@@ -30,10 +30,9 @@ Règles :
 
 On suit **Gitflow** (cf. [05-git-et-deploiement.md](./05-git-et-deploiement.md)) :
 
-```
-feature/*  ──►  develop  ──►  main
-  (preview)     (recette)     (prod)
-   recette DB    recette DB    prod DB
+```mermaid
+flowchart LR
+  F["feature/*<br/>preview · base recette"] --> D["develop<br/>recette · base recette"] --> M["main<br/>prod · base prod"]
 ```
 
 - `feature/*` → preview Netlify sur **base recette**.
@@ -47,7 +46,7 @@ Les tests (cahier manuel, et E2E à terme) ont besoin de données de départ
 
 ### Organisation
 
-```
+```text
 supabase/
   migrations/        # Schéma (structure) — versionné, appliqué à la main
   seed/

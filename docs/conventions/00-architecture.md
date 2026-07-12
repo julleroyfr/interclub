@@ -5,7 +5,7 @@
 Application web de gestion de compétitions **interclub**.
 
 | Couche | Choix | Rôle |
-|--------|-------|------|
+| -------- | ------- | ------ |
 | Front / Rendu | **Next.js 16 (App Router, React 19)** | UI, routes, Server Components, Server Actions |
 | Backend / Données | **Supabase** (PostgreSQL) | Base de données, API auto-générée, RLS |
 | Auth | **Supabase Auth** | Authentification, sessions, gestion des rôles |
@@ -44,7 +44,7 @@ Application web de gestion de compétitions **interclub**.
 
 ## 3. Structure des dossiers
 
-```
+```text
 src/
   app/                    # Routes (App Router). Un dossier = un segment d'URL.
     layout.tsx            # Layout racine

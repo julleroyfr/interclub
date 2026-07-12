@@ -12,7 +12,7 @@ description: Travailler correctement avec CETTE version de Next.js (16.2.6, App 
 ## Où lire (doc embarquée, fait foi)
 
 | Sujet | Fichier |
-|-------|---------|
+| ------- | --------- |
 | Server & Client Components | `01-getting-started/05-server-and-client-components.md` |
 | Récupérer des données | `01-getting-started/06-fetching-data.md` |
 | Muter des données (Server Actions) | `01-getting-started/07-mutating-data.md` |

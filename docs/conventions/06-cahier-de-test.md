@@ -23,7 +23,7 @@ testeur déroule pas à pas.
 ## 3. Ce qui va dans le cahier (vs Vitest)
 
 | Va dans le cahier de test (manuel) | Va dans Vitest (auto) |
-|------------------------------------|-----------------------|
+| ------------------------------------ | ----------------------- |
 | Parcours IHM bout-en-bout | Calculs du domaine (`src/domaine/`) |
 | Authentification / rôles | Validation de règles pures |
 | Policies RLS (qui voit/modifie quoi) | Logique de composant isolée |

@@ -24,7 +24,7 @@ Stack UI réelle : **Tailwind CSS v4** (config CSS-first via `@theme` dans
 ## 2. Breakpoints (Tailwind v4, défauts)
 
 | Préfixe | ≥ largeur | Cible typique |
-|---------|-----------|----------------|
+| --------- | ----------- | ---------------- |
 | _(aucun)_ | 0 | Téléphone (base) |
 | `sm:` | 640 px | Grand téléphone / petite tablette |
 | `md:` | 768 px | Tablette |
@@ -45,6 +45,7 @@ Stack UI réelle : **Tailwind CSS v4** (config CSS-first via `@theme` dans
   import type { Viewport } from 'next'
   export const viewport: Viewport = { width: 'device-width', initialScale: 1 }
   ```
+
 - `lang` du `<html>` doit refléter la langue de l'UI (**`fr`**).
 
 ## 4. Patterns responsive utiles au domaine

@@ -6,7 +6,7 @@ Ce projet **n'a pas de Docker ni de CLI Supabase** : on ne peut pas monter une
 base éphémère ni automatiser des tests contre Supabase. On distingue donc :
 
 | Nature | Cible | Automatisé ? | Outil |
-|--------|-------|--------------|-------|
+| -------- | ------- | -------------- | ------- |
 | **Unitaire** | Domaine pur (`src/domaine/`) | ✅ Oui | Vitest |
 | **Composant** | UI isolée, sans réseau | ✅ Oui | Vitest + Testing Library |
 | **Intégration Supabase / IHM / bout-en-bout** | App réelle + base réelle | ❌ Non — **manuel** | **Cahier de test** |
@@ -72,7 +72,7 @@ génère un cahier à partir d'une spec.
 ## 4. Outillage installé
 
 | Besoin | Outil | Config | Script |
-|--------|-------|--------|--------|
+| -------- | ------- | -------- | -------- |
 | Unitaire / composant | Vitest + Testing Library | `vitest.config.mts`, `vitest.setup.ts` | `npm run test` (CI), `npm run test:watch` |
 | Couverture | `@vitest/coverage-v8` | — | `npm run test:coverage` |
 | E2E navigateur | Playwright (+ Chromium) | `playwright.config.ts`, dossier `e2e/` | `npm run test:e2e` |

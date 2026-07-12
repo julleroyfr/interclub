@@ -6,10 +6,9 @@
 
 Ordre de vérité, du plus fort au plus faible :
 
-```
-①  Spécification fonctionnelle détaillée   (docs/specs/)
-②  Tests                                    (à côté du code / e2e)
-③  Implémentation                           (src/)
+```mermaid
+flowchart LR
+  S["① Spécification détaillée<br/>docs/specs/"] --> T["② Tests<br/>à côté du code / e2e"] --> I["③ Implémentation<br/>src/"]
 ```
 
 - ① décrit **le comportement attendu** (le _quoi_ et le _pourquoi_).
@@ -23,7 +22,7 @@ spec est un test faux. Un code qui contredit les tests est un bug.
 
 Pour toute nouvelle fonctionnalité ou évolution :
 
-```
+```text
 1. SPEC     Rédiger / mettre à jour la spec fonctionnelle détaillée.
             → Validation avant de continuer.
 2. TESTS    Écrire les tests qui encodent la spec. Ils échouent (RED).
@@ -63,7 +62,7 @@ sans passer par la spec est un défaut de processus.
 ### Quand faut-il demander ?
 
 | Situation | Demander ? |
-|-----------|-----------|
+| ----------- | ----------- |
 | Nouvelle règle métier / modification d'une règle existante | ✅ Oui |
 | Changement d'un comportement décrit dans une spec | ✅ Oui |
 | Ajout d'un cas limite non prévu par la spec | ✅ Oui (compléter la spec) |
@@ -122,7 +121,7 @@ externes ou en ASCII. Ils restent ainsi versionnés, diffables et rendus par
 GitHub/l'IDE. Types utiles selon le besoin :
 
 | Besoin | Diagramme Mermaid |
-|--------|-------------------|
+| -------- | ------------------- |
 | Enchaînement d'étapes / décisions (parcours, algorithme) | `flowchart` |
 | Interactions dans le temps (auth, realtime, appels Supabase) | `sequenceDiagram` |
 | Cycle de vie d'une entité (ex. statut d'une rencontre) | `stateDiagram-v2` |

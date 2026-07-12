@@ -13,9 +13,28 @@
 - **Conséquence directe : un `push` sur `main` = mise en ligne prod.** On n'y
   arrive qu'après passage en recette et cahier de test joué.
 
+### Garde-fou avant commit (toute branche)
+
+Projet très orienté specs & documentation : **avant chaque commit, quelle que
+soit la branche**, on **valide les Markdown et on corrige si nécessaire**.
+
+- [ ] `npm run lint:md` passe (0 erreur). Corriger via `npm run lint:md:fix`
+      puis à la main pour le reste. La validation porte sur **tous** les Markdown
+      du projet (pas seulement ceux modifiés).
+
+> Config : `.markdownlint-cli2.jsonc`. Les diagrammes sont en **Mermaid** (cf.
+> [01-workflow-spec-first-tdd.md](./01-workflow-spec-first-tdd.md) §4) ; les
+> arborescences/exemples en blocs ` ```text `.
+
+**Automatisé** : un hook git `pre-commit` (`.githooks/pre-commit`) exécute
+`lint:md` et **bloque le commit** si un Markdown est invalide. Il est activé
+automatiquement au `npm install` (script `prepare` → `core.hooksPath=.githooks`).
+Après un clone, si besoin : `git config core.hooksPath .githooks`. Contournement
+ponctuel (déconseillé) : `git commit --no-verify`.
+
 ### Garde-fou avant push
 
-Avant tout `push` :
+Avant tout `push` (en plus du garde-fou de commit) :
 
 - [ ] `npm run lint` passe.
 - [ ] `npm run typecheck` OK.
@@ -28,9 +47,9 @@ Avant tout `push` :
 
 On suit **Gitflow** : le code remonte **`feature/*` → `develop` → `main`**.
 
-```
-feature/*  ──►  develop  ──►  main
- (preview)      (recette)     (prod)
+```mermaid
+flowchart LR
+  F["feature/*<br/>(preview)"] --> D["develop<br/>(recette)"] --> M["main<br/>(prod)"]
 ```
 
 - **`main`** : production. Ne reçoit que des fusions depuis `develop` (ou
@@ -50,7 +69,7 @@ feature/*  ──►  develop  ──►  main
 
 - **Messages en français**, style Conventional Commits :
 
-  ```
+  ```text
   feat(classement): calcul du classement d'une division
   fix(rencontre): corrige le report d'un forfait sur le score
   docs(conventions): ajoute le cahier de test

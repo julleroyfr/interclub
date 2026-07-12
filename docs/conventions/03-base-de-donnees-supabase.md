@@ -15,7 +15,7 @@
 ## 2. Conventions de nommage SQL
 
 | Objet | Convention | Exemple |
-|-------|-----------|---------|
+| ------- | ----------- | --------- |
 | Table | singulier, snake_case français | `rencontre`, `equipe`, `joueur` |
 | Colonne | snake_case français | `date_rencontre`, `score_domicile` |
 | Clé primaire | `id` (uuid par défaut) | `id` |
@@ -96,7 +96,7 @@ environnement (recette et prod ayant chacun leur base, donc leur table).
 Forme minimale attendue :
 
 | Colonne | Type | Rôle |
-|---------|------|------|
+| --------- | ------ | ------ |
 | `version` | `text` (PK) | Identifiant de la migration = nom du fichier (`AAAAMMJJHHMM_description`) |
 | `description` | `text` | Résumé lisible |
 | `applique_le` | `timestamptz` (défaut `now()`) | Date d'application |
