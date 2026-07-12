@@ -18,7 +18,7 @@ comptes par rôle…), pour que le cahier soit rejouable à l'identique.
 ## Comptes de test
 
 | Compte | Rôle | Usage |
-|--------|------|-------|
+| -------- | ------ | ------- |
 | … | capitaine | … |
 | … | arbitre | … |
 | … | administrateur | … |

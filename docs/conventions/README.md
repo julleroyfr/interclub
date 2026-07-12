@@ -11,8 +11,9 @@ architecture (Next.js + Supabase + Netlify, spec-first / TDD, code et BDD en fra
 
 **La spécification est la vérité.** L'ordre de vérité, du plus fort au plus faible :
 
-```
-Spécification fonctionnelle détaillée  →  Tests  →  Implémentation
+```mermaid
+flowchart LR
+  S[Spécification détaillée] --> T[Tests] --> I[Implémentation]
 ```
 
 Aucun code n'est écrit sans spec puis test. Aucun changement de comportement
@@ -29,7 +30,7 @@ Détail et types de diagrammes : [01-workflow-spec-first-tdd.md](./01-workflow-s
 ## Sommaire
 
 | Document | Contenu |
-|----------|---------|
+| ---------- | --------- |
 | [00-architecture.md](./00-architecture.md) | Stack technique, décisions d'architecture, ce qu'on n'utilise pas |
 | [01-workflow-spec-first-tdd.md](./01-workflow-spec-first-tdd.md) | Processus spec-first / TDD, règle de changement, définition de « terminé » |
 | [02-conventions-code.md](./02-conventions-code.md) | Langue, nommage, structure `src/`, style TypeScript/React |
@@ -44,7 +45,7 @@ Détail et types de diagrammes : [01-workflow-spec-first-tdd.md](./01-workflow-s
 ### Skills associés (`.claude/skills/`)
 
 | Skill | Rôle |
-|-------|------|
+| ------- | ------ |
 | `nouvelle-fonctionnalite` | Piloter une fonctionnalité de bout en bout : spec → tests → code → cahier |
 | `rediger-spec` | Écrire une spec fonctionnelle détaillée (source de vérité) |
 | `cycle-tdd` | Cycle Rouge → Vert → Refactor avec Vitest sur le domaine pur |

@@ -11,7 +11,7 @@ base. Conventions : `docs/conventions/03-base-de-donnees-supabase.md`.
 ## Les trois points d'entrée (déjà en place — les RÉUTILISER)
 
 | Contexte | Helper | Usage |
-|----------|--------|-------|
+| ---------- | -------- | ------- |
 | Server Component / Server Action / Route Handler | `src/lib/supabase/server.ts` → `createClient()` | `const supabase = await createClient()` — utilise `await cookies()` |
 | Client Component (`"use client"`) | `src/lib/supabase/client.ts` → `createClient()` | navigateur, realtime, interactivité |
 | Rafraîchissement de session | `src/lib/supabase/middleware.ts` → `updateSession()` appelé par `src/proxy.ts` | tourne sur les requêtes (proxy Next 16) |
@@ -39,10 +39,12 @@ passer par ces helpers.
 ## Accès aux données
 
 - **Toujours vérifier `error`** :
+
   ```ts
   const { data, error } = await supabase.from('rencontre').select('*')
   if (error) { /* traiter — ne jamais avaler */ }
   ```
+
 - Lectures côté serveur quand possible (Server Components) ; mutations via Server
   Actions.
 - **Pas de logique métier dans la requête** : classement, éligibilité, forfaits se

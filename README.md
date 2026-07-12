@@ -20,17 +20,17 @@ npm run dev
 ## Variables d'environnement
 
 | Variable | Description |
-|---|---|
+| --- | --- |
 | `NEXT_PUBLIC_SUPABASE_URL` | URL du projet Supabase |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Clé publique anon |
 | `SUPABASE_SERVICE_ROLE_KEY` | Clé service_role (serveur uniquement) |
 
 ## Structure
 
-```
+```text
 src/
   app/          # Pages (App Router)
   lib/
     supabase/   # Clients Supabase (browser, server, middleware)
-  middleware.ts # Refresh session Supabase
+  proxy.ts      # Proxy Next 16 (ex-middleware) — refresh session Supabase
 ```

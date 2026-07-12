@@ -6,7 +6,7 @@
 langue métier.
 
 | Élément | Langue | Exemple |
-|---------|--------|---------|
+| --------- | -------- | --------- |
 | Noms de variables, fonctions, types | Français | `calculerClassement`, `equipeDomicile` |
 | Noms de composants React | Français, PascalCase | `FeuilleDeMatch`, `CompositionEquipe` |
 | Fichiers du domaine | Français, kebab-case | `calcul-classement.ts` |

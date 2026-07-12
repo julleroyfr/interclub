@@ -58,7 +58,7 @@ C'est déjà le cas dans `src/lib/supabase/server.ts` (`await cookies()`).
 - ⚠️ **Sécurité** : une Server Action est joignable par POST direct, hors UI.
   **Vérifier authentification ET autorisation à l'intérieur de CHAQUE Server
   Action** (ne pas se fier à l'UI). En pratique : `await supabase.auth.getUser()`
-  + contrôle du droit, en plus de la RLS. cf. guide `02-guides/data-security.md`.
+  - contrôle du droit, en plus de la RLS. cf. guide `02-guides/data-security.md`.
 - Après mutation, **revalider** le cache concerné (`revalidatePath` /
   `revalidateTag`) ou rediriger (`redirect`).
 

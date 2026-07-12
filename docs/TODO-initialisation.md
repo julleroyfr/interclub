@@ -19,7 +19,7 @@ Dernière mise à jour : 2026-07-12.
 ## ⏳ En attente (à faire)
 
 | ID | Tâche | Dépend de | Notes |
-|----|-------|-----------|-------|
+| ---- | ------- | ----------- | ------- |
 | T2 | Créer projets Supabase **recette** + **prod** ; variables Netlify par contexte (preview/branch→recette, production→prod) | — | Infra. cf. `09-environnements-et-donnees.md`. |
 | T3 | Migration initiale : schéma **`interclub`** + table **`interclub.version`** ; exposer le schéma à l'API | T2 | Première migration. Créer le fichier dans `supabase/migrations/`, l'appliquer recette puis prod, consigner (`JOURNAL.md`). |
 | T4 | Modèle de données socle (entités issues des specs : clubs, équipes, joueurs, divisions, rencontres…) → migrations | T1, T3 | Dérive des specs validées. RLS incluse. |
