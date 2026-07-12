@@ -12,9 +12,7 @@ Dernière mise à jour : 2026-07-12.
 
 ## 🔄 En cours
 
-| ID | Tâche | Dépend de | Notes |
-|----|-------|-----------|-------|
-| T1 | **Spec #1 — Rôles & autorisations** (rédigée par l'utilisateur) | — | Première spec ; matrice rôles × actions. Débloque auth + RLS + modèle de données. |
+Aucune tâche en cours.
 
 ## ⏳ En attente (à faire)
 
@@ -35,6 +33,9 @@ Dernière mise à jour : 2026-07-12.
 
 ## ✅ Fait (archive — non rappelé)
 
+- **T1 — Spec #1 : Rôles & autorisations** (`docs/specs/01-roles-et-autorisations.md`),
+  statut `validée` le 2026-07-12. Matrice rôles × actions + cycle de vie d'une
+  rencontre. Débloque T4 (modèle de données), T5 (auth), T6 (RLS).
 - Conventions & architecture (`docs/conventions/00→09`) + skills (`.claude/skills/`).
 - Mise à jour **Next.js 16.2.10** (+ `eslint-config-next`).
 - Standards **Next.js 16** (`07`), **IHM responsive** (`08`), **environnements &
