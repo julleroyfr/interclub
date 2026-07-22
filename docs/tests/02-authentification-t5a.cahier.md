@@ -13,7 +13,7 @@
     (`NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321`, `..._ANON_KEY` via
     `supabase status`).
   - App lancée : `npm run dev`.
-- **Environnement** : local (stack Docker) — version/commit : `______`
+- **Environnement** : local (stack Docker) — version/commit : `d71aa9a`
 
 ## Jeu de données initial
 
@@ -122,11 +122,11 @@ affichage du rôle, déconnexion) restent à dérouler à la main dans l'app.
 
 | Date | Testeur | Version/commit | Cas | Résultat | Remarque |
 |------|---------|----------------|-----|----------|----------|
-| | | | CT-01 | ✅ / ❌ | |
-| | | | CT-02 | ✅ / ❌ | |
-| | | | CT-03 | ✅ / ❌ | |
-| | | | CT-04 | ✅ / ❌ | |
-| | | | CT-05 | ✅ / ❌ | |
-| | | | CT-06 | ✅ / ❌ | |
-| | | | CT-07 | ✅ / ❌ | |
-| | | | CT-08 | ✅ / ❌ | |
+| 2026-07-22 | julleroyfr | d71aa9a | CT-01 | ✅ | IHM |
+| 2026-07-22 | julleroyfr | d71aa9a | CT-02 | ✅ | IHM |
+| 2026-07-22 | julleroyfr | d71aa9a | CT-03 | ✅ | IHM + `test-t5a.sh` |
+| 2026-07-22 | julleroyfr | d71aa9a | CT-04 | ✅ | IHM + `test-t5a.sh` |
+| 2026-07-22 | julleroyfr | d71aa9a | CT-05 | ✅ | `test-t5a.sh` (RLS API) |
+| 2026-07-22 | julleroyfr | d71aa9a | CT-06 | ✅ | `test-t5a.sh` (RLS API) |
+| 2026-07-22 | julleroyfr | d71aa9a | CT-07 | ✅ | `test-t5a.sh` (insert refusé HTTP 403) |
+| 2026-07-22 | julleroyfr | d71aa9a | CT-08 | ✅ | IHM |
