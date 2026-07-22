@@ -12,16 +12,18 @@ Dernière mise à jour : 2026-07-22.
 
 ## 🔄 En cours
 
-Aucune tâche en cours. **Prochaine étape : T5a** (auth permanente + rôle
-courant), développée et validée sur la **stack locale** (cf. archive). L'archi
-des sessions éphémères est **tranchée** (ADR 0001), donc T5d et T6 sont débloqués.
+- **T5a — Auth permanente + rôle courant** : migration RLS `compte`
+  (`202607221300`) + fonctions `role_courant()`/`est_admin()` + DAL
+  (`src/lib/auth/session.ts`) + Server Actions connexion/déconnexion + écran
+  `/connexion` + accueil reflétant la session. Développé et **validé sur la stack
+  locale** ; reste la passe cahier de test (`docs/tests/02-authentification-t5a.cahier.md`).
 
-> ⏳ **Report recette/prod des migrations** : les 4 migrations
-> (`202607221000` → `202607221200`) sont **validées en local** (`supabase db
-> reset` : `interclub.version` = 4 lignes, 13 tables). Côté distant, seule la
-> migration T3 (`202607221000_…`) est appliquée en **recette** ; les suivantes
-> (socle, voie, auth/jetons QR) restent **à appliquer en recette** (à la main),
-> puis en **prod à la bascule sur `main`**.
+> ⏳ **Report recette/prod des migrations** : les 5 migrations
+> (`202607221000` → `202607221300`) sont **validées en local** (`supabase db
+> reset`). Côté distant (recette), **T3 (`202607221000`) et le socle T4
+> (`202607221100`) sont appliqués** ; **voie (`202607221150`), auth
+> (`202607221200`) et RLS `compte` (`202607221300`) restent à appliquer** (à la
+> main), puis en **prod à la bascule sur `main`** (cf. `supabase/migrations/JOURNAL.md`).
 
 ## ⏳ En attente (à faire)
 

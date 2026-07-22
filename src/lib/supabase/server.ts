@@ -8,6 +8,9 @@ export async function createClient() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      // Le métier vit dans le schéma `interclub` (convention 03 §2bis) : on le
+      // prend comme schéma par défaut pour `.from(...)` / `.rpc(...)`.
+      db: { schema: 'interclub' },
       cookies: {
         getAll() {
           return cookieStore.getAll()

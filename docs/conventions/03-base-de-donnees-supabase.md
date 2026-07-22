@@ -38,6 +38,9 @@
   *Exposed schemas* : ajouter `interclub`) pour être requêtable par le client.
 - Depuis le code, préciser le schéma si besoin : `supabase.schema('interclub')`
   (ou configurer le schéma par défaut du client). Documenter le choix retenu.
+  **Choix retenu** : schéma par défaut du client = `interclub`
+  (`db: { schema: 'interclub' }` dans `src/lib/supabase/server.ts` et `client.ts`)
+  ⇒ `.from(...)` / `.rpc(...)` visent `interclub` sans le préfixer.
 - RLS s'applique par table, indépendamment du schéma : activer RLS sur chaque
   table exposée de `interclub`.
 
