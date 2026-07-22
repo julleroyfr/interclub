@@ -6,7 +6,7 @@ attente** (les tâches ✅ faites sont archivées en bas, pas rappelées).
 
 Statuts : ✅ fait · 🔄 en cours · ⏳ en attente (à faire) · 🚫 bloqué (dépendance non levée)
 
-Dernière mise à jour : 2026-07-12.
+Dernière mise à jour : 2026-07-22.
 
 ---
 
@@ -14,12 +14,14 @@ Dernière mise à jour : 2026-07-12.
 
 Aucune tâche en cours.
 
+> ⏳ **Report prod** : migration T3 (`202607221000_…`) appliquée en **recette**
+> uniquement ; **prod à appliquer à la bascule sur `main`** (idem futures
+> migrations tant qu'on n'a pas basculé).
+
 ## ⏳ En attente (à faire)
 
 | ID | Tâche | Dépend de | Notes |
 | ---- | ------- | ----------- | ------- |
-| T2 | Créer projets Supabase **recette** + **prod** ; variables Netlify par contexte (preview/branch→recette, production→prod) | — | Infra. cf. `09-environnements-et-donnees.md`. |
-| T3 | Migration initiale : schéma **`interclub`** + table **`interclub.version`** ; exposer le schéma à l'API | T2 | Première migration. Créer le fichier dans `supabase/migrations/`, l'appliquer recette puis prod, consigner (`JOURNAL.md`). |
 | T4 | Modèle de données socle (entités issues des specs : clubs, équipes, joueurs, divisions, rencontres…) → migrations | T1, T3 | Dérive des specs validées. RLS incluse. |
 | T5 | Authentification Supabase (inscription/connexion) + mapping utilisateur ↔ rôle/joueur | T1, T4 | cf. `expertise-supabase`. |
 | T6 | Policies **RLS** selon la matrice de la spec rôles | T4, T5 | Une policy par opération ; vérifiées par cahier de test (négatifs inclus). |
@@ -33,6 +35,12 @@ Aucune tâche en cours.
 
 ## ✅ Fait (archive — non rappelé)
 
+- **T3 — Migration initiale** (`202607221000_creation_schema_interclub_et_version.sql`) :
+  schéma `interclub` + table `interclub.version`. Appliquée en **recette** le
+  2026-07-22, schéma exposé à l'API. **Prod reportée** à la bascule sur `main`.
+  Débloque T4.
+- **T2 — Projets Supabase recette + prod** créés, variables Netlify par contexte
+  (preview/branch→recette, production→prod). Débloque T3.
 - **T1 — Spec #1 : Rôles & autorisations** (`docs/specs/01-roles-et-autorisations.md`),
   statut `validée` le 2026-07-12. Matrice rôles × actions + cycle de vie d'une
   rencontre. Débloque T4 (modèle de données), T5 (auth), T6 (RLS).

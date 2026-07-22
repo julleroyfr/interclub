@@ -10,7 +10,8 @@ jour à chaque application. Voir les règles :
 
 | Version (fichier) | Description | Recette (date/par) | Prod (date/par) |
 |-------------------|-------------|--------------------|-----------------|
-| _(aucune migration pour l'instant)_ | | | |
+| `202607221000_creation_schema_interclub_et_version` | Schéma `interclub` + table de suivi `interclub.version` | 2026-07-22 / julleroyfr | _reporté (à la bascule sur `main`)_ |
 
-> Première migration à venir : création du schéma `interclub` + table
-> `interclub.version` (cf. TODO d'initialisation).
+> Prod volontairement reportée : sera appliquée quand le code sera basculé sur
+> `main`. Schéma `interclub` à exposer à l'API en prod à ce moment-là (déjà fait
+> en recette).
