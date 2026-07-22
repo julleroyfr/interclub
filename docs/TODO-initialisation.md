@@ -12,25 +12,24 @@ Dernière mise à jour : 2026-07-22.
 
 ## 🔄 En cours
 
-Aucune tâche en cours. **Prochaine étape : T5b** (UI admin de mapping de rôle) ou
-**T5c** (jetons QR) — au choix, les deux sont débloqués par T5a.
+**T5b codé** (2026-07-22) : écran `/admin/mapping`, domaine `mapping-de-role`
+(7 tests Vitest verts), Server Action gardée + RLS, lecture des comptes via clé
+service ([ADR 0002](decisions/0002-liste-des-comptes-via-cle-service.md)).
+**Prochaine étape : T5c** (jetons QR).
 
-> 🧪 **À faire côté utilisateur** : dérouler les cas **UI** du cahier T5a
-> (CT-01, CT-02, CT-08 : affichage du rôle, déconnexion) dans l'app. Les cas
-> auth/RLS (CT-03 à CT-07) sont automatisés (`npm run test:t5a`, 8/8 OK).
+> 🧪 **À faire côté utilisateur** : dérouler le cahier T5b
+> (`docs/tests/03-mapping-de-role-t5b.cahier.md`, CT-01 → CT-08) sur la stack
+> locale — nécessite `SUPABASE_SERVICE_ROLE_KEY` dans `.env.local`. **Aucune
+> migration** pour T5b (le modèle `compte` et ses policies datent de T5a).
 >
-> ⏳ **Report recette/prod des migrations** : les 5 migrations
-> (`202607221000` → `202607221300`) sont **validées en local** (`supabase db
-> reset`). Côté distant (recette), **T3 (`202607221000`) et le socle T4
-> (`202607221100`) sont appliqués** ; **voie (`202607221150`), auth
-> (`202607221200`) et RLS `compte` (`202607221300`) restent à appliquer** (à la
-> main), puis en **prod à la bascule sur `main`** (cf. `supabase/migrations/JOURNAL.md`).
+> ✅ **T5a entièrement clos** : cahier UI **validé** en app, et les 5 migrations
+> (`202607221000` → `202607221300`) **appliquées en recette**. Prod = à la
+> bascule sur `main` (cf. `supabase/migrations/JOURNAL.md`).
 
 ## ⏳ En attente (à faire)
 
 | ID | Tâche | Dépend de | Notes |
 | ---- | ------- | ----------- | ------- |
-| T5b | Mapping de rôle : UI admin pour attribuer rôle + club à un compte existant | T5a | Policies `compte` déjà posées en T5a — reste l'écran/action admin (Server Action + garde `est_admin`). Création du compte Supabase hors périmètre (spec #2). |
 | T5c | Jetons QR : génération / affichage / révocation (admin + coach permanent pour son club) + affectation juge | T5a | Tables `jeton_qr` déjà en place. Policies `jeton_qr` (admin, coach permanent de son club) + UI. Pas de gating phase (R14). cf. spec #2 R15–R23. |
 | T5d | Ouverture de session QR au scan (sessions anonymes + `session_qr` + RPC `ouvrir_session_qr`) | T5c, [ADR 0001](decisions/0001-authentification-sessions-ephemeres-qr.md) | Activer les connexions anonymes Supabase ; migration `session_qr` + RPC ; purge des anonymes. |
 | T6 | Policies **RLS** selon la matrice de la spec rôles + [ADR 0001](decisions/0001-authentification-sessions-ephemeres-qr.md) (2 chemins : permanent via `compte`, éphémère via `session_qr`) | T4, T5 | Une policy par opération ; gating de phase ② ; vérifiées par cahier de test (négatifs inclus). |
@@ -44,6 +43,17 @@ Aucune tâche en cours. **Prochaine étape : T5b** (UI admin de mapping de rôle
 
 ## ✅ Fait (archive — non rappelé)
 
+- **T5b — Mapping de rôle (écran admin)** (2026-07-22) : domaine pur
+  `src/domaine/mapping-de-role.ts` (validation R1–R5, 7 tests Vitest), écran
+  `/admin/mapping` (`src/app/admin/mapping/`) sur le design system « Nuit »,
+  loaders `src/lib/auth/mapping.ts` + Server Action `mapping-actions.ts`
+  (`attribuerMapping`, garde admin + upsert via RLS), client `service_role`
+  `src/lib/supabase/admin.ts` (lecture comptes/clubs), lien « Administrer les
+  rôles » sur l'accueil (admin). Décision : [ADR 0002](decisions/0002-liste-des-comptes-via-cle-service.md).
+  Cahier `docs/tests/03-mapping-de-role-t5b.cahier.md`. **Aucune migration**
+  (modèle `compte` + policies datent de T5a). Reste (utilisateur) : dérouler le
+  cahier. Design system « Nuit » appliqué aussi aux écrans accueil + connexion.
+  **Débloque T5c.**
 - **T5a — Auth permanente + rôle courant** (2026-07-22) : migration
   `202607221300` (fonctions `role_courant()`/`est_admin()` `SECURITY DEFINER` +
   grants + policies RLS de `compte`), schéma client par défaut = `interclub`, DAL

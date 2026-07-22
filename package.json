@@ -16,6 +16,7 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:t5a": "bash scripts/test-t5a.sh",
+    "test:t5b": "bash scripts/test-t5b.sh",
     "db:reset": "supabase db reset"
   },
   "dependencies": {

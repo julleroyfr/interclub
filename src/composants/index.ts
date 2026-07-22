@@ -6,6 +6,11 @@ export type { VarianteBouton, TailleBouton } from './Bouton'
 
 export { Carte } from './Carte'
 export { ChampTexte } from './ChampTexte'
+export { ChampSelect } from './ChampSelect'
+export type { OptionSelect } from './ChampSelect'
+export { ChampCase } from './ChampCase'
+export { GroupeRadio } from './GroupeRadio'
+export type { OptionRadio } from './GroupeRadio'
 
 export { Etiquette } from './Etiquette'
 export type { VarianteEtiquette } from './Etiquette'

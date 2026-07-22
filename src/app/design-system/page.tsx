@@ -3,10 +3,13 @@ import {
   Carte,
   Cellule,
   CelluleTete,
+  ChampCase,
+  ChampSelect,
   ChampTexte,
   CorpsTableau,
   EnTetePage,
   Etiquette,
+  GroupeRadio,
   LigneTableau,
   Pastille,
   Tableau,
@@ -113,6 +116,55 @@ export default function GalerieDesignSystem() {
             placeholder="8″12"
             erreur="Un temps doit être strictement positif."
           />
+          <ChampSelect
+            id="demo-club"
+            label="Club"
+            placeholder="Sélectionnez un club…"
+            options={[
+              { value: 'a', label: 'Vertical Mérignac' },
+              { value: 'b', label: 'Grimpe Pessac' },
+            ]}
+            indice="Menu natif rendu en sombre (color-scheme)."
+          />
+          <ChampSelect
+            id="demo-role"
+            label="Rôle"
+            tonLabel="accent"
+            defaultValue="coach"
+            options={[
+              { value: 'admin', label: 'Admin' },
+              { value: 'coach', label: 'Coach' },
+            ]}
+          />
+        </div>
+      </Bloc>
+
+      <Bloc titre="Choix (radio & cases à cocher)">
+        <div className="grid gap-5 sm:grid-cols-2">
+          <GroupeRadio
+            name="demo-role-radio"
+            legend="Rôle"
+            tonLabel="accent"
+            defaultValue="coach"
+            options={[
+              { value: 'coach', label: 'Coach' },
+              { value: 'admin', label: 'Admin' },
+              { value: 'juge', label: 'Juge', disabled: true },
+            ]}
+          />
+          <div className="flex flex-col gap-1">
+            <ChampCase
+              id="demo-case-vitesse"
+              label="Épreuve de vitesse"
+              defaultChecked
+            />
+            <ChampCase
+              id="demo-case-difficulte"
+              label="Épreuve de difficulté"
+              indice="Voie et bloc comptent pour le classement."
+            />
+            <ChampCase id="demo-case-relais" label="Relais" disabled />
+          </div>
         </div>
       </Bloc>
 
