@@ -14,7 +14,14 @@ const etatInitial: EtatMapping = undefined
 
 const styleChamp =
   'mt-1 h-12 w-full rounded-xl border border-bordure bg-black/30 px-4 text-base ' +
-  'text-texte-fort focus:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent/20'
+  'text-texte-fort focus:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent/20 ' +
+  // `color-scheme: dark` : le navigateur dessine la liste déroulante native en
+  // sombre (options lisibles). `styleOption` fournit un secours explicite.
+  '[color-scheme:dark]'
+
+// Fond/texte explicites des <option> (secours si le navigateur ignore
+// color-scheme sur le menu natif).
+const styleOption = 'bg-fond text-texte'
 
 const styleLabel = 'text-xs font-medium uppercase tracking-wide text-texte-attenue'
 
@@ -44,11 +51,11 @@ export function FormulaireMapping({ comptes, clubs }: Props) {
           defaultValue=""
           className={styleChamp}
         >
-          <option value="" disabled>
+          <option value="" disabled className={styleOption}>
             Sélectionnez un compte…
           </option>
           {comptes.map((c) => (
-            <option key={c.id} value={c.id}>
+            <option key={c.id} value={c.id} className={styleOption}>
               {c.email ?? c.id}
             </option>
           ))}
@@ -95,11 +102,11 @@ export function FormulaireMapping({ comptes, clubs }: Props) {
             defaultValue=""
             className={styleChamp}
           >
-            <option value="" disabled>
+            <option value="" disabled className={styleOption}>
               Sélectionnez un club…
             </option>
             {clubs.map((c) => (
-              <option key={c.id} value={c.id}>
+              <option key={c.id} value={c.id} className={styleOption}>
                 {c.nom}
               </option>
             ))}
