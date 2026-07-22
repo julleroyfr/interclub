@@ -12,11 +12,16 @@ Dernière mise à jour : 2026-07-22.
 
 ## 🔄 En cours
 
-Aucune tâche en cours.
+Aucune tâche en cours. **Prochaine étape : T5a** (auth permanente + rôle
+courant), développée et validée sur la **stack locale** (cf. archive). L'archi
+des sessions éphémères est **tranchée** (ADR 0001), donc T5d et T6 sont débloqués.
 
-> ⏳ **Report prod** : migration T3 (`202607221000_…`) appliquée en **recette**
-> uniquement ; **prod à appliquer à la bascule sur `main`** (idem futures
-> migrations tant qu'on n'a pas basculé).
+> ⏳ **Report recette/prod des migrations** : les 4 migrations
+> (`202607221000` → `202607221200`) sont **validées en local** (`supabase db
+> reset` : `interclub.version` = 4 lignes, 13 tables). Côté distant, seule la
+> migration T3 (`202607221000_…`) est appliquée en **recette** ; les suivantes
+> (socle, voie, auth/jetons QR) restent **à appliquer en recette** (à la main),
+> puis en **prod à la bascule sur `main`**.
 
 ## ⏳ En attente (à faire)
 
@@ -34,6 +39,18 @@ Aucune tâche en cours.
 
 ## ✅ Fait (archive — non rappelé)
 
+- **ADR 0001 — Auth des sessions QR éphémères**
+  (`docs/decisions/0001-authentification-sessions-ephemeres-qr.md`), acceptée le
+  2026-07-22. Tranche le mécanisme laissé « hors périmètre » par la spec #2 :
+  connexions **anonymes** Supabase + table `interclub.session_qr` + RPC
+  `ouvrir_session_qr` (`SECURITY DEFINER`), autorisation recalculée en RLS
+  (coupure immédiate R13/R22/R23). **Débloque T5d et T6.**
+- **Stack Supabase locale (Docker)** installée & validée le 2026-07-22 :
+  `supabase start` + `supabase db reset` rejouent les 4 migrations sur base
+  neuve. Convention 03 §5 **amendée** (validation locale autorisée ; `db push` /
+  `db diff` **interdits** ; application recette/prod **manuelle**) ;
+  `supabase/config.toml` versionné (`interclub` exposé, seed branché,
+  `major_version = 17`) ; pas-à-pas `docs/stack-locale-supabase.md` ; CLI 2.109.1.
 - **T3 — Migration initiale** (`202607221000_creation_schema_interclub_et_version.sql`) :
   schéma `interclub` + table `interclub.version`. Appliquée en **recette** le
   2026-07-22, schéma exposé à l'API. **Prod reportée** à la bascule sur `main`.
