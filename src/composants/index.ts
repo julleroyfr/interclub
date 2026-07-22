@@ -6,6 +6,8 @@ export type { VarianteBouton, TailleBouton } from './Bouton'
 
 export { Carte } from './Carte'
 export { ChampTexte } from './ChampTexte'
+export { ChampSelect } from './ChampSelect'
+export type { OptionSelect } from './ChampSelect'
 
 export { Etiquette } from './Etiquette'
 export type { VarianteEtiquette } from './Etiquette'

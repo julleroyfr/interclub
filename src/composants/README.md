@@ -35,6 +35,7 @@ template **Nuit** retenu. Thème **sombre**, verre dépoli, accents cyan / lime.
 | `Carte` | Conteneur en verre (option `interactive`) |
 | `Bouton` | `primaire` \| `secondaire` \| `fantome` \| `danger`, tailles `md` (44px) / `sm` |
 | `ChampTexte` | Saisie labellisée, indice / erreur, anti-zoom iOS |
+| `ChampSelect` | Liste déroulante labellisée (`options` + `placeholder`), menu natif en thème sombre (`color-scheme`), indice / erreur |
 | `Etiquette` | Badge de statut : `accent` \| `succes` \| `neutre` \| `danger` |
 | `Pastille` | Point d'état lumineux |
 | `Tableau` & primitives | Tableau responsive (`overflow-x-auto`) |

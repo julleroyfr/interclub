@@ -2,7 +2,7 @@
 
 import { useActionState, useId, useState } from 'react'
 
-import { Bouton } from '@/composants'
+import { Bouton, ChampSelect } from '@/composants'
 import { attribuerMapping } from '@/lib/auth/mapping-actions'
 import type {
   ClubOption,
@@ -11,17 +11,6 @@ import type {
 } from '@/lib/auth/mapping'
 
 const etatInitial: EtatMapping = undefined
-
-const styleChamp =
-  'mt-1 h-12 w-full rounded-xl border border-bordure bg-black/30 px-4 text-base ' +
-  'text-texte-fort focus:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent/20 ' +
-  // `color-scheme: dark` : le navigateur dessine la liste déroulante native en
-  // sombre (options lisibles). `styleOption` fournit un secours explicite.
-  '[color-scheme:dark]'
-
-// Fond/texte explicites des <option> (secours si le navigateur ignore
-// color-scheme sur le menu natif).
-const styleOption = 'bg-fond text-texte'
 
 const styleLabel = 'text-xs font-medium uppercase tracking-wide text-texte-attenue'
 
@@ -40,27 +29,14 @@ export function FormulaireMapping({ comptes, clubs }: Props) {
 
   return (
     <form action={action} className="mt-4 flex flex-col gap-4">
-      <div>
-        <label htmlFor={idCompte} className={styleLabel}>
-          Compte
-        </label>
-        <select
-          id={idCompte}
-          name="utilisateurId"
-          required
-          defaultValue=""
-          className={styleChamp}
-        >
-          <option value="" disabled className={styleOption}>
-            Sélectionnez un compte…
-          </option>
-          {comptes.map((c) => (
-            <option key={c.id} value={c.id} className={styleOption}>
-              {c.email ?? c.id}
-            </option>
-          ))}
-        </select>
-      </div>
+      <ChampSelect
+        id={idCompte}
+        name="utilisateurId"
+        label="Compte"
+        required
+        placeholder="Sélectionnez un compte…"
+        options={comptes.map((c) => ({ value: c.id, label: c.email ?? c.id }))}
+      />
 
       <fieldset className="flex flex-col gap-2">
         <legend className={styleLabel}>Rôle</legend>
@@ -91,27 +67,14 @@ export function FormulaireMapping({ comptes, clubs }: Props) {
       </fieldset>
 
       {role === 'coach' && (
-        <div>
-          <label htmlFor={idClub} className={styleLabel}>
-            Club
-          </label>
-          <select
-            id={idClub}
-            name="clubId"
-            required
-            defaultValue=""
-            className={styleChamp}
-          >
-            <option value="" disabled className={styleOption}>
-              Sélectionnez un club…
-            </option>
-            {clubs.map((c) => (
-              <option key={c.id} value={c.id} className={styleOption}>
-                {c.nom}
-              </option>
-            ))}
-          </select>
-        </div>
+        <ChampSelect
+          id={idClub}
+          name="clubId"
+          label="Club"
+          required
+          placeholder="Sélectionnez un club…"
+          options={clubs.map((c) => ({ value: c.id, label: c.nom }))}
+        />
       )}
 
       {etat?.erreur && (

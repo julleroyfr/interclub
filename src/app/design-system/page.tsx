@@ -3,6 +3,7 @@ import {
   Carte,
   Cellule,
   CelluleTete,
+  ChampSelect,
   ChampTexte,
   CorpsTableau,
   EnTetePage,
@@ -112,6 +113,26 @@ export default function GalerieDesignSystem() {
             inputMode="numeric"
             placeholder="8″12"
             erreur="Un temps doit être strictement positif."
+          />
+          <ChampSelect
+            id="demo-club"
+            label="Club"
+            placeholder="Sélectionnez un club…"
+            options={[
+              { value: 'a', label: 'Vertical Mérignac' },
+              { value: 'b', label: 'Grimpe Pessac' },
+            ]}
+            indice="Menu natif rendu en sombre (color-scheme)."
+          />
+          <ChampSelect
+            id="demo-role"
+            label="Rôle"
+            tonLabel="accent"
+            defaultValue="coach"
+            options={[
+              { value: 'admin', label: 'Admin' },
+              { value: 'coach', label: 'Coach' },
+            ]}
           />
         </div>
       </Bloc>
