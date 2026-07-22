@@ -22,7 +22,7 @@ Aucune tâche en cours.
 
 | ID | Tâche | Dépend de | Notes |
 | ---- | ------- | ----------- | ------- |
-| T4 | Modèle de données socle (entités issues des specs : clubs, équipes, joueurs, divisions, rencontres…) → migrations | T1, T3 | Dérive des specs validées. RLS incluse. |
+| T4 | Modèle de données socle (entités issues des specs : clubs, équipes, grimpeurs, rencontres, épreuves…) → migrations | T1, T3 | Dérive des specs validées. RLS incluse. |
 | T5 | Authentification Supabase (inscription/connexion) + mapping utilisateur ↔ rôle/joueur | T1, T4 | cf. `expertise-supabase`. |
 | T6 | Policies **RLS** selon la matrice de la spec rôles | T4, T5 | Une policy par opération ; vérifiées par cahier de test (négatifs inclus). |
 | T7 | Jeux de données de test : `seed/01-jeu-de-test.sql` + `seed/99-purge-jeu-de-test.sql` (recette) | T4 | Idempotent + purge bornée. cf. `09` §3-4. |

@@ -72,7 +72,7 @@ conditionne les accès temporels.
 - **R11.** Seul l'admin peut créer, modifier ou supprimer un **club**.
 - **R12.** Seul l'admin peut créer, modifier ou supprimer une **rencontre**.
 - **R13.** Seul l'admin peut accéder au **paramétrage** de l'application
-  (structure de la compétition, divisions, etc.).
+  (structure de la compétition, catégories enfant/ado, etc.).
 - **R14.** L'admin peut afficher les **QR** de toutes les sessions éphémères
   (coachs temporaires et juges).
 - **R15.** Seul l'admin peut **affecter un juge** à l'épreuve de vitesse d'une
