@@ -2,7 +2,7 @@
 
 import { useActionState, useId, useState } from 'react'
 
-import { Bouton, ChampSelect } from '@/composants'
+import { Bouton, ChampSelect, GroupeRadio } from '@/composants'
 import { attribuerMapping } from '@/lib/auth/mapping-actions'
 import type {
   ClubOption,
@@ -11,8 +11,6 @@ import type {
 } from '@/lib/auth/mapping'
 
 const etatInitial: EtatMapping = undefined
-
-const styleLabel = 'text-xs font-medium uppercase tracking-wide text-texte-attenue'
 
 type Props = {
   comptes: CompteSupabase[]
@@ -38,33 +36,16 @@ export function FormulaireMapping({ comptes, clubs }: Props) {
         options={comptes.map((c) => ({ value: c.id, label: c.email ?? c.id }))}
       />
 
-      <fieldset className="flex flex-col gap-2">
-        <legend className={styleLabel}>Rôle</legend>
-        <div className="flex gap-4">
-          <label className="flex items-center gap-2 text-sm text-texte">
-            <input
-              type="radio"
-              name="role"
-              value="coach"
-              checked={role === 'coach'}
-              onChange={() => setRole('coach')}
-              className="size-4 accent-accent"
-            />
-            Coach
-          </label>
-          <label className="flex items-center gap-2 text-sm text-texte">
-            <input
-              type="radio"
-              name="role"
-              value="admin"
-              checked={role === 'admin'}
-              onChange={() => setRole('admin')}
-              className="size-4 accent-accent"
-            />
-            Admin
-          </label>
-        </div>
-      </fieldset>
+      <GroupeRadio
+        name="role"
+        legend="Rôle"
+        value={role}
+        onChange={(v) => setRole(v as 'coach' | 'admin')}
+        options={[
+          { value: 'coach', label: 'Coach' },
+          { value: 'admin', label: 'Admin' },
+        ]}
+      />
 
       {role === 'coach' && (
         <ChampSelect

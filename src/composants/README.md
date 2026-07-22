@@ -36,6 +36,8 @@ template **Nuit** retenu. Thème **sombre**, verre dépoli, accents cyan / lime.
 | `Bouton` | `primaire` \| `secondaire` \| `fantome` \| `danger`, tailles `md` (44px) / `sm` |
 | `ChampTexte` | Saisie labellisée, indice / erreur, anti-zoom iOS |
 | `ChampSelect` | Liste déroulante labellisée (`options` + `placeholder`), menu natif en thème sombre (`color-scheme`), indice / erreur |
+| `GroupeRadio` | Groupe de boutons radio (un choix ; `options`), contrôlé ou non, cibles tactiles ≥44px |
+| `ChampCase` | Case à cocher labellisée (indice optionnel), ligne cliquable ≥44px |
 | `Etiquette` | Badge de statut : `accent` \| `succes` \| `neutre` \| `danger` |
 | `Pastille` | Point d'état lumineux |
 | `Tableau` & primitives | Tableau responsive (`overflow-x-auto`) |

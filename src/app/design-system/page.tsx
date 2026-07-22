@@ -3,11 +3,13 @@ import {
   Carte,
   Cellule,
   CelluleTete,
+  ChampCase,
   ChampSelect,
   ChampTexte,
   CorpsTableau,
   EnTetePage,
   Etiquette,
+  GroupeRadio,
   LigneTableau,
   Pastille,
   Tableau,
@@ -134,6 +136,35 @@ export default function GalerieDesignSystem() {
               { value: 'coach', label: 'Coach' },
             ]}
           />
+        </div>
+      </Bloc>
+
+      <Bloc titre="Choix (radio & cases à cocher)">
+        <div className="grid gap-5 sm:grid-cols-2">
+          <GroupeRadio
+            name="demo-role-radio"
+            legend="Rôle"
+            tonLabel="accent"
+            defaultValue="coach"
+            options={[
+              { value: 'coach', label: 'Coach' },
+              { value: 'admin', label: 'Admin' },
+              { value: 'juge', label: 'Juge', disabled: true },
+            ]}
+          />
+          <div className="flex flex-col gap-1">
+            <ChampCase
+              id="demo-case-vitesse"
+              label="Épreuve de vitesse"
+              defaultChecked
+            />
+            <ChampCase
+              id="demo-case-difficulte"
+              label="Épreuve de difficulté"
+              indice="Voie et bloc comptent pour le classement."
+            />
+            <ChampCase id="demo-case-relais" label="Relais" disabled />
+          </div>
         </div>
       </Bloc>
 
