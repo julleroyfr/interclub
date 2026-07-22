@@ -91,6 +91,8 @@ déployer.
 - **Prérequis** : Docker Desktop (+ WSL2 sous Windows). C'est le coût d'entrée
   assumé de la validation locale ; il n'est **pas** requis pour appliquer une
   migration (l'application reste faisable à la seule main via le SQL Editor).
+- **Pas-à-pas d'installation & d'usage** :
+  [`docs/stack-locale-supabase.md`](../stack-locale-supabase.md).
 
 ### 5.2 Application vers recette puis prod — MANUELLE
 
