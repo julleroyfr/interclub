@@ -2,9 +2,15 @@
 
 - **Statut** : validée (le 2026-07-22)
 - **Sources** : décision produit du 2026-07-22 (mécanisme d'authentification,
-  cycle de vie des sessions QR éphémères, affectation juge). S'appuie sur la
-  **spec #1 — Rôles & autorisations** (`01-roles-et-autorisations.md`), qui
-  reste la vérité pour « qui peut faire quoi ».
+  cycle de vie des sessions QR éphémères, affectation juge) ; règlement CT33 FFME
+  2025-2026 **enfant/ado** (voies de vitesse filles / garçons, résultat de
+  vitesse). S'appuie sur la **spec #1 — Rôles & autorisations**
+  (`01-roles-et-autorisations.md`), qui reste la vérité pour « qui peut faire
+  quoi ».
+- **Révision** : 2026-07-22 — intégration du règlement enfant/ado (validée le
+  2026-07-22) : la saisie juge porte sur un **résultat de vitesse**
+  (temps/chute/non-présentation) et la **voie cloisonne** cette saisie (R11,
+  R18, R24) ; jeton QR propre à chaque demi-journée/rencontre.
 
 ## Objectif
 
@@ -27,9 +33,12 @@ alimente le modèle de données (mapping, jetons) et les policies **RLS**.
   sessions éphémères d'un **rôle** et d'un **périmètre** donnés pour une
   rencontre.
 - **Périmètre** : ce qu'une session éphémère a le droit de toucher — un **club**
-  (coach temporaire) ou l'**épreuve de vitesse** d'une rencontre (juge).
+  (coach temporaire) ou une **voie de vitesse** d'une rencontre (juge).
+- **Voie de vitesse** : couloir/ligne de l'épreuve de vitesse d'une rencontre. Le
+  nombre de voies est **paramétrable** par rencontre. Un juge est affecté à **une**
+  voie. (À ne pas confondre avec l'épreuve « voie » = difficulté.)
 - **Affectation juge** : mise à disposition, par l'admin, du jeton QR « juge »
-  de l'épreuve de vitesse d'une rencontre (spec #1 R15, R29).
+  d'une **voie de vitesse** d'une rencontre (spec #1 R15, R29).
 - **Révocation** : invalidation d'un jeton QR (et des sessions qu'il a ouvertes).
 - **Régénération** : remplacement d'un jeton QR par un nouveau jeton distinct,
   l'ancien étant révoqué.
@@ -63,11 +72,16 @@ alimente le modèle de données (mapping, jetons) et les policies **RLS**.
   simultanées** (plusieurs personnes / appareils) tant qu'il est valide.
 - **R9.** Il existe exactement deux natures de jeton QR :
   - **(a) coach temporaire** — périmètre = **un club**, pour une rencontre ;
-  - **(b) juge** — périmètre = l'**épreuve de vitesse** d'une rencontre.
+  - **(b) juge** — périmètre = **une voie de vitesse** d'une rencontre.
 - **R10.** Une session ouverte par un jeton « coach temporaire » a les droits
   fonctionnels du coach de ce club (spec #1 R27), **bornés à cette rencontre**.
 - **R11.** Une session ouverte par un jeton « juge » a les droits du juge (spec #1
-  R30–R31) sur l'**épreuve de vitesse de cette rencontre**, et rien d'autre.
+  R30–R31) : saisir les **résultats de vitesse** (un temps chronométré, une chute
+  ou une non-présentation) des grimpeurs de **la voie à laquelle le juge est
+  affecté** (R9b, R17), et rien d'autre. Chaque grimpeur concourt sur **une seule
+  voie** — celle de son classement (p. ex. filles ou garçons, R18) — et n'y a
+  **qu'un seul résultat** (spec #1 R31). La voie **cloisonne** donc la saisie du
+  juge : un juge ne saisit que les résultats des grimpeurs de sa voie.
 
 ### Validité (fenêtre temporelle)
 
@@ -87,11 +101,15 @@ alimente le modèle de données (mapping, jetons) et les policies **RLS**.
   R14).
 - **R16.** Un **coach permanent** peut générer et afficher le jeton QR « coach
   temporaire » de **son** club, et **uniquement** le sien (spec #1 R26).
-- **R17.** Générer/afficher un jeton QR « juge » pour l'épreuve de vitesse d'une
-  rencontre vaut **affectation du juge** ; **seul l'admin** peut le faire (spec #1
-  R15).
-- **R18.** Une rencontre a **au plus un** jeton QR « juge » actif (une seule
-  épreuve de vitesse, une seule affectation).
+- **R17.** Générer/afficher un jeton QR « juge » pour **une voie de vitesse** d'une
+  rencontre vaut **affectation du juge** à cette voie ; **seul l'admin** peut le
+  faire (spec #1 R15).
+- **R18.** Une rencontre peut avoir **plusieurs** jetons QR « juge » actifs, car
+  l'épreuve de vitesse comporte **plusieurs voies** correspondant à des
+  **classements distincts** (p. ex. une voie filles et une voie garçons, chacune
+  avec son classement) : un juge par voie. Il y a **au plus un** jeton « juge »
+  actif **par voie de vitesse** (le multi-usage, R8, couvre plusieurs personnes
+  sur une même voie).
 - **R19.** Une rencontre a **au plus un** jeton QR « coach temporaire » actif
   **par club engagé** dans cette rencontre.
 
@@ -109,8 +127,8 @@ alimente le modèle de données (mapping, jetons) et les policies **RLS**.
 
 - **R24.** Une session éphémère ne peut agir que **dans son périmètre** : coach
   temporaire → équipes / grimpeurs / résultats de **son club** pour **cette
-  rencontre** (spec #1 R20, R27) ; juge → **temps de l'épreuve de vitesse** de
-  cette rencontre (spec #1 R30).
+  rencontre** (spec #1 R20, R27) ; juge → **résultats de vitesse des grimpeurs de
+  sa voie** pour cette rencontre (spec #1 R30, R11).
 - **R25.** Toute action d'une session éphémère **hors de son périmètre** ou **hors
   phase ②** est **refusée** (spec #1 R28, R33).
 
@@ -132,9 +150,9 @@ droits coach bornés au club A et à cette rencontre (R6–R10, R8).
 ### Nominal — affectation & saisie juge
 
 Étant donné une rencontre en phase ②, quand l'admin génère le jeton QR « juge »
-de son épreuve de vitesse (affectation, R17) et qu'un juge le scanne, alors une
-session juge s'ouvre et permet de saisir les temps de vitesse de cette rencontre
-(R11, R24).
+de son épreuve de vitesse (affectation à une voie, R17) et qu'un juge le scanne,
+alors une session juge s'ouvre et permet de saisir les **résultats de vitesse**
+(temps, chute ou non-présentation) des grimpeurs de **cette voie** (R11, R24).
 
 ### Cas limites / erreurs
 
@@ -147,8 +165,9 @@ session juge s'ouvre et permet de saisir les temps de vitesse de cette rencontre
 - Après **révocation/régénération**, une personne rescanne l'**ancien** QR →
   aucune session (R22, R23).
 - Un compte permanent **sans mapping** tente d'agir → aucun droit (R5).
-- Tentative de créer un **second** jeton « juge » actif sur une rencontre → refusé
-  (R18) ; idem un second jeton « coach temporaire » actif pour le même club (R19).
+- Tentative de créer un **second** jeton « juge » actif sur la **même voie** →
+  refusé (R18) ; idem un second jeton « coach temporaire » actif pour le même
+  club (R19).
 
 ## Diagrammes
 
@@ -194,11 +213,18 @@ stateDiagram-v2
 - **Mapping de rôle** : un compte permanent porte **au plus un** rôle applicatif
   (`admin` ou `coach`) ; un mapping `coach` porte un `club_id` **obligatoire**,
   un mapping `admin` n'en porte pas (R1, R3).
+- **Rencontre & demi-journée** : chaque demi-journée (catégorie matin /
+  après-midi) est une **rencontre distincte** (spec #1 R34) ; un jeton QR est lié
+  à **une** rencontre et ne vaut **pas** pour l'autre demi-journée.
+- **Voie de vitesse** : une rencontre a **0..n** voies de vitesse (nombre
+  paramétrable) ; chaque voie appartient à une rencontre et porte un identifiant
+  (ex. numéro) unique dans la rencontre (R9b, R17). Une voie correspond à un
+  **classement** (p. ex. filles / garçons, R18).
 - **Jeton QR** : valeur **unique** ; lié à **une** rencontre ; de nature
-  `coach_temporaire` (avec un club) **ou** `juge` (épreuve de vitesse de la
-  rencontre) ; état **actif / révoqué** (R6, R9, R22).
-- **Unicité** : au plus **un** jeton `juge` actif par rencontre (R18) ; au plus
-  **un** jeton `coach_temporaire` actif par couple (club, rencontre) (R19).
+  `coach_temporaire` (avec un `club_id`, sans voie) **ou** `juge` (avec une
+  `voie_vitesse`, sans club) ; état **actif / révoqué** (R6, R9, R22).
+- **Unicité** : au plus **un** jeton `juge` actif par **voie de vitesse** (R18) ;
+  au plus **un** jeton `coach_temporaire` actif par couple (club, rencontre) (R19).
 - **Validité** : la validité d'une session se **calcule** (phase ② de la
   rencontre + jeton non révoqué), elle n'est pas figée en base (R12, R22).
 - **RLS attendue** :

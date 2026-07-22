@@ -12,6 +12,8 @@ jour à chaque application. Voir les règles :
 |-------------------|-------------|--------------------|-----------------|
 | `202607221000_creation_schema_interclub_et_version` | Schéma `interclub` + table de suivi `interclub.version` | 2026-07-22 / julleroyfr | _reporté (à la bascule sur `main`)_ |
 | `202607221100_modele_donnees_socle` | Modèle socle (club, coach, grimpeur, rencontre, equipe, composition, epreuve, resultat, temps_vitesse) + RLS activée | 2026-07-22 / julleroyfr | _reporté (à la bascule sur `main`)_ |
+| `202607221150_voie_de_vitesse` | Voies de vitesse d'une rencontre (nombre paramétrable) + RLS activée | _à appliquer_ | _reporté (à la bascule sur `main`)_ |
+| `202607221200_auth_et_jetons_qr` | Auth : `compte` (mapping compte↔rôle/club) + `jeton_qr` (jetons éphémères ; juge→voie) + RLS activée | _à appliquer_ | _reporté (à la bascule sur `main`)_ |
 
 > Prod volontairement reportée : sera appliquée quand le code sera basculé sur
 > `main`. Schéma `interclub` à exposer à l'API en prod à ce moment-là (déjà fait

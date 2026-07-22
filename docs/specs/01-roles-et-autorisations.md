@@ -2,9 +2,13 @@
 
 - **Statut** : validée (le 2026-07-12)
 - **Sources** : décision produit du 2026-07-12 (rôles, droits, cycle de vie
-  d'une rencontre) ; règlement 2025 v3.1 Adultes (contexte des épreuves voie /
-  bloc / vitesse). ⚠️ La dernière version du règlement prime toujours (cf.
-  `docs/conventions/01-workflow-spec-first-tdd.md` §4).
+  d'une rencontre) ; règlement CT33 FFME 2025-2026 **enfant/ado** et v3.1 Adultes
+  (épreuves voie / bloc / vitesse, résultat de vitesse, catégories matin /
+  après-midi, prêts de grimpeurs). ⚠️ La dernière version du règlement prime
+  toujours (cf. `docs/conventions/01-workflow-spec-first-tdd.md` §4).
+- **Révision** : 2026-07-22 — intégration du règlement enfant/ado (validée le
+  2026-07-22) : résultat de vitesse temps/chute/non-présentation (R30–R31),
+  catégorie de rencontre & demi-journées (R34), grimpeurs prêtés (R35–R36).
 
 ## Objectif
 
@@ -33,10 +37,23 @@ conditionne les accès temporels.
 - **Équipe** : groupe de grimpeurs engagé par un club.
 - **Grimpeur** (compétiteur) : membre d'une équipe.
 - **Rencontre** : confrontation programmée entre équipes, déroulée en trois
-  phases (voir R5).
+  phases (voir R5). Porte exactement une **catégorie** (voir R34).
+- **Catégorie** : tranche d'âge d'une rencontre — **matin** (moins de 13 ans) ou
+  **après-midi** (13/19 ans) — déterminée par l'année de naissance rapportée à
+  l'**année de la saison** (borne dynamique, pas une année figée). L'année-pivot
+  (les « 13 ans ») peut concourir dans les deux catégories.
 - **Épreuve** : discipline évaluée lors d'une rencontre — **voie**, **bloc** ou
   **vitesse**.
-- **Vitesse** : épreuve chronométrée ; sa saisie porte sur des **temps**.
+- **Vitesse** : épreuve chronométrée ; sa saisie porte, par grimpeur, sur un
+  **résultat de vitesse** (voir ci-dessous).
+- **Résultat de vitesse** : issue saisie par le juge pour un grimpeur sur
+  l'épreuve de vitesse, prenant exactement une des trois formes : un **temps
+  chronométré**, une **chute**, ou une **non-présentation**.
+- **Prêt (grimpeur prêté)** : grimpeur d'un club engagé ponctuellement dans
+  l'équipe d'un autre club ou dans l'**équipe CT33**, tout en restant rattaché à
+  son club d'origine (il y conserve ses résultats individuels).
+- **Équipe CT33** : équipe gérée par l'organisation, regroupant des participants
+  en surnombre ou prêtés.
 - **Infos publiques** : données de compétition consultables tous clubs confondus
   (calendrier, résultats, classements).
 
@@ -64,6 +81,11 @@ conditionne les accès temporels.
   phase ③ résultats publics.
 - **R9.** Les sessions QR éphémères (coach temporaire, juge) ne sont valides que
   pendant la phase ② compétition de leur rencontre.
+- **R34.** Une rencontre porte exactement une **catégorie** (matin < 13 ans, ou
+  après-midi 13/19 ans). Une journée d'interclub à deux demi-journées se
+  modélise en **deux rencontres distinctes**, chacune avec ses propres phases,
+  jetons QR et affectations. Un grimpeur de l'année-pivot peut être engagé dans
+  les deux rencontres.
 
 ### Admin
 
@@ -84,7 +106,8 @@ conditionne les accès temporels.
 - **R17.** Un coach peut créer, modifier et supprimer les **équipes** de son
   club, et uniquement celles-ci.
 - **R18.** Un coach peut ajouter, modifier et supprimer les **grimpeurs** de ses
-  équipes, et uniquement ceux-ci.
+  équipes, et uniquement ceux-ci (le rattachement d'un grimpeur **prêté** d'un
+  autre club relève de l'admin, cf. R35).
 - **R19.** Un coach peut saisir et modifier les **résultats** des grimpeurs de
   ses équipes (en phase ② compétition, cf. R7).
 - **R20.** Un coach ne peut ni consulter en écriture ni modifier les données
@@ -115,16 +138,29 @@ conditionne les accès temporels.
 
 - **R29.** Un juge est affecté par l'admin (R15) à l'épreuve de **vitesse** d'une
   rencontre.
-- **R30.** Le juge saisit uniquement les **temps** de l'épreuve de vitesse à
-  laquelle il est affecté ; il n'intervient pas sur les épreuves de voie ni de
-  bloc.
+- **R30.** Le juge saisit uniquement les **résultats de vitesse** (temps, chute
+  ou non-présentation) de l'épreuve de vitesse à laquelle il est affecté ; il
+  n'intervient pas sur les épreuves de voie ni de bloc.
 - **R31.** Pour saisir, le juge **sélectionne un grimpeur** (compétiteur) puis
-  enregistre son temps. Un grimpeur a **un seul temps** pour l'épreuve de vitesse
-  (pas d'autre passage).
+  enregistre son **résultat de vitesse**, qui prend exactement une des trois
+  formes : un **temps chronométré**, une **chute**, ou une **non-présentation**.
+  Un grimpeur a **un seul résultat de vitesse** par rencontre (pas d'autre
+  passage).
 - **R32.** Le juge ne peut effectuer aucune autre action que la saisie définie en
   R30–R31 (aucun CRUD club, équipe, grimpeur ou rencontre).
 - **R33.** Le juge n'a accès qu'à la fenêtre de la rencontre (session QR
   éphémère, phase ② compétition, R9).
+
+### Grimpeurs prêtés (prêt inter-clubs / équipe CT33)
+
+- **R35.** Le **rattachement** d'un grimpeur **prêté** (issu d'un autre club) à
+  une équipe d'accueil, ou à l'**équipe CT33**, est réservé à l'**admin**. Un
+  coach ne peut pas rattacher à ses équipes un grimpeur d'un autre club.
+- **R36.** Une fois un grimpeur prêté rattaché à une équipe d'accueil (R35), le
+  **coach de cette équipe** le gère comme un grimpeur de son équipe : saisie et
+  modification de ses **résultats** (R19), dans son périmètre et en phase ②
+  compétition (R7). Le grimpeur reste rattaché à son **club d'origine** pour ses
+  résultats individuels (classement — hors périmètre de cette spec).
 
 ## Matrice rôles × actions
 
@@ -141,14 +177,17 @@ grimpeurs / l'épreuve affectée) · ⏱️ uniquement pendant la phase ② comp
 | CRUD équipes (de son club) | ✅ | 🔒 | 🔒⏱️ | ❌ |
 | CRUD grimpeurs (de ses équipes) | ✅ | 🔒 | 🔒⏱️ | ❌ |
 | Saisir les résultats de ses grimpeurs | ✅ | 🔒⏱️ | 🔒⏱️ | ❌ |
-| Saisir les temps de l'épreuve de vitesse affectée | ✅ | ❌ | ❌ | 🔒⏱️ |
+| Saisir les résultats de vitesse (temps/chute/non-prés.) de la voie affectée | ✅ | ❌ | ❌ | 🔒⏱️ |
+| Rattacher un grimpeur prêté (autre club / équipe CT33) | ✅ | ❌ | ❌ | ❌ |
 | Consulter les infos publiques (tous clubs) | ✅ | ✅ | ⏱️ | ❌ |
 | Consulter les rencontres passées | ✅ | ✅ | ❌ | ❌ |
 | Pré-saisir équipes/grimpeurs (phase ①) | ✅ | ✅ | ❌ | ❌ |
 | Se connecter hors rencontre | ✅ | ✅ | ❌ | ❌ |
 
 Pour un coach permanent, « Afficher les QR » est limité (🔒) aux coachs
-temporaires de son club (R26).
+temporaires de son club (R26). Un grimpeur prêté est rattaché par l'admin (R35),
+puis saisi par le coach de son équipe d'accueil comme un grimpeur de son
+périmètre (R36) — d'où l'absence de ligne dédiée « saisie » pour le prêt.
 
 ## Diagrammes
 
@@ -219,8 +258,16 @@ résultats de ses grimpeurs, alors les opérations sont acceptées (R19, R27).
 ### Nominal — juge
 
 Étant donné un juge affecté à l'épreuve de vitesse d'une rencontre en phase ②
-compétition, quand il sélectionne un grimpeur et saisit son temps, alors la
-saisie est acceptée (R29, R30, R31).
+compétition, quand il sélectionne un grimpeur et saisit son **résultat de
+vitesse** (un temps, ou une chute, ou une non-présentation), alors la saisie est
+acceptée (R29, R30, R31).
+
+### Nominal — grimpeur prêté
+
+Étant donné un grimpeur du club B rattaché par l'admin à une équipe du club A
+(prêt), quand le coach du club A saisit ses résultats en phase ② compétition,
+alors la saisie est acceptée (R35, R36) ; le coach du club A ne pouvait pas
+l'ajouter lui-même (R35).
 
 ### Cas limites / erreurs
 
@@ -228,10 +275,12 @@ saisie est acceptée (R29, R30, R31).
 - Un coach temporaire tente d'agir hors phase ② compétition → refusé (R28).
 - Un coach temporaire tente de consulter une rencontre passée → refusé (R28).
 - Un coach tente de pré-saisir en phase ② compétition → refusé (R6).
-- Un juge tente de saisir un temps sans avoir sélectionné de grimpeur, ou un
-  second temps pour un grimpeur déjà chronométré → refusé (R31).
-- Un juge tente de saisir un temps sur une épreuve de vitesse à laquelle il n'est
-  pas affecté → refusé (R30).
+- Un juge tente de saisir un résultat sans avoir sélectionné de grimpeur, ou un
+  second résultat pour un grimpeur déjà saisi → refusé (R31).
+- Un juge tente de saisir un résultat sur une épreuve de vitesse à laquelle il
+  n'est pas affecté → refusé (R30).
+- Un coach tente de rattacher à son équipe un grimpeur d'un autre club (prêt) →
+  refusé, réservé à l'admin (R35).
 - Un juge tente de saisir un résultat de voie ou de bloc → refusé (R30).
 - Un juge tente de créer/modifier une équipe ou un grimpeur → refusé (R32).
 - Un coach tente de créer un club, une rencontre, ou d'accéder au paramétrage →
@@ -249,14 +298,23 @@ saisie est acceptée (R29, R30, R31).
   valide qu'en phase ② compétition (R9, R28, R33).
 - Une affectation de juge relie un juge à l'**épreuve de vitesse** d'une
   rencontre (R15, R29).
-- Un grimpeur a **au plus un temps** pour l'épreuve de vitesse d'une rencontre
-  (unicité, R31).
+- Une **rencontre** porte exactement une **catégorie** (matin / après-midi) ;
+  les deux demi-journées d'une journée sont **deux rencontres** distinctes (R34).
+- Un grimpeur a **au plus un résultat de vitesse** pour l'épreuve de vitesse
+  d'une rencontre (unicité), ce résultat étant un temps, une chute ou une
+  non-présentation (R31).
+- Un grimpeur est rattaché à un **club d'origine** ; son engagement dans une
+  équipe d'accueil ou l'équipe CT33 (**prêt**) est posé par l'admin (R35), et la
+  saisie de ses résultats suit le coach de l'équipe d'accueil (R36).
 - **RLS attendue** :
   - lecture/écriture des équipes, grimpeurs et résultats **restreinte au club**
     du coach (R17–R20) ;
   - lecture des infos publiques ouverte aux coachs, tous clubs (R21) ;
-  - écriture des temps d'un juge **restreinte à l'épreuve de vitesse qui lui est
-    affectée** (R30) ;
+  - écriture des **résultats de vitesse** d'un juge **restreinte à la voie de
+    l'épreuve de vitesse qui lui est affectée** (R30) ;
+  - rattachement d'un grimpeur **prêté** à une équipe d'accueil / équipe CT33
+    **réservé à l'admin** (R35) ; ensuite saisie par le coach de cette équipe
+    (R36) ;
   - opérations admin (clubs, rencontres, paramétrage, affectation juge, QR)
     **réservées au rôle admin** (R11–R15) — hors affichage QR des coachs
     temporaires de son club par le coach permanent (R26) ;
@@ -271,7 +329,10 @@ Cette spec ne couvre pas (à traiter dans des specs dédiées) :
 - Le **mécanisme d'authentification** détaillé (génération/scan du QR, durée de
   validité, révocation) et le mapping utilisateur ↔ rôle ↔ joueur.
 - L'accès **visiteur non authentifié** aux infos publiques.
-- Le modèle détaillé de **scoring et de classement**.
+- Le modèle détaillé de **scoring et de classement** (barèmes voie / bloc /
+  vitesse, classements filles / garçons, cotations par catégorie).
+- Le **calcul d'éligibilité par âge** d'un grimpeur à une catégorie (matin /
+  après-midi) au-delà du fait qu'une rencontre porte une catégorie (R34).
 - Le **workflow de saisie/validation des résultats** au-delà de « qui peut
   saisir, et dans quelle phase » (états fins, verrouillage, correction
   post-rencontre).
