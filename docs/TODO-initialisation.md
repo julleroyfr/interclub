@@ -22,8 +22,8 @@ Aucune tâche en cours.
 
 | ID | Tâche | Dépend de | Notes |
 | ---- | ------- | ----------- | ------- |
-| T5 | Authentification Supabase (inscription/connexion) + mapping utilisateur ↔ rôle + jetons QR + affectation juge | T1, T4 | **Spec #2 validée** (`02-authentification-et-sessions-qr.md`). Reste : migration auth/jetons QR (recette) puis code. cf. `expertise-supabase`. |
-| T6 | Policies **RLS** selon la matrice de la spec rôles | T4, T5 | Une policy par opération ; vérifiées par cahier de test (négatifs inclus). |
+| T5 | Authentification Supabase (inscription/connexion) + mapping utilisateur ↔ rôle + jetons QR + affectation juge | T1, T4 | **Spec #2 validée** ; mécanisme éphémère **tranché** ([ADR 0001](decisions/0001-authentification-sessions-ephemeres-qr.md)). Découpage : **T5a** auth permanente + rôle courant · **T5b** mapping de rôle (admin) · **T5c** jetons QR (génération/affichage/révocation) · **T5d** ouverture session QR (anonymes + `session_qr` + RPC). Reste : migration auth/jetons QR (recette) puis code. cf. `expertise-supabase`. |
+| T6 | Policies **RLS** selon la matrice de la spec rôles + [ADR 0001](decisions/0001-authentification-sessions-ephemeres-qr.md) (2 chemins : permanent via `compte`, éphémère via `session_qr`) | T4, T5 | Une policy par opération ; gating de phase ② ; vérifiées par cahier de test (négatifs inclus). |
 | T7 | Jeux de données de test : `seed/01-jeu-de-test.sql` + `seed/99-purge-jeu-de-test.sql` (recette) | T4 | Idempotent + purge bornée. cf. `09` §3-4. |
 | T8 | Premier écran + cahier de test associé (responsive, vérif mobile) | T4, T5 | Suivre `nouvelle-fonctionnalite` + `expertise-ihm-responsive`. |
 | T9 | `<html lang="en">` → `lang="fr"` dans `src/app/layout.tsx` | — | Reporté (a11y). cf. mémoire `todo-differes`. |

@@ -241,6 +241,9 @@ Cette spec ne couvre pas (à traiter ailleurs) :
 
 - Le **mécanisme technique** d'authentification éphémère (Supabase Anonymous,
   JWT/claims custom, magic link…) : choix d'**architecture**, pas de spec.
+  → **Tranché** par l'[ADR 0001](../decisions/0001-authentification-sessions-ephemeres-qr.md)
+  (connexions anonymes + table `session_qr` + RPC `ouvrir_session_qr`, autorisation
+  recalculée en RLS).
 - Le **format graphique** et le **canal d'affichage** du QR (écran, impression).
 - Les **transitions de phase** d'une rencontre — qui les déclenche et à quelles
   conditions (hors périmètre déjà posé par la spec #1).
