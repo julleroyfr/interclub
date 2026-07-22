@@ -12,6 +12,31 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/*
+ * Design system « Nuit » — tokens sémantiques du thème sombre.
+ * Génèrent les utilitaires Tailwind (bg-*, text-*, border-*, ring-*).
+ * Toujours passer par ces tokens plutôt que par des couleurs brutes.
+ */
+@theme {
+  /* Fonds & surfaces (verre) */
+  --color-fond: #020617; /* base de l'application */
+  --color-surface: rgba(255, 255, 255, 0.04); /* carte en verre */
+  --color-surface-forte: rgba(255, 255, 255, 0.08); /* survol / actif */
+  --color-bordure: rgba(255, 255, 255, 0.12);
+
+  /* Accents */
+  --color-accent: #22d3ee; /* cyan — action primaire, focus */
+  --color-accent-doux: #67e8f9;
+  --color-secondaire: #bef264; /* lime — succès, mise en avant */
+  --color-danger: #fb7185; /* rose — chute, erreur, destructif */
+
+  /* Texte */
+  --color-texte-fort: #ffffff;
+  --color-texte: #e2e8f0; /* corps */
+  --color-texte-attenue: #94a3b8; /* légendes */
+  --color-texte-doux: #64748b; /* placeholders, méta */
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
