@@ -42,6 +42,21 @@ Fourni par le **seed** `supabase/seed/01-utilisateurs-de-test.sql`, chargé par
 | `coach@test.local` | coach (Club A) | Non-admin : doit être refusé sur l'écran (négatif) |
 | `sansmapping@test.local` | (aucun) | Compte **cible** des attributions (R5 → rôle) |
 
+## Automatisation partielle
+
+Les cas exigeant un **contournement de l'écran** (appel API direct) sont
+automatisés par `scripts/test-t5b.sh` — RLS d'écriture et contrainte R3 :
+
+```bash
+npm run test:t5b        # (ou : bash scripts/test-t5b.sh)
+```
+
+Pré-requis : `supabase start` puis `supabase db reset` (charge le seed **et** la
+migration `202607221400`). Le script couvre **CT-07** (non-admin ne peut pas
+écrire, R4/R5) et **CT-05** au niveau base (contrainte `chk_compte_role_club`,
+R3) ; aucune de ces écritures n'aboutit, l'état n'est donc pas modifié. Les cas
+**UI** (CT-01..04, CT-06, CT-08) restent à dérouler à la main.
+
 ## Cas de test
 
 ### CT-01 — L'admin voit l'écran de mapping   (couvre : R4 ; nominal)
@@ -135,11 +150,11 @@ Fourni par le **seed** `supabase/seed/01-utilisateurs-de-test.sql`, chargé par
 
 | Date | Testeur | Version/commit | Cas | Résultat | Remarque |
 |------|---------|----------------|-----|----------|----------|
-| | | | CT-01 | ✅ / ❌ | |
-| | | | CT-02 | ✅ / ❌ | |
-| | | | CT-03 | ✅ / ❌ | |
-| | | | CT-04 | ✅ / ❌ | |
-| | | | CT-05 | ✅ / ❌ | |
-| | | | CT-06 | ✅ / ❌ | |
-| | | | CT-07 | ✅ / ❌ | |
-| | | | CT-08 | ✅ / ❌ | |
+| 2026-07-22 | julleroyfr | `57cc179` | CT-01 | ✅ | IHM |
+| 2026-07-22 | julleroyfr | `57cc179` | CT-02 | ✅ | IHM |
+| 2026-07-22 | julleroyfr | `57cc179` | CT-03 | ✅ | IHM |
+| 2026-07-22 | julleroyfr | `57cc179` | CT-04 | ✅ | IHM |
+| 2026-07-22 | julleroyfr | `57cc179` | CT-05 | ✅ | IHM ; aussi `test:t5b` (contrainte R3) |
+| 2026-07-22 | julleroyfr | `57cc179` | CT-06 | ✅ | IHM (404 non-admin) |
+| | | | CT-07 | ⏳ | à exécuter : `npm run test:t5b` (RLS écriture) |
+| 2026-07-22 | julleroyfr | `57cc179` | CT-08 | ✅ | IHM |
