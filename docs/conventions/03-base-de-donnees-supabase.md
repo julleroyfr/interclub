@@ -61,11 +61,38 @@
 - Les rôles applicatifs (ex. capitaine, arbitre, administrateur) sont modélisés
   en base et pilotent les policies RLS.
 
-## 5. Migrations — processus MANUEL
+## 5. Migrations — validation LOCALE, application MANUELLE
 
-> ⚠️ **Contrainte de ce projet : pas de Docker, pas de CLI Supabase.**
-> Les migrations sont **écrites en SQL versionné** puis **appliquées à la main**
-> dans l'éditeur SQL Supabase. Il n'y a pas d'exécution automatisée.
+> ⚠️ **Deux sujets distincts, à ne pas confondre :**
+> **où l'on développe/valide** (stack Supabase **locale**, autorisée) et
+> **comment le schéma arrive en recette/prod** (application **manuelle**, seule
+> voie vers les vraies bases). La stack locale ne pousse **jamais** vers le
+> distant.
+
+Le fichier SQL écrit à la main dans `supabase/migrations/` reste **la vérité du
+schéma**. La stack locale sert à *valider* ce SQL, pas à le générer ni à le
+déployer.
+
+### 5.1 Stack Supabase locale (Docker) — pour dev & validation
+
+- La stack Supabase locale (`supabase start`, via Docker) est **autorisée**, en
+  **local uniquement**, pour itérer et valider les impacts BDD : rejouabilité des
+  migrations, contraintes, policies RLS, Auth, Realtime.
+- Commandes **autorisées** (local) : `supabase start` / `stop` / `status` /
+  `db reset` (rejoue toutes les migrations sur une base neuve).
+- Commandes **interdites** :
+  - ❌ `supabase db push` — l'application vers recette/prod reste **manuelle**
+    (§5.2). La stack locale ne touche jamais le distant.
+  - ❌ `supabase db diff` / migrations **auto-générées** — le SQL écrit à la main
+    est la seule vérité du schéma. On ne commite pas de SQL généré par diff.
+- **`supabase/config.toml`** : y déclarer le schéma `interclub` en *exposed
+  schema* et **épingler la version Postgres** pour coller à Supabase cloud et
+  limiter la divergence local ↔ recette. Le `config.toml` est versionné.
+- **Prérequis** : Docker Desktop (+ WSL2 sous Windows). C'est le coût d'entrée
+  assumé de la validation locale ; il n'est **pas** requis pour appliquer une
+  migration (l'application reste faisable à la seule main via le SQL Editor).
+
+### 5.2 Application vers recette puis prod — MANUELLE
 
 Processus pour tout changement de schéma :
 
@@ -74,19 +101,26 @@ Processus pour tout changement de schéma :
    Un fichier = un changement cohérent. Idempotent si possible
    (`create table if not exists`, `alter … add column if not exists`).
    Terminer par l'insertion de la ligne de suivi dans `interclub.version` (§5bis).
-2. **Relire** vis-à-vis de la spec (colonnes, contraintes, RLS).
-3. **Appliquer d'abord en RECETTE** dans le SQL Editor Supabase, valider, **puis**
-   rejouer en **PROD** (cf. [09-environnements-et-donnees.md](./09-environnements-et-donnees.md)).
-4. **Consigner l'application** : dans `supabase/migrations/JOURNAL.md`
+2. **Valider en local** (§5.1) : `supabase db reset` pour vérifier que le SQL
+   rejoue proprement sur base neuve, puis dérouler les vérifications (contraintes,
+   RLS, cahier de test) sur la stack locale.
+3. **Relire** vis-à-vis de la spec (colonnes, contraintes, RLS).
+4. **Appliquer d'abord en RECETTE** dans le SQL Editor Supabase (copier le SQL
+   **à la main**), valider, **puis** rejouer en **PROD** (cf.
+   [09-environnements-et-donnees.md](./09-environnements-et-donnees.md)).
+5. **Consigner l'application** : dans `supabase/migrations/JOURNAL.md`
    (date + auteur + environnement) **et** via la table `interclub.version`.
-5. **Valider** via le cahier de test (données, contraintes, RLS).
+6. **Valider** via le cahier de test sur la base réelle (données, contraintes, RLS).
 
 Règles :
 
-- **Jamais** de modification de schéma « à la souris » sans fichier de migration
-  correspondant. Le fichier SQL est la vérité du schéma.
-- Le SQL doit être **rejouable** sur une base neuve pour reconstruire le schéma.
+- **Jamais** de modification de schéma « à la souris » sur recette/prod sans
+  fichier de migration correspondant. Le fichier SQL est la vérité du schéma.
+- Le SQL doit être **rejouable** sur une base neuve pour reconstruire le schéma
+  (c'est précisément ce que `supabase db reset` vérifie en local).
 - Une migration appliquée n'est pas réécrite : on ajoute une nouvelle migration.
+- L'application vers recette/prod passe **exclusivement** par le SQL Editor à la
+  main. Aucune commande CLI ne pousse vers le distant.
 
 ## 5bis. Table de suivi `interclub.version`
 

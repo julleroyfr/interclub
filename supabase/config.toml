@@ -1,0 +1,62 @@
+# Configuration de la stack Supabase LOCALE (Docker).
+#
+# ⚠️ Usage strictement LOCAL — dev & validation des impacts BDD.
+#    Commandes autorisées : supabase start / stop / status / db reset.
+#    INTERDITS : `supabase db push` (application distante) et `supabase db diff`
+#    (SQL auto-généré). Le SQL écrit à la main dans supabase/migrations/ reste la
+#    seule vérité du schéma ; l'application vers recette/prod est MANUELLE.
+#    Réf. : docs/conventions/03-base-de-donnees-supabase.md §5.
+
+# Identifiant du projet local (préfixe des conteneurs Docker). Local uniquement.
+project_id = "interclub"
+
+[api]
+enabled = true
+port = 54321
+# Schémas exposés par PostgREST en local. `interclub` DOIT y figurer pour
+# reproduire le réglage cloud (Dashboard → Settings → API → Exposed schemas).
+schemas = ["public", "graphql_public", "interclub"]
+# Chemin de recherche : permet de requêter interclub sans le préfixer partout.
+extra_search_path = ["public", "extensions", "interclub"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+# Version majeure de PostgreSQL. À ÉPINGLER sur celle du projet cloud pour
+# limiter la divergence local ↔ recette/prod.
+# ⚠️ VÉRIFIER : Dashboard → Settings → Database → Postgres version, puis aligner.
+major_version = 17
+
+[db.seed]
+# Jeux de données de test chargés au `supabase db reset` (cf.
+# docs/conventions/09-environnements-et-donnees.md). Vide pour l'instant :
+# le dossier supabase/seed/ ne contient que README.md.
+enabled = true
+sql_paths = ["./seed/*.sql"]
+
+[realtime]
+# Le projet utilise Supabase Realtime (messagerie, mises à jour live).
+enabled = true
+
+[studio]
+enabled = true
+port = 54323
+
+[auth]
+# Le projet utilise Supabase Auth. Base locale pour tester sessions/rôles/RLS.
+enabled = true
+# URL de l'app locale (Next dev) pour les redirections auth.
+site_url = "http://127.0.0.1:3000"
+additional_redirect_urls = ["http://127.0.0.1:3000"]
+jwt_expiry = 3600
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+enable_confirmations = false
+
+[inbucket]
+# Capture les e-mails locaux (magic links, confirmations) — aucun envoi réel.
+enabled = true
+port = 54324

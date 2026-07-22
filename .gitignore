@@ -39,6 +39,11 @@ yarn-error.log*
 # vercel
 .vercel
 
+# supabase — stack locale (Docker). On versionne config.toml, migrations, seed ;
+# on ignore les fichiers temporaires/générés de la stack locale.
+supabase/.temp/
+supabase/.branches/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
