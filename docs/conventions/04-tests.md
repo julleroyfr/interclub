@@ -2,17 +2,25 @@
 
 ## 1. Deux natures de tests, deux réalités
 
-Ce projet **n'a pas de Docker ni de CLI Supabase** : on ne peut pas monter une
-base éphémère ni automatiser des tests contre Supabase. On distingue donc :
+Ce projet dispose d'une **stack Supabase locale** (Docker) autorisée pour la
+validation locale (cf. [03-base-de-donnees-supabase.md](./03-base-de-donnees-supabase.md) §5.1).
+Elle permet de valider les impacts BDD (rejouabilité des migrations, contraintes,
+RLS, Auth, Realtime) sans toucher recette/prod. On distingue :
 
 | Nature | Cible | Automatisé ? | Outil |
 | -------- | ------- | -------------- | ------- |
 | **Unitaire** | Domaine pur (`src/domaine/`) | ✅ Oui | Vitest |
 | **Composant** | UI isolée, sans réseau | ✅ Oui | Vitest + Testing Library |
-| **Intégration Supabase / IHM / bout-en-bout** | App réelle + base réelle | ❌ Non — **manuel** | **Cahier de test** |
+| **Intégration BDD (schéma, contraintes, RLS)** | Base réelle **locale** (`supabase db reset`) | ✅ Possible | Stack Supabase locale (+ SQL / harnais) |
+| **IHM / bout-en-bout / validation recette-prod** | App réelle + base recette/prod | ❌ Non — **manuel** | **Cahier de test** |
 
-> Règle : **tout ce qui peut être testé sans Supabase est automatisé ; tout ce
-> qui touche la base réelle est validé à la main via un cahier de test.**
+> Règle : **tout ce qui peut être testé sans base reste automatisé en pur
+> (Vitest) ; les impacts BDD se valident d'abord sur la stack locale ; la
+> validation finale sur recette/prod passe par le cahier de test manuel.**
+>
+> La stack locale **complète** le cahier de test, elle ne le remplace pas : ce
+> qui fait foi pour recette/prod reste le cahier de test exécuté sur la base
+> réelle (config, versions et données peuvent différer du local).
 
 ## 2. Tests automatisés (Vitest)
 

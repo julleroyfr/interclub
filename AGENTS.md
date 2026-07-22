@@ -18,9 +18,12 @@ Points non négociables :
 - **Règle de changement** : tout changement impactant une spec existante se fait
   **après validation explicite**, puis dans l'ordre spec → tests → code. Jamais
   le code en premier. (cf. `docs/conventions/01-workflow-spec-first-tdd.md` §3)
-- **Pas de Docker/CLI Supabase** : migrations écrites en SQL versionné puis
-  **appliquées à la main** ; tests base réelle / auth / RLS / realtime via
-  **cahier de test manuel** (`docs/conventions/06-cahier-de-test.md`).
+- **Migrations : validation locale, application manuelle.** SQL versionné écrit
+  à la main = vérité du schéma. Stack Supabase **locale** (Docker) autorisée pour
+  valider les impacts BDD ; `supabase db push` / `db diff` **interdits**.
+  Application vers recette/prod **à la main** (SQL Editor). Validation finale sur
+  base réelle via **cahier de test manuel**. (cf.
+  `docs/conventions/03-base-de-donnees-supabase.md` §5, `06-cahier-de-test.md`)
 - Supabase-first, **pas de middleware ni d'API custom** sauf besoin justifié.
 - **Push = déploiement Netlify** (pas de GitHub Actions).
 

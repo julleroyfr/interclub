@@ -66,8 +66,11 @@ supabase/
 - **Comptes de test par rôle** (joueur, capitaine, responsable de club, arbitre,
   admin) créés via Supabase Auth en recette, documentés dans le cahier
   ([06-cahier-de-test.md](./06-cahier-de-test.md)).
-- Scripts **versionnés** et **rejouables**, appliqués à la main dans le SQL Editor
-  (pas de CLI/Docker).
+- Scripts **versionnés** et **rejouables**. En **recette/prod** : appliqués à la
+  main dans le SQL Editor. En **local** : chargés automatiquement au
+  `supabase db reset` (branchés via `supabase/config.toml` → `[db.seed]`), pour
+  valider un cahier sur la stack locale avant la recette (cf.
+  [03-base-de-donnees-supabase.md](./03-base-de-donnees-supabase.md) §5.1).
 
 ### Cycle « rejouer un cahier »
 
