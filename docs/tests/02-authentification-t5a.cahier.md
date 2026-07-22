@@ -36,6 +36,19 @@ Fourni par le **seed** `supabase/seed/01-utilisateurs-de-test.sql`, chargé
 | `coach@test.local` | coach (Club A) | Périmètre club, ne voit que sa ligne `compte` |
 | `sansmapping@test.local` | (aucun) | Compte permanent sans mapping (R5, fail-closed) |
 
+## Automatisation partielle
+
+Les cas **non-UI** (connexions, CT-03, CT-04, CT-05, CT-06, CT-07) sont
+automatisés par `scripts/test-t5a.sh` (auth + RLS via l'API locale) :
+
+```bash
+npm run test:t5a        # (ou : bash scripts/test-t5a.sh)
+```
+
+Pré-requis : `supabase start` puis `supabase db reset` (charge le seed). Le
+script sort en erreur si un cas échoue. Les cas **UI** (CT-01, CT-02, CT-08 :
+affichage du rôle, déconnexion) restent à dérouler à la main dans l'app.
+
 ## Cas de test
 
 ### CT-01 — Connexion admin   (couvre : R1, R10 ; scénario nominal)
