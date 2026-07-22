@@ -56,20 +56,20 @@ sequenceDiagram
   actor U as Coach temp. / Juge
   participant App
   participant Auth as Supabase Auth
-  participant DB as interclub (RLS + RPC)
+  participant DB as interclub (RLS et RPC)
   U->>App: Scan du QR (secret `valeur`)
   App->>Auth: signInAnonymously()
   Auth-->>App: auth.users anonyme (auth.uid())
   App->>DB: rpc ouvrir_session_qr(valeur)
   Note over DB: SECURITY DEFINER — valide jeton.actif ET rencontre.phase = ②
   alt Jeton actif ET phase ②
-    DB-->>App: insert session_qr(auth.uid(), jeton) ; renvoie rôle + périmètre
+    DB-->>App: crée session_qr et renvoie rôle et périmètre
   else Révoqué OU hors phase ②
     DB-->>App: erreur — aucune session (R12, R22)
   end
   U->>App: Action métier
   App->>DB: Requête ordinaire (RLS)
-  Note over DB: RLS recalcule périmètre + phase via session_qr → jeton → rencontre
+  Note over DB: RLS recalcule périmètre et phase via session_qr, jeton, rencontre
 ```
 
 - Le scan déclenche `supabase.auth.signInAnonymously()` : chaque appareil obtient
