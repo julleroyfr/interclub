@@ -17,20 +17,16 @@
 
 ## Jeu de données initial
 
-À créer avant de commencer (Studio local → Authentication, puis SQL Editor local) :
+Fourni par le **seed** `supabase/seed/01-utilisateurs-de-test.sql`, chargé
+**automatiquement** par `supabase db reset` (aucune manip Studio nécessaire) :
 
-1. **Un club** :
-   `insert into interclub.club (nom) values ('Club A') returning id;`
-2. **Trois utilisateurs Auth** (Studio → Authentication → Add user, mot de passe
-   défini) : `admin@test.local`, `coach@test.local`, `sansmapping@test.local`.
-3. **Mappings** dans `interclub.compte` (récupérer les `id` Auth et le `club_id`) :
+- Club « Club A ».
+- 3 comptes Auth confirmés, **mot de passe commun : `interclub`** :
+  `admin@test.local` (rôle admin), `coach@test.local` (coach, Club A),
+  `sansmapping@test.local` (aucun mapping → cas R5).
 
-   ```sql
-   insert into interclub.compte (utilisateur_id, role, club_id) values
-     ('<id-admin>', 'admin', null),
-     ('<id-coach>', 'coach', '<id-club-a>');
-   -- `sansmapping@test.local` : AUCUNE ligne (cas R5).
-   ```
+> Vérifier après `db reset` :
+> `select u.email, c.role from auth.users u left join interclub.compte c on c.utilisateur_id = u.id order by u.email;`
 
 ## Comptes de test
 
