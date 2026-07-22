@@ -51,6 +51,11 @@ ne peut pas fournir aujourd'hui.
 - `SUPABASE_SERVICE_ROLE_KEY` est un **secret** : présent en variable
   d'environnement (Netlify par contexte), jamais versionné, jamais préfixé
   `NEXT_PUBLIC_`.
+- Le schéma `interclub` étant **custom**, `service_role` n'y a **aucun privilège
+  par défaut** (contrairement à `public`) : il faut lui accorder explicitement
+  `usage` sur le schéma et `select` sur `club`/`compte` (migration
+  `202607221400`). `service_role` contourne la RLS **mais reste soumis aux GRANTs
+  de table**.
 
 ## Conséquences
 

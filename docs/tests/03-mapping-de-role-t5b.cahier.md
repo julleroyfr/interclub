@@ -11,7 +11,9 @@
   comptes / clubs via la clé `service_role`, écriture via RLS.
 - **Pré-requis** :
   - Stack Supabase **locale** démarrée (`supabase start`) migrations jouées
-    (`supabase db reset`, dont `202607221200` et `202607221300`).
+    (`supabase db reset`, dont `202607221200`, `202607221300` et
+    **`202607221400`** — grants `service_role` sans lesquels l'écran renvoie
+    `42501 permission denied`).
   - `.env.local` pointant sur la stack locale, avec **`SUPABASE_SERVICE_ROLE_KEY`**
     renseigné (valeur `service_role` de `supabase status`). Sans cette clé,
     l'écran `/admin/mapping` renvoie une erreur (lecture des comptes indisponible).
