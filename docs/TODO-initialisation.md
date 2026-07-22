@@ -12,12 +12,13 @@ Dernière mise à jour : 2026-07-22.
 
 ## 🔄 En cours
 
-- **T5a — Auth permanente + rôle courant** : migration RLS `compte`
-  (`202607221300`) + fonctions `role_courant()`/`est_admin()` + DAL
-  (`src/lib/auth/session.ts`) + Server Actions connexion/déconnexion + écran
-  `/connexion` + accueil reflétant la session. Développé et **validé sur la stack
-  locale** ; reste la passe cahier de test (`docs/tests/02-authentification-t5a.cahier.md`).
+Aucune tâche en cours. **Prochaine étape : T5b** (UI admin de mapping de rôle) ou
+**T5c** (jetons QR) — au choix, les deux sont débloqués par T5a.
 
+> 🧪 **À faire côté utilisateur** : dérouler les cas **UI** du cahier T5a
+> (CT-01, CT-02, CT-08 : affichage du rôle, déconnexion) dans l'app. Les cas
+> auth/RLS (CT-03 à CT-07) sont automatisés (`npm run test:t5a`, 8/8 OK).
+>
 > ⏳ **Report recette/prod des migrations** : les 5 migrations
 > (`202607221000` → `202607221300`) sont **validées en local** (`supabase db
 > reset`). Côté distant (recette), **T3 (`202607221000`) et le socle T4
@@ -29,7 +30,9 @@ Dernière mise à jour : 2026-07-22.
 
 | ID | Tâche | Dépend de | Notes |
 | ---- | ------- | ----------- | ------- |
-| T5 | Authentification Supabase (inscription/connexion) + mapping utilisateur ↔ rôle + jetons QR + affectation juge | T1, T4 | **Spec #2 validée** ; mécanisme éphémère **tranché** ([ADR 0001](decisions/0001-authentification-sessions-ephemeres-qr.md)). Découpage : **T5a** auth permanente + rôle courant · **T5b** mapping de rôle (admin) · **T5c** jetons QR (génération/affichage/révocation) · **T5d** ouverture session QR (anonymes + `session_qr` + RPC). Reste : migration auth/jetons QR (recette) puis code. cf. `expertise-supabase`. |
+| T5b | Mapping de rôle : UI admin pour attribuer rôle + club à un compte existant | T5a | Policies `compte` déjà posées en T5a — reste l'écran/action admin (Server Action + garde `est_admin`). Création du compte Supabase hors périmètre (spec #2). |
+| T5c | Jetons QR : génération / affichage / révocation (admin + coach permanent pour son club) + affectation juge | T5a | Tables `jeton_qr` déjà en place. Policies `jeton_qr` (admin, coach permanent de son club) + UI. Pas de gating phase (R14). cf. spec #2 R15–R23. |
+| T5d | Ouverture de session QR au scan (sessions anonymes + `session_qr` + RPC `ouvrir_session_qr`) | T5c, [ADR 0001](decisions/0001-authentification-sessions-ephemeres-qr.md) | Activer les connexions anonymes Supabase ; migration `session_qr` + RPC ; purge des anonymes. |
 | T6 | Policies **RLS** selon la matrice de la spec rôles + [ADR 0001](decisions/0001-authentification-sessions-ephemeres-qr.md) (2 chemins : permanent via `compte`, éphémère via `session_qr`) | T4, T5 | Une policy par opération ; gating de phase ② ; vérifiées par cahier de test (négatifs inclus). |
 | T7 | Jeux de données de test : `seed/01-jeu-de-test.sql` + `seed/99-purge-jeu-de-test.sql` (recette) | T4 | Idempotent + purge bornée. cf. `09` §3-4. |
 | T8 | Premier écran + cahier de test associé (responsive, vérif mobile) | T4, T5 | Suivre `nouvelle-fonctionnalite` + `expertise-ihm-responsive`. |
@@ -41,6 +44,15 @@ Dernière mise à jour : 2026-07-22.
 
 ## ✅ Fait (archive — non rappelé)
 
+- **T5a — Auth permanente + rôle courant** (2026-07-22) : migration
+  `202607221300` (fonctions `role_courant()`/`est_admin()` `SECURITY DEFINER` +
+  grants + policies RLS de `compte`), schéma client par défaut = `interclub`, DAL
+  `src/lib/auth/session.ts`, Server Actions connexion/déconnexion
+  (`src/lib/auth/actions.ts`), écran `/connexion` + accueil reflétant la session,
+  seed `supabase/seed/01-utilisateurs-de-test.sql` (3 comptes de test), cahier
+  `docs/tests/02-authentification-t5a.cahier.md` et script `scripts/test-t5a.sh`
+  (`npm run test:t5a`, 8/8 OK). Validé sur la stack locale. **Débloque T5b, T5c.**
+  Reste (utilisateur) : dérouler les cas UI du cahier.
 - **ADR 0001 — Auth des sessions QR éphémères**
   (`docs/decisions/0001-authentification-sessions-ephemeres-qr.md`), acceptée le
   2026-07-22. Tranche le mécanisme laissé « hors périmètre » par la spec #2 :
