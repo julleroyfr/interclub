@@ -34,7 +34,7 @@ Dernière mise à jour : 2026-07-22.
 
 | ID | Tâche | Dépend de | Notes |
 | ---- | ------- | ----------- | ------- |
-| T5d | Ouverture de session QR au scan (sessions anonymes + `session_qr` + RPC `ouvrir_session_qr`) | T5c, [ADR 0001](decisions/0001-authentification-sessions-ephemeres-qr.md) | Activer les connexions anonymes Supabase ; migration `session_qr` + RPC ; purge des anonymes. |
+| T5d | Ouverture de session QR au scan (sessions anonymes + `session_qr` + RPC `ouvrir_session_qr`) | T5c, [ADR 0001](decisions/0001-authentification-sessions-ephemeres-qr.md) | Activer les connexions anonymes Supabase ; migration `session_qr` + RPC ; purge des anonymes. **Coupure immédiate (R22/R23)** : révoquer/régénérer un jeton doit couper l'accès des sessions ouvertes avec l'ancien **dès la requête suivante** (recalcul RLS sur `jeton_qr.actif`) ; les porteurs doivent **re-scanner le nouveau QR** (pas de reconnexion, sessions anonymes). Non observable en T5c (pas de session vivante) → **ajouter des cas de cahier T5d** vérifiant la coupure après révocation/régénération, et compléter CT-03/CT-04 du cahier T5c (`04-jetons-qr-t5c`) une fois le scan disponible. |
 | T6 | Policies **RLS** selon la matrice de la spec rôles + [ADR 0001](decisions/0001-authentification-sessions-ephemeres-qr.md) (2 chemins : permanent via `compte`, éphémère via `session_qr`) | T4, T5 | Une policy par opération ; gating de phase ② ; vérifiées par cahier de test (négatifs inclus). |
 | T7 | Jeux de données de test : `seed/01-jeu-de-test.sql` + `seed/99-purge-jeu-de-test.sql` (recette) | T4 | Idempotent + purge bornée. cf. `09` §3-4. |
 | T8 | Premier écran + cahier de test associé (responsive, vérif mobile) | T4, T5 | Suivre `nouvelle-fonctionnalite` + `expertise-ihm-responsive`. |
