@@ -4,6 +4,13 @@ import { Bouton, Carte, Etiquette, Pastille } from '@/composants'
 import { seDeconnecter } from '@/lib/auth/actions'
 import { getUtilisateurCourant } from '@/lib/auth/session'
 
+// Lien d'action secondaire, calqué sur le bouton « secondaire » du DS.
+const lienSecondaire =
+  'inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border ' +
+  'border-bordure bg-surface px-4 text-sm font-semibold text-texte transition ' +
+  'hover:bg-surface-forte focus-visible:outline-none focus-visible:ring-2 ' +
+  'focus-visible:ring-accent/60 focus-visible:ring-offset-2 focus-visible:ring-offset-fond'
+
 export default async function Accueil() {
   const utilisateur = await getUtilisateurCourant()
 
@@ -27,11 +34,18 @@ export default async function Accueil() {
               )}
             </div>
             {utilisateur.role === 'admin' && (
-              <Link
-                href="/admin/mapping"
-                className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-bordure bg-surface px-4 text-sm font-semibold text-texte transition hover:bg-surface-forte focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-2 focus-visible:ring-offset-fond"
-              >
-                Administrer les rôles
+              <>
+                <Link href="/admin/mapping" className={lienSecondaire}>
+                  Administrer les rôles
+                </Link>
+                <Link href="/admin/jetons" className={lienSecondaire}>
+                  Jetons QR
+                </Link>
+              </>
+            )}
+            {utilisateur.role === 'coach' && (
+              <Link href="/coach/jetons" className={lienSecondaire}>
+                Mes jetons QR
               </Link>
             )}
             <form action={seDeconnecter} className="w-full">
