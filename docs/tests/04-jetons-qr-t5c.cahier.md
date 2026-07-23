@@ -136,8 +136,8 @@ restent à dérouler à la main.
 | | | | CT-03 | ✅ / ❌ | IHM |
 | | | | CT-04 | ✅ / ❌ | IHM |
 | | | | CT-05 | ✅ / ❌ | IHM |
-| | | | CT-06 | ✅ / ❌ | `test:t5c` |
-| | | | CT-07 | ✅ / ❌ | `test:t5c` |
-| | | | CT-08 | ✅ / ❌ | `test:t5c` |
-| | | | CT-09 | ✅ / ❌ | IHM + `test:t5c` |
+| 2026-07-23 | julleroyfr | `51e0ac7` | CT-06 | ✅ | `test:t5c` (local, 403) |
+| 2026-07-23 | julleroyfr | `51e0ac7` | CT-07 | ✅ | `test:t5c` (local, 403) |
+| 2026-07-23 | julleroyfr | `51e0ac7` | CT-08 | ✅ | `test:t5c` (local, 201/409) |
+| 2026-07-23 | julleroyfr | `51e0ac7` | CT-09 | ✅ | `test:t5c` (local, 403) ; IHM 404 à faire |
 | | | | CT-10 | ✅ / ❌ | IHM |
