@@ -12,25 +12,28 @@ Dernière mise à jour : 2026-07-22.
 
 ## 🔄 En cours
 
-**T5b codé** (2026-07-22) : écran `/admin/mapping`, domaine `mapping-de-role`
-(7 tests Vitest verts), Server Action gardée + RLS, lecture des comptes via clé
-service ([ADR 0002](decisions/0002-liste-des-comptes-via-cle-service.md)).
-**Prochaine étape : T5c** (jetons QR).
+**T5c codé** (2026-07-23) : écrans `/admin/jetons` et `/coach/jetons`, domaine
+`jeton-qr` (16 tests Vitest), Server Actions gardées + RLS, migration
+`202607230900` (policies `jeton_qr` + `club_courant()`), vrai QR côté serveur
+([ADR 0003](decisions/0003-affichage-qr-et-lecture-catalogues.md)).
+**Prochaine étape : T5d** (ouverture de session QR au scan).
 
-> 🧪 **À faire côté utilisateur** : dérouler le cahier T5b
-> (`docs/tests/03-mapping-de-role-t5b.cahier.md`, CT-01 → CT-08) sur la stack
-> locale — nécessite `SUPABASE_SERVICE_ROLE_KEY` dans `.env.local`. **Aucune
-> migration** pour T5b (le modèle `compte` et ses policies datent de T5a).
+> 🧪 **À faire côté utilisateur** :
 >
-> ✅ **T5a entièrement clos** : cahier UI **validé** en app, et les 5 migrations
-> (`202607221000` → `202607221300`) **appliquées en recette**. Prod = à la
-> bascule sur `main` (cf. `supabase/migrations/JOURNAL.md`).
+> - Appliquer la migration `202607230900` en **local** (`supabase db reset`,
+>   charge aussi le seed `02-jetons-de-test.sql`) puis en **recette** (à la main).
+> - Dérouler le cahier T5c (`docs/tests/04-jetons-qr-t5c.cahier.md`) + lancer
+>   `npm run test:t5c` (CT-06..09).
+> - Rappel T5b : dérouler le cahier `03-...` + `npm run test:t5b` (CT-07) si pas
+>   encore fait.
+>
+> ✅ **T5a entièrement clos** ; **T5b** fusionné dans `develop` (migration
+> `202607221400` appliquée en recette).
 
 ## ⏳ En attente (à faire)
 
 | ID | Tâche | Dépend de | Notes |
 | ---- | ------- | ----------- | ------- |
-| T5c | Jetons QR : génération / affichage / révocation (admin + coach permanent pour son club) + affectation juge | T5a | Tables `jeton_qr` déjà en place. Policies `jeton_qr` (admin, coach permanent de son club) + UI. Pas de gating phase (R14). cf. spec #2 R15–R23. |
 | T5d | Ouverture de session QR au scan (sessions anonymes + `session_qr` + RPC `ouvrir_session_qr`) | T5c, [ADR 0001](decisions/0001-authentification-sessions-ephemeres-qr.md) | Activer les connexions anonymes Supabase ; migration `session_qr` + RPC ; purge des anonymes. |
 | T6 | Policies **RLS** selon la matrice de la spec rôles + [ADR 0001](decisions/0001-authentification-sessions-ephemeres-qr.md) (2 chemins : permanent via `compte`, éphémère via `session_qr`) | T4, T5 | Une policy par opération ; gating de phase ② ; vérifiées par cahier de test (négatifs inclus). |
 | T7 | Jeux de données de test : `seed/01-jeu-de-test.sql` + `seed/99-purge-jeu-de-test.sql` (recette) | T4 | Idempotent + purge bornée. cf. `09` §3-4. |
@@ -43,6 +46,18 @@ service ([ADR 0002](decisions/0002-liste-des-comptes-via-cle-service.md)).
 
 ## ✅ Fait (archive — non rappelé)
 
+- **T5c — Jetons QR (génération/affichage/révocation/régénération)** (2026-07-23) :
+  domaine pur `src/domaine/jeton-qr.ts` (R9/R15–R23, 16 tests Vitest), migration
+  `202607230900` (helper `club_courant()` + grants + policies RLS `jeton_qr` :
+  admin tout, coach temp. de son club), loaders `src/lib/jetons/jetons.ts`
+  (catalogues via `service_role`, jetons via RLS, **vrai QR** côté serveur via
+  `qrcode`), Server Actions `src/lib/jetons/actions.ts` (générer/révoquer/
+  régénérer, gardées `peutGererJeton` + RLS), écrans `/admin/jetons` (tout
+  périmètre + affectation juge) et `/coach/jetons` (jeton de son club), seed
+  `02-jetons-de-test.sql`. Décision : [ADR 0003](decisions/0003-affichage-qr-et-lecture-catalogues.md).
+  Cahier `docs/tests/04-jetons-qr-t5c.cahier.md` + script `scripts/test-t5c.sh`
+  (`npm run test:t5c`, CT-06..09). Reste (utilisateur) : appliquer la migration +
+  dérouler le cahier. **Débloque T5d.**
 - **T5b — Mapping de rôle (écran admin)** (2026-07-22) : domaine pur
   `src/domaine/mapping-de-role.ts` (validation R1–R5, 7 tests Vitest), écran
   `/admin/mapping` (`src/app/admin/mapping/`) sur le design system « Nuit »,
