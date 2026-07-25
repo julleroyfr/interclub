@@ -15,7 +15,8 @@
 - **Pré-requis** :
   - Migration `202607251000` appliquée (local : `supabase db reset` ; recette :
     SQL Editor). Dépend des migrations socle/voie/auth/session déjà présentes.
-  - Seeds `01`, `02`, `03` chargés (clubs A/B, comptes, rencontre 33…33, jetons).
+  - Seed `01-jeu-de-test.sql` chargé (clubs A/B, comptes, rencontre 33…33,
+    voies, équipes, grimpeurs, épreuves, compositions, jetons) — T7.
 - **Environnement** : local (stack Docker) et/ou recette — version/commit : `______`
 
 ## Automatisation (local)
@@ -29,20 +30,25 @@ réelle** (recette) et pour les cas non couverts par le script.
 
 ## Jeu de données initial
 
-Seeds `01`/`02`/`03` :
+Fourni par le seed **`01-jeu-de-test.sql`** (T7) :
 
 - Clubs : **Club A** (`11…11`), **Club B** (`22…22`).
 - Comptes (mdp `interclub`) : `admin@test.local` (admin), `coach@test.local`
   (coach permanent Club A), `sansmapping@test.local` (aucun mapping).
-- Rencontre `33…33` (2026-09-19, enfant), portée par Club A, 2 voies de vitesse,
-  2 équipes (A1 `66…66` club A, B1 `77…77` club B), **phase `competition`**
-  (seed 03).
-- Jetons QR (seed 03) : coach temp. Club A (`aaaaaaaa-aaaa-4aaa-…`), juge Voie 1
+- Rencontre `33…33` (2026-09-19, enfant), portée par Club A, **phase
+  `competition`**, 2 voies de vitesse, 3 épreuves (voie `…801`, bloc `…802`,
+  vitesse `…803`).
+- Équipes : A1 `66…66` et A2 `66…6602` (club A), B1 `77…77` (club B).
+- Grimpeurs : gA1 `a…a1`, gA2 `a…a2` (club A) ; gB1 `b…b1`, gB2 `b…b2` (club B).
+- Compositions : gA1+gA2 dans A1 ; gB1 dans B1. **gB2 reste libre** (matière au
+  prêt de CT-07) ; A2 est vide.
+- Jetons QR : coach temp. Club A (`aaaaaaaa-aaaa-4aaa-…`), juge Voie 1
   (`bbbbbbbb-bbbb-4bbb-…`).
 
-> Pour les cas exigeant des grimpeurs/épreuves/compositions et des sessions
-> éphémères ouvertes, créer les fixtures décrites dans chaque cas (ou s'appuyer
-> sur le futur seed **T7**). Basculer la phase via
+> Les **sessions QR éphémères** (coach temp. / juge) ne sont pas seedées : elles
+> s'ouvrent au scan (RPC `ouvrir_session_qr`). Pour les cas SQL, insérer une
+> ligne `session_qr(utilisateur_id, jeton_qr_id)` liant un `auth.users` anonyme
+> au jeton voulu. Basculer la phase via
 > `update interclub.rencontre set phase='…' where id='33333333-3333-3333-3333-333333333333';`.
 
 ## Comment impersoner un rôle (SQL Editor / psql)

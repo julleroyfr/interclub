@@ -11,14 +11,14 @@
   côté serveur ; catalogues lus via `service_role`, jetons/écritures via RLS.
 - **Pré-requis** :
   - Stack Supabase **locale** démarrée, migrations jouées (`supabase db reset`,
-    dont **`202607230900`**), **seeds 01 + 02** chargés.
+    dont **`202607230900`**), **le seed 01-jeu-de-test.sql** chargés.
   - `.env.local` local avec **`SUPABASE_SERVICE_ROLE_KEY`** renseigné.
   - App lancée : `npm run dev`.
 - **Environnement** : local (stack Docker) — version/commit : `______`
 
 ## Jeu de données initial
 
-Seeds `01-utilisateurs-de-test.sql` + `02-jetons-de-test.sql` (via `db reset`) :
+Seeds `01-jeu-de-test.sql` + `01-jeu-de-test.sql` (via `db reset`) :
 
 - Clubs : **Club A**, **Club B**.
 - Comptes (mdp `interclub`) : `admin@test.local` (admin), `coach@test.local`

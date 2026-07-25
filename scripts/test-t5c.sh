@@ -11,7 +11,7 @@
 # CT-06/07/09 ne modifient rien (écritures refusées). CT-08 est rendu rejouable :
 # on révoque d'abord tout jeton coach temp. actif de Club A, puis on nettoie.
 #
-# Pré-requis : `supabase start` puis `supabase db reset` (charge les seeds 01+02
+# Pré-requis : `supabase start` puis `supabase db reset` (charge les le seed 01-jeu-de-test.sql
 #              et la migration 202607230900). Docker + CLI Supabase.
 # Usage      : bash scripts/test-t5c.sh   (ou : npm run test:t5c)
 
@@ -19,7 +19,7 @@ set -uo pipefail
 
 API="http://127.0.0.1:54321"
 MDP="interclub"
-RENC="33333333-3333-3333-3333-333333333333" # rencontre de test (seed 02)
+RENC="33333333-3333-3333-3333-333333333333" # rencontre de test (seed 01-jeu-de-test)
 VOIE1="44444444-4444-4444-4444-444444444444" # voie 1
 CLUB_A="11111111-1111-1111-1111-111111111111"
 CLUB_B="22222222-2222-2222-2222-222222222222"

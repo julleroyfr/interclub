@@ -21,13 +21,24 @@ spec #1 et les 2 chemins d'acteur de l'[ADR 0001](decisions/0001-authentificatio
 Précisions spec #1 validées (rév. 2026-07-25) : périmètre juge = épreuve vitesse
 (R30) ; roster grimpeur éditable hors phase (R6). Validé en local :
 `npm run test:t6` (17/17) + cahier `docs/tests/06-rls-tables-metier-t6.cahier.md`
-(CT-01..12). **Prochaine étape : T7** (seed/purge) ou **T8** (1er écran).
+(CT-01..12). **Prochaine étape : T8** (1er écran).
+
+**T7 codé** (2026-07-25) : jeu de données de test **consolidé** en source unique
+`supabase/seed/01-jeu-de-test.sql` (idempotent — clubs, comptes, rencontre,
+voies, équipes, grimpeurs, épreuves, compositions, jetons) + purge bornée
+`supabase/seed/99-purge-jeu-de-test.sql` (plage d'UUID réservée, rejouable).
+Anciens seeds `01-utilisateurs`/`02-jetons`/`03-session-qr` fusionnés et
+supprimés ; `config.toml` → `sql_paths` explicite (purge exclue). Validé en
+local : `db reset` + `test:t6` (17/17), `test:t5a/b/c` (8+4+4), purge → tout à 0,
+rejeu OK, idempotence OK.
 
 > 🧪 **À faire côté utilisateur** :
 >
 > 1. ✅ Migration `202607251000` appliquée en **recette** (2026-07-25) — et les
 >    prérequis (voie, auth/jetons, rls_compte, rls_jeton, session_qr).
-> 2. Dérouler le cahier T6 sur base réelle (colonne **Recette**, CT-01..12).
+> 2. Appliquer le seed **`01-jeu-de-test.sql`** en **recette** (SQL Editor), puis
+>    dérouler le cahier T6 (colonne **Recette**, CT-01..12). Pour rejouer :
+>    `99-purge-jeu-de-test.sql` puis `01-jeu-de-test.sql`.
 >
 > ✅ **T5a / T5b / T5c / T5d** entièrement clos et validés.
 
@@ -35,7 +46,6 @@ Précisions spec #1 validées (rév. 2026-07-25) : périmètre juge = épreuve v
 
 | ID | Tâche | Dépend de | Notes |
 | ---- | ------- | ----------- | ------- |
-| T7 | Jeux de données de test : `seed/01-jeu-de-test.sql` + `seed/99-purge-jeu-de-test.sql` (recette) | T4 | Idempotent + purge bornée. cf. `09` §3-4. |
 | T8 | Premier écran + cahier de test associé (responsive, vérif mobile) | T4, T5 | Suivre `nouvelle-fonctionnalite` + `expertise-ihm-responsive`. |
 | T9 | `<html lang="en">` → `lang="fr"` dans `src/app/layout.tsx` | — | Reporté (a11y). cf. mémoire `todo-differes`. |
 | T10 | Export `viewport` (Next 16) dans le layout racine | — | cf. `07-standards-nextjs-16.md` §3 / `08` §3. |
@@ -61,8 +71,9 @@ Précisions spec #1 validées (rév. 2026-07-25) : périmètre juge = épreuve v
   (catalogues via `service_role`, jetons via RLS, **vrai QR** côté serveur via
   `qrcode`), Server Actions `src/lib/jetons/actions.ts` (générer/révoquer/
   régénérer, gardées `peutGererJeton` + RLS), écrans `/admin/jetons` (tout
-  périmètre + affectation juge) et `/coach/jetons` (jeton de son club), seed
-  `02-jetons-de-test.sql`. Décision : [ADR 0003](decisions/0003-affichage-qr-et-lecture-catalogues.md).
+  périmètre + affectation juge) et `/coach/jetons` (jeton de son club), données
+  de test (jetons) — depuis T7, fondues dans `seed/01-jeu-de-test.sql`. Décision :
+  [ADR 0003](decisions/0003-affichage-qr-et-lecture-catalogues.md).
   Cahier `docs/tests/04-jetons-qr-t5c.cahier.md` + script `scripts/test-t5c.sh`
   (`npm run test:t5c`, CT-06..09). Reste (utilisateur) : appliquer la migration +
   dérouler le cahier. **Débloque T5d.**
@@ -82,8 +93,8 @@ Précisions spec #1 validées (rév. 2026-07-25) : périmètre juge = épreuve v
   grants + policies RLS de `compte`), schéma client par défaut = `interclub`, DAL
   `src/lib/auth/session.ts`, Server Actions connexion/déconnexion
   (`src/lib/auth/actions.ts`), écran `/connexion` + accueil reflétant la session,
-  seed `supabase/seed/01-utilisateurs-de-test.sql` (3 comptes de test), cahier
-  `docs/tests/02-authentification-t5a.cahier.md` et script `scripts/test-t5a.sh`
+  données de test (3 comptes) — depuis T7, fondues dans `seed/01-jeu-de-test.sql`,
+  cahier `docs/tests/02-authentification-t5a.cahier.md` et script `scripts/test-t5a.sh`
   (`npm run test:t5a`, 8/8 OK). Validé sur la stack locale. **Débloque T5b, T5c.**
   Reste (utilisateur) : dérouler les cas UI du cahier.
 - **ADR 0001 — Auth des sessions QR éphémères**

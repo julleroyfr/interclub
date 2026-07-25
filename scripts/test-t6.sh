@@ -49,17 +49,13 @@ begin
 end $fn$;
 
 -- ---- Fixtures (superuser, RLS contournée) -------------------------------
-insert into interclub.epreuve (id, rencontre_id, type) values
-  ('88888888-8888-8888-8888-888888888888','33333333-3333-3333-3333-333333333333','voie'),
-  ('99999999-9999-9999-9999-999999999999','33333333-3333-3333-3333-333333333333','vitesse');
-insert into interclub.grimpeur (id, club_id, nom, prenom, annee_naissance) values
-  ('a0000000-0000-0000-0000-0000000000a1','11111111-1111-1111-1111-111111111111','GrA','x',2015),
-  ('b0000000-0000-0000-0000-0000000000b1','22222222-2222-2222-2222-222222222222','GrB','x',2015);
-insert into interclub.equipe (id, rencontre_id, club_id, nom) values
-  ('66666666-6666-6666-6666-666666666602','33333333-3333-3333-3333-333333333333','11111111-1111-1111-1111-111111111111','A-bis');
+-- Le jeu de test (seed 01) fournit déjà : épreuves voie (…801)/vitesse (…803),
+-- grimpeurs gA1 (a…a1) et gB2 (b…b2, libre), équipes A1 (…6666)/A2 (…6602),
+-- compositions gA1∈A1. On n'ajoute que ce qui ne peut être seedé :
+--   1. le PRÊT posé par l'admin (gB2 club B ∈ équipe A1 club A) — état initial R36 ;
+--   2. deux utilisateurs anonymes + leurs sessions QR (créées au scan en vrai).
 insert into interclub.composition (equipe_id, grimpeur_id) values
-  ('66666666-6666-6666-6666-666666666666','a0000000-0000-0000-0000-0000000000a1'),
-  ('66666666-6666-6666-6666-666666666666','b0000000-0000-0000-0000-0000000000b1'); -- gB prêté par l'admin
+  ('66666666-6666-6666-6666-666666666666','b0000000-0000-0000-0000-0000000000b2'); -- gB2 prêté par l'admin
 insert into auth.users (instance_id,id,aud,role,is_anonymous,created_at,updated_at) values
   ('00000000-0000-0000-0000-000000000000','d0000000-0000-0000-0000-0000000000c7','authenticated','authenticated',true,now(),now()),
   ('00000000-0000-0000-0000-000000000000','e0000000-0000-0000-0000-0000000000c8','authenticated','authenticated',true,now(),now());
@@ -84,7 +80,7 @@ select pg_temp.essai('A-coachA-grimpeurA',  true,  $$insert into interclub.grimp
 select pg_temp.essai('A-coachA-grimpeurB',  false, $$insert into interclub.grimpeur (club_id,nom,prenom,annee_naissance) values ('22222222-2222-2222-2222-222222222222','r','b',2016)$$);
 select pg_temp.essai('A-coachA-equipeA-p1', true,  $$insert into interclub.equipe (rencontre_id,club_id,nom) values ('33333333-3333-3333-3333-333333333333','11111111-1111-1111-1111-111111111111','A2')$$);
 select pg_temp.essai('A-coachA-equipeB',    false, $$insert into interclub.equipe (rencontre_id,club_id,nom) values ('33333333-3333-3333-3333-333333333333','22222222-2222-2222-2222-222222222222','B2')$$);
-select pg_temp.essai('A-coachA-resultat-p1',false, $$insert into interclub.resultat (epreuve_id,grimpeur_id,valeur) values ('88888888-8888-8888-8888-888888888888','a0000000-0000-0000-0000-0000000000a1','top')$$);
+select pg_temp.essai('A-coachA-resultat-p1',false, $$insert into interclub.resultat (epreuve_id,grimpeur_id,valeur) values ('88888888-8888-8888-8888-888888888801','a0000000-0000-0000-0000-0000000000a1','top')$$);
 reset role;
 
 -- Coach temporaire : aucune session valide en phase ① (R28).
@@ -98,8 +94,8 @@ update interclub.rencontre set phase='competition' where id='33333333-3333-3333-
 -- Coach permanent Club A.
 select set_config('request.jwt.claims','{"sub":"cccccccc-cccc-cccc-cccc-cccccccccccc"}', true); set role authenticated;
 select pg_temp.essai('B-coachA-equipe-p2',   false, $$insert into interclub.equipe (rencontre_id,club_id,nom) values ('33333333-3333-3333-3333-333333333333','11111111-1111-1111-1111-111111111111','A3')$$);
-select pg_temp.essai('B-coachA-resultat',    true,  $$insert into interclub.resultat (epreuve_id,grimpeur_id,valeur) values ('88888888-8888-8888-8888-888888888888','a0000000-0000-0000-0000-0000000000a1','top')$$);
-select pg_temp.essai('B-coachA-resultatPrete',true, $$insert into interclub.resultat (epreuve_id,grimpeur_id,valeur) values ('88888888-8888-8888-8888-888888888888','b0000000-0000-0000-0000-0000000000b1','top')$$);
+select pg_temp.essai('B-coachA-resultat',    true,  $$insert into interclub.resultat (epreuve_id,grimpeur_id,valeur) values ('88888888-8888-8888-8888-888888888801','a0000000-0000-0000-0000-0000000000a1','top')$$);
+select pg_temp.essai('B-coachA-resultatPrete',true, $$insert into interclub.resultat (epreuve_id,grimpeur_id,valeur) values ('88888888-8888-8888-8888-888888888801','b0000000-0000-0000-0000-0000000000b2','top')$$);
 select pg_temp.essai('B-coachA-composePrete',false, $$insert into interclub.composition (equipe_id,grimpeur_id) values ('66666666-6666-6666-6666-666666666602','b0000000-0000-0000-0000-0000000000b1')$$);
 reset role;
 
@@ -111,9 +107,9 @@ reset role;
 
 -- Juge (session, phase ②).
 select set_config('request.jwt.claims','{"sub":"e0000000-0000-0000-0000-0000000000c8"}', true); set role authenticated;
-select pg_temp.essai('B-juge-tempsVitesse',  true,  $$insert into interclub.temps_vitesse (epreuve_id,grimpeur_id,temps) values ('99999999-9999-9999-9999-999999999999','a0000000-0000-0000-0000-0000000000a1',7.2)$$);
-select pg_temp.essai('B-juge-resultatVoie',  false, $$insert into interclub.resultat (epreuve_id,grimpeur_id,valeur) values ('88888888-8888-8888-8888-888888888888','a0000000-0000-0000-0000-0000000000a1','top')$$);
-select pg_temp.essai('B-juge-tempsSurVoie',  false, $$insert into interclub.temps_vitesse (epreuve_id,grimpeur_id,temps) values ('88888888-8888-8888-8888-888888888888','a0000000-0000-0000-0000-0000000000a1',7.2)$$);
+select pg_temp.essai('B-juge-tempsVitesse',  true,  $$insert into interclub.temps_vitesse (epreuve_id,grimpeur_id,temps) values ('88888888-8888-8888-8888-888888888803','a0000000-0000-0000-0000-0000000000a1',7.2)$$);
+select pg_temp.essai('B-juge-resultatVoie',  false, $$insert into interclub.resultat (epreuve_id,grimpeur_id,valeur) values ('88888888-8888-8888-8888-888888888801','a0000000-0000-0000-0000-0000000000a1','top')$$);
+select pg_temp.essai('B-juge-tempsSurVoie',  false, $$insert into interclub.temps_vitesse (epreuve_id,grimpeur_id,temps) values ('88888888-8888-8888-8888-888888888801','a0000000-0000-0000-0000-0000000000a1',7.2)$$);
 reset role;
 
 -- ---- Restitution --------------------------------------------------------

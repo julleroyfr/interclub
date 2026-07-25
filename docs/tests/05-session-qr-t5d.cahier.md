@@ -11,7 +11,7 @@
 - **Pré-requis** :
   - `supabase/config.toml` → `enable_anonymous_sign_ins = true` (déjà versionnée).
   - Migration **`202607231000`** appliquée — lancer `supabase db reset` en local
-    (applique migrations + seeds 01, 02, 03 dans l'ordre).
+    (applique migrations + le seed 01-jeu-de-test.sql dans l'ordre).
   - App lancée : `npm run dev`.
 - **Environnement** : local (stack Docker) — version/commit : `______`
 
@@ -23,8 +23,8 @@ Seeds `01`, `02`, `03` appliqués via `supabase db reset` :
 - Comptes (mdp `interclub`) : `admin@test.local` (admin), `coach@test.local`
   (coach Club A).
 - Rencontre du 2026-09-19 (enfant), portée par Club A, 2 voies de vitesse,
-  **phase `competition`** (seed 03).
-- Jetons QR à UUIDs fixes (seed 03) :
+  **phase `competition`** (seed 01-jeu-de-test).
+- Jetons QR à UUIDs fixes (seed 01-jeu-de-test) :
 
 | Nature | Club / Voie | Valeur (secret QR) | URL de scan locale |
 |--------|-------------|--------------------|--------------------|
@@ -48,8 +48,8 @@ Seeds `01`, `02`, `03` appliqués via `supabase db reset` :
 ### CT-01 — Scan jeton coach temporaire en phase ②   (couvre : R6, R7, R8, R10, R12 ; nominal)
 
 - **Rôle / compte** : navigateur anonyme (pas de compte).
-- **Pré-condition** : rencontre en phase `competition` (seed 03) ; jeton coach
-  temp. Club A actif (seed 03 : `aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa`).
+- **Pré-condition** : rencontre en phase `competition` (seed 01-jeu-de-test) ; jeton coach
+  temp. Club A actif (seed 01-jeu-de-test : `aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa`).
 - **Étapes** :
   1. Accéder à
      `http://localhost:3000/scan?jeton=aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa`.
@@ -66,8 +66,8 @@ Seeds `01`, `02`, `03` appliqués via `supabase db reset` :
 ### CT-02 — Scan jeton juge en phase ②   (couvre : R6, R9b, R11 ; nominal)
 
 - **Rôle / compte** : navigateur anonyme.
-- **Pré-condition** : rencontre en phase `competition` (seed 03) ; jeton juge
-  Voie 1 actif (seed 03 : `bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb`).
+- **Pré-condition** : rencontre en phase `competition` (seed 01-jeu-de-test) ; jeton juge
+  Voie 1 actif (seed 01-jeu-de-test : `bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb`).
 - **Étapes** :
   1. Accéder à
      `http://localhost:3000/scan?jeton=bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb`.
