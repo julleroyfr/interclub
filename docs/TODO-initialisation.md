@@ -32,6 +32,16 @@ supprimés ; `config.toml` → `sql_paths` explicite (purge exclue). Validé en
 local : `db reset` + `test:t6` (17/17), `test:t5a/b/c` (8+4+4), purge → tout à 0,
 rejeu OK, idempotence OK.
 
+**T8 amorcé — 1er écran de paramétrage : Clubs** (2026-07-25) : domaine pur
+`src/domaine/club.ts` (`normaliserNomClub`, 6 tests Vitest), écran admin
+`/admin/clubs` (create/rename/delete, design « Nuit », mobile-first) — loader
+`src/lib/clubs/clubs.ts`, Server Actions `src/lib/clubs/actions.ts` (garde admin
+et RLS `club_*_admin`, R11), lien « Clubs » sur l'accueil admin. **Aucune
+migration** (table et policies datent de T6). Cahier
+`docs/tests/07-parametrage-clubs-t8.cahier.md` (CT-01..09). Validé : typecheck +
+ESLint + build OK, Vitest 48/48. Suite paramétrage : **rencontre**, **grimpeur**
+(même patron).
+
 > 🧪 **À faire côté utilisateur** :
 >
 > 1. ✅ Migration `202607251000` appliquée en **recette** (2026-07-25) — et les
@@ -46,7 +56,7 @@ rejeu OK, idempotence OK.
 
 | ID | Tâche | Dépend de | Notes |
 | ---- | ------- | ----------- | ------- |
-| T8 | Premier écran + cahier de test associé (responsive, vérif mobile) | T4, T5 | Suivre `nouvelle-fonctionnalite` + `expertise-ihm-responsive`. |
+| T8 | Écrans de paramétrage (admin) + cahiers (responsive, vérif mobile) — **Clubs ✅** ; reste **rencontre**, **grimpeur** (même patron) | T4, T5 | Suivre `nouvelle-fonctionnalite` + `expertise-ihm-responsive`. |
 | T9 | `<html lang="en">` → `lang="fr"` dans `src/app/layout.tsx` | — | Reporté (a11y). cf. mémoire `todo-differes`. |
 | T10 | Export `viewport` (Next 16) dans le layout racine | — | cf. `07-standards-nextjs-16.md` §3 / `08` §3. |
 | T11 | (Option) Hook local pre-push : `lint` + `typecheck` + `test` | — | Filet de sécurité car `push` = déploiement. |
