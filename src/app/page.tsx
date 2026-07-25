@@ -41,6 +41,9 @@ export default async function Accueil() {
                 <Link href="/admin/rencontres" className={lienSecondaire}>
                   Rencontres
                 </Link>
+                <Link href="/admin/grimpeurs" className={lienSecondaire}>
+                  Grimpeurs
+                </Link>
                 <Link href="/admin/mapping" className={lienSecondaire}>
                   Administrer les rôles
                 </Link>

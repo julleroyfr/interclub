@@ -53,6 +53,18 @@ et policies datent de T6). Cahier
 `docs/tests/08-parametrage-rencontres-t8.cahier.md` (CT-01..09). Validé :
 typecheck + ESLint + build OK, Vitest 62/62. Reste : **grimpeur** (même patron).
 
+**T8 suite — écran de paramétrage : Grimpeurs (volet admin du roster)**
+(2026-07-25) : domaine pur `src/domaine/grimpeur.ts` (`normaliserSaisieGrimpeur`
+— nom/prénom + année de naissance bornée, 9 tests Vitest), écran admin
+`/admin/grimpeurs` (add/modify/delete par club, design « Nuit », mobile-first) —
+loader `src/lib/grimpeurs/grimpeurs.ts` (grimpeur + club + nb engagements),
+Server Actions `src/lib/grimpeurs/actions.ts` (garde admin R11/R13 ; la RLS
+`grimpeur_*` admet aussi le coach du club, R18 — futur écran coach), lien
+« Grimpeurs » sur l'accueil admin. **Aucune migration** (table et policies datent
+de T6). Cahier `docs/tests/09-parametrage-grimpeurs-t8.cahier.md` (CT-01..09).
+Validé : typecheck + ESLint + build OK, Vitest 71/71. **T8 (paramétrage admin :
+Clubs, Rencontres, Grimpeurs) terminé.**
+
 > 🧪 **À faire côté utilisateur** :
 >
 > 1. ✅ Migration `202607251000` appliquée en **recette** (2026-07-25) — et les
@@ -67,7 +79,7 @@ typecheck + ESLint + build OK, Vitest 62/62. Reste : **grimpeur** (même patron)
 
 | ID | Tâche | Dépend de | Notes |
 | ---- | ------- | ----------- | ------- |
-| T8 | Écrans de paramétrage (admin) + cahiers (responsive, vérif mobile) — **Clubs ✅**, **Rencontres ✅** ; reste **grimpeur** (même patron) | T4, T5 | Suivre `nouvelle-fonctionnalite` + `expertise-ihm-responsive`. |
+| T8 | Écrans de paramétrage (admin) + cahiers (responsive, vérif mobile) — **Clubs ✅**, **Rencontres ✅**, **Grimpeurs ✅** | T4, T5 | Suivre `nouvelle-fonctionnalite` + `expertise-ihm-responsive`. |
 | T9 | `<html lang="en">` → `lang="fr"` dans `src/app/layout.tsx` | — | Reporté (a11y). cf. mémoire `todo-differes`. |
 | T10 | Export `viewport` (Next 16) dans le layout racine | — | cf. `07-standards-nextjs-16.md` §3 / `08` §3. |
 | T11 | (Option) Hook local pre-push : `lint` + `typecheck` + `test` | — | Filet de sécurité car `push` = déploiement. |
