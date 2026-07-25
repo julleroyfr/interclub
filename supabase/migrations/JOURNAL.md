@@ -12,13 +12,13 @@ jour à chaque application. Voir les règles :
 |-------------------|-------------|--------------------|-----------------|
 | `202607221000_creation_schema_interclub_et_version` | Schéma `interclub` + table de suivi `interclub.version` | 2026-07-22 / julleroyfr | _reporté (à la bascule sur `main`)_ |
 | `202607221100_modele_donnees_socle` | Modèle socle (club, coach, grimpeur, rencontre, equipe, composition, epreuve, resultat, temps_vitesse) + RLS activée | 2026-07-22 / julleroyfr | _reporté (à la bascule sur `main`)_ |
-| `202607221150_voie_de_vitesse` | Voies de vitesse d'une rencontre (nombre paramétrable) + RLS activée | _à appliquer_ | _reporté (à la bascule sur `main`)_ |
-| `202607221200_auth_et_jetons_qr` | Auth : `compte` (mapping compte↔rôle/club) + `jeton_qr` (jetons éphémères ; juge→voie) + RLS activée | _à appliquer_ | _reporté (à la bascule sur `main`)_ |
-| `202607221300_rls_compte_et_role_courant` | Fonctions `role_courant()`/`est_admin()` + grants schéma/`compte` + policies RLS de `compte` (T5a) | _à appliquer_ | _reporté (à la bascule sur `main`)_ |
+| `202607221150_voie_de_vitesse` | Voies de vitesse d'une rencontre (nombre paramétrable) + RLS activée | 2026-07-25 / julleroyfr | _reporté (à la bascule sur `main`)_ |
+| `202607221200_auth_et_jetons_qr` | Auth : `compte` (mapping compte↔rôle/club) + `jeton_qr` (jetons éphémères ; juge→voie) + RLS activée | 2026-07-25 / julleroyfr | _reporté (à la bascule sur `main`)_ |
+| `202607221300_rls_compte_et_role_courant` | Fonctions `role_courant()`/`est_admin()` + grants schéma/`compte` + policies RLS de `compte` (T5a) | 2026-07-25 / julleroyfr | _reporté (à la bascule sur `main`)_ |
 | `202607221400_grants_service_role_mapping` | Grants lecture `service_role` sur `interclub` (usage schéma + select `club`/`compte`) pour l'écran admin de mapping (T5b, ADR 0002) | 2026-07-22 / julleroyfr | _reporté (à la bascule sur `main`)_ |
-| `202607230900_rls_jeton_qr_et_grants` | Helper `club_courant()` + grants (`jeton_qr` écriture `authenticated` ; select `rencontre`/`voie_vitesse`/`equipe` `service_role`) + policies RLS de `jeton_qr` (admin tout ; coach temp. de son club) — T5c | _à appliquer_ | _reporté (à la bascule sur `main`)_ |
-| `202607231000_session_qr_et_rpc` | Table `session_qr` (utilisateur_id → jeton_qr_id) + RLS select own + RPC `ouvrir_session_qr` SECURITY DEFINER (ADR 0001) — T5d | _à appliquer_ | _reporté (à la bascule sur `main`)_ |
-| `202607251000_rls_tables_metier` | Policies RLS des 9 tables métier (T6) : helpers de périmètre SECURITY DEFINER (phase, coach temp./juge de rencontre, écritures équipe/composition/résultat/temps vitesse) + grants `authenticated` + policies par opération (matrice spec #1 + ADR 0001, 2 chemins acteur, gating de phase) | _à appliquer_ | _reporté (à la bascule sur `main`)_ |
+| `202607230900_rls_jeton_qr_et_grants` | Helper `club_courant()` + grants (`jeton_qr` écriture `authenticated` ; select `rencontre`/`voie_vitesse`/`equipe` `service_role`) + policies RLS de `jeton_qr` (admin tout ; coach temp. de son club) — T5c | 2026-07-25 / julleroyfr | _reporté (à la bascule sur `main`)_ |
+| `202607231000_session_qr_et_rpc` | Table `session_qr` (utilisateur_id → jeton_qr_id) + RLS select own + RPC `ouvrir_session_qr` SECURITY DEFINER (ADR 0001) — T5d | 2026-07-25 / julleroyfr | _reporté (à la bascule sur `main`)_ |
+| `202607251000_rls_tables_metier` | Policies RLS des 9 tables métier (T6) : helpers de périmètre SECURITY DEFINER (phase, coach temp./juge de rencontre, écritures équipe/composition/résultat/temps vitesse) + grants `authenticated` + policies par opération (matrice spec #1 + ADR 0001, 2 chemins acteur, gating de phase) | 2026-07-25 / julleroyfr | _reporté (à la bascule sur `main`)_ |
 
 > Prod volontairement reportée : sera appliquée quand le code sera basculé sur
 > `main`. Schéma `interclub` à exposer à l'API en prod à ce moment-là (déjà fait

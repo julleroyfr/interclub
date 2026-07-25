@@ -25,8 +25,9 @@ Précisions spec #1 validées (rév. 2026-07-25) : périmètre juge = épreuve v
 
 > 🧪 **À faire côté utilisateur** :
 >
-> 1. Appliquer la migration `202607251000` en **recette** (SQL Editor).
-> 2. Dérouler le cahier T6 sur base réelle (registre CT-01..12).
+> 1. ✅ Migration `202607251000` appliquée en **recette** (2026-07-25) — et les
+>    prérequis (voie, auth/jetons, rls_compte, rls_jeton, session_qr).
+> 2. Dérouler le cahier T6 sur base réelle (colonne **Recette**, CT-01..12).
 >
 > ✅ **T5a / T5b / T5c / T5d** entièrement clos et validés.
 
