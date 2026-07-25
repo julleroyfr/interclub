@@ -17,6 +17,7 @@ jour à chaque application. Voir les règles :
 | `202607221300_rls_compte_et_role_courant` | Fonctions `role_courant()`/`est_admin()` + grants schéma/`compte` + policies RLS de `compte` (T5a) | _à appliquer_ | _reporté (à la bascule sur `main`)_ |
 | `202607221400_grants_service_role_mapping` | Grants lecture `service_role` sur `interclub` (usage schéma + select `club`/`compte`) pour l'écran admin de mapping (T5b, ADR 0002) | 2026-07-22 / julleroyfr | _reporté (à la bascule sur `main`)_ |
 | `202607230900_rls_jeton_qr_et_grants` | Helper `club_courant()` + grants (`jeton_qr` écriture `authenticated` ; select `rencontre`/`voie_vitesse`/`equipe` `service_role`) + policies RLS de `jeton_qr` (admin tout ; coach temp. de son club) — T5c | _à appliquer_ | _reporté (à la bascule sur `main`)_ |
+| `202607231000_session_qr_et_rpc` | Table `session_qr` (utilisateur_id → jeton_qr_id) + RLS select own + RPC `ouvrir_session_qr` SECURITY DEFINER (ADR 0001) — T5d | _à appliquer_ | _reporté (à la bascule sur `main`)_ |
 
 > Prod volontairement reportée : sera appliquée quand le code sera basculé sur
 > `main`. Schéma `interclub` à exposer à l'API en prod à ce moment-là (déjà fait

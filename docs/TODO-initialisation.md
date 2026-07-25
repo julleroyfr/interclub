@@ -12,29 +12,30 @@ Dernière mise à jour : 2026-07-22.
 
 ## 🔄 En cours
 
-**T5c codé** (2026-07-23) : écrans `/admin/jetons` et `/coach/jetons`, domaine
-`jeton-qr` (16 tests Vitest), Server Actions gardées + RLS, migration
-`202607230900` (policies `jeton_qr` + `club_courant()`), vrai QR côté serveur
-([ADR 0003](decisions/0003-affichage-qr-et-lecture-catalogues.md)).
-**Prochaine étape : T5d** (ouverture de session QR au scan).
+**T5d codé** (2026-07-23) : domaine pur `src/domaine/session-qr.ts` (11 tests
+Vitest), migration `202607231000` (table `session_qr` + RLS select own + RPC
+`ouvrir_session_qr` SECURITY DEFINER — ADR 0001), page `/scan` (Client Component
+`signInAnonymously` → RPC → redirect `/coach` ou `/juge`), stubs `/coach` et
+`/juge`, mise à jour QR pour encoder l'URL de scan (via `NEXT_PUBLIC_APP_URL`).
+Cahier `docs/tests/05-session-qr-t5d.cahier.md` (CT-01..10).
+**Prochaine étape : T6** (policies RLS tables métier — deux chemins acteur).
 
 > 🧪 **À faire côté utilisateur** :
 >
-> - Appliquer la migration `202607230900` en **local** (`supabase db reset`,
->   charge aussi le seed `02-jetons-de-test.sql`) puis en **recette** (à la main).
-> - Dérouler le cahier T5c (`docs/tests/04-jetons-qr-t5c.cahier.md`) + lancer
->   `npm run test:t5c` (CT-06..09).
-> - Rappel T5b : dérouler le cahier `03-...` + `npm run test:t5b` (CT-07) si pas
->   encore fait.
+> 1. **Activer** les connexions anonymes dans Supabase Dashboard
+>    (Authentication → Providers → Anonymous sign-ins → Enable).
+> 2. Appliquer la migration `202607231000` en **local** (`supabase db reset`) puis
+>    en **recette** (SQL Editor).
+> 3. Dérouler le cahier T5d (`docs/tests/05-session-qr-t5d.cahier.md`) CT-01..10
+>    (CT-05 est à compléter en T6/T8).
 >
-> ✅ **T5a entièrement clos** ; **T5b** fusionné dans `develop` (migration
-> `202607221400` appliquée en recette).
+> ✅ **T5a / T5b / T5c** entièrement clos.
 
 ## ⏳ En attente (à faire)
 
 | ID | Tâche | Dépend de | Notes |
 | ---- | ------- | ----------- | ------- |
-| T5d | Ouverture de session QR au scan (sessions anonymes + `session_qr` + RPC `ouvrir_session_qr`) | T5c, [ADR 0001](decisions/0001-authentification-sessions-ephemeres-qr.md) | Activer les connexions anonymes Supabase ; migration `session_qr` + RPC ; purge des anonymes. **Coupure immédiate (R22/R23)** : révoquer/régénérer un jeton doit couper l'accès des sessions ouvertes avec l'ancien **dès la requête suivante** (recalcul RLS sur `jeton_qr.actif`) ; les porteurs doivent **re-scanner le nouveau QR** (pas de reconnexion, sessions anonymes). Non observable en T5c (pas de session vivante) → **ajouter des cas de cahier T5d** vérifiant la coupure après révocation/régénération, et compléter CT-03/CT-04 du cahier T5c (`04-jetons-qr-t5c`) une fois le scan disponible. |
+| T5d | ~~Ouverture de session QR au scan~~ **✅ codé — à valider (voir 🔄 En cours)** | — | Purge des anonymes (`auth.users` sans `session_qr`) à prévoir (job/script, hors périmètre T5d). |
 | T6 | Policies **RLS** selon la matrice de la spec rôles + [ADR 0001](decisions/0001-authentification-sessions-ephemeres-qr.md) (2 chemins : permanent via `compte`, éphémère via `session_qr`) | T4, T5 | Une policy par opération ; gating de phase ② ; vérifiées par cahier de test (négatifs inclus). |
 | T7 | Jeux de données de test : `seed/01-jeu-de-test.sql` + `seed/99-purge-jeu-de-test.sql` (recette) | T4 | Idempotent + purge bornée. cf. `09` §3-4. |
 | T8 | Premier écran + cahier de test associé (responsive, vérif mobile) | T4, T5 | Suivre `nouvelle-fonctionnalite` + `expertise-ihm-responsive`. |
