@@ -42,6 +42,17 @@ migration** (table et policies datent de T6). Cahier
 ESLint + build OK, Vitest 48/48. Suite paramétrage : **rencontre**, **grimpeur**
 (même patron).
 
+**T8 suite — écran de paramétrage : Rencontres** (2026-07-25) : domaine pur
+`src/domaine/rencontre.ts` (`normaliserSaisieRencontre` + cycle de phases
+`phaseSuivante`/`phasePrecedente`, 14 tests Vitest), écran admin
+`/admin/rencontres` (create/modify/change-phase/delete, design « Nuit »,
+mobile-first) — loader `src/lib/rencontres/rencontres.ts`, Server Actions
+`src/lib/rencontres/actions.ts` (garde admin et RLS `rencontre_*_admin`, R12 ;
+phases R5), lien « Rencontres » sur l'accueil admin. **Aucune migration** (table
+et policies datent de T6). Cahier
+`docs/tests/08-parametrage-rencontres-t8.cahier.md` (CT-01..09). Validé :
+typecheck + ESLint + build OK, Vitest 62/62. Reste : **grimpeur** (même patron).
+
 > 🧪 **À faire côté utilisateur** :
 >
 > 1. ✅ Migration `202607251000` appliquée en **recette** (2026-07-25) — et les
@@ -56,7 +67,7 @@ ESLint + build OK, Vitest 48/48. Suite paramétrage : **rencontre**, **grimpeur*
 
 | ID | Tâche | Dépend de | Notes |
 | ---- | ------- | ----------- | ------- |
-| T8 | Écrans de paramétrage (admin) + cahiers (responsive, vérif mobile) — **Clubs ✅** ; reste **rencontre**, **grimpeur** (même patron) | T4, T5 | Suivre `nouvelle-fonctionnalite` + `expertise-ihm-responsive`. |
+| T8 | Écrans de paramétrage (admin) + cahiers (responsive, vérif mobile) — **Clubs ✅**, **Rencontres ✅** ; reste **grimpeur** (même patron) | T4, T5 | Suivre `nouvelle-fonctionnalite` + `expertise-ihm-responsive`. |
 | T9 | `<html lang="en">` → `lang="fr"` dans `src/app/layout.tsx` | — | Reporté (a11y). cf. mémoire `todo-differes`. |
 | T10 | Export `viewport` (Next 16) dans le layout racine | — | cf. `07-standards-nextjs-16.md` §3 / `08` §3. |
 | T11 | (Option) Hook local pre-push : `lint` + `typecheck` + `test` | — | Filet de sécurité car `push` = déploiement. |
