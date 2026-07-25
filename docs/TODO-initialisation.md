@@ -6,37 +6,34 @@ attente** (les tâches ✅ faites sont archivées en bas, pas rappelées).
 
 Statuts : ✅ fait · 🔄 en cours · ⏳ en attente (à faire) · 🚫 bloqué (dépendance non levée)
 
-Dernière mise à jour : 2026-07-22.
+Dernière mise à jour : 2026-07-25.
 
 ---
 
 ## 🔄 En cours
 
-**T5d codé** (2026-07-23) : domaine pur `src/domaine/session-qr.ts` (11 tests
-Vitest), migration `202607231000` (table `session_qr` + RLS select own + RPC
-`ouvrir_session_qr` SECURITY DEFINER — ADR 0001), page `/scan` (Client Component
-`signInAnonymously` → RPC → redirect `/coach` ou `/juge`), stubs `/coach` et
-`/juge`, mise à jour QR pour encoder l'URL de scan (via `NEXT_PUBLIC_APP_URL`).
-Cahier `docs/tests/05-session-qr-t5d.cahier.md` (CT-01..10).
-**Prochaine étape : T6** (policies RLS tables métier — deux chemins acteur).
+**T6 codé** (2026-07-25) : migration `202607251000_rls_tables_metier` — 11
+helpers de périmètre `SECURITY DEFINER` (phase, coach temp./juge de rencontre,
+écritures équipe/composition/résultat/temps vitesse) + grants `authenticated` +
+policies par opération sur les **9 tables métier**, implémentant la matrice de la
+spec #1 et les 2 chemins d'acteur de l'[ADR 0001](decisions/0001-authentification-sessions-ephemeres-qr.md)
+(permanent via `compte`, éphémère via `session_qr`) avec gating de phase.
+Précisions spec #1 validées (rév. 2026-07-25) : périmètre juge = épreuve vitesse
+(R30) ; roster grimpeur éditable hors phase (R6). Validé en local :
+`npm run test:t6` (17/17) + cahier `docs/tests/06-rls-tables-metier-t6.cahier.md`
+(CT-01..12). **Prochaine étape : T7** (seed/purge) ou **T8** (1er écran).
 
 > 🧪 **À faire côté utilisateur** :
 >
-> 1. **Activer** les connexions anonymes dans Supabase Dashboard
->    (Authentication → Providers → Anonymous sign-ins → Enable).
-> 2. Appliquer la migration `202607231000` en **local** (`supabase db reset`) puis
->    en **recette** (SQL Editor).
-> 3. Dérouler le cahier T5d (`docs/tests/05-session-qr-t5d.cahier.md`) CT-01..10
->    (CT-05 est à compléter en T6/T8).
+> 1. Appliquer la migration `202607251000` en **recette** (SQL Editor).
+> 2. Dérouler le cahier T6 sur base réelle (registre CT-01..12).
 >
-> ✅ **T5a / T5b / T5c** entièrement clos.
+> ✅ **T5a / T5b / T5c / T5d** entièrement clos et validés.
 
 ## ⏳ En attente (à faire)
 
 | ID | Tâche | Dépend de | Notes |
 | ---- | ------- | ----------- | ------- |
-| T5d | ~~Ouverture de session QR au scan~~ **✅ codé — à valider (voir 🔄 En cours)** | — | Purge des anonymes (`auth.users` sans `session_qr`) à prévoir (job/script, hors périmètre T5d). |
-| T6 | Policies **RLS** selon la matrice de la spec rôles + [ADR 0001](decisions/0001-authentification-sessions-ephemeres-qr.md) (2 chemins : permanent via `compte`, éphémère via `session_qr`) | T4, T5 | Une policy par opération ; gating de phase ② ; vérifiées par cahier de test (négatifs inclus). |
 | T7 | Jeux de données de test : `seed/01-jeu-de-test.sql` + `seed/99-purge-jeu-de-test.sql` (recette) | T4 | Idempotent + purge bornée. cf. `09` §3-4. |
 | T8 | Premier écran + cahier de test associé (responsive, vérif mobile) | T4, T5 | Suivre `nouvelle-fonctionnalite` + `expertise-ihm-responsive`. |
 | T9 | `<html lang="en">` → `lang="fr"` dans `src/app/layout.tsx` | — | Reporté (a11y). cf. mémoire `todo-differes`. |
@@ -47,6 +44,15 @@ Cahier `docs/tests/05-session-qr-t5d.cahier.md` (CT-01..10).
 
 ## ✅ Fait (archive — non rappelé)
 
+- **T5d — Ouverture de session QR au scan** (validée 2026-07-25) : domaine pur
+  `src/domaine/session-qr.ts` (11 tests Vitest), migration `202607231000` (table
+  `session_qr` + RLS select own + RPC `ouvrir_session_qr` SECURITY DEFINER —
+  ADR 0001), page `/scan` (Client Component `signInAnonymously` → RPC → redirect
+  `/coach` ou `/juge`), stubs `/coach` et `/juge`, QR encodant l'URL de scan (via
+  `NEXT_PUBLIC_APP_URL`). Cahier `docs/tests/05-session-qr-t5d.cahier.md`
+  (CT-01..10, CT-05 complété en T6/T8). Connexions anonymes activées + migration
+  appliquée (local + recette) + cahier déroulé. Purge des anonymes (`auth.users`
+  sans `session_qr`) à prévoir (job/script, hors périmètre). **Débloque T6.**
 - **T5c — Jetons QR (génération/affichage/révocation/régénération)** (2026-07-23) :
   domaine pur `src/domaine/jeton-qr.ts` (R9/R15–R23, 16 tests Vitest), migration
   `202607230900` (helper `club_courant()` + grants + policies RLS `jeton_qr` :
