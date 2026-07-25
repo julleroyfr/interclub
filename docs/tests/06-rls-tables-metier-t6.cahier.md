@@ -177,21 +177,28 @@ reset role;
 
 ## Registre d'exécution
 
-| Cas | Environnement | Date | Testeur | Verdict | Notes |
-|-----|---------------|------|---------|---------|-------|
-| CT-01 | | | | ⬜ | |
-| CT-02 | | | | ⬜ | |
-| CT-03 | | | | ⬜ | |
-| CT-04 | | | | ⬜ | |
-| CT-05 | | | | ⬜ | |
-| CT-06 | | | | ⬜ | |
-| CT-07 | | | | ⬜ | |
-| CT-08 | | | | ⬜ | |
-| CT-09 | | | | ⬜ | |
-| CT-10 | | | | ⬜ | |
-| CT-11 | | | | ⬜ | |
-| CT-12 | | | | ⬜ | |
+Deux passages : **local** (stack Docker — fait) et **recette** (base réelle — à
+dérouler après application de la migration en SQL Editor).
 
-> **Note (local)** : CT-01..CT-10 sont couverts automatiquement par
-> `npm run test:t6` (17/17). Le registre ci-dessus sert à tracer la validation
-> **sur base réelle (recette)**.
+| Cas | Local (date / verdict) | Recette (date / testeur / verdict) | Notes |
+|-----|------------------------|------------------------------------|-------|
+| CT-01 | 2026-07-25 · ✅ | ⬜ | admin insert club/rencontre/epreuve/voie |
+| CT-02 | 2026-07-25 · ✅ | ⬜ | sansmapping : refus (fail-closed) |
+| CT-03 | 2026-07-25 · ✅ | ⬜ | coach : club/rencontre refusés |
+| CT-04 | 2026-07-25 · ✅ | ⬜ | roster : club A OK (2 phases), club B refusé |
+| CT-05 | 2026-07-25 · ✅ | ⬜ | équipe A phase ① OK, phase ② refusée, club B refusé |
+| CT-06 | 2026-07-25 · ✅ | ⬜ | résultat refusé en ①, accepté en ② |
+| CT-07 | 2026-07-25 · ✅ | ⬜ | prêt : coach refusé, admin OK, résultat coach OK |
+| CT-08 | 2026-07-25 · ✅ | ⬜ | coach temp : club A OK ②, club B refusé, phase ① refusée |
+| CT-09 | 2026-07-25 · ✅ | ⬜ | coupure immédiate à la révocation du jeton |
+| CT-10 | 2026-07-25 · ✅ | ⬜ | juge : temps vitesse OK, voie refusée, temps sur voie refusé |
+| CT-11 | 2026-07-25 · ✅ | ⬜ | juge d'une autre rencontre : refusé |
+| CT-12 | 2026-07-25 · ✅ | ⬜ | coach A : club A visible, club B invisible, référence visible |
+
+> **Local (2026-07-25)** : CT-01..CT-10 rejoués par `npm run test:t6` (17/17) ;
+> CT-11/CT-12 vérifiés par impersonation en SQL Editor local (juge d'une autre
+> rencontre refusé ; visibilité coach A limitée à son club, référence/calendrier
+> visibles). **12/12 conformes.**
+>
+> **Recette** : colonne dédiée à remplir après application de la migration
+> `202607251000` en SQL Editor.
