@@ -1,7 +1,9 @@
 import 'server-only'
 
+import { headers } from 'next/headers'
 import QRCode from 'qrcode'
 
+import { construireUrlScan } from '@/domaine/session-qr'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 
@@ -38,9 +40,13 @@ async function versJetonVue(row: {
   voie_vitesse_id: string | null
   valeur: string
 }): Promise<JetonVue> {
-  // On encode la `valeur` (secret scanné). Le format d'URL de scan sera fixé en
-  // T5d (ouverture de session) — cf. ADR 0003.
-  const qrDataUrl = await QRCode.toDataURL(row.valeur, { margin: 1, width: 240 })
+  // Encode l'URL de scan complète (T5d, ADR 0003). Le host est lu depuis les
+  // en-têtes HTTP : fonctionne en local, preview Netlify et prod sans config.
+  const hdrs = await headers()
+  const host = hdrs.get('host') ?? 'localhost:3000'
+  const proto = host.startsWith('localhost') ? 'http' : 'https'
+  const contenu = construireUrlScan(`${proto}://${host}`, row.valeur)
+  const qrDataUrl = await QRCode.toDataURL(contenu, { margin: 1, width: 240 })
   return {
     id: row.id,
     nature: row.nature,

@@ -29,11 +29,12 @@ shadow_port = 54320
 major_version = 17
 
 [db.seed]
-# Jeux de données de test chargés au `supabase db reset` (cf.
-# docs/conventions/09-environnements-et-donnees.md). Vide pour l'instant :
-# le dossier supabase/seed/ ne contient que README.md.
+# Jeu de données de test chargé au `supabase db reset` (cf.
+# docs/conventions/09-environnements-et-donnees.md §3). Liste EXPLICITE : on
+# charge le seed, PAS la purge (`99-purge-jeu-de-test.sql`) — sinon elle
+# effacerait les données juste seedées à chaque reset.
 enabled = true
-sql_paths = ["./seed/*.sql"]
+sql_paths = ["./seed/01-jeu-de-test.sql"]
 
 [realtime]
 # Le projet utilise Supabase Realtime (messagerie, mises à jour live).
@@ -51,6 +52,7 @@ site_url = "http://127.0.0.1:3000"
 additional_redirect_urls = ["http://127.0.0.1:3000"]
 jwt_expiry = 3600
 enable_signup = true
+enable_anonymous_sign_ins = true
 
 [auth.email]
 enable_signup = true

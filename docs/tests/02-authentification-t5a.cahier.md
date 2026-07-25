@@ -17,7 +17,7 @@
 
 ## Jeu de données initial
 
-Fourni par le **seed** `supabase/seed/01-utilisateurs-de-test.sql`, chargé
+Fourni par le **seed** `supabase/seed/01-jeu-de-test.sql`, chargé
 **automatiquement** par `supabase db reset` (aucune manip Studio nécessaire) :
 
 - Club « Club A ».

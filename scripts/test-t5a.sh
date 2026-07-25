@@ -9,7 +9,7 @@
 # CT-02, CT-08) restent à vérifier à la main dans l'app.
 #
 # Pré-requis : `supabase start` puis `supabase db reset` (charge le seed
-#              supabase/seed/01-utilisateurs-de-test.sql). Docker + CLI Supabase.
+#              supabase/seed/01-jeu-de-test.sql). Docker + CLI Supabase.
 # Usage      : bash scripts/test-t5a.sh   (ou : npm run test:t5a)
 
 set -uo pipefail

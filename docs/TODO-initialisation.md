@@ -6,37 +6,46 @@ attente** (les tâches ✅ faites sont archivées en bas, pas rappelées).
 
 Statuts : ✅ fait · 🔄 en cours · ⏳ en attente (à faire) · 🚫 bloqué (dépendance non levée)
 
-Dernière mise à jour : 2026-07-22.
+Dernière mise à jour : 2026-07-25.
 
 ---
 
 ## 🔄 En cours
 
-**T5c codé** (2026-07-23) : écrans `/admin/jetons` et `/coach/jetons`, domaine
-`jeton-qr` (16 tests Vitest), Server Actions gardées + RLS, migration
-`202607230900` (policies `jeton_qr` + `club_courant()`), vrai QR côté serveur
-([ADR 0003](decisions/0003-affichage-qr-et-lecture-catalogues.md)).
-**Prochaine étape : T5d** (ouverture de session QR au scan).
+**T6 codé** (2026-07-25) : migration `202607251000_rls_tables_metier` — 11
+helpers de périmètre `SECURITY DEFINER` (phase, coach temp./juge de rencontre,
+écritures équipe/composition/résultat/temps vitesse) + grants `authenticated` +
+policies par opération sur les **9 tables métier**, implémentant la matrice de la
+spec #1 et les 2 chemins d'acteur de l'[ADR 0001](decisions/0001-authentification-sessions-ephemeres-qr.md)
+(permanent via `compte`, éphémère via `session_qr`) avec gating de phase.
+Précisions spec #1 validées (rév. 2026-07-25) : périmètre juge = épreuve vitesse
+(R30) ; roster grimpeur éditable hors phase (R6). Validé en local :
+`npm run test:t6` (17/17) + cahier `docs/tests/06-rls-tables-metier-t6.cahier.md`
+(CT-01..12). **Prochaine étape : T8** (1er écran).
+
+**T7 codé** (2026-07-25) : jeu de données de test **consolidé** en source unique
+`supabase/seed/01-jeu-de-test.sql` (idempotent — clubs, comptes, rencontre,
+voies, équipes, grimpeurs, épreuves, compositions, jetons) + purge bornée
+`supabase/seed/99-purge-jeu-de-test.sql` (plage d'UUID réservée, rejouable).
+Anciens seeds `01-utilisateurs`/`02-jetons`/`03-session-qr` fusionnés et
+supprimés ; `config.toml` → `sql_paths` explicite (purge exclue). Validé en
+local : `db reset` + `test:t6` (17/17), `test:t5a/b/c` (8+4+4), purge → tout à 0,
+rejeu OK, idempotence OK.
 
 > 🧪 **À faire côté utilisateur** :
 >
-> - Appliquer la migration `202607230900` en **local** (`supabase db reset`,
->   charge aussi le seed `02-jetons-de-test.sql`) puis en **recette** (à la main).
-> - Dérouler le cahier T5c (`docs/tests/04-jetons-qr-t5c.cahier.md`) + lancer
->   `npm run test:t5c` (CT-06..09).
-> - Rappel T5b : dérouler le cahier `03-...` + `npm run test:t5b` (CT-07) si pas
->   encore fait.
+> 1. ✅ Migration `202607251000` appliquée en **recette** (2026-07-25) — et les
+>    prérequis (voie, auth/jetons, rls_compte, rls_jeton, session_qr).
+> 2. Appliquer le seed **`01-jeu-de-test.sql`** en **recette** (SQL Editor), puis
+>    dérouler le cahier T6 (colonne **Recette**, CT-01..12). Pour rejouer :
+>    `99-purge-jeu-de-test.sql` puis `01-jeu-de-test.sql`.
 >
-> ✅ **T5a entièrement clos** ; **T5b** fusionné dans `develop` (migration
-> `202607221400` appliquée en recette).
+> ✅ **T5a / T5b / T5c / T5d** entièrement clos et validés.
 
 ## ⏳ En attente (à faire)
 
 | ID | Tâche | Dépend de | Notes |
 | ---- | ------- | ----------- | ------- |
-| T5d | Ouverture de session QR au scan (sessions anonymes + `session_qr` + RPC `ouvrir_session_qr`) | T5c, [ADR 0001](decisions/0001-authentification-sessions-ephemeres-qr.md) | Activer les connexions anonymes Supabase ; migration `session_qr` + RPC ; purge des anonymes. **Coupure immédiate (R22/R23)** : révoquer/régénérer un jeton doit couper l'accès des sessions ouvertes avec l'ancien **dès la requête suivante** (recalcul RLS sur `jeton_qr.actif`) ; les porteurs doivent **re-scanner le nouveau QR** (pas de reconnexion, sessions anonymes). Non observable en T5c (pas de session vivante) → **ajouter des cas de cahier T5d** vérifiant la coupure après révocation/régénération, et compléter CT-03/CT-04 du cahier T5c (`04-jetons-qr-t5c`) une fois le scan disponible. |
-| T6 | Policies **RLS** selon la matrice de la spec rôles + [ADR 0001](decisions/0001-authentification-sessions-ephemeres-qr.md) (2 chemins : permanent via `compte`, éphémère via `session_qr`) | T4, T5 | Une policy par opération ; gating de phase ② ; vérifiées par cahier de test (négatifs inclus). |
-| T7 | Jeux de données de test : `seed/01-jeu-de-test.sql` + `seed/99-purge-jeu-de-test.sql` (recette) | T4 | Idempotent + purge bornée. cf. `09` §3-4. |
 | T8 | Premier écran + cahier de test associé (responsive, vérif mobile) | T4, T5 | Suivre `nouvelle-fonctionnalite` + `expertise-ihm-responsive`. |
 | T9 | `<html lang="en">` → `lang="fr"` dans `src/app/layout.tsx` | — | Reporté (a11y). cf. mémoire `todo-differes`. |
 | T10 | Export `viewport` (Next 16) dans le layout racine | — | cf. `07-standards-nextjs-16.md` §3 / `08` §3. |
@@ -46,6 +55,15 @@ Dernière mise à jour : 2026-07-22.
 
 ## ✅ Fait (archive — non rappelé)
 
+- **T5d — Ouverture de session QR au scan** (validée 2026-07-25) : domaine pur
+  `src/domaine/session-qr.ts` (11 tests Vitest), migration `202607231000` (table
+  `session_qr` + RLS select own + RPC `ouvrir_session_qr` SECURITY DEFINER —
+  ADR 0001), page `/scan` (Client Component `signInAnonymously` → RPC → redirect
+  `/coach` ou `/juge`), stubs `/coach` et `/juge`, QR encodant l'URL de scan (via
+  `NEXT_PUBLIC_APP_URL`). Cahier `docs/tests/05-session-qr-t5d.cahier.md`
+  (CT-01..10, CT-05 complété en T6/T8). Connexions anonymes activées + migration
+  appliquée (local + recette) + cahier déroulé. Purge des anonymes (`auth.users`
+  sans `session_qr`) à prévoir (job/script, hors périmètre). **Débloque T6.**
 - **T5c — Jetons QR (génération/affichage/révocation/régénération)** (2026-07-23) :
   domaine pur `src/domaine/jeton-qr.ts` (R9/R15–R23, 16 tests Vitest), migration
   `202607230900` (helper `club_courant()` + grants + policies RLS `jeton_qr` :
@@ -53,8 +71,9 @@ Dernière mise à jour : 2026-07-22.
   (catalogues via `service_role`, jetons via RLS, **vrai QR** côté serveur via
   `qrcode`), Server Actions `src/lib/jetons/actions.ts` (générer/révoquer/
   régénérer, gardées `peutGererJeton` + RLS), écrans `/admin/jetons` (tout
-  périmètre + affectation juge) et `/coach/jetons` (jeton de son club), seed
-  `02-jetons-de-test.sql`. Décision : [ADR 0003](decisions/0003-affichage-qr-et-lecture-catalogues.md).
+  périmètre + affectation juge) et `/coach/jetons` (jeton de son club), données
+  de test (jetons) — depuis T7, fondues dans `seed/01-jeu-de-test.sql`. Décision :
+  [ADR 0003](decisions/0003-affichage-qr-et-lecture-catalogues.md).
   Cahier `docs/tests/04-jetons-qr-t5c.cahier.md` + script `scripts/test-t5c.sh`
   (`npm run test:t5c`, CT-06..09). Reste (utilisateur) : appliquer la migration +
   dérouler le cahier. **Débloque T5d.**
@@ -74,8 +93,8 @@ Dernière mise à jour : 2026-07-22.
   grants + policies RLS de `compte`), schéma client par défaut = `interclub`, DAL
   `src/lib/auth/session.ts`, Server Actions connexion/déconnexion
   (`src/lib/auth/actions.ts`), écran `/connexion` + accueil reflétant la session,
-  seed `supabase/seed/01-utilisateurs-de-test.sql` (3 comptes de test), cahier
-  `docs/tests/02-authentification-t5a.cahier.md` et script `scripts/test-t5a.sh`
+  données de test (3 comptes) — depuis T7, fondues dans `seed/01-jeu-de-test.sql`,
+  cahier `docs/tests/02-authentification-t5a.cahier.md` et script `scripts/test-t5a.sh`
   (`npm run test:t5a`, 8/8 OK). Validé sur la stack locale. **Débloque T5b, T5c.**
   Reste (utilisateur) : dérouler les cas UI du cahier.
 - **ADR 0001 — Auth des sessions QR éphémères**

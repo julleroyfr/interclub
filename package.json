@@ -18,6 +18,7 @@
     "test:t5a": "bash scripts/test-t5a.sh",
     "test:t5b": "bash scripts/test-t5b.sh",
     "test:t5c": "bash scripts/test-t5c.sh",
+    "test:t6": "bash scripts/test-t6.sh",
     "db:reset": "supabase db reset"
   },
   "dependencies": {

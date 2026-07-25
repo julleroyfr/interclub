@@ -22,7 +22,7 @@
 
 ## Jeu de données initial
 
-Fourni par le **seed** `supabase/seed/01-utilisateurs-de-test.sql`, chargé par
+Fourni par le **seed** `supabase/seed/01-jeu-de-test.sql`, chargé par
 `supabase db reset` :
 
 - Club « Club A ».

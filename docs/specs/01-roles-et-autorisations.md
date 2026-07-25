@@ -9,6 +9,12 @@
 - **Révision** : 2026-07-22 — intégration du règlement enfant/ado (validée le
   2026-07-22) : résultat de vitesse temps/chute/non-présentation (R30–R31),
   catégorie de rencontre & demi-journées (R34), grimpeurs prêtés (R35–R36).
+- **Révision** : 2026-07-25 — précisions d'implémentation RLS (T6), validées le
+  2026-07-25 : périmètre de saisie du juge borné à l'**épreuve de vitesse de sa
+  rencontre** (précision R30) ; le **roster `grimpeur` d'un club reste éditable
+  hors phase**, le gating de phase ① ne portant que sur l'engagement en
+  rencontre (équipes/compositions) (précision R6). Ces précisions n'altèrent pas
+  la matrice ; elles lèvent deux ambiguïtés face au modèle de données.
 
 ## Objectif
 
@@ -75,6 +81,12 @@ conditionne les accès temporels.
   saisies des résultats), **③ résultats publics** (rendu public des résultats).
 - **R6.** La pré-saisie des équipes et grimpeurs n'est possible qu'en phase ①
   pré-compétition.
+  - **Précision (rév. 2026-07-25)** : « grimpeurs » désigne ici leur
+    **engagement dans une rencontre** (compositions d'équipe). Le **roster de
+    grimpeurs d'un club** (licenciés, indépendant d'une rencontre) reste
+    consultable et éditable par le coach de ce club **hors phase** ; seul
+    l'engagement en rencontre (équipes et compositions) est borné à la phase ①.
+    Le coach temporaire, lui, agit en phase ② (R27, matrice).
 - **R7.** La saisie des résultats (coach) et des temps de vitesse (juge) n'est
   possible qu'en phase ② compétition.
 - **R8.** Les résultats deviennent consultables comme **infos publiques** en
@@ -141,6 +153,11 @@ conditionne les accès temporels.
 - **R30.** Le juge saisit uniquement les **résultats de vitesse** (temps, chute
   ou non-présentation) de l'épreuve de vitesse à laquelle il est affecté ; il
   n'intervient pas sur les épreuves de voie ni de bloc.
+  - **Précision (rév. 2026-07-25)** : en RLS, le périmètre d'écriture du juge est
+    **l'épreuve de vitesse de sa rencontre** (le résultat de vitesse porte
+    l'épreuve + le grimpeur, pas le couloir). Le **couloir (`voie_vitesse`)**
+    auquel le jeton juge est rattaché reste une **information d'organisation
+    physique** ; il ne subdivise pas le périmètre d'écriture en base.
 - **R31.** Pour saisir, le juge **sélectionne un grimpeur** (compétiteur) puis
   enregistre son **résultat de vitesse**, qui prend exactement une des trois
   formes : un **temps chronométré**, une **chute**, ou une **non-présentation**.
