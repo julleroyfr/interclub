@@ -6,7 +6,8 @@
 > [docs/conventions/06-cahier-de-test.md](../conventions/06-cahier-de-test.md) ;
 > IHM : [08-ihm-responsive.md](../conventions/08-ihm-responsive.md).
 
-- **Spec de référence** : `docs/specs/01-roles-et-autorisations.md` (R12 : seul
+- **Spec de référence** : `docs/specs/03-ecrans-de-parametrage-admin.md` (écran
+  Rencontres, R13–R19) ; `docs/specs/01-roles-et-autorisations.md` (R12 : seul
   l'admin crée/modifie/supprime une rencontre ; R5 : cycle de vie en trois
   phases successives ; R22 : interdit au coach).
 - **Domaine** : `src/domaine/rencontre.ts` (`normaliserSaisieRencontre`,

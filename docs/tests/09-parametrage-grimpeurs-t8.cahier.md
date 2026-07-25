@@ -6,7 +6,8 @@
 > [docs/conventions/06-cahier-de-test.md](../conventions/06-cahier-de-test.md) ;
 > IHM : [08-ihm-responsive.md](../conventions/08-ihm-responsive.md).
 
-- **Spec de référence** : `docs/specs/01-roles-et-autorisations.md` (R18 : le
+- **Spec de référence** : `docs/specs/03-ecrans-de-parametrage-admin.md` (écran
+  Grimpeurs, R20–R26) ; `docs/specs/01-roles-et-autorisations.md` (R18 : le
   coach gère les grimpeurs de son club ; R11/R13 : l'admin paramètre ; R6 :
   roster éditable hors phase). Cet écran est le **volet admin** (gère tout club) ;
   le volet **coach** (son seul club) relèvera d'une tranche coach ultérieure.

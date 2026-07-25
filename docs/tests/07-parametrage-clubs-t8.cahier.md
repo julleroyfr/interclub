@@ -6,8 +6,9 @@
 > [docs/conventions/06-cahier-de-test.md](../conventions/06-cahier-de-test.md) ;
 > IHM : [08-ihm-responsive.md](../conventions/08-ihm-responsive.md).
 
-- **Spec de référence** : `docs/specs/01-roles-et-autorisations.md` (R11 : seul
-  l'admin crée/modifie/supprime un club ; R22 : interdit au coach).
+- **Spec de référence** : `docs/specs/03-ecrans-de-parametrage-admin.md` (écran
+  Clubs, R8–R12) ; `docs/specs/01-roles-et-autorisations.md` (R11 : seul l'admin
+  crée/modifie/supprime un club ; R22 : interdit au coach).
 - **Domaine** : `src/domaine/club.ts` (`normaliserNomClub`, 6 tests Vitest).
 - **Migration** : aucune (table `club` + policies `club_*_admin` déjà en place —
   T6, migration `202607251000`).
