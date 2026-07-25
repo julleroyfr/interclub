@@ -35,6 +35,9 @@ export default async function Accueil() {
             </div>
             {utilisateur.role === 'admin' && (
               <>
+                <Link href="/admin/clubs" className={lienSecondaire}>
+                  Clubs
+                </Link>
                 <Link href="/admin/mapping" className={lienSecondaire}>
                   Administrer les rôles
                 </Link>
