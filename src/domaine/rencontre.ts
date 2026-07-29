@@ -6,8 +6,8 @@
 
 /** Catégorie d'une rencontre (tranche d'âge, R34). Valeurs = contrainte SQL. */
 export const CATEGORIES = [
-  { value: 'enfant', label: 'Enfant — matin (moins de 13 ans)' },
-  { value: 'ado', label: 'Ado — après-midi (13 à 19 ans)' },
+  { value: 'enfant', label: 'Enfant — matin (moins de 13 ans)', labelCourt: 'Enfant' },
+  { value: 'ado', label: 'Ado — après-midi (13 à 19 ans)', labelCourt: 'Ado' },
 ] as const
 
 export type Categorie = (typeof CATEGORIES)[number]['value']

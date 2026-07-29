@@ -16,7 +16,7 @@ import type { EtatRencontre } from '@/lib/rencontres/rencontres'
 import type { RencontreTdb } from '@/lib/tableau-de-bord/tableau-de-bord'
 
 const labelCategorie = (v: string) =>
-  CATEGORIES.find((c) => c.value === v)?.label ?? v
+  CATEGORIES.find((c) => c.value === v)?.labelCourt ?? v
 
 const labelPhase = (v: Phase) => PHASES.find((p) => p.value === v)?.label ?? v
 
@@ -54,10 +54,10 @@ function LigneRencontreTdb({ rencontre }: { rencontre: RencontreTdb }) {
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="text-sm font-medium text-texte-fort">
-            {formaterDate(rencontre.dateRencontre)}
+            {labelCategorie(rencontre.categorie)} · {rencontre.clubPorteurNom}
           </p>
           <p className="mt-0.5 text-xs text-texte-doux">
-            {labelCategorie(rencontre.categorie)} · {rencontre.clubPorteurNom}
+            {formaterDate(rencontre.dateRencontre)}
           </p>
         </div>
         <Etiquette variante={variantePhase(rencontre.phase)}>
