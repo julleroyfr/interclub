@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "prepare": "git config core.hooksPath .githooks || exit 0",
-    "dev": "next dev",
+    "dev": "next dev --port 3011",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
