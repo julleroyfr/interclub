@@ -34,23 +34,9 @@ export default async function Accueil() {
               )}
             </div>
             {utilisateur.role === 'admin' && (
-              <>
-                <Link href="/admin/clubs" className={lienSecondaire}>
-                  Clubs
-                </Link>
-                <Link href="/admin/rencontres" className={lienSecondaire}>
-                  Rencontres
-                </Link>
-                <Link href="/admin/grimpeurs" className={lienSecondaire}>
-                  Grimpeurs
-                </Link>
-                <Link href="/admin/mapping" className={lienSecondaire}>
-                  Administrer les rôles
-                </Link>
-                <Link href="/admin/jetons" className={lienSecondaire}>
-                  Jetons QR
-                </Link>
-              </>
+              <Link href="/admin" className={lienSecondaire}>
+                Ouvrir le tableau de bord →
+              </Link>
             )}
             {utilisateur.role === 'coach' && (
               <Link href="/coach/jetons" className={lienSecondaire}>
