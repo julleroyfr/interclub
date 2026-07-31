@@ -6,8 +6,12 @@ import { Bouton, Carte, Etiquette, TitreSection } from '@/composants'
 import { NIVEAUX_MOULINETTE, NIVEAUX_TETE } from '@/domaine/gabarit'
 import type { Categorie } from '@/domaine/rencontre'
 import {
+  ajouterBlocGabarit,
   ajouterVoieDifficulteGabarit,
+  ajouterVoieVitesseGabarit,
+  supprimerBlocGabarit,
   supprimerVoieDifficulteGabarit,
+  supprimerVoieVitesseGabarit,
   type EtatGabarit,
 } from '@/lib/gabarit/actions'
 import type { EpreuveGabaritVue } from '@/lib/gabarit/gabarit'
@@ -140,6 +144,132 @@ function SectionVoiesDifficulte({
   )
 }
 
+function SectionBlocs({ epreuve }: { epreuve: EpreuveGabaritVue }) {
+  const etatInitial: EtatGabarit = undefined
+  const [etatAjout, actionAjout, ajoutEnCours] = useActionState(ajouterBlocGabarit, etatInitial)
+  const [, actionSuppr] = useActionState(supprimerBlocGabarit, etatInitial)
+
+  const idCode = useId()
+
+  return (
+    <div className="flex flex-col gap-3">
+      {epreuve.blocs.length === 0 ? (
+        <p className="text-sm text-texte-attenue">Aucun bloc.</p>
+      ) : (
+        <ul className="flex flex-wrap gap-2">
+          {epreuve.blocs.map((b) => (
+            <li key={b.id} className="flex items-center gap-1">
+              <Etiquette variante="neutre">{b.code}</Etiquette>
+              <form action={actionSuppr}>
+                <input type="hidden" name="id" value={b.id} />
+                <Bouton type="submit" variante="fantome" taille="sm">
+                  ✕
+                </Bouton>
+              </form>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <form action={actionAjout} className="flex flex-wrap items-end gap-2 pt-1">
+        <input type="hidden" name="gabaritEpreuveId" value={epreuve.id} />
+
+        <div className="flex flex-col gap-1">
+          <label htmlFor={idCode} className="text-xs text-texte-attenue">
+            Code
+          </label>
+          <input
+            id={idCode}
+            name="code"
+            type="text"
+            placeholder="ex. B3"
+            required
+            className="w-24 rounded-lg border border-bordure bg-black/30 px-2 py-1.5 text-sm text-texte-fort placeholder:text-texte-attenue"
+          />
+        </div>
+
+        <Bouton type="submit" taille="sm" disabled={ajoutEnCours}>
+          + Bloc
+        </Bouton>
+
+        {etatAjout?.erreur && (
+          <p role="alert" className="w-full text-xs text-danger">
+            {etatAjout.erreur}
+          </p>
+        )}
+      </form>
+    </div>
+  )
+}
+
+function SectionVitesse({ epreuve }: { epreuve: EpreuveGabaritVue }) {
+  const etatInitial: EtatGabarit = undefined
+  const [etatAjout, actionAjout, ajoutEnCours] = useActionState(
+    ajouterVoieVitesseGabarit,
+    etatInitial,
+  )
+  const [, actionSuppr] = useActionState(supprimerVoieVitesseGabarit, etatInitial)
+
+  const idLibelle = useId()
+  const idSuggestions = useId()
+
+  return (
+    <div className="flex flex-col gap-3">
+      {epreuve.voiesVitesse.length === 0 ? (
+        <p className="text-sm text-texte-attenue">Aucune voie de vitesse.</p>
+      ) : (
+        <ul className="flex flex-wrap gap-2">
+          {epreuve.voiesVitesse.map((vv) => (
+            <li key={vv.id} className="flex items-center gap-1">
+              <Etiquette variante="neutre">{vv.libelle}</Etiquette>
+              <form action={actionSuppr}>
+                <input type="hidden" name="id" value={vv.id} />
+                <Bouton type="submit" variante="fantome" taille="sm">
+                  ✕
+                </Bouton>
+              </form>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <form action={actionAjout} className="flex flex-wrap items-end gap-2 pt-1">
+        <input type="hidden" name="gabaritEpreuveId" value={epreuve.id} />
+
+        <div className="flex flex-col gap-1">
+          <label htmlFor={idLibelle} className="text-xs text-texte-attenue">
+            Libellé
+          </label>
+          <input
+            id={idLibelle}
+            name="libelle"
+            type="text"
+            list={idSuggestions}
+            placeholder="ex. Mixte"
+            required
+            className="w-32 rounded-lg border border-bordure bg-black/30 px-2 py-1.5 text-sm text-texte-fort placeholder:text-texte-attenue"
+          />
+          <datalist id={idSuggestions}>
+            <option value="Filles" />
+            <option value="Garçons" />
+            <option value="Mixte" />
+          </datalist>
+        </div>
+
+        <Bouton type="submit" taille="sm" disabled={ajoutEnCours}>
+          + Voie
+        </Bouton>
+
+        {etatAjout?.erreur && (
+          <p role="alert" className="w-full text-xs text-danger">
+            {etatAjout.erreur}
+          </p>
+        )}
+      </form>
+    </div>
+  )
+}
+
 /** Panneau d'affichage et d'édition d'un gabarit par catégorie. */
 export function PanneauGabarit({
   categorie,
@@ -168,25 +298,9 @@ export function PanneauGabarit({
               <SectionVoiesDifficulte epreuve={e} categorie={categorie} />
             )}
 
-            {e.type === 'bloc' && (
-              <ul className="flex gap-2">
-                {e.blocs.map((b) => (
-                  <li key={b.id}>
-                    <Etiquette variante="neutre">{b.code}</Etiquette>
-                  </li>
-                ))}
-              </ul>
-            )}
+            {e.type === 'bloc' && <SectionBlocs epreuve={e} />}
 
-            {e.type === 'vitesse' && (
-              <ul className="flex gap-2">
-                {e.voiesVitesse.map((vv) => (
-                  <li key={vv.id}>
-                    <Etiquette variante="neutre">{vv.libelle}</Etiquette>
-                  </li>
-                ))}
-              </ul>
-            )}
+            {e.type === 'vitesse' && <SectionVitesse epreuve={e} />}
           </section>
         ))
       )}

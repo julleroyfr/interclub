@@ -76,6 +76,21 @@ Liste des rencontres : bouton **« Rencontres »** → `/admin/rencontres`.
 - **Attendu** : la voie disparaît ; message « Voie supprimée. ». Le gabarit
   revient à 1 voie T7.
 
+### CT-05a — Ajouter / supprimer un bloc du gabarit (R31)
+
+- **Étapes** : gabarit ado, épreuve **Bloc** → saisir le code « B3 » → **+ Bloc**.
+  Puis supprimer B3 (✕).
+- **Attendu** : « B3 » apparaît (« Bloc ajouté. ») puis disparaît (« Bloc
+  supprimé. »). Ajouter un code **déjà existant** (ex. « B1 ») → refus
+  « Le bloc « B1 » existe déjà. » (unicité `(épreuve, code)`).
+
+### CT-05b — Ajouter / supprimer une voie de vitesse + catégorie mixte (R31, R32)
+
+- **Étapes** : gabarit ado, épreuve **Vitesse** → saisir le libellé **« Mixte »**
+  (suggestions Filles / Garçons / Mixte proposées) → **+ Voie**. Puis supprimer.
+- **Attendu** : la voie « Mixte » s'ajoute à côté de Filles / Garçons (libellé
+  libre, R32) puis se supprime. Un libellé vide est refusé.
+
 ### CT-06 — Créer une rencontre : copie du gabarit (nominal, R30)
 
 - **Pré-condition** : gabarit enfant au format seed (CT-02).
@@ -167,6 +182,8 @@ Liste des rencontres : bouton **« Rencontres »** → `/admin/rencontres`.
 | CT-03 | | | | ⬜ | |
 | CT-04 | | | | ⬜ | |
 | CT-05 | | | | ⬜ | |
+| CT-05a | | | | ⬜ | |
+| CT-05b | | | | ⬜ | |
 | CT-06 | | | | ⬜ | |
 | CT-07 | | | | ⬜ | |
 | CT-08 | | | | ⬜ | |

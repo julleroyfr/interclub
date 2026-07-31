@@ -87,6 +87,121 @@ export async function supprimerVoieDifficulteGabarit(
   return { succes: 'Voie supprimée.' }
 }
 
+/** Ajoute un bloc au gabarit d'une catégorie (R31). */
+export async function ajouterBlocGabarit(
+  _etat: EtatGabarit,
+  formData: FormData,
+): Promise<EtatGabarit> {
+  const refus = await refuserSiNonAdmin()
+  if (refus) return refus
+
+  const gabaritEpreuveId = String(formData.get('gabaritEpreuveId') ?? '')
+  const code = String(formData.get('code') ?? '').trim()
+
+  if (!gabaritEpreuveId) return { erreur: 'Épreuve gabarit introuvable.' }
+  if (!code) return { erreur: 'Le code du bloc est obligatoire.' }
+
+  const supabase = await createClient()
+
+  const { data: dernier } = await supabase
+    .from('gabarit_bloc')
+    .select('ordre')
+    .eq('gabarit_epreuve_id', gabaritEpreuveId)
+    .order('ordre', { ascending: false })
+    .limit(1)
+    .single()
+
+  const ordre = ((dernier?.ordre as number | null) ?? 0) + 1
+
+  const { error } = await supabase.from('gabarit_bloc').insert({
+    gabarit_epreuve_id: gabaritEpreuveId,
+    code,
+    ordre,
+  })
+  if (error) {
+    if (error.code === '23505') return { erreur: `Le bloc « ${code} » existe déjà.` }
+    return { erreur: "L'ajout a échoué. Réessayez." }
+  }
+
+  revalidatePath('/admin/gabarit')
+  return { succes: 'Bloc ajouté.' }
+}
+
+/** Supprime un bloc du gabarit (R31). */
+export async function supprimerBlocGabarit(
+  _etat: EtatGabarit,
+  formData: FormData,
+): Promise<EtatGabarit> {
+  const refus = await refuserSiNonAdmin()
+  if (refus) return refus
+
+  const id = String(formData.get('id') ?? '')
+  if (!id) return { erreur: 'Bloc introuvable.' }
+
+  const supabase = await createClient()
+  const { error } = await supabase.from('gabarit_bloc').delete().eq('id', id)
+  if (error) return { erreur: 'La suppression a échoué. Réessayez.' }
+
+  revalidatePath('/admin/gabarit')
+  return { succes: 'Bloc supprimé.' }
+}
+
+/** Ajoute une voie de vitesse au gabarit (libellé libre, R31/R32). */
+export async function ajouterVoieVitesseGabarit(
+  _etat: EtatGabarit,
+  formData: FormData,
+): Promise<EtatGabarit> {
+  const refus = await refuserSiNonAdmin()
+  if (refus) return refus
+
+  const gabaritEpreuveId = String(formData.get('gabaritEpreuveId') ?? '')
+  const libelle = String(formData.get('libelle') ?? '').trim()
+
+  if (!gabaritEpreuveId) return { erreur: 'Épreuve gabarit introuvable.' }
+  if (!libelle) return { erreur: 'Le libellé de la voie de vitesse est obligatoire.' }
+
+  const supabase = await createClient()
+
+  const { data: derniere } = await supabase
+    .from('gabarit_voie_vitesse')
+    .select('ordre')
+    .eq('gabarit_epreuve_id', gabaritEpreuveId)
+    .order('ordre', { ascending: false })
+    .limit(1)
+    .single()
+
+  const ordre = ((derniere?.ordre as number | null) ?? 0) + 1
+
+  const { error } = await supabase.from('gabarit_voie_vitesse').insert({
+    gabarit_epreuve_id: gabaritEpreuveId,
+    libelle,
+    ordre,
+  })
+  if (error) return { erreur: "L'ajout a échoué. Réessayez." }
+
+  revalidatePath('/admin/gabarit')
+  return { succes: 'Voie de vitesse ajoutée.' }
+}
+
+/** Supprime une voie de vitesse du gabarit (R31). */
+export async function supprimerVoieVitesseGabarit(
+  _etat: EtatGabarit,
+  formData: FormData,
+): Promise<EtatGabarit> {
+  const refus = await refuserSiNonAdmin()
+  if (refus) return refus
+
+  const id = String(formData.get('id') ?? '')
+  if (!id) return { erreur: 'Voie de vitesse introuvable.' }
+
+  const supabase = await createClient()
+  const { error } = await supabase.from('gabarit_voie_vitesse').delete().eq('id', id)
+  if (error) return { erreur: 'La suppression a échoué. Réessayez.' }
+
+  revalidatePath('/admin/gabarit')
+  return { succes: 'Voie de vitesse supprimée.' }
+}
+
 /** Ajoute une voie de difficulté à une rencontre existante en phase pré-compétition (R36). */
 export async function ajouterVoieDifficulteRencontre(
   _etat: EtatGabarit,
