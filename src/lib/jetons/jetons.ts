@@ -16,7 +16,7 @@ export type RencontreVue = {
   clubPorteurNom: string | null
 }
 
-/** Club engagé dans une rencontre (périmètre d'un jeton coach temporaire). */
+/** Club pour lequel un jeton coach temporaire peut être généré (R19 spec #2). */
 export type ClubEngage = { id: string; nom: string }
 
 /** Voie de vitesse d'une rencontre (périmètre d'un jeton juge). */
@@ -106,22 +106,19 @@ export async function listerRencontresDuClub(
   return [...parId.values()]
 }
 
-/** Clubs engagés dans une rencontre (via les équipes). */
-export async function listerClubsEngages(
-  rencontreId: string,
-): Promise<ClubEngage[]> {
+/**
+ * Tous les clubs de la compétition — périmètre des jetons coach temporaire
+ * (R19 spec #2). Tous les clubs sont proposés, qu'ils aient ou non des équipes
+ * enregistrées pour la rencontre.
+ */
+export async function listerClubsEngages(): Promise<ClubEngage[]> {
   const admin = createAdminClient()
   const { data, error } = await admin
-    .from('equipe')
-    .select('club_id, club:club_id (nom)')
-    .eq('rencontre_id', rencontreId)
+    .from('club')
+    .select('id, nom')
+    .order('nom')
   if (error) throw error
-  const parId = new Map<string, ClubEngage>()
-  for (const e of data ?? []) {
-    const id = e.club_id as string
-    if (!parId.has(id)) parId.set(id, { id, nom: unNom(e.club) ?? id })
-  }
-  return [...parId.values()].sort((a, b) => a.nom.localeCompare(b.nom))
+  return (data ?? []).map((c) => ({ id: c.id as string, nom: c.nom as string }))
 }
 
 /** Voies de vitesse d'une rencontre. */

@@ -59,11 +59,12 @@ export async function creerRencontre(
   }
 
   const supabase = await createClient()
-  // La phase initiale (pré-compétition) est posée par défaut côté base (R5).
-  const { error } = await supabase.from('rencontre').insert({
-    date_rencontre: saisie.dateRencontre,
-    club_porteur_id: saisie.clubPorteurId,
-    categorie: saisie.categorie,
+  // Copie atomique du gabarit → rencontre (R30). La RPC gère la transaction :
+  // si l'une des insertions échoue, la rencontre n'est pas créée non plus.
+  const { error } = await supabase.rpc('creer_rencontre_avec_gabarit', {
+    p_date: saisie.dateRencontre,
+    p_club_porteur: saisie.clubPorteurId,
+    p_categorie: saisie.categorie,
   })
   if (error) return { erreur: messageErreur(error.code, 'ecriture') }
 

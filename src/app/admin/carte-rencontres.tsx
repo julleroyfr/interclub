@@ -7,6 +7,7 @@ import { Bouton, Carte, Etiquette, TitreSection } from '@/composants'
 import {
   CATEGORIES,
   PHASES,
+  labelSaison,
   phasePrecedente,
   phaseSuivante,
   type Phase,
@@ -65,7 +66,7 @@ function LigneRencontreTdb({ rencontre }: { rencontre: RencontreTdb }) {
         </Etiquette>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {precedente && (
           <form action={actionPhase}>
             <input type="hidden" name="id" value={rencontre.id} />
@@ -84,6 +85,14 @@ function LigneRencontreTdb({ rencontre }: { rencontre: RencontreTdb }) {
             </Bouton>
           </form>
         )}
+        <Link
+          href={`/admin/jetons?rencontre=${rencontre.id}`}
+          aria-label="Jetons QR de cette rencontre"
+          title="Jetons QR"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-bordure text-texte-attenue transition hover:border-accent/40 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+        >
+          <IconeQR />
+        </Link>
       </div>
 
       {etatPhase?.erreur && (
@@ -95,18 +104,54 @@ function LigneRencontreTdb({ rencontre }: { rencontre: RencontreTdb }) {
   )
 }
 
+function IconeQR() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className="h-4 w-4"
+    >
+      {/* cadre haut-gauche */}
+      <rect x="3" y="3" width="7" height="7" rx="1" />
+      <rect x="5" y="5" width="3" height="3" fill="currentColor" stroke="none" />
+      {/* cadre haut-droit */}
+      <rect x="14" y="3" width="7" height="7" rx="1" />
+      <rect x="16" y="5" width="3" height="3" fill="currentColor" stroke="none" />
+      {/* cadre bas-gauche */}
+      <rect x="3" y="14" width="7" height="7" rx="1" />
+      <rect x="5" y="16" width="3" height="3" fill="currentColor" stroke="none" />
+      {/* modules bas-droit */}
+      <rect x="14" y="14" width="3" height="3" fill="currentColor" stroke="none" />
+      <rect x="18" y="14" width="3" height="3" fill="currentColor" stroke="none" />
+      <rect x="14" y="18" width="3" height="3" fill="currentColor" stroke="none" />
+      <rect x="18" y="18" width="3" height="3" fill="currentColor" stroke="none" />
+    </svg>
+  )
+}
+
 /** Carte principale du tableau de bord : liste des rencontres + actions de phase. */
 export function CarteRencontres({
   rencontres,
   totalRencontres,
+  saison,
 }: {
   rencontres: RencontreTdb[]
   totalRencontres: number
+  saison: number
 }) {
   return (
     <Carte className="flex flex-col gap-4 p-5">
       <div className="flex items-center justify-between gap-3">
-        <TitreSection>Rencontres</TitreSection>
+        <div>
+          <TitreSection>Rencontres</TitreSection>
+          <p className="text-xs text-texte-attenue">Saison {labelSaison(saison)}</p>
+        </div>
         <Link
           href="/admin/rencontres"
           className="text-xs font-medium text-accent-doux hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"

@@ -1,6 +1,6 @@
 import 'server-only'
 
-import type { Categorie, Phase } from '@/domaine/rencontre'
+import { anneeSaison, bornesSaison, type Categorie, type Phase } from '@/domaine/rencontre'
 import { createClient } from '@/lib/supabase/server'
 
 /** Option de club porteur pour le formulaire de rencontre. */
@@ -10,6 +10,7 @@ export type OptionClub = { id: string; nom: string }
 export type RencontreAvecDependances = {
   id: string
   dateRencontre: string
+  saison: number
   categorie: Categorie
   phase: Phase
   clubPorteurId: string
@@ -27,19 +28,25 @@ export async function listerClubsOptions(): Promise<OptionClub[]> {
 }
 
 /**
- * Liste les rencontres (les plus récentes d'abord) avec le nom du club porteur
- * et le nombre d'équipes/épreuves rattachées — pour informer la suppression
- * (`equipe`/`epreuve` référencent la rencontre en `on delete cascade` : la
- * suppression emporterait ces enregistrements). Lecture via le client
- * `authenticated` ; l'admin voit tout. À appeler derrière la garde admin.
+ * Liste les rencontres d'une saison (les plus récentes d'abord) avec le nom
+ * du club porteur et le nombre d'équipes/épreuves rattachées (R27, R28 spec #3).
+ * Par défaut filtre sur la saison de `aujourdhui` ; passer `saison` pour une
+ * autre saison. À appeler derrière la garde admin.
  */
-export async function listerRencontres(): Promise<RencontreAvecDependances[]> {
+export async function listerRencontres(options: {
+  aujourdhui: string
+  saison?: number
+}): Promise<RencontreAvecDependances[]> {
   const supabase = await createClient()
+  const annee = options.saison ?? anneeSaison(options.aujourdhui)
+  const bornes = bornesSaison(annee)
 
   const [rencRes, clubsRes, eqRes, epRes] = await Promise.all([
     supabase
       .from('rencontre')
       .select('id, date_rencontre, categorie, phase, club_porteur_id')
+      .gte('date_rencontre', bornes.debut)
+      .lte('date_rencontre', bornes.fin)
       .order('date_rencontre', { ascending: false }),
     supabase.from('club').select('id, nom'),
     supabase.from('equipe').select('rencontre_id'),
@@ -70,9 +77,11 @@ export async function listerRencontres(): Promise<RencontreAvecDependances[]> {
   return (rencRes.data ?? []).map((r) => {
     const id = r.id as string
     const clubId = r.club_porteur_id as string
+    const dateRencontre = r.date_rencontre as string
     return {
       id,
-      dateRencontre: r.date_rencontre as string,
+      dateRencontre,
+      saison: anneeSaison(dateRencontre),
       categorie: r.categorie as Categorie,
       phase: r.phase as Phase,
       clubPorteurId: clubId,

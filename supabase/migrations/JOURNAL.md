@@ -19,6 +19,7 @@ jour à chaque application. Voir les règles :
 | `202607230900_rls_jeton_qr_et_grants` | Helper `club_courant()` + grants (`jeton_qr` écriture `authenticated` ; select `rencontre`/`voie_vitesse`/`equipe` `service_role`) + policies RLS de `jeton_qr` (admin tout ; coach temp. de son club) — T5c | 2026-07-25 / julleroyfr | _reporté (à la bascule sur `main`)_ |
 | `202607231000_session_qr_et_rpc` | Table `session_qr` (utilisateur_id → jeton_qr_id) + RLS select own + RPC `ouvrir_session_qr` SECURITY DEFINER (ADR 0001) — T5d | 2026-07-25 / julleroyfr | _reporté (à la bascule sur `main`)_ |
 | `202607251000_rls_tables_metier` | Policies RLS des 9 tables métier (T6) : helpers de périmètre SECURITY DEFINER (phase, coach temp./juge de rencontre, écritures équipe/composition/résultat/temps vitesse) + grants `authenticated` + policies par opération (matrice spec #1 + ADR 0001, 2 chemins acteur, gating de phase) | 2026-07-25 / julleroyfr | _reporté (à la bascule sur `main`)_ |
+| `202607291000_gabarit_et_voies_epreuve` | Gabarit de rencontre par catégorie (gabarit_epreuve/voie_difficulte/bloc/voie_vitesse) + tables rencontre voie_difficulte/bloc + libelle voie_vitesse + RPC creer_rencontre_avec_gabarit + seed enfant/ado (spec #3 R29–R37) | _à appliquer_ | _reporté_ |
 
 > Prod volontairement reportée : sera appliquée quand le code sera basculé sur
 > `main`. Schéma `interclub` à exposer à l'API en prod à ce moment-là (déjà fait

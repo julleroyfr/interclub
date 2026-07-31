@@ -6,6 +6,7 @@ import { Bouton, ChampSelect, ChampTexte, Etiquette } from '@/composants'
 import {
   CATEGORIES,
   PHASES,
+  labelSaison,
   phasePrecedente,
   phaseSuivante,
   type Phase,
@@ -146,6 +147,7 @@ function LigneRencontre({
                 {labelCategorie(rencontre.categorie)} · {rencontre.clubPorteurNom}
               </p>
               <p className="mt-1 text-xs text-texte-doux">
+                Saison {labelSaison(rencontre.saison)} ·{' '}
                 {rencontre.nbEquipes} équipe(s) · {rencontre.nbEpreuves} épreuve(s)
               </p>
             </div>

@@ -21,7 +21,8 @@ export default async function PageTableauDeBord() {
   const utilisateur = await getUtilisateurCourant()
   if (utilisateur?.role !== 'admin') notFound()
 
-  const { stats, rencontres, totalRencontres } = await chargerTableauDeBord()
+  const aujourdhui = new Date().toISOString().slice(0, 10)
+  const { stats, rencontres, totalRencontres, saison } = await chargerTableauDeBord(aujourdhui)
 
   return (
     <Coquille liens={liens}>
@@ -46,7 +47,11 @@ export default async function PageTableauDeBord() {
         {/* Grille principale : carte Rencontres (large) + cartes d'accès (colonne) */}
         <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[1fr_260px]">
           {/* Carte Rencontres — élément principal (R3, R5–R11) */}
-          <CarteRencontres rencontres={rencontres} totalRencontres={totalRencontres} />
+          <CarteRencontres
+            rencontres={rencontres}
+            totalRencontres={totalRencontres}
+            saison={saison}
+          />
 
           {/* Cartes d'accès secondaires (R12) */}
           <div className="flex flex-col gap-3">
@@ -65,6 +70,7 @@ export default async function PageTableauDeBord() {
             <Carte className="flex flex-col gap-2 p-4">
               <p className="text-sm font-semibold text-texte-fort">Accès</p>
               <nav className="flex flex-col gap-1" aria-label="Accès rapides">
+                <LienAccesRapide href="/admin/gabarit">Gabarit</LienAccesRapide>
                 <LienAccesRapide href="/admin/jetons">Jetons QR</LienAccesRapide>
                 <LienAccesRapide href="/admin/mapping">Rôles</LienAccesRapide>
               </nav>
