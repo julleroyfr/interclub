@@ -346,16 +346,16 @@ begin
     (ge_enfant_voie, 'M2', 'moulinette', '5a',  2),
     (ge_enfant_voie, 'M3', 'moulinette', '5b',  3),
     (ge_enfant_voie, 'M4', 'moulinette', '5c',  4),
-    -- Voies tête enfant : T1–T10
+    -- Voies tête enfant : T1–T10 (cotations règlement CT33 § Matin)
     (ge_enfant_voie, 'T1',  'tete', '4c',   5),
-    (ge_enfant_voie, 'T2',  'tete', '4c+',  6),
-    (ge_enfant_voie, 'T3',  'tete', '5a',   7),
-    (ge_enfant_voie, 'T4',  'tete', '5b',   8),
-    (ge_enfant_voie, 'T5',  'tete', '5c',   9),
-    (ge_enfant_voie, 'T6',  'tete', '6a',  10),
-    (ge_enfant_voie, 'T7',  'tete', '6b',  11),
-    (ge_enfant_voie, 'T8',  'tete', '6c',  12),
-    (ge_enfant_voie, 'T9',  'tete', '7a',  13),
+    (ge_enfant_voie, 'T2',  'tete', '5a',   6),
+    (ge_enfant_voie, 'T3',  'tete', '5b',   7),
+    (ge_enfant_voie, 'T4',  'tete', '5c',   8),
+    (ge_enfant_voie, 'T5',  'tete', '6a',   9),
+    (ge_enfant_voie, 'T6',  'tete', '6b',  10),
+    (ge_enfant_voie, 'T7',  'tete', '6c',  11),
+    (ge_enfant_voie, 'T8',  'tete', '7a',  12),
+    (ge_enfant_voie, 'T9',  'tete', '7b',  13),
     (ge_enfant_voie, 'T10', 'tete', '7c',  14)
   on conflict do nothing;
 
@@ -406,19 +406,19 @@ begin
     where categorie = 'ado' and type = 'voie';
   end if;
 
-  -- Voies tête ado : T1–T10 (pas de moulinette, R34/R37)
+  -- Voies tête ado : T1–T10 (pas de moulinette, R34/R37 ; cotations § Après-midi)
   insert into interclub.gabarit_voie_difficulte
     (gabarit_epreuve_id, niveau, type_voie, cotation, ordre)
   values
     (ge_ado_voie, 'T1',  'tete', '4c',   1),
-    (ge_ado_voie, 'T2',  'tete', '4c+',  2),
-    (ge_ado_voie, 'T3',  'tete', '5a',   3),
-    (ge_ado_voie, 'T4',  'tete', '5b',   4),
-    (ge_ado_voie, 'T5',  'tete', '5c',   5),
-    (ge_ado_voie, 'T6',  'tete', '6a',   6),
-    (ge_ado_voie, 'T7',  'tete', '6b',   7),
-    (ge_ado_voie, 'T8',  'tete', '6c',   8),
-    (ge_ado_voie, 'T9',  'tete', '7a',   9),
+    (ge_ado_voie, 'T2',  'tete', '5a',   2),
+    (ge_ado_voie, 'T3',  'tete', '5b',   3),
+    (ge_ado_voie, 'T4',  'tete', '5c',   4),
+    (ge_ado_voie, 'T5',  'tete', '6a',   5),
+    (ge_ado_voie, 'T6',  'tete', '6b',   6),
+    (ge_ado_voie, 'T7',  'tete', '6c',   7),
+    (ge_ado_voie, 'T8',  'tete', '7a',   8),
+    (ge_ado_voie, 'T9',  'tete', '7b',   9),
     (ge_ado_voie, 'T10', 'tete', '7c',  10)
   on conflict do nothing;
 
