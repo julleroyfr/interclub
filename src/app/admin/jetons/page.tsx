@@ -94,7 +94,7 @@ export default async function PageJetonsAdmin({
 
 async function SectionsRencontre({ rencontreId }: { rencontreId: string }) {
   const [clubs, voies, jetons] = await Promise.all([
-    listerClubsEngages(rencontreId),
+    listerClubsEngages(),
     listerVoies(rencontreId),
     listerJetonsActifs(rencontreId),
   ])
@@ -114,7 +114,7 @@ async function SectionsRencontre({ rencontreId }: { rencontreId: string }) {
       </div>
 
       <section className="flex flex-col gap-3">
-        <TitreSection>Coach temporaire (par club engagé)</TitreSection>
+        <TitreSection>Coach temporaire (par club)</TitreSection>
         {clubs.length === 0 ? (
           <p className="text-sm text-texte-attenue">Aucun club engagé.</p>
         ) : (

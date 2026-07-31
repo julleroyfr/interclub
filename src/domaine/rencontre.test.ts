@@ -4,6 +4,9 @@ import {
   CATEGORIES,
   PHASES,
   SaisieRencontreInvalideError,
+  anneeSaison,
+  bornesSaison,
+  labelSaison,
   normaliserSaisieRencontre,
   phasePrecedente,
   phaseSuivante,
@@ -77,6 +80,46 @@ describe('Saisie d’une rencontre (R12)', () => {
 
   it('expose les deux catégories du référentiel', () => {
     expect(CATEGORIES.map((c) => c.value)).toEqual(['enfant', 'ado'])
+  })
+})
+
+describe('Saison sportive (R37)', () => {
+  describe('anneeSaison — calcul depuis la date de la rencontre', () => {
+    it('rencontre en septembre → année de début de saison = année de la date (R37)', () => {
+      expect(anneeSaison('2025-09-01')).toBe(2025)
+    })
+
+    it('rencontre en décembre → année de début de saison = année de la date (R37)', () => {
+      expect(anneeSaison('2025-12-31')).toBe(2025)
+    })
+
+    it('rencontre en janvier → année de début de saison = année de la date − 1 (R37)', () => {
+      expect(anneeSaison('2026-01-01')).toBe(2025)
+    })
+
+    it('rencontre en août → année de début de saison = année de la date − 1 (R37)', () => {
+      expect(anneeSaison('2026-08-31')).toBe(2025)
+    })
+
+    it('1er septembre de l’année suivante → nouvelle saison (R37)', () => {
+      expect(anneeSaison('2026-09-01')).toBe(2026)
+    })
+  })
+
+  describe('bornesSaison — plage de dates SQL pour filtrer (R37)', () => {
+    it('saison 2025 va du 2025-09-01 au 2026-08-31 (R37)', () => {
+      expect(bornesSaison(2025)).toEqual({ debut: '2025-09-01', fin: '2026-08-31' })
+    })
+
+    it('saison 2024 va du 2024-09-01 au 2025-08-31 (R37)', () => {
+      expect(bornesSaison(2024)).toEqual({ debut: '2024-09-01', fin: '2025-08-31' })
+    })
+  })
+
+  describe('labelSaison — affichage lisible (R37)', () => {
+    it('saison 2025 → libellé "2025–2026"', () => {
+      expect(labelSaison(2025)).toBe('2025–2026')
+    })
   })
 })
 

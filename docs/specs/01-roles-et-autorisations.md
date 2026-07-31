@@ -46,8 +46,9 @@ conditionne les accès temporels.
   phases (voir R5). Porte exactement une **catégorie** (voir R34).
 - **Catégorie** : tranche d'âge d'une rencontre — **matin** (moins de 13 ans) ou
   **après-midi** (13/19 ans) — déterminée par l'année de naissance rapportée à
-  l'**année de la saison** (borne dynamique, pas une année figée). L'année-pivot
-  (les « 13 ans ») peut concourir dans les deux catégories.
+  l'**année de la saison** au sens de R37 (borne dynamique, pas une année
+  figée). L'année-pivot (les « 13 ans ») peut concourir dans les deux
+  catégories.
 - **Épreuve** : discipline évaluée lors d'une rencontre — **voie**, **bloc** ou
   **vitesse**.
 - **Vitesse** : épreuve chronométrée ; sa saisie porte, par grimpeur, sur un
@@ -62,6 +63,11 @@ conditionne les accès temporels.
   en surnombre ou prêtés.
 - **Infos publiques** : données de compétition consultables tous clubs confondus
   (calendrier, résultats, classements).
+- **Saison** : période de compétition allant du **1er septembre** au **31 août**
+  de l'année suivante, identifiée par son **année de début** (ex. saison 2025 =
+  2025-09-01 → 2026-08-31). L'appartenance d'une rencontre à une saison est
+  calculée dynamiquement à partir de sa date (R37) — aucun champ supplémentaire
+  en base.
 
 ## Règles fonctionnelles
 
@@ -178,6 +184,21 @@ conditionne les accès temporels.
   modification de ses **résultats** (R19), dans son périmètre et en phase ②
   compétition (R7). Le grimpeur reste rattaché à son **club d'origine** pour ses
   résultats individuels (classement — hors périmètre de cette spec).
+
+### Saison
+
+- **R37.** La **saison** d'une rencontre est calculée dynamiquement à partir de
+  sa **date** sans champ supplémentaire en base :
+  - date entre le **1er septembre** et le **31 décembre** inclus → année de la
+    saison = **année de la date** ;
+  - date entre le **1er janvier** et le **31 août** inclus → année de la saison
+    = **année de la date − 1**.
+  - Exemple : rencontre le 2025-11-15 → saison 2025 ; rencontre le 2026-03-10
+    → saison 2025 également.
+- **R38.** Les **résultats individuels**, **par équipe** et **par club** sont
+  calculés et agrégés **par saison** (R37) : seules les rencontres d'une même
+  saison contribuent aux classements de cette saison. Le détail du calcul est
+  couvert par la spec de classement (hors périmètre de cette spec).
 
 ## Matrice rôles × actions
 
@@ -323,6 +344,9 @@ l'ajouter lui-même (R35).
 - Un grimpeur est rattaché à un **club d'origine** ; son engagement dans une
   équipe d'accueil ou l'équipe CT33 (**prêt**) est posé par l'admin (R35), et la
   saisie de ses résultats suit le coach de l'équipe d'accueil (R36).
+- La **saison** d'une rencontre est une valeur **dérivée** de sa date (R37) —
+  pas de colonne `saison` en base ; elle est calculée à la lecture. Les
+  classements sont partitionnés par saison (R38).
 - **RLS attendue** :
   - lecture/écriture des équipes, grimpeurs et résultats **restreinte au club**
     du coach (R17–R20) ;

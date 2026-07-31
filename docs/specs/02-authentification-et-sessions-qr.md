@@ -34,9 +34,11 @@ alimente le modèle de données (mapping, jetons) et les policies **RLS**.
   rencontre.
 - **Périmètre** : ce qu'une session éphémère a le droit de toucher — un **club**
   (coach temporaire) ou une **voie de vitesse** d'une rencontre (juge).
-- **Voie de vitesse** : couloir/ligne de l'épreuve de vitesse d'une rencontre. Le
-  nombre de voies est **paramétrable** par rencontre. Un juge est affecté à **une**
-  voie. (À ne pas confondre avec l'épreuve « voie » = difficulté.)
+- **Voie de vitesse** : couloir/ligne de l'épreuve de vitesse d'une rencontre,
+  portant un **libellé** de classement (ex. « Filles », « Garçons »). Pour la
+  catégorie enfant, les 2 voies sont créées automatiquement (spec #3 R29–R31) ;
+  pour la catégorie ado le nombre est paramétrable. Un juge est affecté à
+  **une** voie. (À ne pas confondre avec l'épreuve « voie » = difficulté.)
 - **Affectation juge** : mise à disposition, par l'admin, du jeton QR « juge »
   d'une **voie de vitesse** d'une rencontre (spec #1 R15, R29).
 - **Révocation** : invalidation d'un jeton QR (et des sessions qu'il a ouvertes).
@@ -111,7 +113,9 @@ alimente le modèle de données (mapping, jetons) et les policies **RLS**.
   actif **par voie de vitesse** (le multi-usage, R8, couvre plusieurs personnes
   sur une même voie).
 - **R19.** Une rencontre a **au plus un** jeton QR « coach temporaire » actif
-  **par club engagé** dans cette rencontre.
+  **par club** : l'admin peut générer un jeton pour **tout club** de la
+  compétition, qu'il ait ou non des équipes enregistrées pour cette rencontre
+  (un club sans coach permanent a besoin du jeton pour inscrire ses équipes).
 
 ### Révocation & régénération
 
@@ -216,10 +220,10 @@ stateDiagram-v2
 - **Rencontre & demi-journée** : chaque demi-journée (catégorie matin /
   après-midi) est une **rencontre distincte** (spec #1 R34) ; un jeton QR est lié
   à **une** rencontre et ne vaut **pas** pour l'autre demi-journée.
-- **Voie de vitesse** : une rencontre a **0..n** voies de vitesse (nombre
-  paramétrable) ; chaque voie appartient à une rencontre et porte un identifiant
-  (ex. numéro) unique dans la rencontre (R9b, R17). Une voie correspond à un
-  **classement** (p. ex. filles / garçons, R18).
+- **Voie de vitesse** : une rencontre a **0..n** voies de vitesse ; pour la
+  catégorie enfant, les 2 voies (Filles / Garçons) sont auto-créées (spec #3
+  R29–R31). Chaque voie appartient à une rencontre, porte un identifiant unique
+  dans la rencontre et un **libellé** de classement (R9b, R17, R31).
 - **Jeton QR** : valeur **unique** ; lié à **une** rencontre ; de nature
   `coach_temporaire` (avec un `club_id`, sans voie) **ou** `juge` (avec une
   `voie_vitesse`, sans club) ; état **actif / révoqué** (R6, R9, R22).

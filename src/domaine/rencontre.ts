@@ -6,8 +6,8 @@
 
 /** Catégorie d'une rencontre (tranche d'âge, R34). Valeurs = contrainte SQL. */
 export const CATEGORIES = [
-  { value: 'enfant', label: 'Enfant — matin (moins de 13 ans)' },
-  { value: 'ado', label: 'Ado — après-midi (13 à 19 ans)' },
+  { value: 'enfant', label: 'Enfant — matin (moins de 13 ans)', labelCourt: 'Enfant' },
+  { value: 'ado', label: 'Ado — après-midi (13 à 19 ans)', labelCourt: 'Ado' },
 ] as const
 
 export type Categorie = (typeof CATEGORIES)[number]['value']
@@ -84,6 +84,30 @@ export function normaliserSaisieRencontre(
   }
 
   return { dateRencontre, clubPorteurId, categorie: categorie as Categorie }
+}
+
+/**
+ * Année de début de la saison sportive contenant la date donnée (R37).
+ * Sept–Déc → année de la date. Jan–Août → année de la date − 1.
+ * Exemple : '2026-03-10' → 2025 (saison 2025–2026).
+ */
+export function anneeSaison(dateISO: string): number {
+  const mois = Number(dateISO.slice(5, 7))
+  const annee = Number(dateISO.slice(0, 4))
+  return mois >= 9 ? annee : annee - 1
+}
+
+/** Bornes de dates SQL (gte/lte) pour filtrer les rencontres d'une saison (R37). */
+export function bornesSaison(annee: number): { debut: string; fin: string } {
+  return {
+    debut: `${annee}-09-01`,
+    fin: `${annee + 1}-08-31`,
+  }
+}
+
+/** Libellé lisible d'une saison (ex. 2025 → "2025–2026"). */
+export function labelSaison(annee: number): string {
+  return `${annee}–${annee + 1}`
 }
 
 /** Phase suivante dans le cycle (R5), ou `null` si déjà à la dernière. */

@@ -68,11 +68,14 @@ nouvelle : il **réagence** et **met en avant** des actions déjà spécifiées
 - **R9.** La carte offre un **accès à l'écran de gestion complet**
   (`/admin/rencontres`) pour la création/modification/suppression (non
   dupliquées sur le tableau de bord).
-- **R10.** Les rencontres sont triées par **date décroissante**, toutes phases
-  confondues. La carte n'en affiche que les **5 plus récentes** ; au-delà, un
-  lien **« voir tout »** mène à `/admin/rencontres`.
-- **R11.** Si aucune rencontre n'existe, la carte affiche un état vide invitant
-  à en **créer une** (lien vers `/admin/rencontres`).
+- **R10.** La carte affiche les rencontres de la **saison courante** (calculée
+  à partir de la date du jour, spec #1 R37), triées par **date décroissante**,
+  toutes phases confondues. Elle n'en affiche que les **5 plus récentes** de
+  cette saison ; au-delà, un lien **« voir tout »** mène à
+  `/admin/rencontres`.
+- **R11.** Si aucune rencontre n'existe **pour la saison courante**, la carte
+  affiche un état vide invitant à en **créer une** (lien vers
+  `/admin/rencontres`).
 
 ### Cartes secondaires
 
@@ -139,7 +142,7 @@ la phase passe à **compétition**, l'étiquette se met à jour et le bouton
 
 - Rencontre en **résultats publics** → pas de bouton « avancer » (R7).
 - Rencontre en **pré-compétition** → pas de bouton « revenir » (R7).
-- Aucune rencontre → carte en état vide avec invitation à créer (R11).
+- Aucune rencontre pour la saison courante → carte en état vide avec invitation à créer (R11).
 - Un non-admin atteint la page → aucune carte d'administration (R2).
 
 ## Contraintes de données
@@ -147,6 +150,9 @@ la phase passe à **compétition**, l'étiquette se met à jour et le bouton
 - Aucune nouvelle table ni migration. Lecture des rencontres (avec club porteur)
   et des compteurs clubs/grimpeurs via le client `authenticated` (l'admin voit
   tout).
+- La **saison courante** est calculée côté serveur à partir de la date du jour
+  (spec #1 R37) — aucune colonne `saison` en base ; le filtre s'applique sur
+  `rencontre.date`.
 - L'action de phase réutilise la Server Action **existante**
   `changerPhaseRencontre` et la policy **`rencontre_update_admin`** (spec #3).
 
