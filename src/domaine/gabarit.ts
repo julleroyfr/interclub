@@ -57,6 +57,26 @@ export function validerNiveauVoie(
   }
 }
 
+/** Points d'une voie ou d'un palier invalides (négatifs ou non entiers). */
+export class PointsInvalideError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'PointsInvalideError'
+  }
+}
+
+/**
+ * Valide qu'un nombre de points est un entier positif ou nul (R38, R39).
+ * Lance `PointsInvalideError` sinon.
+ */
+export function validerPoints(points: number, libelle = 'Les points'): void {
+  if (!Number.isInteger(points) || points < 0) {
+    throw new PointsInvalideError(
+      `${libelle} doivent être un entier positif ou nul (R38).`,
+    )
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Types pour la copie gabarit → rencontre (R30)
 // ---------------------------------------------------------------------------
@@ -65,12 +85,28 @@ export type GabaritVoieDifficulte = {
   niveau: string
   typeVoie: TypeVoie
   cotation: string
+  /** Points du top de la voie (R38). */
+  points: number
+  /** Prise valorisée — enfant tête uniquement (R38), sinon null. */
+  pointsPriseValorisee: number | null
+  /** Prise Zone 1 — ado uniquement (R38), sinon null. */
+  pointsZone1: number | null
+  /** Prise Zone 2 — ado uniquement (R38), sinon null. */
+  pointsZone2: number | null
+  ordre: number
+}
+
+/** Palier de points d'un bloc — meilleure tentative, pas de cumul (R39). */
+export type GabaritBlocPalier = {
+  libelle: string
+  points: number
   ordre: number
 }
 
 export type GabaritBloc = {
   code: string
   ordre: number
+  paliers: GabaritBlocPalier[]
 }
 
 export type GabaritVoieVitesse = {
@@ -98,7 +134,7 @@ export function construireEpreuvesDepuisGabarit(
   return gabarit.map((e) => ({
     type: e.type,
     voiesDifficulte: e.voiesDifficulte.map((v) => ({ ...v })),
-    blocs: e.blocs.map((b) => ({ ...b })),
+    blocs: e.blocs.map((b) => ({ ...b, paliers: b.paliers.map((p) => ({ ...p })) })),
     voiesVitesse: e.voiesVitesse.map((vv) => ({ ...vv })),
   }))
 }

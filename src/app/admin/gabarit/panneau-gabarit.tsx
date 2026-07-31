@@ -7,14 +7,17 @@ import { NIVEAUX_MOULINETTE, NIVEAUX_TETE } from '@/domaine/gabarit'
 import type { Categorie } from '@/domaine/rencontre'
 import {
   ajouterBlocGabarit,
+  ajouterPalierBlocGabarit,
   ajouterVoieDifficulteGabarit,
   ajouterVoieVitesseGabarit,
+  modifierPointsVoieGabarit,
   supprimerBlocGabarit,
+  supprimerPalierBlocGabarit,
   supprimerVoieDifficulteGabarit,
   supprimerVoieVitesseGabarit,
   type EtatGabarit,
 } from '@/lib/gabarit/actions'
-import type { EpreuveGabaritVue } from '@/lib/gabarit/gabarit'
+import type { BlocVue, EpreuveGabaritVue, VoieDifficulteVue } from '@/lib/gabarit/gabarit'
 
 const labelType: Record<string, string> = {
   voie: 'Voie de difficulté',
@@ -25,6 +28,107 @@ const labelType: Record<string, string> = {
 const labelTypeVoie: Record<string, string> = {
   moulinette: 'Moulinette',
   tete: 'Tête',
+}
+
+const champTexte =
+  'rounded-lg border border-bordure bg-black/30 px-2 py-1.5 text-sm text-texte-fort placeholder:text-texte-attenue'
+const champNombre = `w-16 ${champTexte}`
+
+/** Petit champ de points (entier ≥ 0) avec libellé compact. */
+function ChampPoints({
+  nom,
+  label,
+  defaultValue,
+  required = false,
+}: {
+  nom: string
+  label: string
+  defaultValue?: number | null
+  required?: boolean
+}) {
+  return (
+    <label className="flex flex-col gap-0.5">
+      <span className="text-[0.7rem] text-texte-attenue">{label}</span>
+      <input
+        name={nom}
+        type="number"
+        min={0}
+        step={1}
+        required={required}
+        defaultValue={defaultValue ?? undefined}
+        className={champNombre}
+      />
+    </label>
+  )
+}
+
+/** Une voie du gabarit : identité + édition des points (R38). */
+function LigneVoieDifficulte({
+  voie,
+  categorie,
+}: {
+  voie: VoieDifficulteVue
+  categorie: Categorie
+}) {
+  const etatInitial: EtatGabarit = undefined
+  const [etatPoints, actionPoints, majEnCours] = useActionState(
+    modifierPointsVoieGabarit,
+    etatInitial,
+  )
+  const [, actionSuppr] = useActionState(supprimerVoieDifficulteGabarit, etatInitial)
+
+  const estEnfantTete = categorie === 'enfant' && voie.typeVoie === 'tete'
+  const estAdo = categorie === 'ado'
+
+  return (
+    <li className="flex flex-col gap-1 border-b border-bordure/40 pb-2 last:border-0">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm text-texte-fort">
+          {voie.niveau}
+          <span className="ml-1.5 text-texte-attenue">
+            {labelTypeVoie[voie.typeVoie]} · {voie.cotation}
+          </span>
+        </span>
+        <form action={actionSuppr}>
+          <input type="hidden" name="id" value={voie.id} />
+          <Bouton type="submit" variante="fantome" taille="sm">
+            ✕
+          </Bouton>
+        </form>
+      </div>
+
+      <form action={actionPoints} className="flex flex-wrap items-end gap-2">
+        <input type="hidden" name="id" value={voie.id} />
+        <input type="hidden" name="categorie" value={categorie} />
+        <input type="hidden" name="typeVoie" value={voie.typeVoie} />
+
+        <ChampPoints nom="points" label="Voie entière" defaultValue={voie.points} required />
+        {estEnfantTete && (
+          <ChampPoints
+            nom="pointsPriseValorisee"
+            label="Prise valorisée"
+            defaultValue={voie.pointsPriseValorisee}
+          />
+        )}
+        {estAdo && (
+          <>
+            <ChampPoints nom="pointsZone1" label="Zone 1" defaultValue={voie.pointsZone1} />
+            <ChampPoints nom="pointsZone2" label="Zone 2" defaultValue={voie.pointsZone2} />
+          </>
+        )}
+
+        <Bouton type="submit" variante="secondaire" taille="sm" disabled={majEnCours}>
+          Enregistrer
+        </Bouton>
+
+        {etatPoints?.erreur && (
+          <p role="alert" className="w-full text-xs text-danger">
+            {etatPoints.erreur}
+          </p>
+        )}
+      </form>
+    </li>
+  )
 }
 
 function SectionVoiesDifficulte({
@@ -39,7 +143,6 @@ function SectionVoiesDifficulte({
     ajouterVoieDifficulteGabarit,
     etatInitial,
   )
-  const [, actionSuppr] = useActionState(supprimerVoieDifficulteGabarit, etatInitial)
 
   const idNiveau = useId()
   const idTypeVoie = useId()
@@ -53,22 +156,9 @@ function SectionVoiesDifficulte({
       {epreuve.voiesDifficulte.length === 0 ? (
         <p className="text-sm text-texte-attenue">Aucune voie de difficulté.</p>
       ) : (
-        <ul className="flex flex-col gap-1">
+        <ul className="flex flex-col gap-2">
           {epreuve.voiesDifficulte.map((v) => (
-            <li key={v.id} className="flex items-center justify-between gap-2">
-              <span className="text-sm text-texte-fort">
-                {v.niveau}
-                <span className="ml-1.5 text-texte-attenue">
-                  {labelTypeVoie[v.typeVoie]} · {v.cotation}
-                </span>
-              </span>
-              <form action={actionSuppr}>
-                <input type="hidden" name="id" value={v.id} />
-                <Bouton type="submit" variante="fantome" taille="sm">
-                  ✕
-                </Bouton>
-              </form>
-            </li>
+            <LigneVoieDifficulte key={v.id} voie={v} categorie={categorie} />
           ))}
         </ul>
       )}
@@ -126,9 +216,18 @@ function SectionVoiesDifficulte({
             type="text"
             placeholder="ex. 6a+"
             required
-            className="w-20 rounded-lg border border-bordure bg-black/30 px-2 py-1.5 text-sm text-texte-fort placeholder:text-texte-attenue"
+            className={`w-20 ${champTexte}`}
           />
         </div>
+
+        <ChampPoints nom="points" label="Voie entière" required />
+        {categorie === 'enfant' && <ChampPoints nom="pointsPriseValorisee" label="Prise valo." />}
+        {categorie === 'ado' && (
+          <>
+            <ChampPoints nom="pointsZone1" label="Zone 1" />
+            <ChampPoints nom="pointsZone2" label="Zone 2" />
+          </>
+        )}
 
         <Bouton type="submit" taille="sm" disabled={ajoutEnCours}>
           + Voie
@@ -144,10 +243,82 @@ function SectionVoiesDifficulte({
   )
 }
 
+/** Un bloc du gabarit : code + paliers de points éditables (R39). */
+function LigneBloc({ bloc }: { bloc: BlocVue }) {
+  const etatInitial: EtatGabarit = undefined
+  const [, actionSupprBloc] = useActionState(supprimerBlocGabarit, etatInitial)
+  const [etatPalier, actionAjoutPalier, ajoutEnCours] = useActionState(
+    ajouterPalierBlocGabarit,
+    etatInitial,
+  )
+  const [, actionSupprPalier] = useActionState(supprimerPalierBlocGabarit, etatInitial)
+
+  return (
+    <li className="flex flex-col gap-2 rounded-lg border border-bordure/50 p-3">
+      <div className="flex items-center justify-between gap-2">
+        <Etiquette variante="neutre">{bloc.code}</Etiquette>
+        <form action={actionSupprBloc}>
+          <input type="hidden" name="id" value={bloc.id} />
+          <Bouton type="submit" variante="fantome" taille="sm">
+            ✕ bloc
+          </Bouton>
+        </form>
+      </div>
+
+      {bloc.paliers.length === 0 ? (
+        <p className="text-xs text-texte-attenue">Aucun palier.</p>
+      ) : (
+        <ul className="flex flex-col gap-1">
+          {bloc.paliers.map((p) => (
+            <li key={p.id} className="flex items-center justify-between gap-2 text-sm">
+              <span className="text-texte-fort">
+                {p.libelle}
+                <span className="ml-1.5 text-texte-attenue">{p.points} pts</span>
+              </span>
+              <form action={actionSupprPalier}>
+                <input type="hidden" name="id" value={p.id} />
+                <Bouton type="submit" variante="fantome" taille="sm">
+                  ✕
+                </Bouton>
+              </form>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <form action={actionAjoutPalier} className="flex flex-wrap items-end gap-2">
+        <input type="hidden" name="gabaritBlocId" value={bloc.id} />
+
+        <label className="flex flex-col gap-0.5">
+          <span className="text-[0.7rem] text-texte-attenue">Palier</span>
+          <input
+            name="libelle"
+            type="text"
+            placeholder="ex. Zone 1"
+            required
+            className={`w-28 ${champTexte}`}
+          />
+        </label>
+
+        <ChampPoints nom="points" label="Points" required />
+
+        <Bouton type="submit" variante="secondaire" taille="sm" disabled={ajoutEnCours}>
+          + Palier
+        </Bouton>
+
+        {etatPalier?.erreur && (
+          <p role="alert" className="w-full text-xs text-danger">
+            {etatPalier.erreur}
+          </p>
+        )}
+      </form>
+    </li>
+  )
+}
+
 function SectionBlocs({ epreuve }: { epreuve: EpreuveGabaritVue }) {
   const etatInitial: EtatGabarit = undefined
   const [etatAjout, actionAjout, ajoutEnCours] = useActionState(ajouterBlocGabarit, etatInitial)
-  const [, actionSuppr] = useActionState(supprimerBlocGabarit, etatInitial)
 
   const idCode = useId()
 
@@ -156,17 +327,9 @@ function SectionBlocs({ epreuve }: { epreuve: EpreuveGabaritVue }) {
       {epreuve.blocs.length === 0 ? (
         <p className="text-sm text-texte-attenue">Aucun bloc.</p>
       ) : (
-        <ul className="flex flex-wrap gap-2">
+        <ul className="flex flex-col gap-2">
           {epreuve.blocs.map((b) => (
-            <li key={b.id} className="flex items-center gap-1">
-              <Etiquette variante="neutre">{b.code}</Etiquette>
-              <form action={actionSuppr}>
-                <input type="hidden" name="id" value={b.id} />
-                <Bouton type="submit" variante="fantome" taille="sm">
-                  ✕
-                </Bouton>
-              </form>
-            </li>
+            <LigneBloc key={b.id} bloc={b} />
           ))}
         </ul>
       )}
@@ -184,7 +347,7 @@ function SectionBlocs({ epreuve }: { epreuve: EpreuveGabaritVue }) {
             type="text"
             placeholder="ex. B3"
             required
-            className="w-24 rounded-lg border border-bordure bg-black/30 px-2 py-1.5 text-sm text-texte-fort placeholder:text-texte-attenue"
+            className={`w-24 ${champTexte}`}
           />
         </div>
 

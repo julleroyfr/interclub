@@ -4,10 +4,30 @@ import {
   NiveauVoieInvalideError,
   NIVEAUX_MOULINETTE,
   NIVEAUX_TETE,
+  PointsInvalideError,
   construireEpreuvesDepuisGabarit,
   validerNiveauVoie,
+  validerPoints,
   type GabaritEpreuve,
 } from './gabarit'
+
+// Fabrique une voie de difficulté complète (points par défaut) pour les tests.
+function voie(
+  o: Partial<GabaritEpreuve['voiesDifficulte'][number]> & {
+    niveau: string
+    ordre: number
+  },
+): GabaritEpreuve['voiesDifficulte'][number] {
+  return {
+    typeVoie: 'tete',
+    cotation: '',
+    points: 0,
+    pointsPriseValorisee: null,
+    pointsZone1: null,
+    pointsZone2: null,
+    ...o,
+  }
+}
 
 // Spec #3 — Gabarit de rencontre.
 // R37 : niveau d'une voie de difficulté contraint aux valeurs réglementaires.
@@ -63,6 +83,23 @@ describe('Validation du niveau de voie (R37)', () => {
   })
 })
 
+describe('Validation des points (R38, R39)', () => {
+  it('accepte 0 et les entiers positifs', () => {
+    for (const n of [0, 1, 4, 22, 60]) {
+      expect(() => validerPoints(n)).not.toThrow()
+    }
+  })
+
+  it('refuse un nombre négatif', () => {
+    expect(() => validerPoints(-1)).toThrow(PointsInvalideError)
+  })
+
+  it('refuse un non-entier', () => {
+    expect(() => validerPoints(2.5)).toThrow(PointsInvalideError)
+    expect(() => validerPoints(Number.NaN)).toThrow(PointsInvalideError)
+  })
+})
+
 describe('Copie gabarit → épreuves de rencontre (R30)', () => {
   it('produit une liste vide depuis un gabarit vide (R35)', () => {
     expect(construireEpreuvesDepuisGabarit([])).toEqual([])
@@ -79,14 +116,14 @@ describe('Copie gabarit → épreuves de rencontre (R30)', () => {
     expect(resultat.map((e) => e.type)).toEqual(['voie', 'bloc', 'vitesse'])
   })
 
-  it('copie les voies de difficulté avec leurs attributs (R30)', () => {
+  it('copie les voies de difficulté avec leurs attributs et leurs points (R30, R38)', () => {
     const gabarit: GabaritEpreuve[] = [
       {
         type: 'voie',
         voiesDifficulte: [
-          { niveau: 'M1', typeVoie: 'moulinette', cotation: '4c', ordre: 1 },
-          { niveau: 'T5', typeVoie: 'tete', cotation: '6a', ordre: 2 },
-          { niveau: 'T5', typeVoie: 'tete', cotation: '6a+', ordre: 3 },
+          voie({ niveau: 'M1', typeVoie: 'moulinette', cotation: '4c', points: 1, ordre: 1 }),
+          voie({ niveau: 'T5', typeVoie: 'tete', cotation: '6a', points: 9, pointsPriseValorisee: 5, ordre: 2 }),
+          voie({ niveau: 'T5', typeVoie: 'tete', cotation: '6a+', points: 9, pointsPriseValorisee: 5, ordre: 3 }),
         ],
         blocs: [],
         voiesVitesse: [],
@@ -94,29 +131,54 @@ describe('Copie gabarit → épreuves de rencontre (R30)', () => {
     ]
     const [epreuve] = construireEpreuvesDepuisGabarit(gabarit)
     expect(epreuve.voiesDifficulte).toHaveLength(3)
-    expect(epreuve.voiesDifficulte[0]).toEqual({ niveau: 'M1', typeVoie: 'moulinette', cotation: '4c', ordre: 1 })
-    expect(epreuve.voiesDifficulte[1]).toEqual({ niveau: 'T5', typeVoie: 'tete', cotation: '6a', ordre: 2 })
-    // deux voies au même niveau T5 (doublée)
-    expect(epreuve.voiesDifficulte[2]).toEqual({ niveau: 'T5', typeVoie: 'tete', cotation: '6a+', ordre: 3 })
+    expect(epreuve.voiesDifficulte[0].points).toBe(1)
+    expect(epreuve.voiesDifficulte[0].pointsPriseValorisee).toBeNull()
+    expect(epreuve.voiesDifficulte[1].pointsPriseValorisee).toBe(5)
+    // deux voies au même niveau T5 (doublée) — points identiques copiés
+    expect(epreuve.voiesDifficulte[2]).toEqual(
+      voie({ niveau: 'T5', typeVoie: 'tete', cotation: '6a+', points: 9, pointsPriseValorisee: 5, ordre: 3 }),
+    )
   })
 
-  it('copie les blocs avec leurs attributs (R30)', () => {
+  it('copie les blocs avec leurs paliers de points (R30, R39)', () => {
     const gabarit: GabaritEpreuve[] = [
       {
         type: 'bloc',
         voiesDifficulte: [],
         blocs: [
-          { code: 'B1', ordre: 1 },
-          { code: 'B2', ordre: 2 },
+          {
+            code: 'B1',
+            ordre: 1,
+            paliers: [
+              { libelle: '1er essai', points: 4, ordre: 1 },
+              { libelle: '2e essai', points: 3, ordre: 2 },
+            ],
+          },
+          { code: 'B2', ordre: 2, paliers: [] },
         ],
         voiesVitesse: [],
       },
     ]
     const [epreuve] = construireEpreuvesDepuisGabarit(gabarit)
-    expect(epreuve.blocs).toEqual([
-      { code: 'B1', ordre: 1 },
-      { code: 'B2', ordre: 2 },
+    expect(epreuve.blocs[0].paliers).toEqual([
+      { libelle: '1er essai', points: 4, ordre: 1 },
+      { libelle: '2e essai', points: 3, ordre: 2 },
     ])
+    expect(epreuve.blocs[1].paliers).toEqual([])
+  })
+
+  it('une copie de bloc est indépendante — modifier ses paliers ne touche pas le gabarit (R30)', () => {
+    const gabarit: GabaritEpreuve[] = [
+      {
+        type: 'bloc',
+        voiesDifficulte: [],
+        blocs: [{ code: 'B1', ordre: 1, paliers: [{ libelle: 'Zone', points: 10, ordre: 1 }] }],
+        voiesVitesse: [],
+      },
+    ]
+    const [epreuve] = construireEpreuvesDepuisGabarit(gabarit)
+    epreuve.blocs[0].paliers.push({ libelle: 'Complet', points: 30, ordre: 2 })
+    expect(gabarit[0].blocs[0].paliers).toHaveLength(1)
   })
 
   it('copie les voies de vitesse avec leurs libellés (R30, R32)', () => {
@@ -143,9 +205,9 @@ describe('Copie gabarit → épreuves de rencontre (R30)', () => {
       {
         type: 'voie',
         voiesDifficulte: [
-          { niveau: 'T3', typeVoie: 'tete', cotation: '5b', ordre: 1 },
-          { niveau: 'T1', typeVoie: 'tete', cotation: '4c', ordre: 2 },
-          { niveau: 'T2', typeVoie: 'tete', cotation: '5a', ordre: 3 },
+          voie({ niveau: 'T3', typeVoie: 'tete', cotation: '5b', ordre: 1 }),
+          voie({ niveau: 'T1', typeVoie: 'tete', cotation: '4c', ordre: 2 }),
+          voie({ niveau: 'T2', typeVoie: 'tete', cotation: '5a', ordre: 3 }),
         ],
         blocs: [],
         voiesVitesse: [],
@@ -160,13 +222,13 @@ describe('Copie gabarit → épreuves de rencontre (R30)', () => {
     const gabarit: GabaritEpreuve[] = [
       {
         type: 'voie',
-        voiesDifficulte: [{ niveau: 'T1', typeVoie: 'tete', cotation: '4c', ordre: 1 }],
+        voiesDifficulte: [voie({ niveau: 'T1', typeVoie: 'tete', cotation: '4c', ordre: 1 })],
         blocs: [],
         voiesVitesse: [],
       },
     ]
     const resultat = construireEpreuvesDepuisGabarit(gabarit)
-    resultat[0].voiesDifficulte.push({ niveau: 'T2', typeVoie: 'tete', cotation: '5a', ordre: 2 })
+    resultat[0].voiesDifficulte.push(voie({ niveau: 'T2', typeVoie: 'tete', cotation: '5a', ordre: 2 }))
     expect(gabarit[0].voiesDifficulte).toHaveLength(1)
   })
 })

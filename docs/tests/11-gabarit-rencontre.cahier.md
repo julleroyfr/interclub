@@ -91,13 +91,35 @@ Liste des rencontres : bouton **« Rencontres »** → `/admin/rencontres`.
 - **Attendu** : la voie « Mixte » s'ajoute à côté de Filles / Garçons (libellé
   libre, R32) puis se supprime. Un libellé vide est refusé.
 
+### CT-05c — Points des voies de difficulté pré-remplis et éditables (R38)
+
+- **Étapes** : ouvrir `/admin/gabarit`, section Voie de difficulté.
+- **Attendu** :
+  - Enfant : chaque voie affiche « voie entière » (M1=1 … T10=14) ; les têtes
+    ont une **prise valorisée** (T1=3 … T10=8) ; les moulinettes n'en ont pas.
+  - Ado : chaque voie affiche voie entière + **Zone 1 / Zone 2** (T1 = 4 / 1 / 2
+    … T10 = 22 / 19 / 20).
+  - Modifier un champ de points d'une voie → **Enregistrer** ; la valeur persiste
+    (« Points mis à jour. »). Une valeur négative ou décimale est **refusée**.
+
+### CT-05d — Paliers de blocs pré-remplis et éditables (R39)
+
+- **Étapes** : section Bloc.
+- **Attendu** :
+  - Enfant : B1 = « 1er essai » 4 / « 2e essai » 3 ; B2 = 6 / 5 / 4.
+  - Ado : B1 = « Zone » 10 / « Bloc complet » 30 ; B2 = « Zone 1 » 20 /
+    « Zone 2 » 40 / « Bloc complet » 60.
+  - Ajouter un palier (libellé + points) puis le supprimer fonctionne ; points
+    négatifs/décimaux refusés.
+
 ### CT-06 — Créer une rencontre : copie du gabarit (nominal, R30)
 
 - **Pré-condition** : gabarit enfant au format seed (CT-02).
 - **Étapes** : `/admin/rencontres` → créer une rencontre, catégorie **enfant**.
 - **Attendu** : rencontre créée en phase **pré-compétition** ; sa structure
-  reprend le gabarit **copié** : **3 épreuves**, **14 voies de difficulté**,
-  **2 blocs**, **2 voies de vitesse** (libellées « Filles » / « Garçons », R32).
+  reprend le gabarit **copié** : **3 épreuves**, **14 voies de difficulté**
+  (avec leurs **points**, R38), **2 blocs** (avec leurs **paliers**, R39),
+  **2 voies de vitesse** (libellées « Filles » / « Garçons », R32).
 
 ### CT-07 — La modification du gabarit n'affecte pas les rencontres créées (R30)
 
@@ -184,6 +206,8 @@ Liste des rencontres : bouton **« Rencontres »** → `/admin/rencontres`.
 | CT-05 | | | | ⬜ | |
 | CT-05a | | | | ⬜ | |
 | CT-05b | | | | ⬜ | |
+| CT-05c | | | | ⬜ | |
+| CT-05d | | | | ⬜ | |
 | CT-06 | | | | ⬜ | |
 | CT-07 | | | | ⬜ | |
 | CT-08 | | | | ⬜ | |

@@ -11,6 +11,17 @@ export type VoieDifficulteVue = {
   niveau: string
   typeVoie: TypeVoie
   cotation: string
+  points: number
+  pointsPriseValorisee: number | null
+  pointsZone1: number | null
+  pointsZone2: number | null
+  ordre: number
+}
+
+export type BlocPalierVue = {
+  id: string
+  libelle: string
+  points: number
   ordre: number
 }
 
@@ -18,6 +29,7 @@ export type BlocVue = {
   id: string
   code: string
   ordre: number
+  paliers: BlocPalierVue[]
 }
 
 export type VoieVitesseGabaritVue = {
@@ -57,7 +69,9 @@ export async function listerGabarit(categorie: Categorie): Promise<EpreuveGabari
   ] = await Promise.all([
     admin
       .from('gabarit_voie_difficulte')
-      .select('id, gabarit_epreuve_id, niveau, type_voie, cotation, ordre')
+      .select(
+        'id, gabarit_epreuve_id, niveau, type_voie, cotation, points, points_prise_valorisee, points_zone1, points_zone2, ordre',
+      )
       .in('gabarit_epreuve_id', ids)
       .order('ordre'),
     admin
@@ -75,6 +89,18 @@ export async function listerGabarit(categorie: Categorie): Promise<EpreuveGabari
   if (errBlocs) throw errBlocs
   if (errVitesses) throw errVitesses
 
+  // Paliers de blocs (R39) — chargés séparément puis regroupés par bloc.
+  const blocIds = (blocs ?? []).map((b) => b.id as string)
+  const { data: paliers, error: errPaliers } =
+    blocIds.length === 0
+      ? { data: [], error: null }
+      : await admin
+          .from('gabarit_bloc_palier')
+          .select('id, gabarit_bloc_id, libelle, points, ordre')
+          .in('gabarit_bloc_id', blocIds)
+          .order('ordre')
+  if (errPaliers) throw errPaliers
+
   return epreuves.map((e) => ({
     id: e.id as string,
     categorie: e.categorie as Categorie,
@@ -86,6 +112,10 @@ export async function listerGabarit(categorie: Categorie): Promise<EpreuveGabari
         niveau: v.niveau as string,
         typeVoie: v.type_voie as TypeVoie,
         cotation: v.cotation as string,
+        points: v.points as number,
+        pointsPriseValorisee: (v.points_prise_valorisee as number | null) ?? null,
+        pointsZone1: (v.points_zone1 as number | null) ?? null,
+        pointsZone2: (v.points_zone2 as number | null) ?? null,
         ordre: v.ordre as number,
       })),
     blocs: (blocs ?? [])
@@ -94,6 +124,14 @@ export async function listerGabarit(categorie: Categorie): Promise<EpreuveGabari
         id: b.id as string,
         code: b.code as string,
         ordre: b.ordre as number,
+        paliers: (paliers ?? [])
+          .filter((p) => p.gabarit_bloc_id === b.id)
+          .map((p) => ({
+            id: p.id as string,
+            libelle: p.libelle as string,
+            points: p.points as number,
+            ordre: p.ordre as number,
+          })),
       })),
     voiesVitesse: (vitesses ?? [])
       .filter((vv) => vv.gabarit_epreuve_id === e.id)

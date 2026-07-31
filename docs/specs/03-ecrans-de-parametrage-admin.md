@@ -44,6 +44,20 @@ saisie, les flux CRUD, et les règles de suppression (dépendances / cascade).
   (`enfant` ou `ado`), définissant les épreuves et leurs voies. L'admin peut le
   modifier via l'IHM ; les rencontres futures en héritent par copie. Toute
   modification du gabarit est sans effet sur les rencontres déjà créées.
+- **Points d'une voie de difficulté** : crédits attribués selon la tentative,
+  fixés par le règlement CT33 mais **stockés et éditables** par voie (gabarit et
+  rencontre) :
+  - **Points voie entière** : points du *top* de la voie (obligatoire).
+  - **Prise valorisée** (enfant, voies **tête** uniquement) : crédit
+    intermédiaire d'une prise stratégique (≈ moitié des points voie entière).
+  - **Prise Zone 1 / Zone 2** (ado) : deux crédits intermédiaires ; les points de
+    Zone ne sont pas cumulatifs.
+  - Les voies **moulinette** (enfant) n'ont ni prise valorisée ni zones.
+- **Palier de bloc** : crédit attribué à un bloc selon la **meilleure tentative**
+  (pas de cumul), fixé par le règlement mais **stocké et éditable**. La structure
+  diffère selon la catégorie — enfant : un palier **par numéro d'essai** ; ado :
+  un palier **par zone** puis « bloc complet ». Chaque palier porte un libellé
+  (ex. « 1er essai », « Zone 1 », « Bloc complet ») et un nombre de points.
 
 ## Règles fonctionnelles
 
@@ -150,14 +164,18 @@ saisie, les flux CRUD, et les règles de suppression (dépendances / cascade).
   difficulté, bloc, vitesse) et leurs **voies** associées. L'admin peut
   consulter et modifier ces gabarits via l'IHM.
 - **R30.** À la **création** d'une rencontre, le gabarit de sa catégorie est
-  **copié** dans la rencontre : épreuves et voies sont instanciées telles
-  qu'elles sont au moment de la création. Toute modification ultérieure du
-  gabarit est **sans effet** sur les rencontres déjà créées.
+  **copié** dans la rencontre : épreuves, voies, **points de voies** (R38) et
+  **paliers de blocs** (R39) sont instanciés tels qu'ils sont au moment de la
+  création. Toute modification ultérieure du gabarit est **sans effet** sur les
+  rencontres déjà créées.
 - **R31.** L'admin peut, dans un gabarit, **ajouter**, **modifier** ou
   **supprimer** des épreuves, des voies de difficulté, des blocs et des voies de
   vitesse. Pour une voie de difficulté, il choisit son **niveau** (parmi les
-  niveaux réglementaires de la catégorie) et sa **cotation** (libellé libre, ex.
-  « 5c+ »). Plusieurs voies peuvent partager le même niveau (doublées, triplées).
+  niveaux réglementaires de la catégorie), sa **cotation** (libellé libre, ex.
+  « 5c+ ») et ses **points** (voie entière + prise valorisée ou zones selon la
+  catégorie, R38). Pour un bloc, il édite son **code** et ses **paliers** de
+  points (R39). Plusieurs voies peuvent partager le même niveau (doublées,
+  triplées).
 - **R32.** Une **voie de vitesse** (dans le gabarit ou dans une rencontre) porte
   un **libellé** indiquant le classement concerné (ex. « Filles »,
   « Garçons »). Ce libellé est utilisé dans les écrans de jetons QR et
@@ -167,18 +185,18 @@ saisie, les flux CRUD, et les règles de suppression (dépendances / cascade).
 
   | Épreuve | Contenu | Détail |
   |---------|---------|--------|
-  | Voie de difficulté | 14 voies | M1 (4c), M2 (5a), M3 (5b), M4 (5c) moulinette · T1 (4c) à T10 (7c) tête |
-  | Bloc | 2 blocs | B1, B2 |
-  | Vitesse | 2 voies | Libellées « Filles » et « Garçons » |
+  | Voie de difficulté | 14 voies | M1 (4c), M2 (5a), M3 (5b), M4 (5c) moulinette · T1 (4c) à T10 (7c) tête ; points pré-remplis (R38) |
+  | Bloc | 2 blocs | B1, B2 ; paliers par essai (R39) |
+  | Vitesse | 2 voies | Libellées « Filles » et « Garçons » (points hors périmètre) |
 
 - **R34.** Le gabarit **ado** est pré-initialisé avec le format du règlement CT33
   FFME 2025-2026 (§ Après-midi) :
 
   | Épreuve | Contenu | Détail |
   |---------|---------|--------|
-  | Voie de difficulté | 10 voies en tête | T1 (4c) à T10 (7c) — 1 voie par niveau |
-  | Bloc | 2 blocs | B1, B2 |
-  | Vitesse | 2 voies | Libellées « Filles » et « Garçons » |
+  | Voie de difficulté | 10 voies en tête | T1 (4c) à T10 (7c) — 1 voie par niveau ; points + zones pré-remplis (R38) |
+  | Bloc | 2 blocs | B1, B2 ; paliers par zone (R39) |
+  | Vitesse | 2 voies | Libellées « Filles » et « Garçons » (points hors périmètre) |
 
   Les voies ado sont **exclusivement en tête** (pas de moulinette) et leur niveau
   est **toujours dans T1–T10**. L'admin peut doubler ou tripler certains niveaux
@@ -199,6 +217,39 @@ saisie, les flux CRUD, et les règles de suppression (dépendances / cascade).
   - Catégorie **ado** — tête uniquement : `T1`–`T10` (aucune moulinette).
   Un niveau hors de ces plages est **refusé**, aussi bien dans le gabarit que
   dans la structure d'une rencontre.
+- **R38.** Chaque voie de difficulté porte des **points** (entiers ≥ 0),
+  pré-remplis au seed selon le règlement CT33 et **éditables** (gabarit et
+  rencontre). Les champs dépendent de la catégorie et du type de voie :
+  - **Points voie entière** : obligatoire pour toute voie.
+  - **Prise valorisée** : uniquement pour les voies **tête enfant** (null
+    ailleurs).
+  - **Prise Zone 1 / Zone 2** : uniquement pour les voies **ado** (null ailleurs).
+
+  Barème pré-rempli **enfant** (§ Matin) :
+
+  | Niveau | M1 | M2 | M3 | M4 | T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8 | T9 | T10 |
+  |--------|----|----|----|----|----|----|----|----|----|----|----|----|----|-----|
+  | Voie entière | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 |
+  | Prise valorisée | — | — | — | — | 3 | 3 | 4 | 4 | 5 | 5 | 6 | 6 | 7 | 8 |
+
+  Barème pré-rempli **ado** (§ Après-midi), voies tête T1–T10 :
+
+  | Niveau | T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8 | T9 | T10 |
+  |--------|----|----|----|----|----|----|----|----|----|-----|
+  | Zone 1 | 1 | 3 | 5 | 7 | 9 | 11 | 13 | 15 | 17 | 19 |
+  | Zone 2 | 2 | 4 | 6 | 8 | 10 | 12 | 14 | 16 | 18 | 20 |
+  | Voie entière | 4 | 6 | 8 | 10 | 12 | 14 | 16 | 18 | 20 | 22 |
+
+- **R39.** Chaque bloc porte une liste ordonnée de **paliers** (libellé + points
+  entiers ≥ 0), pré-remplis au seed et **éditables** ; le grimpeur récolte les
+  points de sa **meilleure tentative** (pas de cumul). Barème pré-rempli :
+  - **Enfant** (par essai) : B1 → « 1er essai » 4, « 2e essai » 3 ; B2 →
+    « 1er essai » 6, « 2e essai » 5, « 3e essai » 4.
+  - **Ado** (par zone) : B1 → « Zone » 10, « Bloc complet » 30 ; B2 → « Zone 1 »
+    20, « Zone 2 » 40, « Bloc complet » 60.
+
+  Les **points de vitesse** (barème par rang) sont **hors du périmètre de cette
+  itération** et seront traités séparément.
 
 ## Cycle de vie d'une rencontre (R15, R17)
 
@@ -287,26 +338,35 @@ année à 4 chiffres valide, alors le grimpeur est ajouté au roster de ce club
 - **Entités gabarit** (schéma à créer par migration) :
   - `gabarit_epreuve(id, categorie, type)` — `categorie` ∈ `enfant | ado` ;
     `type` ∈ `voie | bloc | vitesse` ; unicité `(categorie, type)`.
-  - `gabarit_voie_difficulte(id, gabarit_epreuve_id, niveau, type_voie, cotation, ordre)` —
+  - `gabarit_voie_difficulte(id, gabarit_epreuve_id, niveau, type_voie, cotation,
+    points, points_prise_valorisee, points_zone1, points_zone2, ordre)` —
     `type_voie` ∈ `moulinette | tete` ; `niveau` ∈ `M1..M4` (moulinette) ou
     `T1..T10` (tête), contraint par R37 ; **`niveau` n'est pas unique** dans
-    l'épreuve (voies doublées/triplées autorisées).
+    l'épreuve (voies doublées/triplées autorisées). `points` entier ≥ 0
+    obligatoire ; `points_prise_valorisee` (enfant tête) et `points_zone1`/
+    `points_zone2` (ado) entiers ≥ 0 **nullables** selon la catégorie (R38).
   - `gabarit_bloc(id, gabarit_epreuve_id, code, ordre)` — code unique dans
     l'épreuve (B1, B2).
+  - `gabarit_bloc_palier(id, gabarit_bloc_id, libelle, points, ordre)` — palier de
+    points d'un bloc (R39) ; `points` entier ≥ 0 ; cascade sur `gabarit_bloc`.
   - `gabarit_voie_vitesse(id, gabarit_epreuve_id, libelle, ordre)` — libellé
     libre (ex. « Filles », « Garçons »).
 - **Entités rencontre instanciées** (déjà en base pour voie_vitesse ; nouvelles
   pour voie_difficulte et bloc) :
-  - `voie_difficulte(id, epreuve_id, niveau, type_voie, cotation, ordre)` —
-    même structure et contraintes que le gabarit ; copie au moment de la
-    création (R30) ou ajout post-création (R36).
+  - `voie_difficulte(id, epreuve_id, niveau, type_voie, cotation, points,
+    points_prise_valorisee, points_zone1, points_zone2, ordre)` — même structure
+    et contraintes que le gabarit ; copie au moment de la création (R30) ou ajout
+    post-création (R36).
   - `bloc(id, epreuve_id, code, ordre)` — idem.
+  - `bloc_palier(id, bloc_id, libelle, points, ordre)` — paliers de points d'un
+    bloc de rencontre (R39) ; cascade sur `bloc`.
   - Colonne `libelle text` ajoutée sur `voie_vitesse` (ex. « Filles »,
     « Garçons »).
 - La **cascade de suppression** d'une rencontre supprime ses épreuves et, par
-  transitivité, ses voies de difficulté, blocs et voies de vitesse (R18).
+  transitivité, ses voies de difficulté, blocs (et leurs paliers) et voies de
+  vitesse (R18).
 - La **cascade de suppression** d'un gabarit_epreuve supprime ses voies/blocs
-  gabarit, sans effet sur les rencontres existantes.
+  gabarit (et paliers de bloc), sans effet sur les rencontres existantes.
 
 ## Hors périmètre
 
@@ -317,5 +377,7 @@ année à 4 chiffres valide, alors le grimpeur est ajouté au roster de ce club
 - La gestion des **équipes / compositions** (engagement en rencontre, spec #1
   R6, R17) et des **jetons QR** (spec #2).
 - Le **scoring** et le classement (hors spec #1).
+- Les **points de vitesse** (barème par rang du règlement) : leur modélisation et
+  leur édition sont reportées à une itération dédiée (R39).
 - La détermination automatique de la **catégorie** d'un grimpeur d'après son
   année de naissance et la saison (spec #1 R34) — non calculée par ces écrans.
