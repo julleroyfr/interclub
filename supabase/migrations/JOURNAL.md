@@ -21,6 +21,7 @@ jour à chaque application. Voir les règles :
 | `202607251000_rls_tables_metier` | Policies RLS des 9 tables métier (T6) : helpers de périmètre SECURITY DEFINER (phase, coach temp./juge de rencontre, écritures équipe/composition/résultat/temps vitesse) + grants `authenticated` + policies par opération (matrice spec #1 + ADR 0001, 2 chemins acteur, gating de phase) | 2026-07-25 / julleroyfr | _reporté (à la bascule sur `main`)_ |
 | `202607291000_gabarit_et_voies_epreuve` | Gabarit de rencontre par catégorie (gabarit_epreuve/voie_difficulte/bloc/voie_vitesse) + tables rencontre voie_difficulte/bloc + libelle voie_vitesse + RPC creer_rencontre_avec_gabarit + seed enfant/ado (spec #3 R29–R37) | _à appliquer_ | _reporté_ |
 | `202607311000_points_gabarit_voie_bloc` | Points des voies de difficulté (voie entière + prise valorisée enfant / zones ado, R38) + paliers de blocs (gabarit_bloc_palier/bloc_palier, R39) + copie RPC + seed barème CT33 (spec #3) | _à appliquer_ | _reporté_ |
+| `202608281000_grants_authenticated_gabarit_structure` | Grants `authenticated` (select/insert/update/delete) sur `gabarit_*` et `voie_difficulte`/`bloc`/`bloc_palier` — oubli des migrations 202607291000/202607311000 (seul `service_role` était granté), rendait inopérante la RLS `*_all_admin` : écriture gabarit/rencontre (R36/R43) et lecture rencontre en échec silencieux | _à appliquer_ | _reporté_ |
 
 > Prod volontairement reportée : sera appliquée quand le code sera basculé sur
 > `main`. Schéma `interclub` à exposer à l'API en prod à ce moment-là (déjà fait

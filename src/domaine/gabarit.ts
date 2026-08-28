@@ -77,6 +77,33 @@ export function validerPoints(points: number, libelle = 'Les points'): void {
   }
 }
 
+/** Champs de points conditionnels applicables à une voie de difficulté (R38). */
+export type ChampsPointsVoie = {
+  /** Prise valorisée — voies tête enfant uniquement (R38). */
+  priseValorisee: boolean
+  /** Zones 1 et 2 — voies ado uniquement (R38). */
+  zones: boolean
+}
+
+/**
+ * Détermine quels champs de points supplémentaires s'appliquent à une voie de
+ * difficulté selon sa catégorie et son type (R38) — pilote l'affichage du
+ * formulaire d'ajout de voie (R43). Le champ « points voie entière » est
+ * toujours requis et n'apparaît donc pas ici.
+ * - Enfant tête → prise valorisée.
+ * - Ado (tête) → zones 1/2.
+ * - Enfant moulinette / ado moulinette (interdit R37) → aucun champ conditionnel.
+ */
+export function champsPointsVoie(
+  categorie: Categorie,
+  typeVoie: TypeVoie,
+): ChampsPointsVoie {
+  return {
+    priseValorisee: categorie === 'enfant' && typeVoie === 'tete',
+    zones: categorie === 'ado' && typeVoie === 'tete',
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Types pour la copie gabarit → rencontre (R30)
 // ---------------------------------------------------------------------------

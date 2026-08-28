@@ -1,6 +1,7 @@
 # Spec : Écrans de paramétrage (admin)
 
-- **Statut** : brouillon (à valider)
+- **Statut** : validée (section « Configuration d'une rencontre » R40–R45 validée
+  le 2026-08-28)
 - **Sources** : décision produit du 2026-07-25 (tranche T8 — premiers écrans
   d'administration). S'appuie sur la **spec #1 — Rôles & autorisations**
   (`01-roles-et-autorisations.md`), qui reste la vérité pour « qui peut faire
@@ -251,6 +252,45 @@ saisie, les flux CRUD, et les règles de suppression (dépendances / cascade).
   Les **points de vitesse** (barème par rang) sont **hors du périmètre de cette
   itération** et seront traités séparément.
 
+### Écran Configuration d'une rencontre (`/admin/rencontres/[id]`)
+
+> Cet écran met en œuvre côté IHM la modification de structure définie en **R36**.
+> Maquette de référence validée : `docs/maquettes/rencontre-structure.html`
+> (disposition « onglets » + variantes lecture seule et sans format).
+
+- **R40.** Chaque ligne de la **liste des rencontres** (R19) offre une action
+  **« Configurer »** ouvrant l'écran `/admin/rencontres/[id]` de la rencontre.
+  L'écran est **réservé à l'admin** (R2) ; un autre rôle est refusé.
+- **R41.** L'écran présente un **en-tête récapitulatif** — date, catégorie, club
+  porteur et **phase courante** de la rencontre — puis la structure organisée en
+  **trois onglets** : **Voies de difficulté**, **Blocs**, **Vitesse**. Chaque
+  onglet indique le **nombre d'éléments** qu'il contient et n'affiche qu'un seul
+  type à la fois.
+- **R42.** Chaque onglet **liste les éléments existants** de la rencontre, dans
+  leur ordre (`ordre`, R38/R39) :
+  - **Voies** : niveau, type (moulinette/tête), cotation et points (voie entière,
+    et prise valorisée ou zones selon la catégorie, R38).
+  - **Blocs** : code et **paliers** (libellé + points, R39).
+  - **Vitesse** : numéro et libellé (R32).
+- **R43.** **En phase pré-compétition**, chaque onglet propose un **formulaire
+  d'ajout** correspondant à son type (voie de difficulté, bloc, voie de vitesse),
+  conforme à R36–R39 et R37 (niveaux contraints). Les **champs de points** du
+  formulaire de voie sont **conditionnels** à la catégorie et au type (R38) :
+  prise valorisée pour les voies **tête enfant**, zones 1/2 pour les voies
+  **ado**. L'ajout est le **seul** geste d'édition (ni modification ni
+  suppression — hors périmètre).
+- **R44.** **Hors phase pré-compétition** (compétition, résultats publics),
+  l'écran est en **lecture seule** : aucun formulaire n'est affiché et un
+  **message** indique que la structure est **verrouillée** et ne peut être
+  modifiée qu'en pré-compétition (R36). Les listes des onglets restent
+  consultables.
+- **R45.** **Rencontre sans format** (créée sur gabarit vide, R35) : si la
+  rencontre ne comporte **aucune épreuve**, l'écran affiche un **état vide** et
+  permet d'**ajouter d'abord une épreuve** en choisissant son **type** (voie,
+  bloc ou vitesse). Une épreuve d'un type déjà présent ne peut être ajoutée deux
+  fois. Une fois l'épreuve créée, l'onglet correspondant propose l'ajout
+  d'éléments (R43).
+
 ## Cycle de vie d'une rencontre (R15, R17)
 
 ```mermaid
@@ -288,10 +328,23 @@ pré-compétition (R15) avec le gabarit copié (R30).
 
 ### Nominal — modifier la structure d'une rencontre existante
 
-Étant donné une rencontre en phase pré-compétition, quand l'admin ajoute des
-voies de difficulté (ex. : 2 voies supplémentaires T11 et T12 pour un groupe de
-niveau), alors ces voies sont créées pour cette rencontre sans toucher au gabarit
-ni aux autres rencontres (R36).
+Étant donné une rencontre en phase pré-compétition, quand l'admin ouvre l'écran
+de configuration depuis la liste (R40), va sur l'onglet **Voies** (R41) et ajoute
+une 2ᵉ voie T6 pour un groupe de niveau supplémentaire (R43), alors cette voie est
+créée pour cette rencontre sans toucher au gabarit ni aux autres rencontres (R36).
+
+### Nominal — configurer une rencontre sans format (R35)
+
+Étant donné une rencontre créée sur un gabarit vide (aucune épreuve), quand
+l'admin ouvre l'écran de configuration, alors un état vide s'affiche (R45) ; quand
+il ajoute une épreuve de type « voie de difficulté », alors l'onglet Voies propose
+ensuite l'ajout de voies (R43, R45).
+
+### Nominal — consulter une rencontre en compétition
+
+Étant donné une rencontre en phase compétition, quand l'admin ouvre son écran de
+configuration, alors la structure s'affiche en lecture seule avec un message de
+verrouillage et aucun formulaire d'ajout (R44).
 
 ### Nominal — gérer le roster
 
@@ -314,7 +367,9 @@ année à 4 chiffres valide, alors le grimpeur est ajouté au roster de ce club
 - Suppression d'une épreuve ou voie dans le gabarit → sans effet sur les
   rencontres déjà créées (R30).
 - Tentative d'ajout de voies sur une rencontre en phase compétition ou résultats
-  publics → refusée (R36).
+  publics → refusée (R36) ; côté écran, les formulaires ne sont pas affichés (R44).
+- Ouverture de l'écran de configuration par un rôle non-admin → refusée (R40).
+- Ajout d'une épreuve d'un type déjà présent sur la rencontre → refusé (R45).
 - Saisie d'un niveau hors plage réglementaire (ex. T11 pour ado, M5 pour enfant,
   ou toute moulinette pour ado) → refusée (R37).
 

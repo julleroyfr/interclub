@@ -5,6 +5,7 @@ import {
   NIVEAUX_MOULINETTE,
   NIVEAUX_TETE,
   PointsInvalideError,
+  champsPointsVoie,
   construireEpreuvesDepuisGabarit,
   validerNiveauVoie,
   validerPoints,
@@ -97,6 +98,24 @@ describe('Validation des points (R38, R39)', () => {
   it('refuse un non-entier', () => {
     expect(() => validerPoints(2.5)).toThrow(PointsInvalideError)
     expect(() => validerPoints(Number.NaN)).toThrow(PointsInvalideError)
+  })
+})
+
+describe('Champs de points applicables à une voie (R38, R43)', () => {
+  it('voie tête enfant : prise valorisée, pas de zones (R38)', () => {
+    expect(champsPointsVoie('enfant', 'tete')).toEqual({ priseValorisee: true, zones: false })
+  })
+
+  it('voie moulinette enfant : ni prise valorisée ni zones (R38)', () => {
+    expect(champsPointsVoie('enfant', 'moulinette')).toEqual({ priseValorisee: false, zones: false })
+  })
+
+  it('voie tête ado : zones, pas de prise valorisée (R38)', () => {
+    expect(champsPointsVoie('ado', 'tete')).toEqual({ priseValorisee: false, zones: true })
+  })
+
+  it('voie moulinette ado : aucun champ conditionnel (R37 interdit, R38)', () => {
+    expect(champsPointsVoie('ado', 'moulinette')).toEqual({ priseValorisee: false, zones: false })
   })
 })
 
