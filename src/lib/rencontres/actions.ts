@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 
 import {
   normaliserSaisieRencontre,
+  peutEntrerEnPreparation,
   PHASES,
   SaisieRencontreInvalideError,
   type Phase,
@@ -17,6 +18,13 @@ import { type EtatRencontre } from './rencontres'
 // joignables par POST direct, on ne se fie pas à l'UI. Défense en profondeur :
 // garde admin explicite (message clair) + la vraie frontière reste la **RLS**
 // (policies `rencontre_insert/update/delete_admin`).
+
+/** Date du jour (calendrier local) au format ISO `AAAA-MM-JJ`. */
+function aujourdhuiISO(): string {
+  const d = new Date()
+  const p = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
+}
 
 /** Refuse l'appelant non-admin (message R12), ou `null` si admin. */
 async function refuserSiNonAdmin(): Promise<EtatRencontre | null> {
@@ -125,6 +133,24 @@ export async function changerPhaseRencontre(
   }
 
   const supabase = await createClient()
+
+  // Garde-fou « jour J » (spec #1 R5, spec #4 R6) : l'entrée en préparation n'est
+  // permise que le jour de la rencontre. La date fait autorité en base.
+  if (phase === 'preparation') {
+    const { data: renc } = await supabase
+      .from('rencontre')
+      .select('date_rencontre')
+      .eq('id', id)
+      .maybeSingle()
+    if (!renc) return { erreur: 'Rencontre introuvable.' }
+    if (!peutEntrerEnPreparation(renc.date_rencontre as string, aujourdhuiISO())) {
+      return {
+        erreur:
+          'La préparation ne peut être activée que le jour de la rencontre (R5).',
+      }
+    }
+  }
+
   const { error } = await supabase
     .from('rencontre')
     .update({ phase: phase as Phase })

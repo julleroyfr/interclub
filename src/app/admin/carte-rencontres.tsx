@@ -3,11 +3,12 @@
 import Link from 'next/link'
 import { useActionState } from 'react'
 
-import { Bouton, Carte, Etiquette, TitreSection } from '@/composants'
+import { Bouton, Carte, Etiquette, TitreSection, variantePhase } from '@/composants'
 import {
   CATEGORIES,
   PHASES,
   labelSaison,
+  peutEntrerEnPreparation,
   phasePrecedente,
   phaseSuivante,
   type Phase,
@@ -21,12 +22,6 @@ const labelCategorie = (v: string) =>
 
 const labelPhase = (v: Phase) => PHASES.find((p) => p.value === v)?.label ?? v
 
-const variantePhase = (phase: Phase) => {
-  if (phase === 'competition') return 'accent' as const
-  if (phase === 'resultats_publics') return 'succes' as const
-  return 'neutre' as const
-}
-
 function formaterDate(iso: string): string {
   const [a, m, j] = iso.split('-')
   if (!a || !m || !j) return iso
@@ -34,6 +29,13 @@ function formaterDate(iso: string): string {
     'fr-FR',
     { day: '2-digit', month: 'long', year: 'numeric', timeZone: 'UTC' },
   )
+}
+
+/** Date du jour (calendrier local) au format ISO `AAAA-MM-JJ`. */
+function aujourdhuiISO(): string {
+  const d = new Date()
+  const p = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
 }
 
 /** Ligne de rencontre avec boutons avancer/revenir de phase. */
@@ -46,6 +48,11 @@ function LigneRencontreTdb({ rencontre }: { rencontre: RencontreTdb }) {
 
   const precedente = phasePrecedente(rencontre.phase)
   const suivante = phaseSuivante(rencontre.phase)
+  // Garde-fou jour J (R5) reflété dans l'IHM : entrée en préparation seulement
+  // le jour de la rencontre (l'action reste la garde autoritaire).
+  const preparationHorsJourJ =
+    suivante === 'preparation' &&
+    !peutEntrerEnPreparation(rencontre.dateRencontre, aujourdhuiISO())
 
   return (
     <li
@@ -61,7 +68,7 @@ function LigneRencontreTdb({ rencontre }: { rencontre: RencontreTdb }) {
             {formaterDate(rencontre.dateRencontre)}
           </p>
         </div>
-        <Etiquette variante={variantePhase(rencontre.phase)}>
+        <Etiquette variante={variantePhase[rencontre.phase]}>
           {labelPhase(rencontre.phase)}
         </Etiquette>
       </div>
@@ -80,7 +87,16 @@ function LigneRencontreTdb({ rencontre }: { rencontre: RencontreTdb }) {
           <form action={actionPhase}>
             <input type="hidden" name="id" value={rencontre.id} />
             <input type="hidden" name="phase" value={suivante} />
-            <Bouton type="submit" taille="sm" disabled={phaseEnCours}>
+            <Bouton
+              type="submit"
+              taille="sm"
+              disabled={phaseEnCours || preparationHorsJourJ}
+              title={
+                preparationHorsJourJ
+                  ? 'Activable seulement le jour de la rencontre (R5).'
+                  : undefined
+              }
+            >
               {labelPhase(suivante)} →
             </Bouton>
           </form>

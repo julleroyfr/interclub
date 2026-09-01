@@ -3,11 +3,12 @@
 import Link from 'next/link'
 import { useActionState, useId, useState } from 'react'
 
-import { Bouton, ChampSelect, ChampTexte, Etiquette } from '@/composants'
+import { Bouton, ChampSelect, ChampTexte, Etiquette, variantePhase } from '@/composants'
 import {
   CATEGORIES,
   PHASES,
   labelSaison,
+  peutEntrerEnPreparation,
   phasePrecedente,
   phaseSuivante,
   type Phase,
@@ -38,6 +39,13 @@ function formaterDate(iso: string): string {
     'fr-FR',
     { day: '2-digit', month: 'long', year: 'numeric', timeZone: 'UTC' },
   )
+}
+
+/** Date du jour (calendrier local) au format ISO `AAAA-MM-JJ`. */
+function aujourdhuiISO(): string {
+  const d = new Date()
+  const p = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
 }
 
 /** Liste des rencontres avec édition inline, changement de phase et suppression. */
@@ -97,6 +105,11 @@ function LigneRencontre({
   const precedente = phasePrecedente(rencontre.phase)
   const suivante = phaseSuivante(rencontre.phase)
   const aDependances = rencontre.nbEquipes > 0 || rencontre.nbEpreuves > 0
+  // Garde-fou jour J (R5) reflété dans l'IHM : la préparation ne s'active que le
+  // jour de la rencontre (l'action reste la garde autoritaire).
+  const preparationHorsJourJ =
+    suivante === 'preparation' &&
+    !peutEntrerEnPreparation(rencontre.dateRencontre, aujourdhuiISO())
 
   return (
     <div className="rounded-2xl border border-bordure bg-black/20 p-4">
@@ -152,7 +165,9 @@ function LigneRencontre({
                 {rencontre.nbEquipes} équipe(s) · {rencontre.nbEpreuves} épreuve(s)
               </p>
             </div>
-            <Etiquette variante="accent">{labelPhase(rencontre.phase)}</Etiquette>
+            <Etiquette variante={variantePhase[rencontre.phase]}>
+              {labelPhase(rencontre.phase)}
+            </Etiquette>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -166,13 +181,28 @@ function LigneRencontre({
               </form>
             )}
             {suivante && (
-              <form action={actionPhase}>
-                <input type="hidden" name="id" value={rencontre.id} />
-                <input type="hidden" name="phase" value={suivante} />
-                <Bouton type="submit" disabled={phaseEnCours}>
-                  {labelPhase(suivante)} →
-                </Bouton>
-              </form>
+              <>
+                <form action={actionPhase}>
+                  <input type="hidden" name="id" value={rencontre.id} />
+                  <input type="hidden" name="phase" value={suivante} />
+                  <Bouton
+                    type="submit"
+                    disabled={phaseEnCours || preparationHorsJourJ}
+                    title={
+                      preparationHorsJourJ
+                        ? 'Activable seulement le jour de la rencontre (R5).'
+                        : undefined
+                    }
+                  >
+                    {labelPhase(suivante)} →
+                  </Bouton>
+                </form>
+                {preparationHorsJourJ && (
+                  <span className="basis-full text-xs text-texte-doux">
+                    La préparation ne s’active que le jour de la rencontre (R5).
+                  </span>
+                )}
+              </>
             )}
 
             <Link
