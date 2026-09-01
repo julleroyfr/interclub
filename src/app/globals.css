@@ -22,6 +22,9 @@
   --color-accent-doux: #67e8f9;
   --color-secondaire: #bef264; /* lime — succès, mise en avant */
   --color-danger: #fb7185; /* rose — chute, erreur, destructif */
+  --color-prete: #c084fc; /* violet — grimpeur prêté (spec #5 R13) */
+  --color-prepa: #fb923c; /* orange — préparation « jour J » (phase ②) */
+  --color-attention: #fbbf24; /* ambre — clôture / vérification en cours */
 
   /* Texte */
   --color-texte-fort: #ffffff;

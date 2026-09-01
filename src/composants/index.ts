@@ -14,6 +14,7 @@ export type { OptionRadio } from './GroupeRadio'
 
 export { Etiquette } from './Etiquette'
 export type { VarianteEtiquette } from './Etiquette'
+export { variantePhase } from './variante-phase'
 
 export { Pastille } from './Pastille'
 export type { VariantePastille } from './Pastille'
