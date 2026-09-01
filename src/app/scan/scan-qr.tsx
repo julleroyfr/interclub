@@ -22,14 +22,16 @@ function messageErreur(code: string): string {
 export function ScanQr() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const [etat, setEtat] = useState<Etat>({ type: 'en_cours' })
+  const jeton = searchParams.get('jeton')
+  // L'absence de jeton est dérivable au rendu : pas besoin d'effet (ni de
+  // setState synchrone) pour cet état d'erreur initial.
+  const [etat, setEtat] = useState<Etat>(
+    jeton ? { type: 'en_cours' } : { type: 'erreur', message: 'QR invalide — paramètre manquant.' },
+  )
 
   useEffect(() => {
-    const valeur = searchParams.get('jeton')
-    if (!valeur) {
-      setEtat({ type: 'erreur', message: 'QR invalide — paramètre manquant.' })
-      return
-    }
+    if (!jeton) return
+    const valeur = jeton
 
     let annule = false
 
@@ -66,7 +68,7 @@ export function ScanQr() {
 
     ouvrirSession()
     return () => { annule = true }
-  }, [searchParams, router])
+  }, [jeton, router])
 
   return (
     <div className="grid min-h-screen place-items-center bg-fond bg-[radial-gradient(60rem_40rem_at_top,#0e2a3b,transparent)] px-4 py-10 text-texte">
