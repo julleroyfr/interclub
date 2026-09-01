@@ -15,6 +15,8 @@ type Etat =
 function messageErreur(code: string): string {
   if (code === 'jeton_inconnu') return "Ce QR n'est pas reconnu."
   if (code === 'jeton_revoque') return "Ce QR a été révoqué. Demandez un nouveau QR à votre responsable."
+  if (code === 'hors_fenetre') return "Ce QR n'est pas encore ouvert (ou la rencontre est terminée)."
+  // Ancien code (avant fenêtre nature-dépendante, migration 202609011500) — compat.
   if (code === 'hors_phase_competition') return "La rencontre n'est pas encore en cours (ou est terminée)."
   return "Impossible d'ouvrir la session. Réessayez ou demandez un nouveau QR."
 }

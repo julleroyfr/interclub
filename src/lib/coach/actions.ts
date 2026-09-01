@@ -9,7 +9,7 @@ import {
   normaliserNomEquipe,
   verifierAjoutComposition,
 } from '@/domaine/engagement'
-import { getUtilisateurCourant } from '@/lib/auth/session'
+import { type ContexteCoach, getContexteCoach } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
 
 /** Client Supabase du projet (schéma `interclub`). */
@@ -17,21 +17,46 @@ type Client = Awaited<ReturnType<typeof createClient>>
 
 // Écriture de l'engagement d'un club en rencontre (spec #5 « Espace Coach ») :
 // CRUD équipes (R10), composition (R12/R13/R14/R15) et groupe de départ (R19).
-// Chaque action revérifie le rôle coach et le gating de phase ① (gel R16), la
-// RLS T6 restant la frontière ultime. Réservé au coach permanent (rattaché à un
-// club) : le coach temporaire ne modifie pas l'engagement (gel, spec #1 R27).
+// Chaque action revérifie le contexte coach et le gating de phase (R16), la RLS
+// T6 restant la frontière ultime. Deux acteurs (spec #1 R6/R27) : coach
+// PERMANENT (rattaché à un club, phases ①/②, toutes ses rencontres) et coach
+// TEMPORAIRE (session QR du jour J, borné à SA rencontre, phase ② préparation).
 
 export type EtatEngagement = { erreur?: string; succes?: string } | undefined
 
-/** Vérifie le rôle coach et renvoie son club, ou un état d'erreur. */
+/** Vérifie le contexte coach et renvoie son club + contexte, ou un état d'erreur. */
 async function exigerCoachClub(): Promise<
-  { clubId: string } | { erreur: string }
+  { clubId: string; contexte: ContexteCoach } | { erreur: string }
 > {
-  const utilisateur = await getUtilisateurCourant()
-  if (utilisateur?.role !== 'coach' || !utilisateur.clubId) {
-    return { erreur: 'Action réservée à un coach rattaché à un club.' }
+  const contexte = await getContexteCoach()
+  if (!contexte) {
+    return { erreur: 'Action réservée à un coach (compte rattaché à un club ou session QR active).' }
   }
-  return { clubId: utilisateur.clubId }
+  return { clubId: contexte.clubId, contexte }
+}
+
+/**
+ * Borne l'écriture d'un coach temporaire à SA rencontre et à la phase ②
+ * préparation (spec #5 R16 ; la RLS `est_coach_temp_engagement` reste la garantie
+ * ultime). Sans effet pour un coach permanent. Renvoie un état d'erreur, ou
+ * `null` si l'écriture est permise pour ce contexte.
+ */
+function refuserSiHorsPerimetreTemp(
+  contexte: ContexteCoach,
+  rencontreId: string,
+  phase: Phase,
+): EtatEngagement | null {
+  if (contexte.type !== 'temporaire') return null
+  if (contexte.rencontreId !== rencontreId) {
+    return { erreur: 'Votre session QR ne couvre pas cette rencontre.' }
+  }
+  if (phase !== 'preparation') {
+    return {
+      erreur:
+        "Un coach temporaire ne peut éditer l'engagement que le jour J, en préparation (R16).",
+    }
+  }
+  return null
 }
 
 /** Charge la phase et la catégorie d'une rencontre. */
@@ -105,6 +130,8 @@ export async function creerEquipe(
   if (!rencontre) return { erreur: 'Rencontre introuvable.' }
   const refus = refuserSiPasEditable(rencontre.phase)
   if (refus) return refus
+  const horsPerimetre = refuserSiHorsPerimetreTemp(coach.contexte, rencontreId, rencontre.phase)
+  if (horsPerimetre) return horsPerimetre
 
   const { error } = await supabase
     .from('equipe')
@@ -143,6 +170,12 @@ export async function renommerEquipe(
   if (!rencontre) return { erreur: 'Rencontre introuvable.' }
   const refus = refuserSiPasEditable(rencontre.phase)
   if (refus) return refus
+  const horsPerimetre = refuserSiHorsPerimetreTemp(
+    coach.contexte,
+    appartenance.rencontreId,
+    rencontre.phase,
+  )
+  if (horsPerimetre) return horsPerimetre
 
   const { error } = await supabase.from('equipe').update({ nom }).eq('id', equipeId)
   if (error) {
@@ -172,6 +205,12 @@ export async function supprimerEquipe(
   if (!rencontre) return { erreur: 'Rencontre introuvable.' }
   const refus = refuserSiPasEditable(rencontre.phase)
   if (refus) return refus
+  const horsPerimetre = refuserSiHorsPerimetreTemp(
+    coach.contexte,
+    appartenance.rencontreId,
+    rencontre.phase,
+  )
+  if (horsPerimetre) return horsPerimetre
 
   const { error } = await supabase.from('equipe').delete().eq('id', equipeId)
   if (error) return { erreur: 'La suppression a échoué. Réessayez.' }
@@ -220,6 +259,12 @@ export async function ajouterGrimpeurEquipe(
   if (!rencontre) return { erreur: 'Rencontre introuvable.' }
   const refus = refuserSiPasEditable(rencontre.phase)
   if (refus) return refus
+  const horsPerimetre = refuserSiHorsPerimetreTemp(
+    coach.contexte,
+    appartenance.rencontreId,
+    rencontre.phase,
+  )
+  if (horsPerimetre) return horsPerimetre
 
   let groupeDepart: string | null
   try {
@@ -284,6 +329,12 @@ export async function retirerGrimpeurEquipe(
   if (!rencontre) return { erreur: 'Rencontre introuvable.' }
   const refus = refuserSiPasEditable(rencontre.phase)
   if (refus) return refus
+  const horsPerimetre = refuserSiHorsPerimetreTemp(
+    coach.contexte,
+    appartenance.rencontreId,
+    rencontre.phase,
+  )
+  if (horsPerimetre) return horsPerimetre
 
   const { error } = await supabase
     .from('composition')
@@ -315,6 +366,12 @@ export async function definirGroupeDepart(
   if (!rencontre) return { erreur: 'Rencontre introuvable.' }
   const refus = refuserSiPasEditable(rencontre.phase)
   if (refus) return refus
+  const horsPerimetre = refuserSiHorsPerimetreTemp(
+    coach.contexte,
+    appartenance.rencontreId,
+    rencontre.phase,
+  )
+  if (horsPerimetre) return horsPerimetre
 
   let groupeDepart: string | null
   try {
