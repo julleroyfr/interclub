@@ -87,14 +87,21 @@ alimente le modèle de données (mapping, jetons) et les policies **RLS**.
 
 ### Validité (fenêtre temporelle)
 
-- **R12.** Une session QR éphémère n'est valide que pendant la **phase ②
-  compétition** de sa rencontre (spec #1 R9). Hors phase ②, scanner le jeton
-  **n'ouvre aucune session**.
-- **R13.** Le passage de la rencontre hors de la phase ② (vers ③ résultats
-  publics, ou tout autre état) **met fin** immédiatement à toutes les sessions
-  QR éphémères de cette rencontre (spec #1 R28, R33).
-- **R14.** Un jeton QR peut être généré **avant** la phase ② (préparation), mais
-  il n'ouvre de session **qu'une fois** la rencontre en phase ②.
+- **R12.** Une session QR éphémère n'est valide que pendant la **fenêtre du jour
+  de la rencontre**, qui **dépend de la nature du jeton** (spec #1 R9, rév.
+  2026-09-01) :
+  - jeton **coach temporaire** : phases **② préparation** et **③ compétition** ;
+  - jeton **juge** : phase **③ compétition**.
+
+  Hors de cette fenêtre, scanner le jeton **n'ouvre aucune session**.
+- **R13.** Le passage de la rencontre **hors de la fenêtre** d'un jeton — pour le
+  coach temporaire, dès la **④ clôture** ; pour le juge, dès la fin de la **③
+  compétition** — **met fin** immédiatement à ses sessions QR éphémères (spec #1
+  R28, R33).
+- **R14.** Un jeton QR peut être généré **avant** sa fenêtre (ex. jeton coach
+  temporaire préparé pendant la ① pré-compétition), mais il n'ouvre de session
+  **qu'une fois** la rencontre entrée dans la fenêtre du jeton (② ou ③ selon sa
+  nature).
 
 ### Génération & affichage
 
@@ -134,7 +141,7 @@ alimente le modèle de données (mapping, jetons) et les policies **RLS**.
   rencontre** (spec #1 R20, R27) ; juge → **résultats de vitesse des grimpeurs de
   sa voie** pour cette rencontre (spec #1 R30, R11).
 - **R25.** Toute action d'une session éphémère **hors de son périmètre** ou **hors
-  phase ②** est **refusée** (spec #1 R28, R33).
+  de sa fenêtre de validité** (R12) est **refusée** (spec #1 R28, R33).
 
 ## Scénarios
 
@@ -146,23 +153,27 @@ périmètre du club A (R1, R3, R4), et pas avant (R5).
 
 ### Nominal — session coach temporaire
 
-Étant donné une rencontre en phase ② et un jeton QR « coach temporaire » du club
-A généré par l'admin ou par le coach permanent du club A, quand deux bénévoles du
-club A scannent ce même jeton, alors deux sessions éphémères s'ouvrent avec les
-droits coach bornés au club A et à cette rencontre (R6–R10, R8).
+Étant donné une rencontre en phase **② préparation** (le jour J) et un jeton QR
+« coach temporaire » du club A généré par l'admin ou par le coach permanent du
+club A, quand deux bénévoles du club A scannent ce même jeton, alors deux sessions
+éphémères s'ouvrent avec les droits coach bornés au club A et à cette rencontre —
+édition de l'engagement en préparation, puis saisie des résultats en ③ compétition
+(R6–R10, R8, spec #1 R27).
 
 ### Nominal — affectation & saisie juge
 
-Étant donné une rencontre en phase ②, quand l'admin génère le jeton QR « juge »
-de son épreuve de vitesse (affectation à une voie, R17) et qu'un juge le scanne,
+Étant donné une rencontre en phase **③ compétition**, quand l'admin génère le
+jeton QR « juge » de son épreuve de vitesse (affectation à une voie, R17) et qu'un
+juge le scanne,
 alors une session juge s'ouvre et permet de saisir les **résultats de vitesse**
 (temps, chute ou non-présentation) des grimpeurs de **cette voie** (R11, R24).
 
 ### Cas limites / erreurs
 
-- Scanner un jeton QR **hors phase ②** (avant ou après) → aucune session (R12).
-- Une session éphémère en cours quand la rencontre **passe en phase ③** → session
-  terminée (R13).
+- Scanner un jeton QR **hors de sa fenêtre** (coach temp. avant la ② préparation ;
+  juge hors ③ compétition) → aucune session (R12).
+- Une session coach temporaire en cours quand la rencontre **passe en ④ clôture**
+  (ou une session juge à la fin de la ③ compétition) → session terminée (R13).
 - Un coach permanent tente d'afficher/révoquer le jeton « coach temporaire »
   d'**un autre club** → refusé (R16, R21).
 - Un coach permanent tente de générer un jeton « juge » → refusé (R17).
@@ -183,13 +194,13 @@ sequenceDiagram
   participant App
   participant DB as Supabase (RLS)
   U->>App: Scan du jeton QR (rôle + périmètre + rencontre)
-  App->>DB: Le jeton est-il actif ? Rencontre en phase ② ?
-  alt Jeton actif ET phase ②
+  App->>DB: Jeton actif ? Rencontre dans la fenêtre du jeton (coach temp. : ②③ ; juge : ③) ?
+  alt Jeton actif ET dans la fenêtre
     DB-->>App: Session éphémère ouverte (rôle + périmètre)
-    U->>App: Action (saisie / CRUD selon rôle)
+    U->>App: Action (saisie / CRUD selon rôle et phase)
     App->>DB: Requête filtrée par périmètre
     DB-->>App: Autorisé si périmètre OK (R24), sinon refus (R25)
-  else Jeton révoqué OU hors phase ②
+  else Jeton révoqué OU hors fenêtre
     DB-->>App: Aucune session (R12, R22)
   end
 ```
@@ -200,11 +211,11 @@ sequenceDiagram
 stateDiagram-v2
   [*] --> Genere
   Genere: Généré (R14/R15/R16/R17)
-  Actif: Actif — ouvre des sessions en phase ② (R6, R8, R12)
+  Actif: Actif — ouvre des sessions dans sa fenêtre (coach temp. ②③ / juge ③) (R6, R8, R12)
   Revoque: Révoqué (R22)
-  Genere --> Actif: rencontre en phase ②
+  Genere --> Actif: rencontre entrée dans la fenêtre du jeton
   Actif --> Revoque: révocation / régénération (R20, R21, R23)
-  Actif --> Revoque: fin de phase ② (R13)
+  Actif --> Revoque: sortie de la fenêtre (R13)
   Revoque --> [*]
   note right of Actif
     Multi-usage : plusieurs sessions simultanées (R8)
@@ -229,15 +240,16 @@ stateDiagram-v2
   `voie_vitesse`, sans club) ; état **actif / révoqué** (R6, R9, R22).
 - **Unicité** : au plus **un** jeton `juge` actif par **voie de vitesse** (R18) ;
   au plus **un** jeton `coach_temporaire` actif par couple (club, rencontre) (R19).
-- **Validité** : la validité d'une session se **calcule** (phase ② de la
-  rencontre + jeton non révoqué), elle n'est pas figée en base (R12, R22).
+- **Validité** : la validité d'une session se **calcule** (phase de la rencontre
+  dans la fenêtre du jeton — coach temp. ②③ / juge ③ — + jeton non révoqué), elle
+  n'est pas figée en base (R12, R22).
 - **RLS attendue** :
   - administration du mapping de rôle **réservée à l'admin** (R4) ;
   - génération / affichage / révocation des jetons `coach_temporaire` d'un club
     **réservée à l'admin ou au coach permanent de ce club** (R15, R16, R21) ;
   - génération / révocation des jetons `juge` **réservée à l'admin** (R17, R20) ;
-  - une session éphémère n'agit **que** dans son périmètre et **que** en phase ②
-    (R24, R25), en cohérence avec les policies de la spec #1.
+  - une session éphémère n'agit **que** dans son périmètre et **que** dans sa
+    fenêtre de validité (R24, R25), en cohérence avec les policies de la spec #1.
 
 ## Hors périmètre
 

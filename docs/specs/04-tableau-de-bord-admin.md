@@ -58,8 +58,10 @@ nouvelle : il **réagence** et **met en avant** des actions déjà spécifiées
   (étiquette de statut).
 - **R6.** Depuis la carte, l'admin peut **faire évoluer la phase** d'une
   rencontre **directement** — avancer/revenir pas à pas entre phases adjacentes
-  (`pré-compétition ↔ compétition ↔ résultats publics`) — **sans quitter** le
-  tableau de bord. (Réutilise spec #3 R17 ; cycle spec #1 R5.)
+  (`pré-compétition ↔ préparation ↔ compétition ↔ clôture ↔ résultats publics`) —
+  **sans quitter** le tableau de bord. Le passage en **préparation** n'est possible
+  que **le jour de la rencontre** (garde-fou jour J, spec #3 R17). (Réutilise
+  spec #3 R17 ; cycle spec #1 R5.)
 - **R7.** Après une action de phase, la carte **reflète** la nouvelle phase
   (revalidation), et les actions proposées s'ajustent (pas de bouton « avancer »
   au-delà de la dernière phase, ni « revenir » avant la première).

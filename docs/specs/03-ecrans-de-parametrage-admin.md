@@ -112,10 +112,12 @@ saisie, les flux CRUD, et les règles de suppression (dépendances / cascade).
 - **R16.** L'admin peut **modifier** une rencontre (date, club porteur,
   catégorie) et la **supprimer**.
 - **R17.** L'admin fait évoluer la **phase** pas à pas entre phases **adjacentes**
-  du cycle : `pré-compétition → compétition → résultats publics` (avancer), et
-  réciproquement (revenir). Aucune transition ne saute une phase ; on n'avance
-  pas au-delà de la dernière ni ne recule avant la première. (Source : spec #1
-  R5.)
+  du cycle : `pré-compétition → préparation → compétition → clôture → résultats
+  publics` (avancer), et réciproquement (revenir). Aucune transition ne saute une
+  phase ; on n'avance pas au-delà de la dernière ni ne recule avant la première.
+  **Garde-fou jour J** : le passage en **préparation** n'est autorisé que si la
+  **date de la rencontre est le jour même** (spec #1 R5, rév. 2026-09-01) ; sinon
+  la transition est refusée. (Source : spec #1 R5, cycle à 5 phases.)
 - **R18.** Supprimer une rencontre **supprime en cascade** ses **équipes** et
   **épreuves** (et, par transitivité, leurs compositions/résultats/temps). La
   demande de confirmation **signale** cette cascade lorsque la rencontre a des
@@ -279,8 +281,8 @@ saisie, les flux CRUD, et les règles de suppression (dépendances / cascade).
   prise valorisée pour les voies **tête enfant**, zones 1/2 pour les voies
   **ado**. L'ajout est le **seul** geste d'édition (ni modification ni
   suppression — hors périmètre).
-- **R44.** **Hors phase pré-compétition** (compétition, résultats publics),
-  l'écran est en **lecture seule** : aucun formulaire n'est affiché et un
+- **R44.** **Hors phase pré-compétition** (préparation, compétition, clôture,
+  résultats publics), l'écran est en **lecture seule** : aucun formulaire n'est affiché et un
   **message** indique que la structure est **verrouillée** et ne peut être
   modifiée qu'en pré-compétition (R36). Les listes des onglets restent
   consultables.

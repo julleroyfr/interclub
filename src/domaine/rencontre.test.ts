@@ -8,6 +8,7 @@ import {
   bornesSaison,
   labelSaison,
   normaliserSaisieRencontre,
+  peutEntrerEnPreparation,
   phasePrecedente,
   phaseSuivante,
 } from './rencontre'
@@ -123,18 +124,22 @@ describe('Saison sportive (R37)', () => {
   })
 })
 
-describe('Cycle de vie en trois phases (R5)', () => {
-  it('ordonne les phases : pré-compétition → compétition → résultats publics', () => {
+describe('Cycle de vie en cinq phases (R5, rév. 2026-09-01)', () => {
+  it('ordonne les phases : pré-compétition → préparation → compétition → clôture → résultats publics', () => {
     expect(PHASES.map((p) => p.value)).toEqual([
       'pre_competition',
+      'preparation',
       'competition',
+      'cloture',
       'resultats_publics',
     ])
   })
 
-  it('avance à la phase suivante', () => {
-    expect(phaseSuivante('pre_competition')).toBe('competition')
-    expect(phaseSuivante('competition')).toBe('resultats_publics')
+  it('avance à la phase suivante, préparation insérée avant la compétition', () => {
+    expect(phaseSuivante('pre_competition')).toBe('preparation')
+    expect(phaseSuivante('preparation')).toBe('competition')
+    expect(phaseSuivante('competition')).toBe('cloture')
+    expect(phaseSuivante('cloture')).toBe('resultats_publics')
   })
 
   it('n’avance pas au-delà de la dernière phase', () => {
@@ -142,11 +147,27 @@ describe('Cycle de vie en trois phases (R5)', () => {
   })
 
   it('revient à la phase précédente', () => {
-    expect(phasePrecedente('resultats_publics')).toBe('competition')
-    expect(phasePrecedente('competition')).toBe('pre_competition')
+    expect(phasePrecedente('resultats_publics')).toBe('cloture')
+    expect(phasePrecedente('cloture')).toBe('competition')
+    expect(phasePrecedente('competition')).toBe('preparation')
+    expect(phasePrecedente('preparation')).toBe('pre_competition')
   })
 
   it('ne recule pas avant la première phase', () => {
     expect(phasePrecedente('pre_competition')).toBeNull()
+  })
+})
+
+describe('Garde-fou « jour J » de la phase préparation (R5, rév. 2026-09-01)', () => {
+  it('autorise l’entrée en préparation le jour de la rencontre', () => {
+    expect(peutEntrerEnPreparation('2026-10-12', '2026-10-12')).toBe(true)
+  })
+
+  it('refuse l’entrée en préparation la veille', () => {
+    expect(peutEntrerEnPreparation('2026-10-12', '2026-10-11')).toBe(false)
+  })
+
+  it('refuse l’entrée en préparation le lendemain', () => {
+    expect(peutEntrerEnPreparation('2026-10-12', '2026-10-13')).toBe(false)
   })
 })

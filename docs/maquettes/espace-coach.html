@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Maquettes — Espace Coach (spec #5)</title>
+<style>
+  :root {
+    --fond: #020617;
+    --surface: rgba(255, 255, 255, 0.04);
+    --surface-forte: rgba(255, 255, 255, 0.08);
+    --bordure: rgba(255, 255, 255, 0.12);
+    --accent: #22d3ee;
+    --accent-doux: #67e8f9;
+    --secondaire: #bef264;
+    --prete: #c084fc;
+    --danger: #fb7185;
+    --texte-fort: #ffffff;
+    --texte: #e2e8f0;
+    --texte-attenue: #94a3b8;
+    --texte-doux: #64748b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--fond);
+    color: var(--texte);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.4;
+    padding: 24px 16px 80px;
+  }
+  h1 { color: var(--texte-fort); font-size: 20px; text-align: center; }
+  .intro { text-align: center; color: var(--texte-attenue); max-width: 620px; margin: 0 auto 32px; font-size: 14px; }
+  .grille { display: flex; flex-wrap: wrap; gap: 28px; justify-content: center; align-items: flex-start; }
+  .colonne { width: 340px; max-width: 100%; }
+  .colonne > .titre-option {
+    color: var(--accent); font-size: 13px; text-transform: uppercase; letter-spacing: .08em;
+    font-weight: 700; margin: 0 0 4px;
+  }
+  .colonne > .desc-option { color: var(--texte-doux); font-size: 12.5px; margin: 0 0 12px; min-height: 34px; }
+
+  /* --- cadre "téléphone" --- */
+  .tel {
+    border: 1px solid var(--bordure); border-radius: 22px; overflow: hidden;
+    background: linear-gradient(180deg, rgba(34,211,238,0.06), rgba(2,6,23,0) 220px), var(--fond);
+    box-shadow: 0 12px 40px rgba(0,0,0,.5);
+  }
+  .barre-haut { padding: 12px 16px 14px; border-bottom: 1px solid var(--bordure); }
+  .lien-retour { color: var(--texte-attenue); font-size: 12.5px; }
+  .titre-ecran { color: var(--texte-fort); font-weight: 600; font-size: 16px; margin-top: 6px; }
+  .titre-rencontre { color: var(--texte-fort); font-weight: 600; font-size: 15px; margin-top: 6px; }
+  .meta { color: var(--texte-attenue); font-size: 12.5px; margin-top: 2px; }
+  .sous { color: var(--texte-doux); font-size: 12px; margin-top: 2px; }
+
+  .badge-phase {
+    display: inline-flex; align-items: center; gap: 6px; margin-top: 8px;
+    background: rgba(190,242,100,.12); color: var(--secondaire);
+    border: 1px solid rgba(190,242,100,.3); border-radius: 999px;
+    padding: 3px 10px; font-size: 11.5px; font-weight: 600;
+  }
+  .badge-phase.comp { background: rgba(34,211,238,.12); color: var(--accent-doux); border-color: rgba(34,211,238,.3); }
+  .badge-phase.prepa { background: rgba(251,146,60,.14); color: #fb923c; border-color: rgba(251,146,60,.4); }
+  .badge-phase.verif { background: rgba(251,191,36,.12); color: #fbbf24; border-color: rgba(251,191,36,.32); }
+  .badge-phase.verrou { background: rgba(148,163,184,.12); color: var(--texte-attenue); border-color: var(--bordure); }
+
+  .corps { padding: 14px; }
+
+  /* cartes */
+  .carte { background: var(--surface); border: 1px solid var(--bordure); border-radius: 14px; padding: 12px 14px; margin-bottom: 12px; }
+  .carte-entete { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; gap: 8px; }
+  .carte-titre { color: var(--texte-fort); font-size: 13px; font-weight: 700; }
+  .carte-sous { color: var(--texte-doux); font-size: 11.5px; margin-top: 1px; }
+
+  /* jauge d'effectif n/8 */
+  .effectif { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 700; color: var(--texte-attenue); }
+  .effectif .n { color: var(--texte-fort); }
+  .effectif.plein .n { color: var(--secondaire); }
+  .jauge { display: flex; gap: 3px; }
+  .jauge i { width: 7px; height: 7px; border-radius: 2px; background: rgba(255,255,255,.12); display: inline-block; }
+  .jauge i.on { background: var(--accent); }
+  .jauge i.prete { background: var(--prete); }
+
+  ul.liste { list-style: none; margin: 0; padding: 0; }
+  ul.liste li { display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: 8px; font-size: 13px; }
+  ul.liste li + li { border-top: 1px solid rgba(255,255,255,.05); }
+  ul.liste li:hover { background: var(--surface-forte); }
+  .grimpeur { color: var(--texte-fort); }
+  .an { color: var(--texte-doux); font-size: 11.5px; }
+  .pousse { margin-left: auto; }
+  .retirer { color: var(--danger); font-size: 16px; line-height: 1; cursor: pointer; opacity: .8; }
+  .retirer:hover { opacity: 1; }
+
+  .badge-prete {
+    display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 700;
+    color: var(--prete); background: rgba(192,132,252,.12); border: 1px solid rgba(192,132,252,.35);
+    border-radius: 999px; padding: 1px 8px; text-transform: uppercase; letter-spacing: .04em;
+  }
+  /* groupe de départ (règlement — 3 voies de niveau croissant) */
+  .groupe {
+    display: inline-flex; align-items: center; font-size: 11px; font-weight: 700;
+    color: var(--accent-doux); background: rgba(34,211,238,.10);
+    border: 1px solid rgba(34,211,238,.28); border-radius: 999px; padding: 1px 9px;
+  }
+  .groupe.attente { color: var(--texte-doux); background: transparent; border-style: dashed; border-color: var(--bordure); font-weight: 600; }
+
+  /* rencontres (accueil) */
+  .carte-rencontre { display:block; }
+  .carte-rencontre .ligne1 { display:flex; justify-content: space-between; align-items:center; gap: 8px; }
+  .cat { color: var(--accent-doux); font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing:.05em; }
+  .date-org { color: var(--texte-fort); font-size: 14px; margin-top: 2px; }
+  .nb-equipes { color: var(--texte-attenue); font-size: 12px; margin-top: 6px; }
+  .chev { color: var(--texte-doux); font-size: 18px; }
+
+  /* formulaire d'ajout inline */
+  .form-ajout { margin-top: 10px; border: 1px dashed var(--bordure); border-radius: 12px; padding: 12px; background: rgba(34,211,238,0.03); }
+  .form-ajout .lbl { color: var(--accent); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; display:block; }
+  .ligne-champs { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+  .champ { flex: 1 1 auto; }
+  .champ label { display:block; color: var(--texte-doux); font-size: 10.5px; margin-bottom: 3px; }
+  input, select {
+    width: 100%; background: rgba(0,0,0,.3); color: var(--texte-fort);
+    border: 1px solid var(--bordure); border-radius: 8px; padding: 8px 9px; font-size: 13px; color-scheme: dark;
+  }
+  select option { background: var(--fond); color: var(--texte); }
+  option[disabled] { color: var(--texte-doux); }
+  input::placeholder { color: var(--texte-doux); }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    border-radius: 9px; padding: 9px 14px; font-size: 13px; font-weight: 600; cursor: pointer;
+    border: 1px solid transparent; width: 100%;
+  }
+  .btn-primaire { background: var(--accent); color: #04222a; }
+  .btn-primaire:disabled { background: rgba(34,211,238,.25); color: rgba(4,34,42,.6); cursor: not-allowed; }
+  .btn-fantome { background: transparent; color: var(--accent); border-color: rgba(34,211,238,.35); }
+  .btn-fantome:hover { background: var(--surface-forte); }
+
+  /* messages */
+  .erreur { color: var(--danger); font-size: 12px; background: rgba(251,113,133,.09); border:1px solid rgba(251,113,133,.3); border-radius: 10px; padding: 9px 11px; margin-top: 8px; }
+  .note-lecture { color: var(--texte-attenue); font-size: 12px; background: rgba(148,163,184,.08); border:1px solid var(--bordure); border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; }
+  .vide { color: var(--texte-doux); font-size: 12.5px; font-style: italic; padding: 10px 8px; text-align:center; }
+  .info-plein { color: var(--secondaire); font-size: 11.5px; margin-top: 6px; }
+
+  .legende { max-width: 900px; margin: 44px auto 0; color: var(--texte-attenue); font-size: 13px; }
+  .legende h2 { color: var(--texte-fort); font-size: 15px; margin-bottom: 6px; }
+  .legende h3 { color: var(--accent-doux); font-size: 13px; margin: 16px 0 4px; }
+  .legende li { margin-bottom: 6px; }
+  .legende code { background: var(--surface-forte); padding: 1px 5px; border-radius: 5px; color: var(--texte-fort); font-size: 12px; }
+</style>
+</head>
+<body>
+  <h1>Espace Coach — maquettes (spec #5)</h1>
+  <p class="intro">Parcours d'engagement d'un club dans une rencontre : accueil (liste des rencontres),
+  écran d'engagement (équipes + compositions), ajout d'équipe et de grimpeur, cas du grimpeur prêté,
+  plafond d'effectif et états lecture seule. Design « Nuit », mobile-first.
+  Exemple : <strong>coach du Club A « CAF Bègles »</strong>.</p>
+
+  <div class="grille">
+
+    <!-- ============ 1 · ACCUEIL COACH ============ -->
+    <section class="colonne">
+      <p class="titre-option">1 · Accueil coach — <code>/coach</code></p>
+      <p class="desc-option">Liste des rencontres où le club peut être / est engagé, avec phase et nb d'équipes (R6–R8).</p>
+      <div class="tel">
+        <div class="barre-haut">
+          <div class="lien-retour">← Accueil</div>
+          <div class="titre-ecran">Mes rencontres</div>
+          <div class="sous">Club A — CAF Bègles · triées par priorité</div>
+        </div>
+        <div class="corps">
+
+          <!-- 1) Préparation (jour J) d'abord — la plus actionnable -->
+          <div class="carte carte-rencontre">
+            <div class="ligne1"><span class="cat">Enfant</span><span class="chev">›</span></div>
+            <div class="date-org">12 oct. 2025 — CAF Bègles</div>
+            <div class="badge-phase prepa">◉ Préparation jour J — édition (permanent + temporaire)</div>
+            <div class="nb-equipes">2 équipes engagées · 14 grimpeurs</div>
+          </div>
+
+          <!-- 2) Puis compétitions en cours -->
+          <div class="carte carte-rencontre">
+            <div class="ligne1"><span class="cat">Enfant</span><span class="chev">›</span></div>
+            <div class="date-org">11 oct. 2025 — CAF Bègles</div>
+            <div class="badge-phase comp">● Compétition en cours — saisie résultats</div>
+            <div class="nb-equipes">1 équipe engagée · 8 grimpeurs</div>
+          </div>
+
+          <!-- 3) Puis pré-compétitions (prépa à distance) -->
+          <div class="carte carte-rencontre">
+            <div class="ligne1"><span class="cat">Ado</span><span class="chev">›</span></div>
+            <div class="date-org">2 nov. 2025 — CAF Bègles</div>
+            <div class="badge-phase">● Pré-compétition — édition (permanent)</div>
+            <div class="nb-equipes">2 équipes engagées · 14 grimpeurs</div>
+          </div>
+
+          <!-- 4) Terminées : d'abord la clôture (vérification admin) … -->
+          <div class="carte carte-rencontre">
+            <div class="ligne1"><span class="cat">Ado</span><span class="chev">›</span></div>
+            <div class="date-org">28 sept. 2025 — ESCALADE 33</div>
+            <div class="badge-phase verif">⏳ Clôture — vérification (admin)</div>
+            <div class="nb-equipes">1 équipe · 7 grimpeurs</div>
+          </div>
+
+          <!-- … puis résultats officiels -->
+          <div class="carte carte-rencontre">
+            <div class="ligne1"><span class="cat">Ado</span><span class="chev">›</span></div>
+            <div class="date-org">7 sept. 2025 — ESCALADE 33</div>
+            <div class="badge-phase verrou">🔒 Résultats officiels — lecture seule</div>
+            <div class="nb-equipes">1 équipe · 6 grimpeurs</div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 2 · ÉCRAN D'ENGAGEMENT ============ -->
+    <section class="colonne">
+      <p class="titre-option">2 · Engagement — <code>/coach/rencontres/[id]</code></p>
+      <p class="desc-option">En-tête récap + équipes du club avec composition et effectif n/8. Ajout d'équipe (R9–R11).</p>
+      <div class="tel">
+        <div class="barre-haut">
+          <div class="lien-retour">← Mes rencontres</div>
+          <div class="titre-rencontre">12 oct. 2025 — CAF Bègles</div>
+          <div class="meta">Catégorie enfant</div>
+          <div class="badge-phase">● Pré-compétition — édition possible</div>
+        </div>
+        <div class="corps">
+
+          <div class="carte">
+            <div class="carte-entete">
+              <div><span class="carte-titre">Équipe A1</span></div>
+              <span class="effectif plein"><span class="jauge"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span> <span class="n">8</span>/8</span>
+            </div>
+            <ul class="liste">
+              <li><span class="grimpeur">Léa Martin</span><span class="groupe pousse">Groupe M2</span><span class="retirer">×</span></li>
+              <li><span class="grimpeur">Tom Dubois</span><span class="groupe pousse">Groupe M4</span><span class="retirer">×</span></li>
+              <li><span class="sec" style="color:var(--texte-doux);font-size:12px;padding-left:8px">… 6 autres</span></li>
+            </ul>
+          </div>
+
+          <div class="carte">
+            <div class="carte-entete">
+              <div><span class="carte-titre">Équipe A2</span></div>
+              <span class="effectif"><span class="jauge"><i class="on"></i><i class="on"></i><i class="on"></i></span> <span class="n">3</span>/8</span>
+            </div>
+            <ul class="liste">
+              <li><span class="grimpeur">Emma Roux</span><span class="groupe pousse">Groupe M1</span><span class="retirer">×</span></li>
+              <li><span class="grimpeur">Noé Petit</span><span class="groupe pousse">Groupe M3</span><span class="retirer">×</span></li>
+              <li><span class="grimpeur">Jade Simon</span><span class="groupe attente pousse">à définir</span><span class="retirer">×</span></li>
+            </ul>
+            <button class="btn btn-fantome" style="margin-top:8px">+ Ajouter un grimpeur</button>
+          </div>
+
+          <div class="form-ajout">
+            <span class="lbl">Nouvelle équipe</span>
+            <div class="ligne-champs">
+              <div class="champ"><label>Nom de l'équipe</label><input placeholder="A3"></div>
+            </div>
+            <button class="btn btn-primaire">Créer l'équipe</button>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 3 · COMPOSITION : AJOUT GRIMPEUR ============ -->
+    <section class="colonne">
+      <p class="titre-option">3 · Composer — ajouter un grimpeur (R12)</p>
+      <p class="desc-option">Équipe dépliée : liste + sélection dans le roster du club. Un prêté est visible et retirable (R13).</p>
+      <div class="tel">
+        <div class="barre-haut">
+          <div class="lien-retour">← Équipes</div>
+          <div class="titre-rencontre">Équipe A2 — composition</div>
+          <div class="meta">12 oct. 2025 · enfant</div>
+          <div class="badge-phase">● Pré-compétition — édition possible</div>
+        </div>
+        <div class="corps">
+
+          <div class="carte">
+            <div class="carte-entete">
+              <span class="carte-titre">Grimpeurs</span>
+              <span class="effectif"><span class="jauge"><i class="on"></i><i class="on"></i><i class="on"></i><i class="prete"></i></span> <span class="n">4</span>/8</span>
+            </div>
+            <ul class="liste">
+              <li><span class="grimpeur">Emma Roux</span><span class="groupe pousse">Groupe M1</span><span class="retirer">×</span></li>
+              <li><span class="grimpeur">Noé Petit</span><span class="groupe pousse">Groupe M3</span><span class="retirer">×</span></li>
+              <li><span class="grimpeur">Jade Simon</span><span class="groupe attente pousse">à définir</span><span class="retirer">×</span></li>
+              <li>
+                <span class="grimpeur">Hugo Blanc</span>
+                <span class="badge-prete">Prêté · Club B</span>
+                <span class="groupe pousse">Groupe M3</span><span class="retirer">×</span>
+              </li>
+            </ul>
+            <div class="form-ajout">
+              <span class="lbl">Ajouter depuis le roster du club</span>
+              <div class="ligne-champs">
+                <div class="champ"><label>Grimpeur</label>
+                  <select>
+                    <option>— Choisir —</option>
+                    <option selected>Chloé Girard</option>
+                    <option>Lucas Fabre</option>
+                    <option disabled>Léa Martin — déjà en A1</option>
+                    <option disabled>Tom Dubois — déjà en A1</option>
+                  </select>
+                </div>
+              </div>
+              <div class="ligne-champs">
+                <div class="champ"><label>Groupe de départ <span style="color:var(--texte-doux);text-transform:none;font-weight:400">(optionnel)</span></label>
+                  <select>
+                    <option>— À définir —</option>
+                    <option>Groupe M1</option>
+                    <option selected>Groupe M2</option>
+                    <option>Groupe M3</option>
+                    <option>Groupe M4</option>
+                    <option>Groupe T1</option>
+                    <option>Groupe T2</option>
+                    <option>Groupe T3</option>
+                  </select>
+                </div>
+              </div>
+              <div class="sec" style="color:var(--accent-doux);font-size:12px;margin:-2px 0 8px">Voies de l'enfant : <strong>M2 · M3 · M4</strong> (3 voies croissantes)</div>
+              <button class="btn btn-primaire">Ajouter à l'équipe</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 4 · GRIMPEUR PRÊTÉ (zoom) ============ -->
+    <section class="colonne">
+      <p class="titre-option">4 · Grimpeur prêté (R13 / R35–R36)</p>
+      <p class="desc-option">Rattaché par l'admin (prêt inter-clubs). Le coach d'accueil le voit, le gère et peut le retirer — mais ne peut pas en rattacher lui-même.</p>
+      <div class="tel">
+        <div class="barre-haut">
+          <div class="lien-retour">← Équipes</div>
+          <div class="titre-rencontre">Équipe A2 — Hugo Blanc</div>
+          <div class="meta">Grimpeur prêté</div>
+        </div>
+        <div class="corps">
+          <div class="carte">
+            <div class="carte-entete">
+              <span class="carte-titre">Hugo Blanc</span>
+              <span class="badge-prete">Prêté</span>
+            </div>
+            <ul class="liste">
+              <li><span class="an" style="width:110px">Club d'origine</span><span class="grimpeur pousse">Club B — ASPTT</span></li>
+              <li><span class="an" style="width:110px">Groupe de départ</span><span class="groupe pousse">Groupe M3</span></li>
+              <li><span class="an" style="width:110px">Voies</span><span class="grimpeur pousse">M3 · M4 · T1</span></li>
+              <li><span class="an" style="width:110px">Rattaché par</span><span class="grimpeur pousse">Admin</span></li>
+            </ul>
+            <div class="note-lecture" style="margin:12px 0 0">
+              Le <strong>rattachement</strong> d'un grimpeur prêté est réservé à l'admin (R35).
+              En tant que coach d'accueil, vous le gérez comme les vôtres : ses résultats vous
+              reviennent et vous pouvez le <strong>retirer</strong> de l'équipe (R36).
+            </div>
+            <button class="btn btn-fantome" style="margin-top:12px;color:var(--danger);border-color:rgba(251,113,133,.4)">Retirer de l'équipe A2</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 5 · CAS BLOQUANTS (R14 / R15) ============ -->
+    <section class="colonne">
+      <p class="titre-option">5 · Refus : effectif & double engagement</p>
+      <p class="desc-option">Plafond 8 (R15) et unicité grimpeur par rencontre (R14) : l'ajout est refusé avec message explicite.</p>
+      <div class="tel">
+        <div class="barre-haut">
+          <div class="lien-retour">← Équipes</div>
+          <div class="titre-rencontre">Équipe A1 — composition</div>
+          <div class="badge-phase">● Pré-compétition — édition possible</div>
+        </div>
+        <div class="corps">
+
+          <div class="carte">
+            <div class="carte-entete">
+              <span class="carte-titre">Grimpeurs</span>
+              <span class="effectif plein"><span class="jauge"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span> <span class="n">8</span>/8</span>
+            </div>
+            <div class="info-plein">Équipe complète — plafond de 8 atteint (règlement §6).</div>
+            <div class="form-ajout" style="opacity:.85">
+              <span class="lbl">Ajouter un grimpeur</span>
+              <div class="ligne-champs">
+                <div class="champ"><label>Grimpeur</label>
+                  <select><option>Chloé Girard</option></select>
+                </div>
+              </div>
+              <button class="btn btn-primaire" disabled>Équipe complète (8/8)</button>
+              <div class="erreur">Impossible d'ajouter un 9ᵉ grimpeur : l'effectif d'une équipe est plafonné à 8 (R15).</div>
+            </div>
+          </div>
+
+          <div class="carte">
+            <div class="carte-entete"><span class="carte-titre">Tentative de double engagement</span></div>
+            <div class="erreur" style="margin-top:0">« Léa Martin » est déjà engagée dans l'équipe A1 pour cette rencontre : un grimpeur ne peut appartenir qu'à une seule équipe par rencontre (R14).</div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 6 · LECTURE SEULE (R17) ============ -->
+    <section class="colonne">
+      <p class="titre-option">6 · Lecture seule — hors fenêtre (R16–R17)</p>
+      <p class="desc-option">Coach permanent en phase ② / ③, ou rencontre close : composition consultable, aucun formulaire.</p>
+      <div class="tel">
+        <div class="barre-haut">
+          <div class="lien-retour">← Mes rencontres</div>
+          <div class="titre-rencontre">7 sept. 2025 — ESCALADE 33</div>
+          <div class="meta">Catégorie enfant</div>
+          <div class="badge-phase verrou">🔒 Résultats — lecture seule</div>
+        </div>
+        <div class="corps">
+          <div class="note-lecture">Cette rencontre n'est plus en pré-compétition : la composition
+          ne peut plus être modifiée. Vous pouvez la consulter.</div>
+
+          <div class="carte">
+            <div class="carte-entete">
+              <span class="carte-titre">Équipe A1</span>
+              <span class="effectif"><span class="jauge"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="prete"></i></span> <span class="n">6</span>/8</span>
+            </div>
+            <ul class="liste">
+              <li><span class="grimpeur">Léa Martin</span><span class="groupe pousse">Groupe M2</span></li>
+              <li><span class="grimpeur">Tom Dubois</span><span class="groupe pousse">Groupe M4</span></li>
+              <li><span class="grimpeur">Hugo Blanc</span><span class="badge-prete">Prêté · Club B</span><span class="groupe pousse">Groupe M3</span></li>
+              <li><span class="sec" style="color:var(--texte-doux);font-size:12px;padding-left:8px">… 3 autres</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <div class="legende">
+    <h2>Correspondance maquettes → règles (spec #5)</h2>
+    <h3>Écran 1 — Accueil coach</h3>
+    <ul>
+      <li><strong>R6/R7</strong> — liste des rencontres du club, phase + nb d'équipes, accès à l'engagement.</li>
+      <li><strong>R8</strong> — tri par priorité (cycle à 5 phases, spec #1 R5) :
+        <span class="badge-phase prepa" style="margin:0">◉ Préparation jour J</span> d'abord (la plus actionnable),
+        puis <span class="badge-phase comp" style="margin:0">● Compétition</span>,
+        puis <span class="badge-phase" style="margin:0">● Pré-compétition</span>,
+        enfin les terminées <span class="badge-phase verif" style="margin:0">⏳ Clôture</span>
+        puis <span class="badge-phase verrou" style="margin:0">🔒 Résultats officiels</span>.</li>
+      <li><strong>Édition de l'engagement</strong> : en <strong>pré-compétition</strong> (coach permanent, à distance)
+        et en <strong>préparation jour J</strong> (coach permanent <strong>et temporaire</strong>, mêmes droits).
+        Gelé dès la compétition (admin seul). La <strong>préparation</strong> n'est activée par l'admin que le <strong>jour de la rencontre</strong>.</li>
+    </ul>
+    <h3>Écran 2 — Engagement</h3>
+    <ul>
+      <li><strong>R9</strong> — en-tête récap + équipes du club avec effectif n/8.</li>
+      <li><strong>R10/R11</strong> — créer une équipe (nom unique par rencontre), plusieurs équipes possibles.</li>
+    </ul>
+    <h3>Écran 3 — Composer</h3>
+    <ul>
+      <li><strong>R12</strong> — ajouter/retirer depuis le <em>roster du club</em>.</li>
+      <li><strong>Groupe de départ (rencontres enfant uniquement)</strong> — à l'ajout, on choisit dans une
+        liste le <span class="groupe" style="margin:0">Groupe</span> de l'enfant sur l'échelle
+        <code>M1→M4 puis T1→T8</code> (<strong>T9 et T10 exclus</strong> : ils ne laissent pas 3 voies).
+        Il fixe sa voie de départ, puis <strong>3 voies croissantes</strong>
+        (M2 ⇒ M2·M3·M4 ; M4 ⇒ M4·T1·T2 ; T8 ⇒ T8·T9·T10). <strong>Optionnel</strong> : badge
+        <span class="groupe attente" style="margin:0">à définir</span> tant qu'il n'est pas fixé.
+        Il remplace l'année de naissance. Les rencontres <strong>ado n'ont pas</strong> de groupe de départ.
+        <em>Nouveau concept → à porter dans la spec #5 + colonne <code>groupe_depart</code> (nullable) sur <code>composition</code>.</em></li>
+      <li><strong>R13</strong> — un grimpeur prêté (rattaché par l'admin) apparaît avec le badge <span class="badge-prete">Prêté</span> et reste retirable.</li>
+      <li><strong>R14</strong> — les grimpeurs déjà engagés dans une autre équipe de la rencontre sont désactivés dans la liste.</li>
+    </ul>
+    <h3>Écran 4 — Grimpeur prêté</h3>
+    <ul>
+      <li><strong>R13 / R35–R36</strong> — rattachement = admin ; gestion & retrait = coach d'accueil.</li>
+    </ul>
+    <h3>Écran 5 — Refus</h3>
+    <ul>
+      <li><strong>R15</strong> — ajout d'un 9ᵉ grimpeur refusé (plafond 8, bouton désactivé + message).</li>
+      <li><strong>R14</strong> — double engagement refusé avec message explicite.</li>
+    </ul>
+    <h3>Écran 6 — Lecture seule</h3>
+    <ul>
+      <li><strong>R16/R17</strong> — hors fenêtre d'édition : consultation uniquement, aucun formulaire.</li>
+    </ul>
+    <p style="margin-top:16px;color:var(--texte-doux)">Codes couleur — accent cyan : membre du club · violet
+      <span class="badge-prete">Prêté</span> : grimpeur prêté (R13) · vert citron : phase ① éditable · gris 🔒 : lecture seule.</p>
+  </div>
+</body>
+</html>

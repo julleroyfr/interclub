@@ -1,5 +1,5 @@
 // Domaine pur — rencontre (spec #1 « Rôles & autorisations », R12 : CRUD
-// rencontre réservé à l'admin ; R5 : cycle de vie en trois phases successives).
+// rencontre réservé à l'admin ; R5 : cycle de vie en cinq phases successives).
 // Ici, pas d'accès Supabase : uniquement la validation/normalisation de la
 // saisie et l'ordre des phases, reflets des contraintes SQL de `rencontre`
 // (`categorie in ('enfant','ado')`, `phase in (...)`, `date_rencontre date`).
@@ -15,7 +15,9 @@ export type Categorie = (typeof CATEGORIES)[number]['value']
 /** Phases successives d'une rencontre, dans l'ordre du cycle de vie (R5). */
 export const PHASES = [
   { value: 'pre_competition', label: 'Pré-compétition' },
+  { value: 'preparation', label: 'Préparation jour J' },
   { value: 'competition', label: 'Compétition' },
+  { value: 'cloture', label: 'Clôture' },
   { value: 'resultats_publics', label: 'Résultats publics' },
 ] as const
 
@@ -121,4 +123,13 @@ export function phaseSuivante(phase: Phase): Phase | null {
 export function phasePrecedente(phase: Phase): Phase | null {
   const i = PHASES.findIndex((p) => p.value === phase)
   return i > 0 ? PHASES[i - 1].value : null
+}
+
+/**
+ * Garde-fou « jour J » de la phase préparation (R5, rév. 2026-09-01) : l'admin ne
+ * peut faire entrer une rencontre en `preparation` que **le jour de la
+ * rencontre**. `dateRencontre` et `aujourdhui` sont des dates ISO `AAAA-MM-JJ`.
+ */
+export function peutEntrerEnPreparation(dateRencontre: string, aujourdhui: string): boolean {
+  return dateRencontre === aujourdhui
 }

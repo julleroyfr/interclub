@@ -83,12 +83,31 @@ select pg_temp.essai('A-coachA-equipeB',    false, $$insert into interclub.equip
 select pg_temp.essai('A-coachA-resultat-p1',false, $$insert into interclub.resultat (epreuve_id,grimpeur_id,valeur) values ('88888888-8888-8888-8888-888888888801','a0000000-0000-0000-0000-0000000000a1','top')$$);
 reset role;
 
--- Coach temporaire : aucune session valide en phase ① (R28).
+-- Coach temporaire : aucune session valide en phase ① pré-compétition (R28) —
+-- sa session n'ouvre l'engagement qu'en préparation (jour J), pas avant.
 select set_config('request.jwt.claims','{"sub":"d0000000-0000-0000-0000-0000000000c7"}', true); set role authenticated;
 select pg_temp.essai('A-coachTemp-equipe-p1', false, $$insert into interclub.equipe (rencontre_id,club_id,nom) values ('33333333-3333-3333-3333-333333333333','11111111-1111-1111-1111-111111111111','TMP')$$);
 reset role;
 
--- =========================== BLOC B : phase ② ===========================
+-- ===================== BLOC P : phase préparation (jour J) =================
+-- spec #1 R6/R27 (rév. 2026-09-01) : en préparation, coach permanent ET
+-- temporaire éditent l'engagement (droits identiques) ; pas encore de résultats.
+update interclub.rencontre set phase='preparation' where id='33333333-3333-3333-3333-333333333333';
+
+-- Coach permanent Club A : édite l'engagement en préparation.
+select set_config('request.jwt.claims','{"sub":"cccccccc-cccc-cccc-cccc-cccccccccccc"}', true); set role authenticated;
+select pg_temp.essai('P-coachA-equipe',        true,  $$insert into interclub.equipe (rencontre_id,club_id,nom) values ('33333333-3333-3333-3333-333333333333','11111111-1111-1111-1111-111111111111','PREPA')$$);
+reset role;
+
+-- Coach temporaire Club A : mêmes droits d'engagement que le permanent le jour J.
+select set_config('request.jwt.claims','{"sub":"d0000000-0000-0000-0000-0000000000c7"}', true); set role authenticated;
+select pg_temp.essai('P-coachTemp-equipe',     true,  $$insert into interclub.equipe (rencontre_id,club_id,nom) values ('33333333-3333-3333-3333-333333333333','11111111-1111-1111-1111-111111111111','TMPP')$$);
+select pg_temp.essai('P-coachTemp-composition',true,  $$delete from interclub.composition where equipe_id='66666666-6666-6666-6666-666666666666' and grimpeur_id='a0000000-0000-0000-0000-0000000000a1'$$);
+select pg_temp.essai('P-coachTemp-equipeAutre',false, $$insert into interclub.equipe (rencontre_id,club_id,nom) values ('33333333-3333-3333-3333-333333333333','22222222-2222-2222-2222-222222222222','TMPPB')$$);
+select pg_temp.essai('P-coachTemp-resultat',   false, $$insert into interclub.resultat (epreuve_id,grimpeur_id,valeur) values ('88888888-8888-8888-8888-888888888801','a0000000-0000-0000-0000-0000000000a1','top')$$);
+reset role;
+
+-- =========================== BLOC B : phase ② compétition =================
 update interclub.rencontre set phase='competition' where id='33333333-3333-3333-3333-333333333333';
 
 -- Coach permanent Club A.
@@ -100,9 +119,13 @@ select pg_temp.essai('B-coachA-composePrete',false, $$insert into interclub.comp
 reset role;
 
 -- Coach temporaire Club A (session, phase ②).
+-- Gel de l'engagement (spec #1 R27 / spec #5 R16, rév. 2026-09-01) : le coach
+-- temporaire NE MODIFIE PLUS l'engagement (équipe/composition), même en phase ② ;
+-- il ne conserve que la saisie des résultats de ses grimpeurs.
 select set_config('request.jwt.claims','{"sub":"d0000000-0000-0000-0000-0000000000c7"}', true); set role authenticated;
-select pg_temp.essai('B-coachTemp-equipeA',  true,  $$insert into interclub.equipe (rencontre_id,club_id,nom) values ('33333333-3333-3333-3333-333333333333','11111111-1111-1111-1111-111111111111','TMP2')$$);
-select pg_temp.essai('B-coachTemp-equipeB',  false, $$insert into interclub.equipe (rencontre_id,club_id,nom) values ('33333333-3333-3333-3333-333333333333','22222222-2222-2222-2222-222222222222','TMPB')$$);
+select pg_temp.essai('B-coachTemp-equipeA-gel', false, $$insert into interclub.equipe (rencontre_id,club_id,nom) values ('33333333-3333-3333-3333-333333333333','11111111-1111-1111-1111-111111111111','TMP2')$$);
+select pg_temp.essai('B-coachTemp-equipeB',    false, $$insert into interclub.equipe (rencontre_id,club_id,nom) values ('33333333-3333-3333-3333-333333333333','22222222-2222-2222-2222-222222222222','TMPB')$$);
+select pg_temp.essai('B-coachTemp-resultat',   true,  $$insert into interclub.resultat (epreuve_id,grimpeur_id,valeur) values ('88888888-8888-8888-8888-888888888801','a0000000-0000-0000-0000-0000000000a2','top')$$);
 reset role;
 
 -- Juge (session, phase ②).

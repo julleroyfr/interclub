@@ -1,6 +1,17 @@
 # ADR 0001 — Mécanisme d'authentification des sessions QR éphémères
 
 - **Statut** : acceptée (le 2026-07-22)
+- **Révision** : 2026-09-01 — **fenêtre de validité élargie**. Le mécanisme (session
+  anonyme + RPC/RLS `SECURITY DEFINER` recalculant la validité par requête) est
+  **inchangé** ; seule la **fenêtre** évolue avec le cycle à 5 phases (spec #1 R5/R9,
+  rév. 2026-09-01) : jeton **coach temporaire** valide en **② préparation + ③
+  compétition** (édition de l'engagement le jour J puis saisie des résultats), jeton
+  **juge** valide en **③ compétition**. La « coupure immédiate » s'applique à la
+  **sortie de la fenêtre** (coach temp. dès la ④ clôture ; juge dès la fin de la ③).
+  Implémentation : helpers `est_coach_temp_actif_club` / `est_coach_temp_engagement`
+  (migration `202609011400`). Les mentions littérales `phase = '②'` ci-dessous
+  reflètent l'implémentation d'origine (2026-07-22, cycle à 3 phases) et sont à lire
+  à la lumière de cette révision.
 - **Décideurs** : julleroyfr (produit) + assistance technique
 - **Portée** : architecture d'authentification & modèle de données (impacte T5, T6)
 - **Sources** :
@@ -30,8 +41,10 @@ Extraites des specs, ce sont elles qui discriminent les options :
 - **Multi-usage** (R8) : un même jeton ouvre **plusieurs sessions simultanées**
   (plusieurs personnes / appareils).
 - **Fenêtre stricte** (R12, spec #1 R9) : une session n'est valide **que** pendant
-  la **phase ② compétition** de sa rencontre.
-- **Coupure immédiate** (R13, R22, R23) : sortir de la phase ②, **révoquer** ou
+  la **fenêtre du jour de la rencontre**, dépendante de la nature du jeton (coach
+  temporaire : préparation + compétition ; juge : compétition ; cf. révision
+  2026-09-01).
+- **Coupure immédiate** (R13, R22, R23) : sortir de la fenêtre, **révoquer** ou
   **régénérer** un jeton doit invalider l'accès **au prochain appel**.
 - **Périmètre borné** (R24, R25) : coach temporaire → **son club** ; juge → **sa
   voie de vitesse** ; toute action hors périmètre est refusée.

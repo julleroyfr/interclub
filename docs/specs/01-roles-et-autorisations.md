@@ -15,6 +15,28 @@
   hors phase**, le gating de phase ① ne portant que sur l'engagement en
   rencontre (équipes/compositions) (précision R6). Ces précisions n'altèrent pas
   la matrice ; elles lèvent deux ambiguïtés face au modèle de données.
+- **Révision** : 2026-08-29 — le **cycle de vie passe de 3 à 4 phases** (validée
+  le 2026-08-29) : insertion d'une phase **④ clôture** entre la compétition et les
+  résultats publics. La compétition terminée, **l'admin vérifie et corrige la
+  saisie** (résultats non encore publics) ; coachs et juges ne saisissent plus
+  (leurs sessions/écritures étaient déjà bornées à la phase ③ compétition, R7/R9,
+  donc exclues de la clôture sans changement de RLS). Chaque coach peut consulter
+  les résultats **de son club** (marqués **provisoires**) ; rien n'est public
+  cross-club avant la phase ⑤. La phase « résultats publics » devient **⑤**.
+- **Révision** : 2026-09-01 — **phase « préparation jour J »** (validée le
+  2026-09-01) : insertion d'une phase **② préparation** entre pré-compétition et
+  compétition. Le cycle passe à **5 phases**. La préparation n'est **activable par
+  l'admin que le jour de la rencontre** (garde-fou date). C'est la fenêtre
+  d'édition **sur place** : coach **permanent ET temporaire** y modifient
+  l'engagement (équipes, compositions, groupes de départ) avec des **droits
+  identiques** — le coach temporaire ne peut toutefois **pas générer** de QR de
+  coach temporaire (réservé permanent/admin, R26). L'engagement reste éditable par
+  le **permanent** dès la **pré-compétition** (prépa à distance) ; il est **gelé
+  dès la compétition** (③) : seul l'admin corrige alors. La **session QR** du coach
+  temporaire est valable **préparation + compétition** (« la journée »), révoquée
+  en clôture. Impact RLS : helpers `est_coach_temp_actif_club` /
+  `est_coach_temp_engagement` ; `peut_ecrire_equipe` = permanent (pré-compét/prépa)
+  OU temporaire (prépa) ; résultats inchangés (compétition).
 
 ## Objectif
 
@@ -82,23 +104,45 @@ conditionne les accès temporels.
 
 ### Cycle de vie d'une rencontre
 
-- **R5.** Une rencontre se déroule en trois phases successives : **①
-  pré-compétition** (pré-saisie des équipes), **② compétition** (déroulement et
-  saisies des résultats), **③ résultats publics** (rendu public des résultats).
-- **R6.** La pré-saisie des équipes et grimpeurs n'est possible qu'en phase ①
-  pré-compétition.
+- **R5.** Une rencontre se déroule en **cinq phases successives** : **①
+  pré-compétition** (pré-saisie de l'engagement à distance par le coach permanent),
+  **② préparation** (fenêtre d'édition **sur place le jour J**, ouverte par
+  l'admin, où coach permanent **et** temporaire finalisent l'engagement), **③
+  compétition** (déroulement et saisies des résultats ; engagement gelé), **④
+  clôture** (compétition terminée : vérification et correction de la saisie par
+  l'**admin**, résultats non encore publics), **⑤ résultats publics** (rendu
+  public des résultats).
+  - **Précision (rév. 2026-09-01)** : la phase **② préparation** n'est
+    **activable par l'admin que le jour de la rencontre** (date du jour) ; c'est
+    un garde-fou « jour J ». Hors de ce jour, la rencontre reste en pré-compétition.
+  - **Précision (rév. 2026-08-29)** : en phase ④ **clôture**, **seul l'admin**
+    peut saisir/corriger les résultats et temps ; coachs et juges n'y écrivent
+    plus (leurs droits étaient bornés à la phase ③ compétition, R7/R9). Chaque
+    coach peut **consulter** les résultats **de son club** (statut
+    **provisoire**), mais aucune donnée n'est publique cross-club avant la phase
+    ⑤ (R8).
+- **R6.** L'édition de l'**engagement** (équipes, compositions, groupes de départ)
+  n'est possible qu'en phases **① pré-compétition** et **② préparation**.
   - **Précision (rév. 2026-07-25)** : « grimpeurs » désigne ici leur
     **engagement dans une rencontre** (compositions d'équipe). Le **roster de
     grimpeurs d'un club** (licenciés, indépendant d'une rencontre) reste
     consultable et éditable par le coach de ce club **hors phase** ; seul
-    l'engagement en rencontre (équipes et compositions) est borné à la phase ①.
-    Le coach temporaire, lui, agit en phase ② (R27, matrice).
+    l'engagement en rencontre (équipes et compositions) est borné aux phases
+    d'édition.
+  - **Précision (rév. 2026-09-01)** : en **① pré-compétition**, seul le coach
+    **permanent** édite l'engagement (prépa à distance). En **② préparation**
+    (jour J), coach **permanent et temporaire** l'éditent avec des **droits
+    identiques**. Dès la **③ compétition** et au-delà (④, ⑤), l'engagement est
+    **verrouillé pour les coachs** ; **seul l'admin** peut le corriger.
 - **R7.** La saisie des résultats (coach) et des temps de vitesse (juge) n'est
-  possible qu'en phase ② compétition.
+  possible qu'en phase ③ compétition.
 - **R8.** Les résultats deviennent consultables comme **infos publiques** en
-  phase ③ résultats publics.
-- **R9.** Les sessions QR éphémères (coach temporaire, juge) ne sont valides que
-  pendant la phase ② compétition de leur rencontre.
+  phase ⑤ résultats publics.
+- **R9.** Les sessions QR éphémères ne sont valides que pendant la **fenêtre du
+  jour de la rencontre** : pour le **coach temporaire**, phases **② préparation**
+  et **③ compétition** ; pour le **juge**, phase **③ compétition**. Hors de cette
+  fenêtre (avant la préparation, ou dès la ④ clôture), la session est invalide
+  (révocation recalculée à chaque requête).
 - **R34.** Une rencontre porte exactement une **catégorie** (matin < 13 ans, ou
   après-midi 13/19 ans). Une journée d'interclub à deux demi-journées se
   modélise en **deux rencontres distinctes**, chacune avec ses propres phases,
@@ -127,7 +171,7 @@ conditionne les accès temporels.
   équipes, et uniquement ceux-ci (le rattachement d'un grimpeur **prêté** d'un
   autre club relève de l'admin, cf. R35).
 - **R19.** Un coach peut saisir et modifier les **résultats** des grimpeurs de
-  ses équipes (en phase ② compétition, cf. R7).
+  ses équipes (en phase ③ compétition, cf. R7).
 - **R20.** Un coach ne peut ni consulter en écriture ni modifier les données
   d'un autre club (équipes, grimpeurs, résultats).
 - **R21.** Un coach peut consulter les **infos publiques** de la compétition,
@@ -141,16 +185,22 @@ conditionne les accès temporels.
   d'une rencontre et de sa phase.
 - **R24.** Le coach permanent peut consulter les résultats des rencontres
   passées.
-- **R25.** Le coach permanent peut pré-saisir ses équipes et grimpeurs en phase
-  ① pré-compétition (R6).
+- **R25.** Le coach permanent peut éditer l'engagement de ses équipes (équipes,
+  compositions, groupes de départ) en phases **① pré-compétition** (prépa à
+  distance) et **② préparation** (jour J, aux côtés du coach temporaire) — R6.
 - **R26.** Le coach permanent peut afficher les **QR** des coachs temporaires de
-  **son** club.
-- **R27.** Le coach temporaire dispose des mêmes droits fonctionnels que le
-  coach permanent (R17–R21), mais **uniquement pendant la validité de sa session
-  QR** (phase ② compétition, R9).
-- **R28.** Hors de la fenêtre de la rencontre, le coach temporaire n'a aucun
-  accès : pas de connexion, pas de consultation de rencontres passées, pas de
-  pré-saisie (par opposition à R23–R25).
+  **son** club. Le **coach temporaire**, lui, **ne peut pas** générer ni afficher
+  de QR de coach temporaire (réservé au permanent et à l'admin).
+- **R27.** Le coach temporaire agit **uniquement le jour de la rencontre**, pendant
+  la validité de sa session QR (phases ② préparation et ③ compétition, R9). En **②
+  préparation**, il édite l'**engagement** (équipes, compositions, groupes de
+  départ) avec les **mêmes droits que le coach permanent** (R17, R18), **sauf**
+  générer des QR de coach temporaire (R26). En **③ compétition**, l'engagement est
+  **gelé** (précision R6) et il **saisit les résultats** de ses grimpeurs (R19). Il
+  consulte son périmètre (R21).
+- **R28.** Hors de la fenêtre du jour de la rencontre (avant la préparation, ou
+  dès la ④ clôture), le coach temporaire n'a **aucun accès** : pas de session, pas
+  de consultation de rencontres passées (par opposition à R23–R25).
 
 ### Juge
 
@@ -172,7 +222,7 @@ conditionne les accès temporels.
 - **R32.** Le juge ne peut effectuer aucune autre action que la saisie définie en
   R30–R31 (aucun CRUD club, équipe, grimpeur ou rencontre).
 - **R33.** Le juge n'a accès qu'à la fenêtre de la rencontre (session QR
-  éphémère, phase ② compétition, R9).
+  éphémère, phase ③ compétition, R9).
 
 ### Grimpeurs prêtés (prêt inter-clubs / équipe CT33)
 
@@ -181,7 +231,7 @@ conditionne les accès temporels.
   coach ne peut pas rattacher à ses équipes un grimpeur d'un autre club.
 - **R36.** Une fois un grimpeur prêté rattaché à une équipe d'accueil (R35), le
   **coach de cette équipe** le gère comme un grimpeur de son équipe : saisie et
-  modification de ses **résultats** (R19), dans son périmètre et en phase ②
+  modification de ses **résultats** (R19), dans son périmètre et en phase ③
   compétition (R7). Le grimpeur reste rattaché à son **club d'origine** pour ses
   résultats individuels (classement — hors périmètre de cette spec).
 
@@ -203,7 +253,10 @@ conditionne les accès temporels.
 ## Matrice rôles × actions
 
 Légende : ✅ autorisé · ❌ interdit · 🔒 limité à son périmètre (son club / ses
-grimpeurs / l'épreuve affectée) · ⏱️ uniquement pendant la phase ② compétition.
+grimpeurs / l'épreuve affectée) · ⏱️ uniquement pendant la phase ③ compétition ·
+les exposants **①②** indiquent les **phases** où l'action est permise (① pré-
+compétition, ② préparation jour J). L'engagement est **figé dès la ③ compétition**
+(seul l'admin corrige, précision R6/R27).
 
 | Action | Admin | Coach permanent | Coach temporaire | Juge |
 | ------ | :---: | :-------------: | :--------------: | :--: |
@@ -212,8 +265,8 @@ grimpeurs / l'épreuve affectée) · ⏱️ uniquement pendant la phase ② comp
 | CRUD rencontres | ✅ | ❌ | ❌ | ❌ |
 | Affecter un juge à la vitesse | ✅ | ❌ | ❌ | ❌ |
 | Afficher les QR (coachs temp. + juges) | ✅ | 🔒 | ❌ | ❌ |
-| CRUD équipes (de son club) | ✅ | 🔒 | 🔒⏱️ | ❌ |
-| CRUD grimpeurs (de ses équipes) | ✅ | 🔒 | 🔒⏱️ | ❌ |
+| CRUD équipes (de son club) — engagement | ✅ | 🔒①② | 🔒② | ❌ |
+| CRUD compositions/groupes de départ (de ses équipes) — engagement | ✅ | 🔒①② | 🔒② | ❌ |
 | Saisir les résultats de ses grimpeurs | ✅ | 🔒⏱️ | 🔒⏱️ | ❌ |
 | Saisir les résultats de vitesse (temps/chute/non-prés.) de la voie affectée | ✅ | ❌ | ❌ | 🔒⏱️ |
 | Rattacher un grimpeur prêté (autre club / équipe CT33) | ✅ | ❌ | ❌ | ❌ |
@@ -246,17 +299,29 @@ flowchart TD
 stateDiagram-v2
   [*] --> PreCompetition
   PreCompetition: ① Pré-compétition
-  Competition: ② Compétition
-  ResultatsPublics: ③ Résultats publics
-  PreCompetition --> Competition
-  Competition --> ResultatsPublics
+  Preparation: ② Préparation jour J
+  Competition: ③ Compétition
+  Cloture: ④ Clôture
+  ResultatsPublics: ⑤ Résultats publics
+  PreCompetition --> Preparation
+  Preparation --> Competition
+  Competition --> Cloture
+  Cloture --> ResultatsPublics
   ResultatsPublics --> [*]
   note right of PreCompetition
-    Pré-saisie équipes/grimpeurs (coach permanent) — R6, R25
+    Engagement à distance (coach permanent) — R6, R25
+  end note
+  note right of Preparation
+    Jour J (activable par l'admin le jour même) — R5
+    Engagement édité par coach permanent ET temporaire — R6, R27
   end note
   note right of Competition
-    Saisies coach (résultats) & juge (temps vitesse) — R7
-    Sessions QR éphémères valides — R9
+    Engagement gelé (admin seul). Saisies coach (résultats) & juge (temps) — R7
+    Sessions QR temporaires valides (préparation + compétition) — R9
+  end note
+  note right of Cloture
+    Compétition terminée : vérification/correction par l'admin — R5
+    Coachs & juges n'écrivent plus ; résultats provisoires (club uniquement)
   end note
   note right of ResultatsPublics
     Résultats consultables (infos publiques) — R8
@@ -272,11 +337,11 @@ sequenceDiagram
   participant DB as Supabase (RLS)
   U->>App: Scan du QR de la rencontre
   App->>DB: Ouverture session éphémère (rôle + périmètre + rencontre)
-  DB-->>App: Session valide si phase ② compétition (R9)
-  U->>App: Action (saisie / CRUD selon rôle)
+  DB-->>App: Session valide le jour J — coach temp. : ② préparation + ③ compétition ; juge : ③ compétition (R9)
+  U->>App: Action (saisie / CRUD selon rôle et phase)
   App->>DB: Requête filtrée par périmètre (club / épreuve de vitesse)
   DB-->>App: Autorisé si périmètre + phase OK, sinon refus
-  Note over U,DB: Hors phase ② compétition → aucun accès (R28, R33)
+  Note over U,DB: Hors de la fenêtre du jour (dès ④ clôture) → aucun accès (R28, R33)
 ```
 
 ## Scénarios
@@ -289,13 +354,17 @@ la création est acceptée (R17, R18, R23, R25).
 
 ### Nominal — coach temporaire
 
-Étant donné un coach temporaire du club A ayant scanné le QR d'une rencontre en
-phase ② compétition, quand il modifie la composition de son équipe et saisit les
-résultats de ses grimpeurs, alors les opérations sont acceptées (R19, R27).
+Étant donné un coach temporaire du club A ayant scanné le QR le **jour de la
+rencontre** : en **② préparation**, quand il ajoute une équipe et compose son
+roster (groupes de départ inclus), l'opération est **acceptée** — mêmes droits
+que le coach permanent (R6, R17, R18, R27) ; puis en **③ compétition**, quand il
+**saisit les résultats** de ses grimpeurs, c'est **accepté** (R19, R27), mais s'il
+tente alors de **modifier la composition**, c'est **refusé** — l'engagement est
+gelé, seul l'admin corrige (R6/R27).
 
 ### Nominal — juge
 
-Étant donné un juge affecté à l'épreuve de vitesse d'une rencontre en phase ②
+Étant donné un juge affecté à l'épreuve de vitesse d'une rencontre en phase ③
 compétition, quand il sélectionne un grimpeur et saisit son **résultat de
 vitesse** (un temps, ou une chute, ou une non-présentation), alors la saisie est
 acceptée (R29, R30, R31).
@@ -303,16 +372,21 @@ acceptée (R29, R30, R31).
 ### Nominal — grimpeur prêté
 
 Étant donné un grimpeur du club B rattaché par l'admin à une équipe du club A
-(prêt), quand le coach du club A saisit ses résultats en phase ② compétition,
+(prêt), quand le coach du club A saisit ses résultats en phase ③ compétition,
 alors la saisie est acceptée (R35, R36) ; le coach du club A ne pouvait pas
 l'ajouter lui-même (R35).
 
 ### Cas limites / erreurs
 
 - Un coach du club A tente de modifier une équipe du club B → refusé (R20).
-- Un coach temporaire tente d'agir hors phase ② compétition → refusé (R28).
+- Un coach temporaire tente d'agir **hors de la fenêtre du jour** (avant la ②
+  préparation, ou dès la ④ clôture) → refusé (R9, R28).
+- Un coach temporaire tente de **modifier l'engagement en ③ compétition** →
+  refusé (engagement gelé, R6/R27).
+- Un coach temporaire tente de **générer un QR de coach temporaire** → refusé
+  (réservé permanent/admin, R26).
 - Un coach temporaire tente de consulter une rencontre passée → refusé (R28).
-- Un coach tente de pré-saisir en phase ② compétition → refusé (R6).
+- Un coach tente de pré-saisir en phase ③ compétition → refusé (R6).
 - Un juge tente de saisir un résultat sans avoir sélectionné de grimpeur, ou un
   second résultat pour un grimpeur déjà saisi → refusé (R31).
 - Un juge tente de saisir un résultat sur une épreuve de vitesse à laquelle il
@@ -329,11 +403,11 @@ l'ajouter lui-même (R35).
 ## Contraintes de données
 
 - Un coach est lié à **exactement un club** (rattachement obligatoire, R16).
-- Une **rencontre** porte une **phase** courante parmi ①/②/③ (R5) qui conditionne
-  les écritures (R6–R9).
+- Une **rencontre** porte une **phase** courante parmi ①/②/③/④/⑤ (R5) qui
+  conditionne les écritures (R6–R9).
 - Une **session QR éphémère** est liée à **une rencontre** et porte son périmètre
   (club pour un coach temporaire ; épreuve de vitesse pour un juge) ; elle n'est
-  valide qu'en phase ② compétition (R9, R28, R33).
+  valide qu'en phase ③ compétition (R9, R28, R33).
 - Une affectation de juge relie un juge à l'**épreuve de vitesse** d'une
   rencontre (R15, R29).
 - Une **rencontre** porte exactement une **catégorie** (matin / après-midi) ;
@@ -360,7 +434,7 @@ l'ajouter lui-même (R35).
     **réservées au rôle admin** (R11–R15) — hors affichage QR des coachs
     temporaires de son club par le coach permanent (R26) ;
   - écritures **conditionnées par la phase** de la rencontre (R6–R9) ;
-  - accès des sessions éphémères **borné à la phase ② compétition** (R9, R28,
+  - accès des sessions éphémères **borné à la phase ③ compétition** (R9, R28,
     R33).
 
 ## Hors périmètre
