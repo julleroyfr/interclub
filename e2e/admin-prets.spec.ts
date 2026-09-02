@@ -36,11 +36,13 @@ test.describe('Écran admin — prêts de grimpeurs (R35)', () => {
     await page.goto(`/admin/rencontres/${RENCONTRE_PILOTE}`)
 
     // Créer le prêt : club d'origine → recherche → grimpeur → club d'accueil.
-    await page.getByLabel('Club du grimpeur').selectOption({ label: 'Club B' })
-    await page.getByLabel(/Rechercher un grimpeur/).fill('Devi')
-    await page.locator('select[name="grimpeurId"]').selectOption({ label: 'Devi Bravo' })
-    await page.locator('select[name="clubAccueilId"]').selectOption({ label: 'Club A' })
-    await page.getByRole('button', { name: /Créer le prêt/ }).click()
+    // Scopé au formulaire de prêt (la page porte aussi le panneau « Équipes »).
+    const formPret = page.locator('form', { has: page.getByLabel('Club du grimpeur') })
+    await formPret.getByLabel('Club du grimpeur').selectOption({ label: 'Club B' })
+    await formPret.getByLabel(/Rechercher un grimpeur/).fill('Devi')
+    await formPret.locator('select[name="grimpeurId"]').selectOption({ label: 'Devi Bravo' })
+    await formPret.locator('select[name="clubAccueilId"]').selectOption({ label: 'Club A' })
+    await formPret.getByRole('button', { name: /Créer le prêt/ }).click()
 
     await expect(page.getByRole('status')).toHaveText(/Prêt créé/)
     const ligne = page.locator('tr', { hasText: 'Devi Bravo' })
@@ -72,8 +74,9 @@ test.describe('Écran admin — prêts de grimpeurs (R35)', () => {
       await page.goto(`/admin/rencontres/${RENCONTRE_PILOTE}`)
 
       // Club d'origine = Club B : Club B est exclu des clubs d'accueil.
-      await page.getByLabel('Club du grimpeur').selectOption({ label: 'Club B' })
-      const accueil = await page
+      const formPret = page.locator('form', { has: page.getByLabel('Club du grimpeur') })
+      await formPret.getByLabel('Club du grimpeur').selectOption({ label: 'Club B' })
+      const accueil = await formPret
         .locator('select[name="clubAccueilId"] option')
         .allInnerTexts()
       expect(accueil).toContain('Club A')
@@ -82,7 +85,7 @@ test.describe('Écran admin — prêts de grimpeurs (R35)', () => {
       // Filtre par club + catégorie + disponibilité : Devi (enfant, Club B, libre)
       // proposé ; Ana (Club A), Grand Bravo (ado) et Cléo (déjà engagée en B1, R14)
       // absents.
-      const options = await page
+      const options = await formPret
         .locator('select[name="grimpeurId"] option')
         .allInnerTexts()
       expect(options).toContain('Devi Bravo')

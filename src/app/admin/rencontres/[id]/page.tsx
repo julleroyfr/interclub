@@ -2,10 +2,12 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
 import { Coquille, EnTetePage, type LienNav } from '@/composants'
+import { chargerEngagementTousClubs } from '@/lib/admin/engagement'
 import { getUtilisateurCourant } from '@/lib/auth/session'
 import { chargerPretsRencontre } from '@/lib/prets/prets'
 import { getStructureRencontre } from '@/lib/rencontres/structure'
 
+import { PanneauEquipes } from './panneau-equipes'
 import { PanneauPrets } from './panneau-prets'
 import { PanneauStructure } from './panneau-structure'
 
@@ -33,6 +35,8 @@ export default async function PageConfigurationRencontre({
   if (!structure) notFound()
 
   const { grimpeurs, clubs, prets } = await chargerPretsRencontre(id)
+  const engagementClubs = await chargerEngagementTousClubs(id)
+  const estEnfant = engagementClubs[0]?.engagement.categorie === 'enfant'
 
   return (
     <Coquille liens={liens}>
@@ -42,6 +46,7 @@ export default async function PageConfigurationRencontre({
           sousTitre="Ajoutez voies, blocs et voies de vitesse à cette rencontre (R36)."
         />
         <PanneauStructure structure={structure} />
+        <PanneauEquipes rencontreId={id} estEnfant={estEnfant} clubs={engagementClubs} />
         <PanneauPrets
           rencontreId={id}
           grimpeurs={grimpeurs}
