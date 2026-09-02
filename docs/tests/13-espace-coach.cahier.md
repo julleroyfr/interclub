@@ -32,8 +32,11 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
   portée par Club A, phase initiale **`competition`**.
 - Équipes Club A : **A1** (`6666…6666`, contient Ana Alpha + Bob Alpha), **A2**
   (`6666…6602`, vide). Équipe Club B : **B1** (`7777…7777`, contient Cléo Bravo).
-- Grimpeurs Club A : **Ana Alpha** (2015), **Bob Alpha** (2016). Grimpeur Club B
-  **Devi Bravo** (2016) reste **libre** (matière à prêt, R35/R36).
+- Grimpeurs Club A engagés dans A1 : **Ana Alpha** (2015), **Bob Alpha** (2016),
+  plus un **pool de 8 grimpeurs Club A libres** (Chloé, David, Emma, Félix, Gaby,
+  Hugo, Iris, Jade — `…00a3`→`…00aa`) : matière pour l'ajout au roster (CT-02) et le
+  remplissage d'une équipe à 8/8 (CT-04). Grimpeur Club B **Devi Bravo** (2016)
+  reste **libre** (matière à prêt, R35/R36).
 - Jeton QR **coach temporaire Club A** actif — valeur (secret) :
   `aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa` → URL de scan :
   `http://localhost:3011/scan?jeton=aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa`.
@@ -84,12 +87,12 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
 - **Pré-condition** : phase `pre_competition`.
 - **Étapes** :
   1. Ouvrir la rencontre. Créer une équipe **« A3 »** (formulaire « Nouvelle équipe »).
-  2. Dans A3, ajouter **Bob Alpha** depuis le roster.
+  2. Dans A3, ajouter **Chloé Alpha** (grimpeur libre du pool) depuis le roster.
 - **Résultat attendu** :
   - A3 apparaît (effectif **0/8** puis **1/8** après ajout), la jauge se met à jour
     (revalidation, R18).
   - Le sélecteur d'ajout ne propose que des grimpeurs **non déjà engagés** dans la
-    rencontre.
+    rencontre (Ana et Bob, déjà dans A1, n'y figurent pas).
 - **RLS / sécurité** : recréer « A3 » (même nom) → **refusé** (nom unique par
   rencontre, R10).
 
@@ -115,12 +118,12 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
 - **Pré-condition** : phase `pre_competition` ; Ana Alpha engagée dans A1.
 - **Étapes** :
   1. Tenter d'ajouter **Ana Alpha** à A2.
-  2. Compléter une équipe à **8/8**, puis tenter un 9ᵉ.
+  2. Remplir une équipe à **8/8** avec les 8 grimpeurs libres du pool (Chloé…Jade).
 - **Résultat attendu** :
   - Ana Alpha n'est **pas proposée** (déjà engagée dans la rencontre, R14) ; toute
     tentative directe est refusée avec un message explicite.
-  - À 8/8, le formulaire d'ajout est remplacé par « Équipe complète — plafond de 8
-    atteint (R15) ».
+  - À 8/8, le formulaire d'ajout **disparaît**, remplacé par « Équipe complète —
+    plafond de 8 atteint (R15) » (aucun 9ᵉ ajout possible).
 
 ### CT-05 `[mixte]` — Grimpeur prêté : rattachement admin, gestion coach   (couvre : R13, R35, R36 ; nominal + négatif)
 

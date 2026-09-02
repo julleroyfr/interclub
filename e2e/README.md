@@ -27,10 +27,16 @@ npm run test:e2e              # tous les cahiers E2E
 
 ## Cartographie (cahier 13 — espace coach)
 
-- **CT-01** : implémenté (nominal + négatif 404).
-- **CT-02 → CT-13** : `test.fixme` — à décrocher un par un, chaque titre cite son
-  `CT-xx` et ses règles `Rn`.
+- **CT-01 → CT-04** : implémentés et verts (accueil + 404, création/composition,
+  groupe de départ, double engagement + plafond 8).
+- **CT-05 → CT-13** : `test.fixme` — à décrocher un par un, chaque titre cite son
+  `CT-xx` et ses règles `Rn`. Les plus délicats (multi-contexte QR anonyme + admin)
+  restent devant : CT-07, CT-08, CT-10.
 - **Résidu manuel** : CT-05, couleur violette du badge « Prêté » (`[mixte]`).
+
+> Ces tests mutent la même rencontre en base → exécution **série, un seul profil**
+> (`test:cahier:coach` = `--project=chromium --workers=1`). Un `beforeEach` remet
+> l'engagement à l'état seed (idempotence).
 
 ## Après un passage
 
