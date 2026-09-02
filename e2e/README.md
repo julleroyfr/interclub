@@ -27,16 +27,18 @@ npm run test:e2e              # tous les cahiers E2E
 
 ## Cartographie (cahier 13 — espace coach)
 
-- **Implémentés et verts** : CT-01 (+ négatif 404), CT-02, CT-03, CT-04, CT-06
-  (garde-fou date), CT-12 (lecture seule), CT-13 (périmètre + RLS inter-club via API).
-- **`test.fixme` restants** : CT-05, CT-07, CT-08, CT-09, CT-10, CT-11 — chaque
-  titre cite son `CT-xx` et ses règles `Rn`. Les plus délicats (multi-contexte QR
-  anonyme + admin) : CT-07, CT-08, CT-10.
+- **CT-01 → CT-13 : tous implémentés et verts** — accueil + 404, création/
+  composition, groupe de départ, double engagement + plafond, prêt persistant,
+  garde-fou date (préparation + compétition), sessions QR coach temporaire
+  (ouverture, édition, périmètre, gel), lecture seule, périmètre inter-club. Plus
+  un test dédié « filtre catégorie » (R34).
 - **Résidu manuel** : CT-05, couleur violette du badge « Prêté » (`[mixte]`).
+- Voir aussi `admin-prets.spec.ts` (écran admin de prêts, cahier 14).
 
 > Ces tests mutent la même rencontre en base → exécution **série, un seul profil**
 > (`test:cahier:coach` = `--project=chromium --workers=1`). Un `beforeEach` remet
-> l'engagement à l'état seed (idempotence).
+> l'engagement à l'état seed (idempotence) ; les tests de scan nettoient les
+> sessions QR.
 
 ## Après un passage
 
