@@ -1,6 +1,12 @@
 import 'server-only'
 
-import { anneeSaison, bornesSaison, type Categorie, type Phase } from '@/domaine/rencontre'
+import {
+  anneeSaison,
+  bornesSaison,
+  estEligibleCategorie,
+  type Categorie,
+  type Phase,
+} from '@/domaine/rencontre'
 import { createClient } from '@/lib/supabase/server'
 
 // Lecture de l'engagement d'un club en rencontre (spec #5 « Espace Coach ») :
@@ -179,7 +185,7 @@ export async function getEngagementRencontre(
       .order('nom'),
     supabase
       .from('grimpeur')
-      .select('id, nom, prenom')
+      .select('id, nom, prenom, annee_naissance')
       .eq('club_id', clubId)
       .order('nom')
       .order('prenom'),
@@ -187,7 +193,7 @@ export async function getEngagementRencontre(
     // roster comme des grimpeurs du club, avec badge « prêté · club d'origine ».
     supabase
       .from('pret')
-      .select('grimpeur:grimpeur_id(id, nom, prenom, club_id)')
+      .select('grimpeur:grimpeur_id(id, nom, prenom, club_id, annee_naissance)')
       .eq('rencontre_id', rencontreId)
       .eq('club_accueil_id', clubId),
   ])
@@ -195,15 +201,29 @@ export async function getEngagementRencontre(
   if (rosterRes.error) throw rosterRes.error
   if (pretsRes.error) throw pretsRes.error
 
+  // Éligibilité par catégorie (R34) : le roster ne propose que les grimpeurs de la
+  // tranche d'âge de la rencontre (âge rapporté à la saison).
+  const categorie = rencontre.categorie as Categorie
+  const saison = anneeSaison(rencontre.date_rencontre as string)
+  const estEligible = (anneeNaissance: number) =>
+    estEligibleCategorie(anneeNaissance, categorie, saison)
+
   // Grimpeurs prêtés (aplatis depuis la relation pret → grimpeur ; l'embed peut
   // être typé objet ou tableau selon l'inférence).
-  type GrimpeurPrete = { id: string; nom: string; prenom: string; club_id: string }
+  type GrimpeurPrete = {
+    id: string
+    nom: string
+    prenom: string
+    club_id: string
+    annee_naissance: number
+  }
   const grimpeursPretes = (pretsRes.data ?? [])
     .map((p) => {
       const g = p.grimpeur as unknown
       return (Array.isArray(g) ? g[0] : g) as GrimpeurPrete | null | undefined
     })
     .filter((g): g is GrimpeurPrete => g != null)
+    .filter((g) => estEligible(g.annee_naissance))
 
   // Grimpeurs référencés dans les compositions (dont d'éventuels prêtés d'un
   // autre club) → une seule lecture pour nom/prénom/club d'origine.
@@ -263,14 +283,16 @@ export async function getEngagementRencontre(
   }))
 
   const roster: OptionGrimpeur[] = [
-    ...(rosterRes.data ?? []).map((g) => ({
-      id: g.id as string,
-      nom: g.nom as string,
-      prenom: g.prenom as string,
-      dejaEngage: dejaEngages.has(g.id as string),
-      prete: false,
-      clubOrigineNom: null,
-    })),
+    ...(rosterRes.data ?? [])
+      .filter((g) => estEligible(g.annee_naissance as number))
+      .map((g) => ({
+        id: g.id as string,
+        nom: g.nom as string,
+        prenom: g.prenom as string,
+        dejaEngage: dejaEngages.has(g.id as string),
+        prete: false,
+        clubOrigineNom: null,
+      })),
     ...grimpeursPretes.map((g) => ({
       id: g.id,
       nom: g.nom,

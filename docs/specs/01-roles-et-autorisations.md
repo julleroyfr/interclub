@@ -154,7 +154,11 @@ conditionne les accès temporels.
   après-midi 13/19 ans). Une journée d'interclub à deux demi-journées se
   modélise en **deux rencontres distinctes**, chacune avec ses propres phases,
   jetons QR et affectations. Un grimpeur de l'année-pivot peut être engagé dans
-  les deux rencontres.
+  les deux rencontres. L'**âge** est rapporté à la **saison** (année de la saison
+  moins l'année de naissance). L'**engagement** d'un grimpeur dans une rencontre
+  (composition d'équipe, y compris un prêté) est **limité aux grimpeurs éligibles à
+  sa catégorie** : **enfant** = âge ≤ 13 (moins de 13 ans **et** pivot) ; **ado** =
+  13 à 19 ans. Un grimpeur hors tranche d'âge ne peut y être engagé (cf. spec #5 R12).
 
 ### Admin
 

@@ -2,7 +2,12 @@
 
 import { revalidatePath } from 'next/cache'
 
-import type { Categorie, Phase } from '@/domaine/rencontre'
+import {
+  anneeSaison,
+  estEligibleCategorie,
+  type Categorie,
+  type Phase,
+} from '@/domaine/rencontre'
 import {
   EngagementInvalideError,
   GROUPES_DEPART,
@@ -59,18 +64,22 @@ function refuserSiHorsPerimetreTemp(
   return null
 }
 
-/** Charge la phase et la catégorie d'une rencontre. */
+/** Charge la phase, la catégorie et la date d'une rencontre. */
 async function chargerRencontre(
   supabase: Client,
   rencontreId: string,
-): Promise<{ phase: Phase; categorie: Categorie } | null> {
+): Promise<{ phase: Phase; categorie: Categorie; dateRencontre: string } | null> {
   const { data } = await supabase
     .from('rencontre')
-    .select('phase, categorie')
+    .select('phase, categorie, date_rencontre')
     .eq('id', rencontreId)
     .maybeSingle()
   if (!data) return null
-  return { phase: data.phase as Phase, categorie: data.categorie as Categorie }
+  return {
+    phase: data.phase as Phase,
+    categorie: data.categorie as Categorie,
+    dateRencontre: data.date_rencontre as string,
+  }
 }
 
 /** Phases où l'engagement est éditable par un coach (R16) : pré-compétition + préparation. */
@@ -276,7 +285,7 @@ export async function ajouterGrimpeurEquipe(
 
   const [{ data: grimpeur }, { data: membres }, { data: engages }, { data: pret }] =
     await Promise.all([
-      supabase.from('grimpeur').select('club_id').eq('id', grimpeurId).maybeSingle(),
+      supabase.from('grimpeur').select('club_id, annee_naissance').eq('id', grimpeurId).maybeSingle(),
       supabase.from('composition').select('grimpeur_id').eq('equipe_id', equipeId),
       supabase.from('composition').select('grimpeur_id').eq('rencontre_id', appartenance.rencontreId),
       // Prêt actif de ce grimpeur au club du coach pour cette rencontre (R13/R36).
@@ -290,6 +299,20 @@ export async function ajouterGrimpeurEquipe(
     ])
   if (!grimpeur) {
     return { erreur: "Ce grimpeur n'appartient ni à votre club ni à vos prêts (R13)." }
+  }
+
+  // Éligibilité à la catégorie de la rencontre (tranche d'âge, spec #1 R34).
+  if (
+    !estEligibleCategorie(
+      grimpeur.annee_naissance as number,
+      rencontre.categorie,
+      anneeSaison(rencontre.dateRencontre),
+    )
+  ) {
+    return {
+      erreur:
+        "Ce grimpeur n'est pas dans la tranche d'âge de la rencontre (catégorie, R34).",
+    }
   }
 
   try {

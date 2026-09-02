@@ -136,7 +136,11 @@ cette spec. (Spec #1 R6/R27, rév. 2026-09-01.)
   grimpeurs. Les grimpeurs proposés à l'ajout sont ceux du **roster disponible**
   pour la rencontre, non encore affectés à cette équipe : les grimpeurs **de son
   club** (spec #1 R18) **et** les grimpeurs **prêtés à son club** pour cette
-  rencontre (spec #1 R35).
+  rencontre (spec #1 R35). Dans tous les cas, seuls les grimpeurs **éligibles à la
+  catégorie** de la rencontre (tranche d'âge, spec #1 R34) sont proposés ; l'ajout
+  d'un grimpeur **hors tranche d'âge** est **refusé**. La catégorie **enfant**
+  admet « moins de 13 ans » **et** l'année-pivot (13 ans) ; **ado**, « 13 à 19 ans »
+  (le pivot est éligible aux deux, R34).
 - **R13.** Le coach **ne peut pas créer de prêt** : mettre à disposition un
   grimpeur d'un **autre club** (ou de l'équipe CT33) est **réservé à l'admin**
   (spec #1 R35) ; l'ajout d'un grimpeur ni du club ni prêté est **refusé**. En

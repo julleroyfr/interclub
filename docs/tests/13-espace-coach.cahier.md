@@ -93,9 +93,12 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
   - A3 apparaît (effectif **0/8** puis **1/8** après ajout), la jauge se met à jour
     (revalidation, R18).
   - Le sélecteur d'ajout ne propose que des grimpeurs **non déjà engagés** dans la
-    rencontre (Ana et Bob, déjà dans A1, n'y figurent pas).
+    rencontre (Ana et Bob, déjà dans A1, n'y figurent pas) **et éligibles à la
+    catégorie** (tranche d'âge, R34 / spec #1) : un grimpeur **hors tranche d'âge**
+    (ex. un ado sur une rencontre enfant) **n'est pas proposé**.
 - **RLS / sécurité** : recréer « A3 » (même nom) → **refusé** (nom unique par
-  rencontre, R10).
+  rencontre, R10). Un POST direct ajoutant un grimpeur **hors tranche d'âge** est
+  **refusé** côté serveur (message R34).
 
 ### CT-03 `[auto]` — Groupe de départ (rencontre enfant)   (couvre : R19, R20, R21 ; nominal)
 

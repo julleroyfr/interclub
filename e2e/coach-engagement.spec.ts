@@ -240,6 +240,27 @@ test.describe('Cahier 13 — Espace coach : engagement', () => {
     ).toBeVisible()
   })
 
+  test('Filtre catégorie : un grimpeur hors tranche d’âge n’est pas au roster (R34)', async ({
+    page,
+  }) => {
+    poserPhase('pre_competition')
+    // Grimpeur Club A ADO (né en 2000) : hors tranche d'âge d'une rencontre enfant.
+    const ADO = 'a0000000-0000-0000-0000-0000000000af'
+    execSql(
+      `insert into interclub.grimpeur (id, club_id, nom, prenom, annee_naissance) values ('${ADO}','${CLUB_A}','Alpha','Vieux',2000) on conflict (id) do nothing;`,
+    )
+    try {
+      await commeCoach(page)
+      await page.goto(URL_RENCONTRE)
+      const carteA2 = carteEquipe(page, 'Équipe A2')
+      const opts = await carteA2.locator('select[name="grimpeurId"] option').allInnerTexts()
+      expect(opts.join(' ')).toContain('Chloé Alpha') // enfant : proposé
+      expect(opts.join(' ')).not.toContain('Vieux Alpha') // ado : filtré (R34)
+    } finally {
+      execSql(`delete from interclub.grimpeur where id='${ADO}';`)
+    }
+  })
+
   test('CT-06 — Garde-fou date : préparation ET compétition jour J (spec #1 R5)', async ({
     page,
   }) => {
