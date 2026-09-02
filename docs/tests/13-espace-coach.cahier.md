@@ -15,8 +15,9 @@
   nature-dépendante) ;
   [ADR 0001](../decisions/0001-authentification-sessions-ephemeres-qr.md).
 - **Pré-requis** :
-  - Migrations appliquées jusqu'à **`202609011500_session_qr_coach_temp_prepa`**
-    incluse — lancer `supabase db reset` en local (migrations + seed 01/02/03).
+  - Migrations appliquées jusqu'à **`202609020900_rls_grimpeur_prete_lisible`**
+    incluse (dont la visibilité/retrait du grimpeur prêté, R13/R36) — lancer
+    `supabase db reset` en local (migrations + seed 01/02/03).
   - `supabase/config.toml` → `enable_anonymous_sign_ins = true`.
   - App lancée : `npm run dev` → l'app écoute sur le **port 3011**.
 - **Environnement** : local (stack Docker) — version/commit : `______`

@@ -188,8 +188,35 @@ test.describe('Cahier 13 — Espace coach : engagement', () => {
     await expect(cartePlein.locator('select[name="grimpeurId"]')).toHaveCount(0)
   })
   // CT-05 est `[mixte]` : le cœur (roster, badge « Prêté », retrait) est auto ;
-  // la couleur violette du badge reste `[manuel]` (hors E2E).
-  test.fixme('CT-05 — Grimpeur prêté : rattachement admin, gestion coach (R13, R35, R36)', async () => {})
+  // la couleur violette du badge reste `[manuel]` (hors E2E). Dépend de la
+  // migration 202609020900 (lecture R13 + retrait R36 du prêté).
+  test('CT-05 — Grimpeur prêté : rattachement admin, gestion coach (R13, R35, R36)', async ({
+    page,
+  }) => {
+    poserPhase('pre_competition')
+    await commeCoach(page)
+    await page.goto(URL_RENCONTRE)
+
+    // R13 : un grimpeur d'un autre club n'est pas proposé au roster du coach A.
+    const carteA2 = carteEquipe(page, 'Équipe A2')
+    const roster = await carteA2.locator('select[name="grimpeurId"] option').allInnerTexts()
+    expect(roster).not.toContain('Devi Bravo')
+
+    // R35 : l'admin rattache Devi (Club B) à A2 — prêt réservé à l'admin (simulé en base).
+    execSql(
+      `insert into interclub.composition (equipe_id, grimpeur_id) values ('${EQUIPES.A2}','${GRIMPEURS.devi}') on conflict do nothing;`,
+    )
+    await page.reload()
+
+    // R13 : le prêté apparaît avec son NOM et le badge « Prêté · Club B ».
+    const ligneDevi = carteA2.locator('li', { hasText: 'Devi Bravo' })
+    await expect(ligneDevi).toBeVisible()
+    await expect(ligneDevi.getByText(/Prêté · Club B/)).toBeVisible()
+
+    // R36 : le coach d'accueil peut le retirer.
+    await ligneDevi.getByRole('button', { name: 'Retirer Devi Bravo' }).click()
+    await expect(carteA2.locator('li', { hasText: 'Devi Bravo' })).toHaveCount(0)
+  })
 
   test('CT-06 — Garde-fou date : préparation jour J seulement (spec #1 R5)', async ({
     page,
