@@ -32,10 +32,10 @@ test.describe('Écran admin — prêts de grimpeurs (R35)', () => {
     browser,
   }) => {
     await commeAdmin(page)
-    await page.goto('/admin/prets')
+    // Point d'entrée : la page de la rencontre (rencontre implicite).
+    await page.goto(`/admin/rencontres/${RENCONTRE_PILOTE}`)
 
-    // Créer le prêt : Devi (Club B) → Club A, pour la rencontre pilote.
-    await page.getByLabel('Rencontre').selectOption({ label: '19/09/2026 — Club A (Enfant)' })
+    // Créer le prêt : Devi (Club B) → Club A (rencontre implicite).
     await page.getByLabel('Grimpeur à prêter').selectOption({ label: 'Devi Bravo — Club B' })
     await page.getByLabel("Club d'accueil").selectOption({ label: 'Club A' })
     await page.getByRole('button', { name: /Créer le prêt/ }).click()
@@ -60,8 +60,7 @@ test.describe('Écran admin — prêts de grimpeurs (R35)', () => {
     page,
   }) => {
     await commeAdmin(page)
-    await page.goto('/admin/prets')
-    await page.getByLabel('Rencontre').selectOption({ label: '19/09/2026 — Club A (Enfant)' })
+    await page.goto(`/admin/rencontres/${RENCONTRE_PILOTE}`)
     // Devi (Club B) prêté à… Club B : refusé.
     await page.getByLabel('Grimpeur à prêter').selectOption({ label: 'Devi Bravo — Club B' })
     await page.getByLabel("Club d'accueil").selectOption({ label: 'Club B' })

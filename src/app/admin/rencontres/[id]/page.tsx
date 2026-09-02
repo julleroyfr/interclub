@@ -3,8 +3,10 @@ import { notFound } from 'next/navigation'
 
 import { Coquille, EnTetePage, type LienNav } from '@/composants'
 import { getUtilisateurCourant } from '@/lib/auth/session'
+import { chargerPretsRencontre } from '@/lib/prets/prets'
 import { getStructureRencontre } from '@/lib/rencontres/structure'
 
+import { PanneauPrets } from './panneau-prets'
 import { PanneauStructure } from './panneau-structure'
 
 export const metadata: Metadata = {
@@ -30,6 +32,8 @@ export default async function PageConfigurationRencontre({
   const structure = await getStructureRencontre(id)
   if (!structure) notFound()
 
+  const { grimpeurs, clubs, prets } = await chargerPretsRencontre(id)
+
   return (
     <Coquille liens={liens}>
       <div className="flex flex-col gap-6">
@@ -38,6 +42,12 @@ export default async function PageConfigurationRencontre({
           sousTitre="Ajoutez voies, blocs et voies de vitesse à cette rencontre (R36)."
         />
         <PanneauStructure structure={structure} />
+        <PanneauPrets
+          rencontreId={id}
+          grimpeurs={grimpeurs}
+          clubs={clubs}
+          prets={prets}
+        />
       </div>
     </Coquille>
   )

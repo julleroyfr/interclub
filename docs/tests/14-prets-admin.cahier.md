@@ -1,8 +1,10 @@
-# Cahier de test : Écran admin — prêts de grimpeurs (spec #1 R35)
+# Cahier de test : Prêts de grimpeurs (admin) — spec #1 R35
 
-> Couvre l'écran `/admin/prets` : création et révocation d'un **prêt** (mise à
-> disposition d'un grimpeur d'un autre club à un club d'accueil pour une
-> rencontre), et l'effet côté coach (le prêté apparaît dans son roster).
+> Couvre le **panneau « Prêts »** de la page de configuration d'une rencontre
+> (`/admin/rencontres/[id]`) : création et révocation d'un **prêt** (mise à
+> disposition d'un grimpeur d'un autre club à un club d'accueil), la rencontre
+> étant **implicite** (pas de sélecteur). Et l'effet côté coach (le prêté apparaît
+> dans son roster).
 > Marquage `[auto]`/`[manuel]` : cf. [convention 06 §3.1](../conventions/06-cahier-de-test.md).
 > Automatisé : `e2e/admin-prets.spec.ts` (`npm run test:e2e -- admin-prets`).
 
@@ -21,19 +23,21 @@ Seed `01` : rencontre pilote `3333…` (Club A, enfant) ; **Devi Bravo** (Club B
 
 ### CT-01 `[auto]` — Accès réservé à l'admin   (couvre : R35 ; RLS/garde)
 
-- **Étapes** : ouvrir `/admin/prets` en `coach@test.local`, puis non connecté.
-- **Résultat attendu** : **404** dans les deux cas ; en `admin@test.local`, l'écran
-  s'affiche (formulaire « Créer un prêt » + tableau « Prêts en cours »).
+- **Étapes** : ouvrir `/admin/rencontres/33333333-…` en `coach@test.local`, puis
+  non connecté.
+- **Résultat attendu** : **404** dans les deux cas ; en `admin@test.local`, la page
+  s'affiche avec le panneau **« Prêts de grimpeurs »** (formulaire + tableau).
 
 ### CT-02 `[auto]` — Créer un prêt et le voir côté coach   (couvre : R35, R12, R13 ; nominal)
 
 - **Rôle / compte** : `admin@test.local`, puis `coach@test.local`.
 - **Étapes** :
-  1. **Admin** : `/admin/prets` → Rencontre = 19/09/2026 Club A, Grimpeur =
-     **Devi Bravo — Club B**, Club d'accueil = **Club A** → « Créer le prêt ».
+  1. **Admin** : ouvrir `/admin/rencontres/33333333-…`, panneau « Prêts » →
+     Grimpeur = **Devi Bravo — Club B**, Club d'accueil = **Club A** (la rencontre
+     est implicite) → « Créer le prêt ».
   2. **Coach** (Club A) : ouvrir la rencontre en phase `pre_competition`.
 - **Résultat attendu** :
-  - Étape 1 : message « Prêt créé. » ; une ligne apparaît dans « Prêts en cours »
+  - Étape 1 : message « Prêt créé. » ; une ligne apparaît dans le tableau des prêts
     (Devi Bravo · origine Club B · accueil Club A).
   - Étape 2 : Devi Bravo apparaît dans le **roster** du coach, libellé
     **« Devi Bravo (prêté · Club B) »** (R12/R13).
