@@ -33,20 +33,23 @@ Seed `01` : rencontre pilote `3333…` (Club A, enfant) ; **Devi Bravo** (Club B
 - **Rôle / compte** : `admin@test.local`, puis `coach@test.local`.
 - **Étapes** :
   1. **Admin** : ouvrir `/admin/rencontres/33333333-…`, panneau « Prêts » →
-     Grimpeur = **Devi Bravo — Club B**, Club d'accueil = **Club A** (la rencontre
-     est implicite) → « Créer le prêt ».
+     **Club du grimpeur = Club B** (filtre) → **rechercher** « Devi » → Grimpeur =
+     **Devi Bravo** → Club d'accueil = **Club A** (rencontre implicite) → « Créer le prêt ».
   2. **Coach** (Club A) : ouvrir la rencontre en phase `pre_competition`.
 - **Résultat attendu** :
-  - Étape 1 : message « Prêt créé. » ; une ligne apparaît dans le tableau des prêts
-    (Devi Bravo · origine Club B · accueil Club A).
+  - Étape 1 : le sélecteur de grimpeur ne propose que les grimpeurs du **Club B**
+    (filtre par club + recherche) ; message « Prêt créé. » ; une ligne apparaît dans
+    le tableau des prêts (Devi Bravo · origine Club B · accueil Club A).
   - Étape 2 : Devi Bravo apparaît dans le **roster** du coach, libellé
     **« Devi Bravo (prêté · Club B) »** (R12/R13).
 
-### CT-03 `[auto]` — Refus : prêt vers le club d'origine   (couvre : R35 ; cas limite)
+### CT-03 `[auto]` — Le club d'accueil exclut le club d'origine   (couvre : R35 ; cas limite)
 
-- **Étapes** : admin, créer un prêt Devi Bravo (Club B) → **Club d'accueil = Club B**.
-- **Résultat attendu** : refus avec message « Un grimpeur ne peut pas être prêté à
-  son propre club. » ; aucune ligne créée.
+- **Étapes** : admin, panneau « Prêts » → **Club du grimpeur = Club B**, observer la
+  liste **Club d'accueil**.
+- **Résultat attendu** : **Club B n'y figure pas** (pas de prêt à son propre club) ;
+  Club A y figure. Un POST direct forçant accueil = origine reste **refusé** côté
+  serveur (« … prêté à son propre club »).
 
 ### CT-04 `[auto]` — Refus : doublon de prêt   (couvre : R35 ; cas limite)
 

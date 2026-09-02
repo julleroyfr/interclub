@@ -7,7 +7,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 // ouverts en RLS `authenticated` (cf. ADR 0002/0003). À n'appeler que derrière
 // une garde admin ; l'écriture, elle, passe par la RLS (client authenticated).
 
-export type GrimpeurOption = { id: string; label: string; clubId: string }
+export type GrimpeurOption = { id: string; nom: string; clubId: string }
 export type ClubOption = { id: string; nom: string }
 
 export type PretExistant = {
@@ -61,11 +61,7 @@ export async function chargerPretsRencontre(
   const grimpeurs: GrimpeurOption[] = (grimpeursRes.data ?? []).map((g) => {
     const nomComplet = `${g.prenom as string} ${g.nom as string}`
     infoGrimpeur.set(g.id as string, { nom: nomComplet, clubId: g.club_id as string })
-    return {
-      id: g.id as string,
-      label: `${nomComplet} — ${nomClub.get(g.club_id as string) ?? '?'}`,
-      clubId: g.club_id as string,
-    }
+    return { id: g.id as string, nom: nomComplet, clubId: g.club_id as string }
   })
 
   const prets: PretExistant[] = (pretsRes.data ?? []).map((p) => {

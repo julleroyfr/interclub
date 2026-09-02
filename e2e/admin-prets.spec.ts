@@ -35,9 +35,11 @@ test.describe('Écran admin — prêts de grimpeurs (R35)', () => {
     // Point d'entrée : la page de la rencontre (rencontre implicite).
     await page.goto(`/admin/rencontres/${RENCONTRE_PILOTE}`)
 
-    // Créer le prêt : Devi (Club B) → Club A (rencontre implicite).
-    await page.getByLabel('Grimpeur à prêter').selectOption({ label: 'Devi Bravo — Club B' })
-    await page.getByLabel("Club d'accueil").selectOption({ label: 'Club A' })
+    // Créer le prêt : club d'origine → recherche → grimpeur → club d'accueil.
+    await page.getByLabel('Club du grimpeur').selectOption({ label: 'Club B' })
+    await page.getByLabel(/Rechercher un grimpeur/).fill('Devi')
+    await page.locator('select[name="grimpeurId"]').selectOption({ label: 'Devi Bravo' })
+    await page.locator('select[name="clubAccueilId"]').selectOption({ label: 'Club A' })
     await page.getByRole('button', { name: /Créer le prêt/ }).click()
 
     await expect(page.getByRole('status')).toHaveText(/Prêt créé/)
@@ -56,16 +58,25 @@ test.describe('Écran admin — prêts de grimpeurs (R35)', () => {
     await expect(page.locator('tr', { hasText: 'Devi Bravo' })).toHaveCount(0)
   })
 
-  test('refus : prêt vers le club d’origine du grimpeur (règle domaine)', async ({
+  test('le club d’accueil exclut le club d’origine (pas de prêt à soi-même)', async ({
     page,
   }) => {
     await commeAdmin(page)
     await page.goto(`/admin/rencontres/${RENCONTRE_PILOTE}`)
-    // Devi (Club B) prêté à… Club B : refusé.
-    await page.getByLabel('Grimpeur à prêter').selectOption({ label: 'Devi Bravo — Club B' })
-    await page.getByLabel("Club d'accueil").selectOption({ label: 'Club B' })
-    await page.getByRole('button', { name: /Créer le prêt/ }).click()
+    // Club d'origine = Club B : Club B ne doit PAS figurer dans les clubs d'accueil.
+    await page.getByLabel('Club du grimpeur').selectOption({ label: 'Club B' })
+    const accueil = await page
+      .locator('select[name="clubAccueilId"] option')
+      .allInnerTexts()
+    expect(accueil).toContain('Club A')
+    expect(accueil).not.toContain('Club B')
 
-    await expect(page.getByText(/son propre club/)).toBeVisible()
+    // Filtre par club : seuls les grimpeurs du Club B sont proposés (Cléo, Devi ;
+    // pas Ana/Bob du Club A).
+    const options = await page
+      .locator('select[name="grimpeurId"] option')
+      .allInnerTexts()
+    expect(options).toContain('Devi Bravo')
+    expect(options.join(' ')).not.toContain('Ana Alpha')
   })
 })

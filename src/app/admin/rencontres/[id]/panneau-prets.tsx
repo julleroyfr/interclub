@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useId } from 'react'
+import { useActionState, useId, useState } from 'react'
 
 import {
   Bouton,
@@ -8,6 +8,7 @@ import {
   Cellule,
   CelluleTete,
   ChampSelect,
+  ChampTexte,
   CorpsTableau,
   LigneTableau,
   Tableau,
@@ -102,27 +103,71 @@ function FormulairePret({
   clubs: ClubOption[]
 }) {
   const [etat, action, enCours] = useActionState(creerPretAction, etatInitial)
+  // On choisit d'abord le CLUB D'ORIGINE (potentiellement des centaines de
+  // grimpeurs) puis on filtre par une recherche textuelle sur le nom.
+  const [clubOrigine, setClubOrigine] = useState('')
+  const [recherche, setRecherche] = useState('')
+  const idClubOrigine = useId()
+  const idRecherche = useId()
   const idGrimpeur = useId()
   const idClub = useId()
+
+  const q = recherche.trim().toLowerCase()
+  const grimpeursFiltres = grimpeurs.filter(
+    (g) => g.clubId === clubOrigine && (q === '' || g.nom.toLowerCase().includes(q)),
+  )
+  const clubsAccueil = clubs.filter((c) => c.id !== clubOrigine)
 
   return (
     <form action={action} className="flex flex-col gap-4">
       <input type="hidden" name="rencontreId" value={rencontreId} />
+
       <ChampSelect
-        id={idGrimpeur}
-        name="grimpeurId"
-        label="Grimpeur à prêter"
+        id={idClubOrigine}
+        label="Club du grimpeur"
         required
-        placeholder="Sélectionnez un grimpeur…"
-        options={grimpeurs.map((g) => ({ value: g.id, label: g.label }))}
+        placeholder="Sélectionnez le club d'origine…"
+        options={clubs.map((c) => ({ value: c.id, label: c.nom }))}
+        onChange={(e) => {
+          setClubOrigine(e.target.value)
+          setRecherche('')
+        }}
       />
+
+      {clubOrigine && (
+        <>
+          <ChampTexte
+            // `key` : on repart d'une recherche vide à chaque changement de club.
+            key={clubOrigine}
+            id={idRecherche}
+            label="Rechercher un grimpeur"
+            type="search"
+            placeholder="Nom ou prénom…"
+            autoComplete="off"
+            onChange={(e) => setRecherche(e.target.value)}
+          />
+          <ChampSelect
+            id={idGrimpeur}
+            name="grimpeurId"
+            label={`Grimpeur à prêter (${grimpeursFiltres.length})`}
+            required
+            placeholder={
+              grimpeursFiltres.length
+                ? 'Sélectionnez un grimpeur…'
+                : 'Aucun grimpeur pour ce filtre'
+            }
+            options={grimpeursFiltres.map((g) => ({ value: g.id, label: g.nom }))}
+          />
+        </>
+      )}
+
       <ChampSelect
         id={idClub}
         name="clubAccueilId"
         label="Club d'accueil"
         required
         placeholder="Sélectionnez le club d'accueil…"
-        options={clubs.map((c) => ({ value: c.id, label: c.nom }))}
+        options={clubsAccueil.map((c) => ({ value: c.id, label: c.nom }))}
       />
 
       {etat?.erreur && (
