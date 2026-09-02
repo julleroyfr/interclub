@@ -243,7 +243,10 @@ conditionne les accès temporels.
   **relation distincte de l'affectation en équipe** : il exprime « ce grimpeur est
   disponible pour le club d'accueil sur cette rencontre », indépendamment de
   l'équipe où il est (ou n'est pas) composé. Un coach ne peut ni **créer** ni
-  **révoquer** un prêt.
+  **révoquer** un prêt. Un grimpeur **déjà engagé** dans une équipe de la rencontre
+  (R14) **ne peut être prêté** — il ne joue que pour **une** équipe par rencontre ;
+  seuls les grimpeurs **disponibles** (non engagés, non déjà prêtés) sont proposés
+  au prêt. Il doit aussi être **éligible à la catégorie** de la rencontre (R34).
 - **R36.** Tant qu'un prêt est actif (R35), le **coach du club d'accueil gère le
   grimpeur prêté comme un grimpeur de son club** pour cette rencontre : il peut
   l'**affecter à une équipe, l'en retirer, le déplacer** entre ses équipes

@@ -79,14 +79,16 @@ test.describe('Écran admin — prêts de grimpeurs (R35)', () => {
       expect(accueil).toContain('Club A')
       expect(accueil).not.toContain('Club B')
 
-      // Filtre par club + catégorie : Devi (enfant, Club B) proposé ; Ana (Club A)
-      // et Grand Bravo (ado) absents.
+      // Filtre par club + catégorie + disponibilité : Devi (enfant, Club B, libre)
+      // proposé ; Ana (Club A), Grand Bravo (ado) et Cléo (déjà engagée en B1, R14)
+      // absents.
       const options = await page
         .locator('select[name="grimpeurId"] option')
         .allInnerTexts()
       expect(options).toContain('Devi Bravo')
       expect(options.join(' ')).not.toContain('Ana Alpha')
       expect(options.join(' ')).not.toContain('Grand Bravo')
+      expect(options.join(' ')).not.toContain('Cléo Bravo')
     } finally {
       execSql(`delete from interclub.grimpeur where id='${ADO}';`)
     }

@@ -56,6 +56,9 @@ Seed `01` : rencontre pilote `3333…` (Club A, enfant) ; **Devi Bravo** (Club B
     **refusé** côté serveur (« … prêté à son propre club »).
   - Le grimpeur **ado** n'est **pas proposé** (rencontre enfant, R34) ; les
     grimpeurs enfant du Club B le sont.
+  - Un grimpeur **déjà engagé** dans une équipe de la rencontre (ex. **Cléo** en
+    B1) **n'est pas proposé** au prêt (R14 : indisponible). Un POST direct créant
+    un tel prêt est **refusé** côté serveur.
 
 ### CT-04 `[auto]` — Refus : doublon de prêt   (couvre : R35 ; cas limite)
 

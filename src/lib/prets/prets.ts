@@ -41,7 +41,7 @@ export async function chargerPretsRencontre(
 ): Promise<ContextePretsRencontre> {
   const admin = createAdminClient()
 
-  const [rencRes, clubsRes, grimpeursRes, pretsRes] = await Promise.all([
+  const [rencRes, clubsRes, grimpeursRes, pretsRes, compoRes] = await Promise.all([
     admin.from('rencontre').select('categorie, date_rencontre').eq('id', rencontreId).maybeSingle(),
     admin.from('club').select('id, nom').order('nom'),
     admin
@@ -53,11 +53,21 @@ export async function chargerPretsRencontre(
       .from('pret')
       .select('rencontre_id, grimpeur_id, club_accueil_id')
       .eq('rencontre_id', rencontreId),
+    // Grimpeurs déjà engagés (toutes équipes) dans cette rencontre : indisponibles
+    // au prêt (un grimpeur ne joue que pour une équipe/rencontre, R14).
+    admin.from('composition').select('grimpeur_id').eq('rencontre_id', rencontreId),
   ])
   if (rencRes.error) throw rencRes.error
   if (clubsRes.error) throw clubsRes.error
   if (grimpeursRes.error) throw grimpeursRes.error
   if (pretsRes.error) throw pretsRes.error
+  if (compoRes.error) throw compoRes.error
+
+  // Grimpeurs indisponibles au prêt : déjà engagés (R14) OU déjà prêtés.
+  const indisponibles = new Set<string>([
+    ...(compoRes.data ?? []).map((c) => c.grimpeur_id as string),
+    ...(pretsRes.data ?? []).map((p) => p.grimpeur_id as string),
+  ])
 
   const nomClub = new Map<string, string>(
     (clubsRes.data ?? []).map((c) => [c.id as string, c.nom as string]),
@@ -83,7 +93,7 @@ export async function chargerPretsRencontre(
       !categorie ||
       saison === null ||
       estEligibleCategorie(g.annee_naissance as number, categorie, saison)
-    if (eligible) {
+    if (eligible && !indisponibles.has(g.id as string)) {
       grimpeurs.push({ id: g.id as string, nom: nomComplet, clubId: g.club_id as string })
     }
   }

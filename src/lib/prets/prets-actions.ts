@@ -26,11 +26,16 @@ export async function creerPretAction(
   const clubAccueilId = String(formData.get('clubAccueilId') ?? '')
 
   const supabase = await createClient()
-  const { data: grimpeur } = await supabase
-    .from('grimpeur')
-    .select('club_id')
-    .eq('id', grimpeurId)
-    .maybeSingle()
+  const [{ data: grimpeur }, { data: engage }] = await Promise.all([
+    supabase.from('grimpeur').select('club_id').eq('id', grimpeurId).maybeSingle(),
+    // Déjà engagé (toute équipe) dans cette rencontre → indisponible au prêt (R14).
+    supabase
+      .from('composition')
+      .select('grimpeur_id')
+      .eq('rencontre_id', rencontreId)
+      .eq('grimpeur_id', grimpeurId)
+      .maybeSingle(),
+  ])
 
   let pret
   try {
@@ -43,6 +48,13 @@ export async function creerPretAction(
   } catch (e) {
     if (e instanceof PretInvalideError) return { erreur: e.message }
     throw e
+  }
+
+  if (engage) {
+    return {
+      erreur:
+        'Ce grimpeur est déjà engagé dans une équipe pour cette rencontre (R14) : indisponible au prêt.',
+    }
   }
 
   const { error } = await supabase.from('pret').insert({
