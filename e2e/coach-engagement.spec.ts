@@ -7,10 +7,18 @@ import {
   COMPTES,
   EQUIPES,
   GRIMPEURS,
+  JETON,
   POOL_LIBRES,
   RENCONTRE_PILOTE,
 } from './helpers/donnees'
-import { execSql, poserDate, poserPhase, reinitialiserEngagement } from './helpers/sql'
+import {
+  compterSessionsQr,
+  execSql,
+  nettoyerSessionsQr,
+  poserDate,
+  poserPhase,
+  reinitialiserEngagement,
+} from './helpers/sql'
 
 const URL_RENCONTRE = `/coach/rencontres/${RENCONTRE_PILOTE}`
 
@@ -306,7 +314,30 @@ test.describe('Cahier 13 — Espace coach : engagement', () => {
     await expect(page.getByRole('button', { name: /← Pré-compétition/ })).toHaveCount(0)
     expect(phaseEnBase()).toBe('pre_competition')
   })
-  test.fixme('CT-07 — Ouverture session QR coach temp en préparation (spec #2 R12)', async () => {})
+  test('CT-07 — Ouverture session QR coach temporaire en préparation (spec #2 R12)', async ({
+    page,
+    browser,
+  }) => {
+    nettoyerSessionsQr()
+    poserPhase('preparation')
+
+    // Navigateur anonyme (contexte vierge) : scan du QR coach temporaire.
+    await page.goto(`/scan?jeton=${JETON.coachTemp}`)
+    // Session ouverte → redirection vers /coach (fenêtre coach temp = préparation
+    // + compétition, R12) ; l'espace coach s'affiche (session temp valide).
+    await page.waitForURL('**/coach')
+    await expect(page.getByRole('heading', { name: 'Mes rencontres' })).toBeVisible()
+    expect(compterSessionsQr()).toBeGreaterThanOrEqual(1)
+
+    // Négatif : le QR juge n'est PAS ouvert en préparation (fenêtre juge =
+    // compétition seule) — contexte anonyme distinct.
+    const ctxJuge = await browser.newContext()
+    const pageJuge = await ctxJuge.newPage()
+    await pageJuge.goto(`/scan?jeton=${JETON.juge}`)
+    await expect(pageJuge.getByText(/n.est pas encore ouvert/)).toBeVisible()
+    await expect(pageJuge).toHaveURL(/\/scan/)
+    await ctxJuge.close()
+  })
   test.fixme('CT-08 — Coach temporaire édite en préparation (R16 ; spec #1 R6, R27)', async () => {})
   test.fixme('CT-09 — Coach temporaire borné à SA rencontre (spec #1 R27)', async () => {})
   test.fixme('CT-10 — Gel de l’engagement en compétition (R16, R17)', async () => {})

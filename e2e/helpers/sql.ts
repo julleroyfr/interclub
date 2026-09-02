@@ -26,6 +26,34 @@ export function poserPhase(phase: Phase, rencontreId = RENCONTRE_PILOTE): void {
   )
 }
 
+/**
+ * Nettoie les sessions QR de la rencontre pilote (idempotence des tests de scan) :
+ * supprime les utilisateurs anonymes liés puis leurs sessions (mêmes gestes que la
+ * purge 99). À appeler avant un test qui ouvre une session par scan.
+ */
+export function nettoyerSessionsQr(rencontreId = RENCONTRE_PILOTE): void {
+  execSql(
+    `delete from auth.users u
+       where u.is_anonymous and u.id in (
+         select s.utilisateur_id from interclub.session_qr s
+         join interclub.jeton_qr j on j.id = s.jeton_qr_id
+         where j.rencontre_id = '${rencontreId}');
+     delete from interclub.session_qr
+       where jeton_qr_id in (select id from interclub.jeton_qr where rencontre_id = '${rencontreId}');`,
+  )
+}
+
+/** Nombre de sessions QR ouvertes pour la rencontre pilote. */
+export function compterSessionsQr(rencontreId = RENCONTRE_PILOTE): number {
+  return Number(
+    execSql(
+      `select count(*) from interclub.session_qr s
+         join interclub.jeton_qr j on j.id = s.jeton_qr_id
+        where j.rencontre_id = '${rencontreId}';`,
+    ),
+  )
+}
+
 /** Fixe la date de la rencontre pilote (garde-fou jour J, CT-06). */
 export function poserDate(dateISO: 'today' | string, rencontreId = RENCONTRE_PILOTE): void {
   const valeur = dateISO === 'today' ? 'current_date' : `'${dateISO}'`
