@@ -15,6 +15,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "test:cahier:coach": "playwright test coach-engagement",
     "test:t5a": "bash scripts/test-t5a.sh",
     "test:t5b": "bash scripts/test-t5b.sh",
     "test:t5c": "bash scripts/test-t5c.sh",

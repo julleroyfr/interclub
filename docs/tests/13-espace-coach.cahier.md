@@ -59,7 +59,12 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
 
 ## Cas de test
 
-### CT-01 — Accueil coach : liste triée par priorité   (couvre : R6, R7, R8 ; nominal)
+> **Marquage d'exécution** (cf. [convention 06 §3.1](../conventions/06-cahier-de-test.md#31-cas-exécutables-par-un-agent-marquage-auto--manuel--mixte)) :
+> chaque cas porte `[auto]` (rejouable par l'agent : Playwright + scripts API/RLS),
+> `[manuel]` (jugement de rendu) ou `[mixte]`. Ici un seul résidu manuel (CT-05, la
+> couleur du badge « Prêté »). Pilote de l'[ADR 0004](../decisions/0004-agent-execution-cahiers-de-test.md).
+
+### CT-01 `[auto]` — Accueil coach : liste triée par priorité   (couvre : R6, R7, R8 ; nominal)
 
 - **Rôle / compte** : `coach@test.local`.
 - **Pré-condition** : phase `pre_competition` (SQL).
@@ -73,7 +78,7 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
 - **RLS / sécurité** : `sansmapping@test.local` sur `/coach` → **404** ; un
   visiteur non connecté sur `/coach` → **404**.
 
-### CT-02 — Créer une équipe et composer (permanent, pré-compétition)   (couvre : R9, R10, R11, R12, R15 ; nominal)
+### CT-02 `[auto]` — Créer une équipe et composer (permanent, pré-compétition)   (couvre : R9, R10, R11, R12, R15 ; nominal)
 
 - **Rôle / compte** : `coach@test.local`.
 - **Pré-condition** : phase `pre_competition`.
@@ -88,7 +93,7 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
 - **RLS / sécurité** : recréer « A3 » (même nom) → **refusé** (nom unique par
   rencontre, R10).
 
-### CT-03 — Groupe de départ (rencontre enfant)   (couvre : R19, R20, R21 ; nominal)
+### CT-03 `[auto]` — Groupe de départ (rencontre enfant)   (couvre : R19, R20, R21 ; nominal)
 
 - **Rôle / compte** : `coach@test.local`.
 - **Pré-condition** : phase `pre_competition` ; A2 contient au moins un grimpeur
@@ -104,7 +109,7 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
 - **RLS / sécurité** : sur une rencontre **ado**, aucun champ ni badge de groupe
   n'apparaît (R19).
 
-### CT-04 — Refus : double engagement (R14) et plafond 8 (R15)   (couvre : R14, R15 ; cas limite)
+### CT-04 `[auto]` — Refus : double engagement (R14) et plafond 8 (R15)   (couvre : R14, R15 ; cas limite)
 
 - **Rôle / compte** : `coach@test.local`.
 - **Pré-condition** : phase `pre_competition` ; Ana Alpha engagée dans A1.
@@ -117,7 +122,7 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
   - À 8/8, le formulaire d'ajout est remplacé par « Équipe complète — plafond de 8
     atteint (R15) ».
 
-### CT-05 — Grimpeur prêté : rattachement admin, gestion coach   (couvre : R13, R35, R36 ; nominal + négatif)
+### CT-05 `[mixte]` — Grimpeur prêté : rattachement admin, gestion coach   (couvre : R13, R35, R36 ; nominal + négatif)
 
 - **Pré-condition** : phase `pre_competition`.
 - **Étapes** :
@@ -127,12 +132,16 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
      `insert into interclub.composition (equipe_id, grimpeur_id) values ('66666666-6666-6666-6666-666666666602','b0000000-0000-0000-0000-0000000000b2');`
   3. **Coach** : recharger l'écran d'engagement.
 - **Résultat attendu** :
-  - Après l'étape 2, Devi Bravo apparaît dans A2 avec le badge **« Prêté · Club B »**
-    (violet, R13).
-  - Le coach d'accueil peut le **retirer** (× → retrait accepté, R36) mais **ne peut
-    pas** rattacher un grimpeur d'un autre club lui-même (R13/R35).
+  - `[auto]` Étape 1 : Devi Bravo n'est **pas proposé** au roster ; tentative directe
+    refusée (R13).
+  - `[auto]` Après l'étape 2, Devi Bravo apparaît dans A2 avec le badge
+    **« Prêté · Club B »** (texte présent, R13).
+  - `[auto]` Le coach d'accueil peut le **retirer** (× → retrait accepté, R36) mais
+    **ne peut pas** rattacher un grimpeur d'un autre club lui-même (R13/R35).
+  - `[manuel]` vérifier à l'œil : le badge « Prêté » est bien rendu en **violet**
+    (couleur, R13).
 
-### CT-06 — Garde-fou date : préparation activable le jour J seulement   (couvre : spec #1 R5 ; cas limite)
+### CT-06 `[auto]` — Garde-fou date : préparation activable le jour J seulement   (couvre : spec #1 R5 ; cas limite)
 
 - **Rôle / compte** : `admin@test.local`.
 - **Pré-condition** : phase `pre_competition` ; **date ≠ aujourd'hui**
@@ -150,7 +159,7 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
   `preparation` **hors jour J** est **refusé** côté serveur (message R5), même sans
   passer par le bouton.
 
-### CT-07 — Ouverture de session QR coach temporaire en préparation   (couvre : spec #2 R12, migration 202609011500 ; nominal)
+### CT-07 `[auto]` — Ouverture de session QR coach temporaire en préparation   (couvre : spec #2 R12, migration 202609011500 ; nominal)
 
 - **Rôle / compte** : navigateur anonyme (sans compte), 2ᵉ navigateur / onglet privé.
 - **Pré-condition** : phase **`preparation`** (SQL) ; jeton coach temp. actif.
@@ -165,7 +174,7 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
   (`bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb`) en **préparation** → **refusé**
   (« Ce QR n'est pas encore ouvert… ») : la fenêtre juge reste **compétition seule**.
 
-### CT-08 — Coach temporaire : édition de l'engagement en préparation   (couvre : R16 ; spec #1 R6, R27 ; nominal)
+### CT-08 `[auto]` — Coach temporaire : édition de l'engagement en préparation   (couvre : R16 ; spec #1 R6, R27 ; nominal)
 
 - **Rôle / compte** : coach temporaire (session ouverte au CT-07).
 - **Pré-condition** : phase `preparation`.
@@ -178,7 +187,7 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
 - **RLS / sécurité** : le coach temporaire **ne voit pas** l'écran des jetons
   `/coach/jetons` (réservé au permanent) et ne peut **pas** générer de QR (spec #5 R16).
 
-### CT-09 — Coach temporaire borné à SA rencontre   (couvre : spec #1 R27 ; négatif)
+### CT-09 `[auto]` — Coach temporaire borné à SA rencontre   (couvre : spec #1 R27 ; négatif)
 
 - **Rôle / compte** : coach temporaire (Club A).
 - **Pré-condition** : créer (admin) une **2ᵉ rencontre** Club A ; noter son `id`.
@@ -188,7 +197,7 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
   - **404** : la session temporaire ne couvre que la rencontre de son jeton.
   - Sur `/coach`, **seule** la rencontre de son jeton est listée.
 
-### CT-10 — Gel de l'engagement en compétition   (couvre : R16, R17 ; spec #1 R6, R27 ; gel)
+### CT-10 `[auto]` — Gel de l'engagement en compétition   (couvre : R16, R17 ; spec #1 R6, R27 ; gel)
 
 - **Pré-condition** : phase **`competition`**.
 - **Étapes** :
@@ -203,7 +212,7 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
     `composition` est **refusée par la RLS** (R16, spec #1 R6/R27).
   - Étape 3 : **seul l'admin** peut encore modifier l'engagement.
 
-### CT-11 — Gel dès la pré-compétition pour le coach temporaire   (couvre : R16, spec #1 R28 ; négatif)
+### CT-11 `[auto]` — Gel dès la pré-compétition pour le coach temporaire   (couvre : R16, spec #1 R28 ; négatif)
 
 - **Pré-condition** : phase **`pre_competition`**.
 - **Étapes** :
@@ -213,7 +222,7 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
     (fenêtre = préparation + compétition, R12). Aucune édition temp. possible avant
     le jour J.
 
-### CT-12 — Lecture seule : rencontre terminée (permanent)   (couvre : R17 ; cas limite)
+### CT-12 `[auto]` — Lecture seule : rencontre terminée (permanent)   (couvre : R17 ; cas limite)
 
 - **Rôle / compte** : `coach@test.local`.
 - **Pré-condition** : phase `cloture` puis `resultats_publics`.
@@ -223,7 +232,7 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
   - Badge de phase « Clôture » / « Résultats publics », écran **consultable**,
     **aucun formulaire** (R17). Le badge reflète la phase (lecture seule).
 
-### CT-13 — Périmètre inter-club interdit   (couvre : R2 ; spec #1 R16 ; RLS négative)
+### CT-13 `[auto]` — Périmètre inter-club interdit   (couvre : R2 ; spec #1 R16 ; RLS négative)
 
 - **Rôle / compte** : `coach@test.local` (Club A).
 - **Étapes** :
@@ -237,18 +246,22 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
 
 ## Registre d'exécution
 
-| Date | Testeur | Version/commit | Cas | Résultat | Remarque |
-|------|---------|----------------|-----|----------|----------|
-| | | | CT-01 | ✅ / ❌ | IHM |
-| | | | CT-02 | ✅ / ❌ | IHM |
-| | | | CT-03 | ✅ / ❌ | IHM (enfant) |
-| | | | CT-04 | ✅ / ❌ | IHM |
-| | | | CT-05 | ✅ / ❌ | IHM + SQL admin |
-| | | | CT-06 | ✅ / ❌ | garde-fou date |
-| | | | CT-07 | ✅ / ❌ | session QR prépa |
-| | | | CT-08 | ✅ / ❌ | coach temp édite |
-| | | | CT-09 | ✅ / ❌ | bornage rencontre |
-| | | | CT-10 | ✅ / ❌ | gel compétition |
-| | | | CT-11 | ✅ / ❌ | gel pré-compétition |
-| | | | CT-12 | ✅ / ❌ | lecture seule |
-| | | | CT-13 | ✅ / ❌ | RLS inter-club |
+> **Testeur** : `agent/playwright` pour un passage machine, un nom pour un passage
+> humain. Un cas `[mixte]` n'est **✅ complet** que si sa part `auto` (agent) **et**
+> sa part `manuel` (humain) sont passées (cf. convention 06 §5).
+
+| Date | Testeur | Version/commit | Cas | Marque | Résultat | Remarque |
+|------|---------|----------------|-----|--------|----------|----------|
+| | | | CT-01 | auto | ✅ / ❌ | IHM |
+| | | | CT-02 | auto | ✅ / ❌ | IHM |
+| | | | CT-03 | auto | ✅ / ❌ | IHM (enfant) |
+| | | | CT-04 | auto | ✅ / ❌ | IHM |
+| | | | CT-05 | mixte | ✅ / ❌ | auto: SQL admin + badge ; manuel: couleur violette |
+| | | | CT-06 | auto | ✅ / ❌ | garde-fou date |
+| | | | CT-07 | auto | ✅ / ❌ | session QR prépa |
+| | | | CT-08 | auto | ✅ / ❌ | coach temp édite |
+| | | | CT-09 | auto | ✅ / ❌ | bornage rencontre |
+| | | | CT-10 | auto | ✅ / ❌ | gel compétition |
+| | | | CT-11 | auto | ✅ / ❌ | gel pré-compétition |
+| | | | CT-12 | auto | ✅ / ❌ | lecture seule |
+| | | | CT-13 | auto | ✅ / ❌ | RLS inter-club |
