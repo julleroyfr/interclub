@@ -43,20 +43,23 @@ create policy "grimpeur_select" on interclub.grimpeur for select
   );
 
 -- ===========================================================================
--- RLS : RETRAIT d'un grimpeur PRÊTÉ par le coach d'accueil (spec #5 R36)
+-- RLS : GESTION d'un grimpeur PRÊTÉ par le coach d'accueil — groupe de départ
+--       (UPDATE, R19-R21) et retrait (DELETE, R36)
 -- ---------------------------------------------------------------------------
--- Même racine que ci-dessus : `composition_delete` s'appuyait sur
--- `peut_ecrire_composition`, qui exige `grimpeur.club_id = equipe.club_id`. Le
--- coach d'accueil ne pouvait donc PAS retirer un prêté (R36) — le DELETE passait
--- côté HTTP mais la RLS supprimait 0 ligne. L'INSERT reste, lui, sur
--- `peut_ecrire_composition` (le rattachement cross-club demeure admin, R35).
+-- Même racine que ci-dessus : `composition_update` et `composition_delete`
+-- s'appuyaient sur `peut_ecrire_composition`, qui exige
+-- `grimpeur.club_id = equipe.club_id`. Le coach d'accueil ne pouvait donc ni
+-- définir le groupe de départ d'un prêté (le PATCH passait mais touchait 0 ligne
+-- → le select revenait à « à définir »), ni le retirer (R36). L'INSERT reste, lui,
+-- sur `peut_ecrire_composition` (le rattachement cross-club demeure admin, R35).
 --
--- Correctif : le retrait dépend de l'ÉQUIPE D'ACCUEIL (peut_ecrire_equipe, qui
--- porte le gating de phase), pas du club du grimpeur → couvre le retrait d'un
--- membre propre ET d'un prêté, en phase d'édition seulement (gel R16/R17 préservé).
+-- Correctif : la gestion d'une composition existante (groupe, retrait) dépend de
+-- l'ÉQUIPE D'ACCUEIL (peut_ecrire_equipe, qui porte le gating de phase), pas du
+-- club du grimpeur → couvre membre propre ET prêté, en phase d'édition seulement
+-- (gel R16/R17 préservé).
 -- ===========================================================================
 
-create or replace function interclub.peut_retirer_composition(p_equipe uuid)
+create or replace function interclub.peut_gerer_composition_equipe(p_equipe uuid)
 returns boolean
 language sql
 stable
@@ -71,16 +74,24 @@ as $$
   );
 $$;
 
+-- UPDATE (groupe de départ) : lié à l'équipe d'accueil (couvre le prêté, R19-R21).
+drop policy if exists "composition_update" on interclub.composition;
+create policy "composition_update" on interclub.composition for update
+  to authenticated
+  using (interclub.est_admin() or interclub.peut_gerer_composition_equipe(equipe_id))
+  with check (interclub.est_admin() or interclub.peut_gerer_composition_equipe(equipe_id));
+
+-- DELETE (retrait) : idem — couvre le retrait d'un prêté (R36).
 drop policy if exists "composition_delete" on interclub.composition;
 create policy "composition_delete" on interclub.composition for delete
   to authenticated
-  using (interclub.est_admin() or interclub.peut_retirer_composition(equipe_id));
+  using (interclub.est_admin() or interclub.peut_gerer_composition_equipe(equipe_id));
 
 -- ---------------------------------------------------------------------------
 insert into interclub.version (version, description, applique_par)
 values (
   '202609020900_rls_grimpeur_prete_lisible',
-  'Grimpeur prêté lisible/gérable par le coach d''accueil : grimpeur_select élargi (voit_grimpeur_via_engagement, R13) + composition_delete sur peut_retirer_composition (équipe d''accueil, gating de phase, R36). INSERT cross-club inchangé (admin, R35). Spec #5.',
+  'Grimpeur prêté géré par le coach d''accueil : grimpeur_select élargi (voit_grimpeur_via_engagement, lecture du nom, R13) + composition_update/_delete sur peut_gerer_composition_equipe (équipe d''accueil + gating de phase : groupe de départ R19-R21 et retrait R36). INSERT cross-club inchangé (admin, R35). Spec #5.',
   'julleroyfr'
 )
 on conflict (version) do nothing;

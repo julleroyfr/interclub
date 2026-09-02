@@ -213,6 +213,12 @@ test.describe('Cahier 13 — Espace coach : engagement', () => {
     await expect(ligneDevi).toBeVisible()
     await expect(ligneDevi.getByText(/Prêté · Club B/)).toBeVisible()
 
+    // R21 : le coach d'accueil définit le groupe de départ du prêté → il persiste
+    // (le PATCH sur le prêté était bloqué avant la migration 202609020900).
+    await ligneDevi.locator('select[name="groupeDepart"]').selectOption({ label: 'Groupe M2' })
+    await ligneDevi.getByRole('button', { name: 'OK' }).click()
+    await expect(ligneDevi.locator('select[name="groupeDepart"]')).toHaveValue('M2')
+
     // R36 : le coach d'accueil peut le retirer.
     await ligneDevi.getByRole('button', { name: 'Retirer Devi Bravo' }).click()
     await expect(carteA2.locator('li', { hasText: 'Devi Bravo' })).toHaveCount(0)

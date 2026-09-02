@@ -126,20 +126,23 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
   - À 8/8, le formulaire d'ajout **disparaît**, remplacé par « Équipe complète —
     plafond de 8 atteint (R15) » (aucun 9ᵉ ajout possible).
 
-### CT-05 `[mixte]` — Grimpeur prêté : rattachement admin, gestion coach   (couvre : R13, R35, R36 ; nominal + négatif)
+### CT-05 `[mixte]` — Grimpeur prêté : rattachement admin, gestion coach   (couvre : R13, R21, R35, R36 ; nominal + négatif)
 
-- **Pré-condition** : phase `pre_competition`.
+- **Pré-condition** : phase `pre_competition` ; migration **`202609020900`** appliquée.
 - **Étapes** :
   1. **Coach** : tenter d'ajouter **Devi Bravo** (Club B) à A2 → doit être **impossible**
      (non proposé au roster ; tentative directe refusée, R13).
   2. **Admin** (SQL Editor, R35) :
      `insert into interclub.composition (equipe_id, grimpeur_id) values ('66666666-6666-6666-6666-666666666602','b0000000-0000-0000-0000-0000000000b2');`
   3. **Coach** : recharger l'écran d'engagement.
+  4. **Coach** : définir le **groupe de départ** du prêté (liste déroulante → « M2 » → OK).
 - **Résultat attendu** :
   - `[auto]` Étape 1 : Devi Bravo n'est **pas proposé** au roster ; tentative directe
     refusée (R13).
-  - `[auto]` Après l'étape 2, Devi Bravo apparaît dans A2 avec le badge
+  - `[auto]` Après l'étape 2, Devi Bravo apparaît dans A2 avec son **nom** et le badge
     **« Prêté · Club B »** (texte présent, R13).
+  - `[auto]` Étape 4 : le groupe **persiste** (le sélecteur reste sur « M2 », pas de
+    retour à « à définir », R21).
   - `[auto]` Le coach d'accueil peut le **retirer** (× → retrait accepté, R36) mais
     **ne peut pas** rattacher un grimpeur d'un autre club lui-même (R13/R35).
   - `[manuel]` vérifier à l'œil : le badge « Prêté » est bien rendu en **violet**
