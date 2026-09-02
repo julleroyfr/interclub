@@ -41,30 +41,45 @@ export function PanneauEquipes({
         </p>
       </div>
 
-      {clubs.map((c) => (
-        <Carte key={c.clubId} className="flex flex-col gap-3 p-4">
-          <h3 className="text-sm font-bold text-texte-fort">{c.clubNom}</h3>
+      {clubs.map((c) => {
+        const nbEquipes = c.engagement.equipes.length
+        const nbGrimpeurs = c.engagement.equipes.reduce((n, eq) => n + eq.membres.length, 0)
+        return (
+          <Carte key={c.clubId} className="p-0">
+            {/* Repliable par club : une dizaine d'équipes reste scannable. */}
+            <details open className="group" data-club={c.clubNom}>
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-2xl p-4 hover:bg-surface-forte">
+                <h3 className="text-sm font-bold text-texte-fort">{c.clubNom}</h3>
+                <span className="flex items-center gap-2 text-xs text-texte-attenue">
+                  {nbEquipes} équipe(s) · {nbGrimpeurs} grimpeur(s)
+                  <span className="text-texte-doux transition group-open:rotate-180">▾</span>
+                </span>
+              </summary>
 
-          {c.engagement.equipes.length === 0 ? (
-            <p className="text-xs italic text-texte-doux">Aucune équipe.</p>
-          ) : (
-            <ul className="flex flex-col gap-3">
-              {c.engagement.equipes.map((eq) => (
-                <li key={eq.id}>
-                  <CarteEquipe
-                    rencontreId={rencontreId}
-                    equipe={eq}
-                    roster={c.engagement.roster}
-                    estEnfant={estEnfant}
-                  />
-                </li>
-              ))}
-            </ul>
-          )}
+              <div className="flex flex-col gap-3 px-4 pb-4">
+                {nbEquipes === 0 ? (
+                  <p className="text-xs italic text-texte-doux">Aucune équipe.</p>
+                ) : (
+                  <ul className="flex flex-col gap-3">
+                    {c.engagement.equipes.map((eq) => (
+                      <li key={eq.id}>
+                        <CarteEquipe
+                          rencontreId={rencontreId}
+                          equipe={eq}
+                          roster={c.engagement.roster}
+                          estEnfant={estEnfant}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                )}
 
-          <FormNouvelleEquipe rencontreId={rencontreId} clubId={c.clubId} />
-        </Carte>
-      ))}
+                <FormNouvelleEquipe rencontreId={rencontreId} clubId={c.clubId} />
+              </div>
+            </details>
+          </Carte>
+        )
+      })}
     </section>
   )
 }

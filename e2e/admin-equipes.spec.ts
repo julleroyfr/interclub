@@ -16,9 +16,9 @@ test.describe('Écran admin — équipes tous clubs (R10)', () => {
     reinitialiserEngagement()
   })
 
-  // Section (Carte) d'un club, repérée par son titre.
+  // Section repliable d'un club, repérée par son attribut data-club.
   const carteClub = (page: Page, nom: string): Locator =>
-    page.getByRole('heading', { name: nom, exact: true }).locator('..')
+    page.locator(`details[data-club="${nom}"]`)
 
   test('CRUD d’une équipe d’un autre club, en compétition (R6/R10)', async ({
     page,

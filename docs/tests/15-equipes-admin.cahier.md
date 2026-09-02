@@ -26,7 +26,9 @@ A2 (vide) — Club A ; B1 (Cléo) — Club B ; Devi Bravo (Club B) libre.
   non connecté ; puis en `admin@test.local`.
 - **Résultat attendu** : **404** pour coach et non connecté ; en admin, le panneau
   **« Équipes & engagement (tous clubs) »** liste **Club A** (A1, A2) **et Club B**
-  (B1), chacun avec un formulaire « Nouvelle équipe ».
+  (B1), **regroupés par club** en blocs **repliables** portant un résumé
+  **« N équipe(s) · M grimpeur(s) »** ; chaque bloc a un formulaire « Nouvelle
+  équipe ». (Utile quand une compétition compte une dizaine d'équipes.)
 
 ### CT-02 `[auto]` — CRUD d'une équipe d'un autre club, en compétition   (couvre : R6, R10 ; nominal)
 
