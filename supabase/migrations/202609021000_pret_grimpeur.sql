@@ -20,6 +20,10 @@ create table if not exists interclub.pret (
 
 alter table interclub.pret enable row level security;
 grant select, insert, update, delete on interclub.pret to authenticated;
+-- Lecture des catalogues par les écrans admin via service_role (ADR 0002/0003) :
+-- l'écran de gestion des prêts liste prêts et grimpeurs (tous clubs).
+grant select on interclub.pret to service_role;
+grant select on interclub.grimpeur to service_role;
 
 -- RLS pret : lecture admin + coach du club d'accueil (pour peupler son roster) ;
 -- écriture réservée à l'admin (R35).
@@ -102,7 +106,7 @@ create policy "composition_insert" on interclub.composition for insert
 insert into interclub.version (version, description, applique_par)
 values (
   '202609021000_pret_grimpeur',
-  'Table pret (rencontre, grimpeur, club_accueil) = prêt persistant, écriture admin (R35) + lecture coach d''accueil. grimpeur_select élargi (voit_grimpeur_via_pret : roster). composition_insert élargi (peut_engager_prete : le coach affecte un prêté à son équipe, R36). Chemin admin direct conservé. Spec #1 R35/R36, spec #5 R12/R13.',
+  'Table pret (rencontre, grimpeur, club_accueil) = prêt persistant, écriture admin (R35) + lecture coach d''accueil. grimpeur_select élargi (voit_grimpeur_via_pret : roster). composition_insert élargi (peut_engager_prete : le coach affecte un prêté à son équipe, R36). Grants service_role select sur pret+grimpeur (écran admin de prêts, ADR 0002/0003). Chemin admin direct conservé. Spec #1 R35/R36, spec #5 R12/R13.',
   'julleroyfr'
 )
 on conflict (version) do nothing;
