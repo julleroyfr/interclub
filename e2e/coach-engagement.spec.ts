@@ -1,8 +1,15 @@
 import { expect, test, type Page } from '@playwright/test'
 
-import { commeCoach, commeSansMapping } from './helpers/auth'
-import { POOL_LIBRES, RENCONTRE_PILOTE } from './helpers/donnees'
-import { poserPhase, reinitialiserEngagement } from './helpers/sql'
+import { infosApi } from './helpers/api'
+import { commeAdmin, commeCoach, commeSansMapping } from './helpers/auth'
+import {
+  COMPTES,
+  EQUIPES,
+  GRIMPEURS,
+  POOL_LIBRES,
+  RENCONTRE_PILOTE,
+} from './helpers/donnees'
+import { execSql, poserDate, poserPhase, reinitialiserEngagement } from './helpers/sql'
 
 const URL_RENCONTRE = `/coach/rencontres/${RENCONTRE_PILOTE}`
 
@@ -57,9 +64,11 @@ test.describe('Cahier 13 — Espace coach : engagement', () => {
   test.describe.configure({ mode: 'serial' })
 
   // Baseline garantie avant chaque test : A1 = {Ana, Bob}, A2 vide, B1 = {Cléo},
-  // aucune équipe surnuméraire (idempotence, y compris après un test échoué).
+  // aucune équipe surnuméraire, date seed (CT-06 la déplace) — idempotence, y
+  // compris après un test échoué.
   test.beforeEach(() => {
     reinitialiserEngagement()
+    poserDate('2026-09-19')
   })
 
   test('CT-01 — Accueil coach : liste, badge de phase, effectif, lien (R6, R7, R8)', async ({
@@ -181,12 +190,90 @@ test.describe('Cahier 13 — Espace coach : engagement', () => {
   // CT-05 est `[mixte]` : le cœur (roster, badge « Prêté », retrait) est auto ;
   // la couleur violette du badge reste `[manuel]` (hors E2E).
   test.fixme('CT-05 — Grimpeur prêté : rattachement admin, gestion coach (R13, R35, R36)', async () => {})
-  test.fixme('CT-06 — Garde-fou date : préparation jour J seulement (spec #1 R5)', async () => {})
+
+  test('CT-06 — Garde-fou date : préparation jour J seulement (spec #1 R5)', async ({
+    page,
+  }) => {
+    poserPhase('pre_competition')
+    poserDate('2026-09-19') // ≠ aujourd'hui
+
+    await commeAdmin(page)
+    await page.goto('/admin')
+
+    // Hors jour J, le bouton d'entrée en préparation est désactivé (R5).
+    const boutonPrepa = page.getByRole('button', { name: /Préparation jour J/ })
+    await expect(boutonPrepa).toBeDisabled()
+
+    // Le jour J, il s'active et l'entrée en préparation est acceptée.
+    poserDate('today')
+    await page.reload()
+    await expect(boutonPrepa).toBeEnabled()
+    await boutonPrepa.click()
+
+    // Une fois en préparation, la « suivante » devient Compétition : le bouton
+    // d'entrée en préparation disparaît. On attend cette transition avant de lire.
+    await expect(boutonPrepa).toHaveCount(0)
+    await expect(page.getByRole('button', { name: /Compétition →/ })).toBeVisible()
+    expect(
+      execSql(
+        `select phase from interclub.rencontre where id='${RENCONTRE_PILOTE}';`,
+      ),
+    ).toBe('preparation')
+  })
   test.fixme('CT-07 — Ouverture session QR coach temp en préparation (spec #2 R12)', async () => {})
   test.fixme('CT-08 — Coach temporaire édite en préparation (R16 ; spec #1 R6, R27)', async () => {})
   test.fixme('CT-09 — Coach temporaire borné à SA rencontre (spec #1 R27)', async () => {})
   test.fixme('CT-10 — Gel de l’engagement en compétition (R16, R17)', async () => {})
   test.fixme('CT-11 — Gel dès la pré-compétition pour le coach temp (R16 ; spec #1 R28)', async () => {})
-  test.fixme('CT-12 — Lecture seule : rencontre terminée (R17)', async () => {})
-  test.fixme('CT-13 — Périmètre inter-club interdit (R2 ; spec #1 R16)', async () => {})
+  test('CT-12 — Lecture seule : rencontre terminée (R17)', async ({ page }) => {
+    await commeCoach(page)
+
+    for (const [phase, label] of [
+      ['cloture', 'Clôture'],
+      ['resultats_publics', 'Résultats publics'],
+    ] as const) {
+      poserPhase(phase)
+      await page.goto(URL_RENCONTRE)
+
+      // Badge de phase en lecture seule, note R17, aucun formulaire d'édition.
+      await expect(page.getByText(`${label} — lecture seule`)).toBeVisible()
+      await expect(page.getByText(/consultable mais ne peut plus être modifiée/)).toBeVisible()
+      await expect(page.getByLabel('Nouvelle équipe')).toHaveCount(0)
+      await expect(page.getByRole('button', { name: /Ajouter à l.équipe/ })).toHaveCount(0)
+    }
+  })
+
+  test('CT-13 — Périmètre inter-club interdit (R2 ; spec #1 R16)', async ({
+    page,
+    request,
+  }) => {
+    poserPhase('pre_competition')
+    await commeCoach(page) // coach Club A
+    await page.goto(URL_RENCONTRE)
+
+    // Seules les équipes du Club A sont visibles ; B1 (Club B) est absente.
+    await expect(page.getByRole('heading', { name: 'Équipe A1' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Équipe A2' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Équipe B1' })).toHaveCount(0)
+
+    // RLS : une écriture du coach A sur une équipe du Club B est refusée (R2).
+    const { url, anon } = infosApi()
+    const login = await request.post(`${url}/auth/v1/token?grant_type=password`, {
+      headers: { apikey: anon, 'Content-Type': 'application/json' },
+      data: { email: COMPTES.coach.email, password: COMPTES.coach.mdp },
+    })
+    const token = (await login.json()).access_token
+    const insert = await request.post(`${url}/rest/v1/composition`, {
+      headers: {
+        apikey: anon,
+        Authorization: `Bearer ${token}`,
+        'Content-Profile': 'interclub',
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal',
+      },
+      // équipe B1 (Club B) + Devi (Club B) : hors périmètre du coach A.
+      data: { equipe_id: EQUIPES.B1, grimpeur_id: GRIMPEURS.devi },
+    })
+    expect([401, 403]).toContain(insert.status())
+  })
 })

@@ -27,11 +27,11 @@ npm run test:e2e              # tous les cahiers E2E
 
 ## Cartographie (cahier 13 — espace coach)
 
-- **CT-01 → CT-04** : implémentés et verts (accueil + 404, création/composition,
-  groupe de départ, double engagement + plafond 8).
-- **CT-05 → CT-13** : `test.fixme` — à décrocher un par un, chaque titre cite son
-  `CT-xx` et ses règles `Rn`. Les plus délicats (multi-contexte QR anonyme + admin)
-  restent devant : CT-07, CT-08, CT-10.
+- **Implémentés et verts** : CT-01 (+ négatif 404), CT-02, CT-03, CT-04, CT-06
+  (garde-fou date), CT-12 (lecture seule), CT-13 (périmètre + RLS inter-club via API).
+- **`test.fixme` restants** : CT-05, CT-07, CT-08, CT-09, CT-10, CT-11 — chaque
+  titre cite son `CT-xx` et ses règles `Rn`. Les plus délicats (multi-contexte QR
+  anonyme + admin) : CT-07, CT-08, CT-10.
 - **Résidu manuel** : CT-05, couleur violette du badge « Prêté » (`[mixte]`).
 
 > Ces tests mutent la même rencontre en base → exécution **série, un seul profil**
