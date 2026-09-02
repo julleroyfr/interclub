@@ -6,6 +6,7 @@ import {
   SaisieRencontreInvalideError,
   anneeSaison,
   bornesSaison,
+  estEligibleCategorie,
   estPhaseJourJ,
   labelSaison,
   normaliserSaisieRencontre,
@@ -183,6 +184,35 @@ describe('Garde-fou « jour J » — préparation ET compétition (R5, rév. 202
     expect(peutEntrerEnPhase('pre_competition', '2026-10-12', '2026-01-01')).toBe(true)
     expect(peutEntrerEnPhase('cloture', '2026-10-12', '2026-12-31')).toBe(true)
     expect(peutEntrerEnPhase('resultats_publics', '2026-10-12', '2026-12-31')).toBe(true)
+  })
+})
+
+describe('Éligibilité d’un grimpeur à la catégorie d’une rencontre (R34)', () => {
+  // Saison 2026 (rencontre entre sept. 2026 et août 2027). Âge = 2026 − année.
+  const SAISON = 2026
+
+  it('enfant : accepte « moins de 13 ans » et le pivot (13 ans)', () => {
+    expect(estEligibleCategorie(2015, 'enfant', SAISON)).toBe(true) // 11 ans
+    expect(estEligibleCategorie(2013, 'enfant', SAISON)).toBe(true) // 13 ans (pivot)
+  })
+
+  it('enfant : refuse 14 ans et plus', () => {
+    expect(estEligibleCategorie(2012, 'enfant', SAISON)).toBe(false) // 14 ans
+  })
+
+  it('ado : accepte le pivot (13 ans) jusqu’à 19 ans', () => {
+    expect(estEligibleCategorie(2013, 'ado', SAISON)).toBe(true) // 13 ans (pivot)
+    expect(estEligibleCategorie(2007, 'ado', SAISON)).toBe(true) // 19 ans
+  })
+
+  it('ado : refuse « moins de 13 ans » et « plus de 19 ans »', () => {
+    expect(estEligibleCategorie(2015, 'ado', SAISON)).toBe(false) // 11 ans
+    expect(estEligibleCategorie(2006, 'ado', SAISON)).toBe(false) // 20 ans
+  })
+
+  it('le pivot (13 ans) est éligible aux deux catégories (R34)', () => {
+    expect(estEligibleCategorie(2013, 'enfant', SAISON)).toBe(true)
+    expect(estEligibleCategorie(2013, 'ado', SAISON)).toBe(true)
   })
 })
 

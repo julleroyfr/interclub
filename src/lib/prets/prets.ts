@@ -1,5 +1,10 @@
 import 'server-only'
 
+import {
+  anneeSaison,
+  estEligibleCategorie,
+  type Categorie,
+} from '@/domaine/rencontre'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 // Écran admin de gestion des prêts (spec #1 R35). Lecture des catalogues
@@ -36,14 +41,20 @@ export async function chargerPretsRencontre(
 ): Promise<ContextePretsRencontre> {
   const admin = createAdminClient()
 
-  const [clubsRes, grimpeursRes, pretsRes] = await Promise.all([
+  const [rencRes, clubsRes, grimpeursRes, pretsRes] = await Promise.all([
+    admin.from('rencontre').select('categorie, date_rencontre').eq('id', rencontreId).maybeSingle(),
     admin.from('club').select('id, nom').order('nom'),
-    admin.from('grimpeur').select('id, nom, prenom, club_id').order('nom').order('prenom'),
+    admin
+      .from('grimpeur')
+      .select('id, nom, prenom, club_id, annee_naissance')
+      .order('nom')
+      .order('prenom'),
     admin
       .from('pret')
       .select('rencontre_id, grimpeur_id, club_accueil_id')
       .eq('rencontre_id', rencontreId),
   ])
+  if (rencRes.error) throw rencRes.error
   if (clubsRes.error) throw clubsRes.error
   if (grimpeursRes.error) throw grimpeursRes.error
   if (pretsRes.error) throw pretsRes.error
@@ -57,12 +68,25 @@ export async function chargerPretsRencontre(
     nom: c.nom as string,
   }))
 
+  // Catégorie de la rencontre : on ne propose au prêt que les grimpeurs éligibles
+  // à cette tranche d'âge (R34). Les noms des prêts existants sont résolus depuis
+  // TOUS les grimpeurs (map ci-dessous), indépendamment du filtre.
+  const categorie = rencRes.data?.categorie as Categorie | undefined
+  const saison = rencRes.data ? anneeSaison(rencRes.data.date_rencontre as string) : null
+
   const infoGrimpeur = new Map<string, { nom: string; clubId: string }>()
-  const grimpeurs: GrimpeurOption[] = (grimpeursRes.data ?? []).map((g) => {
+  const grimpeurs: GrimpeurOption[] = []
+  for (const g of grimpeursRes.data ?? []) {
     const nomComplet = `${g.prenom as string} ${g.nom as string}`
     infoGrimpeur.set(g.id as string, { nom: nomComplet, clubId: g.club_id as string })
-    return { id: g.id as string, nom: nomComplet, clubId: g.club_id as string }
-  })
+    const eligible =
+      !categorie ||
+      saison === null ||
+      estEligibleCategorie(g.annee_naissance as number, categorie, saison)
+    if (eligible) {
+      grimpeurs.push({ id: g.id as string, nom: nomComplet, clubId: g.club_id as string })
+    }
+  }
 
   const prets: PretExistant[] = (pretsRes.data ?? []).map((p) => {
     const g = infoGrimpeur.get(p.grimpeur_id as string)

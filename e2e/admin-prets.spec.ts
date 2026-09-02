@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test'
 
 import { commeAdmin, commeCoach } from './helpers/auth'
 import { RENCONTRE_PILOTE } from './helpers/donnees'
-import { poserPhase, reinitialiserEngagement } from './helpers/sql'
+import { execSql, poserPhase, reinitialiserEngagement } from './helpers/sql'
 
 /**
  * Écran admin de gestion des prêts (spec #1 R35). Vérifie le parcours complet :
@@ -58,25 +58,37 @@ test.describe('Écran admin — prêts de grimpeurs (R35)', () => {
     await expect(page.locator('tr', { hasText: 'Devi Bravo' })).toHaveCount(0)
   })
 
-  test('le club d’accueil exclut le club d’origine (pas de prêt à soi-même)', async ({
+  test('accueil exclut le club d’origine + filtre catégorie (enfant) du roster', async ({
     page,
   }) => {
-    await commeAdmin(page)
-    await page.goto(`/admin/rencontres/${RENCONTRE_PILOTE}`)
-    // Club d'origine = Club B : Club B ne doit PAS figurer dans les clubs d'accueil.
-    await page.getByLabel('Club du grimpeur').selectOption({ label: 'Club B' })
-    const accueil = await page
-      .locator('select[name="clubAccueilId"] option')
-      .allInnerTexts()
-    expect(accueil).toContain('Club A')
-    expect(accueil).not.toContain('Club B')
+    // Un grimpeur ADO du Club B (né en 2000) ne doit PAS être proposé pour une
+    // rencontre ENFANT (R34). Inséré puis nettoyé.
+    const ADO = 'b0000000-0000-0000-0000-0000000000b9'
+    execSql(
+      `insert into interclub.grimpeur (id, club_id, nom, prenom, annee_naissance) values ('${ADO}','22222222-2222-2222-2222-222222222222','Bravo','Grand',2000) on conflict (id) do nothing;`,
+    )
+    try {
+      await commeAdmin(page)
+      await page.goto(`/admin/rencontres/${RENCONTRE_PILOTE}`)
 
-    // Filtre par club : seuls les grimpeurs du Club B sont proposés (Cléo, Devi ;
-    // pas Ana/Bob du Club A).
-    const options = await page
-      .locator('select[name="grimpeurId"] option')
-      .allInnerTexts()
-    expect(options).toContain('Devi Bravo')
-    expect(options.join(' ')).not.toContain('Ana Alpha')
+      // Club d'origine = Club B : Club B est exclu des clubs d'accueil.
+      await page.getByLabel('Club du grimpeur').selectOption({ label: 'Club B' })
+      const accueil = await page
+        .locator('select[name="clubAccueilId"] option')
+        .allInnerTexts()
+      expect(accueil).toContain('Club A')
+      expect(accueil).not.toContain('Club B')
+
+      // Filtre par club + catégorie : Devi (enfant, Club B) proposé ; Ana (Club A)
+      // et Grand Bravo (ado) absents.
+      const options = await page
+        .locator('select[name="grimpeurId"] option')
+        .allInnerTexts()
+      expect(options).toContain('Devi Bravo')
+      expect(options.join(' ')).not.toContain('Ana Alpha')
+      expect(options.join(' ')).not.toContain('Grand Bravo')
+    } finally {
+      execSql(`delete from interclub.grimpeur where id='${ADO}';`)
+    }
   })
 })

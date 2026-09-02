@@ -112,6 +112,35 @@ export function labelSaison(annee: number): string {
   return `${annee}–${annee + 1}`
 }
 
+// Bornes d'âge des catégories (R34) : enfant « moins de 13 ans » + pivot ; ado
+// « 13 à 19 ans ». Le pivot (13 ans) est éligible aux DEUX catégories.
+export const AGE_PIVOT = 13
+export const AGE_ADO_MAX = 19
+
+/**
+ * Âge « de compétition » d'un grimpeur pour une saison : année de la saison moins
+ * l'année de naissance (R34). `anneeSaison` = début de saison (cf. `anneeSaison()`).
+ */
+export function ageEnSaison(anneeNaissance: number, anneeSaison: number): number {
+  return anneeSaison - anneeNaissance
+}
+
+/**
+ * Vrai si un grimpeur né en `anneeNaissance` est éligible à la `categorie` d'une
+ * rencontre de la saison `anneeSaison` (R34) : **enfant** = âge ≤ 13 (moins de 13
+ * ans + pivot), **ado** = 13 ≤ âge ≤ 19. Le pivot (13 ans) est dans les deux.
+ */
+export function estEligibleCategorie(
+  anneeNaissance: number,
+  categorie: Categorie,
+  anneeSaison: number,
+): boolean {
+  const age = ageEnSaison(anneeNaissance, anneeSaison)
+  return categorie === 'enfant'
+    ? age <= AGE_PIVOT
+    : age >= AGE_PIVOT && age <= AGE_ADO_MAX
+}
+
 /** Phase suivante dans le cycle (R5), ou `null` si déjà à la dernière. */
 export function phaseSuivante(phase: Phase): Phase | null {
   const i = PHASES.findIndex((p) => p.value === phase)
