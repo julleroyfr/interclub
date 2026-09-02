@@ -133,15 +133,18 @@ cette spec. (Spec #1 R6/R27, rév. 2026-09-01.)
 - **R11.** Un club peut engager **plusieurs équipes** dans une même rencontre (à
   noms distincts, R10).
 - **R12.** Le coach **compose** une équipe en y **ajoutant** ou **retirant** des
-  grimpeurs **de son club** (spec #1 R18). Les grimpeurs proposés à l'ajout sont
-  ceux du **roster du club** non encore affectés à cette équipe.
-- **R13.** Le coach **ne peut pas** rattacher à ses équipes un **grimpeur d'un
-  autre club** (ni l'équipe CT33) : ce **prêt** est réservé à l'admin (spec #1
-  R35). L'ajout d'un grimpeur hors club est **refusé**. Un grimpeur **prêté**
-  déjà rattaché par l'admin **apparaît** dans la composition ; le coach
-  d'accueil le **gère comme les siens** — il peut notamment le **retirer** de
-  l'équipe (spec #1 R36). (Le **rattachement** initial reste, lui, réservé à
-  l'admin, R35.)
+  grimpeurs. Les grimpeurs proposés à l'ajout sont ceux du **roster disponible**
+  pour la rencontre, non encore affectés à cette équipe : les grimpeurs **de son
+  club** (spec #1 R18) **et** les grimpeurs **prêtés à son club** pour cette
+  rencontre (spec #1 R35).
+- **R13.** Le coach **ne peut pas créer de prêt** : mettre à disposition un
+  grimpeur d'un **autre club** (ou de l'équipe CT33) est **réservé à l'admin**
+  (spec #1 R35) ; l'ajout d'un grimpeur ni du club ni prêté est **refusé**. En
+  revanche, un grimpeur **prêté** au club (prêt admin actif) **apparaît dans le
+  roster** avec un badge « prêté · club d'origine » et le coach le **gère comme
+  les siens** : il l'**affecte**, le **retire**, le **déplace** entre équipes et
+  fixe son **groupe de départ** (spec #1 R36). Le **retrait le renvoie au roster**
+  (le prêt persiste) ; seul l'**admin** met fin au prêt (R35).
 - **R14.** Un grimpeur ne peut appartenir qu'à **une seule équipe** de son club
   **par rencontre** : le **double engagement** dans deux équipes de la même
   rencontre est **interdit**. L'ajout d'un grimpeur déjà engagé dans une autre
@@ -226,11 +229,15 @@ les opérations sont **acceptées** — mêmes droits que le coach permanent
 n'est affiché (R16/R17). Seul l'**admin** peut encore corriger l'engagement
 (spec #1 R6/R27).
 
-### Nominal — grimpeur prêté rattaché par l'admin
+### Nominal — grimpeur prêté (prêt admin persistant)
 
-Étant donné un grimpeur du club B **prêté** et rattaché **par l'admin** à
-l'équipe A1 (spec #1 R35), quand le coach du club A ouvre A1, alors le grimpeur
-prêté **apparaît** dans la composition (R13) et compte dans l'effectif.
+Étant donné un grimpeur du club B **prêté au club A** par l'**admin** pour la
+rencontre (spec #1 R35), quand le coach du club A ouvre l'écran, alors le grimpeur
+prêté **apparaît dans le roster** avec le badge « prêté · Club B » (R12/R13). Quand
+le coach l'**affecte** à l'équipe A1, alors il apparaît dans la composition et
+compte dans l'effectif. Quand le coach le **retire** de A1, alors il **revient au
+roster** (le prêt persiste) et peut être ré-affecté (ex. à A2) — sans intervention
+de l'admin (R13, spec #1 R36).
 
 ### Nominal — groupe de départ d'un enfant
 
@@ -248,7 +255,8 @@ peut être ajouté **sans** groupe (« à définir ») et complété plus tard (
 - Un coach du club A tente de voir/éditer une équipe du club B → **refusé** (R2).
 - Création d'une équipe portant un **nom déjà utilisé** dans la même rencontre
   pour le même club → refusée avec message d'**unicité** (R10/R5).
-- Ajout d'un grimpeur **d'un autre club** à une équipe → **refusé** (R13).
+- Ajout d'un grimpeur **d'un autre club NON prêté** à une équipe → **refusé**
+  (R13) ; un grimpeur **prêté** au club, lui, est **autorisé** (R12/R13).
 - Ajout d'un grimpeur **déjà engagé** dans une autre équipe de la **même
   rencontre** → refusé (R14).
 - Ajout d'un **9ᵉ** grimpeur à une équipe déjà à 8 → refusé (R15).

@@ -52,9 +52,10 @@ export function reinitialiserEngagement(): void {
        ('${A2}','${RENCONTRE_PILOTE}','${CLUB_A}','Équipe A2'),
        ('${B1}','${RENCONTRE_PILOTE}','${CLUB_B}','Équipe B1')
      on conflict (id) do nothing;
-     -- 2. Purger compositions + équipes surnuméraires.
+     -- 2. Purger compositions, prêts et équipes surnuméraires.
      delete from interclub.composition
        where equipe_id in (select id from interclub.equipe where rencontre_id='${RENCONTRE_PILOTE}');
+     delete from interclub.pret where rencontre_id='${RENCONTRE_PILOTE}';
      delete from interclub.equipe
        where rencontre_id='${RENCONTRE_PILOTE}' and id not in ('${A1}','${A2}','${B1}');
      -- 3. Compositions baseline : A1 = {Ana, Bob}, B1 = {Cléo}.

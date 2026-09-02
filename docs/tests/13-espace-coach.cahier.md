@@ -15,9 +15,9 @@
   nature-dépendante) ;
   [ADR 0001](../decisions/0001-authentification-sessions-ephemeres-qr.md).
 - **Pré-requis** :
-  - Migrations appliquées jusqu'à **`202609020900_rls_grimpeur_prete_lisible`**
-    incluse (dont la visibilité/retrait du grimpeur prêté, R13/R36) — lancer
-    `supabase db reset` en local (migrations + seed 01/02/03).
+  - Migrations appliquées jusqu'à **`202609021000_pret_grimpeur`** incluse (dont
+    la visibilité/gestion et le **prêt persistant** du grimpeur prêté, R12/R13/R36)
+    — lancer `supabase db reset` en local (migrations + seed 01/02/03).
   - `supabase/config.toml` → `enable_anonymous_sign_ins = true`.
   - App lancée : `npm run dev` → l'app écoute sur le **port 3011**.
 - **Environnement** : local (stack Docker) — version/commit : `______`
@@ -126,25 +126,26 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
   - À 8/8, le formulaire d'ajout **disparaît**, remplacé par « Équipe complète —
     plafond de 8 atteint (R15) » (aucun 9ᵉ ajout possible).
 
-### CT-05 `[mixte]` — Grimpeur prêté : rattachement admin, gestion coach   (couvre : R13, R21, R35, R36 ; nominal + négatif)
+### CT-05 `[mixte]` — Grimpeur prêté : prêt admin persistant, gestion coach   (couvre : R12, R13, R21, R35, R36 ; nominal + négatif)
 
-- **Pré-condition** : phase `pre_competition` ; migration **`202609020900`** appliquée.
+- **Pré-condition** : phase `pre_competition` ; migrations **`202609020900`** et
+  **`202609021000`** appliquées.
 - **Étapes** :
-  1. **Coach** : tenter d'ajouter **Devi Bravo** (Club B) à A2 → doit être **impossible**
-     (non proposé au roster ; tentative directe refusée, R13).
-  2. **Admin** (SQL Editor, R35) :
-     `insert into interclub.composition (equipe_id, grimpeur_id) values ('66666666-6666-6666-6666-666666666602','b0000000-0000-0000-0000-0000000000b2');`
-  3. **Coach** : recharger l'écran d'engagement.
+  1. **Coach** : ouvrir la rencontre → **Devi Bravo** (Club B) n'est **pas** au roster (R13).
+  2. **Admin** (SQL Editor, R35) — créer le **prêt** :
+     `insert into interclub.pret (rencontre_id, grimpeur_id, club_accueil_id) values ('33333333-3333-3333-3333-333333333333','b0000000-0000-0000-0000-0000000000b2','11111111-1111-1111-1111-111111111111');`
+  3. **Coach** : recharger → **affecter** Devi à A2 depuis le roster.
   4. **Coach** : définir le **groupe de départ** du prêté (liste déroulante → « M2 » → OK).
+  5. **Coach** : **retirer** Devi de A2, puis le **ré-affecter** à A1.
 - **Résultat attendu** :
-  - `[auto]` Étape 1 : Devi Bravo n'est **pas proposé** au roster ; tentative directe
-    refusée (R13).
-  - `[auto]` Après l'étape 2, Devi Bravo apparaît dans A2 avec son **nom** et le badge
-    **« Prêté · Club B »** (texte présent, R13).
-  - `[auto]` Étape 4 : le groupe **persiste** (le sélecteur reste sur « M2 », pas de
-    retour à « à définir », R21).
-  - `[auto]` Le coach d'accueil peut le **retirer** (× → retrait accepté, R36) mais
-    **ne peut pas** rattacher un grimpeur d'un autre club lui-même (R13/R35).
+  - `[auto]` Étape 1 : sans prêt, Devi n'est **pas proposé** au roster (R13).
+  - `[auto]` Étape 3 : après le prêt, Devi apparaît dans le **roster** avec le libellé
+    **« Devi Bravo (prêté · Club B) »** (R12). Une fois affecté, sa ligne porte son
+    **nom** et le badge **« Prêté · Club B »** (R13).
+  - `[auto]` Étape 4 : le groupe **persiste** (le sélecteur reste sur « M2 », R21).
+  - `[auto]` Étape 5 : après retrait, Devi **revient au roster** (le prêt persiste) et
+    est **ré-affectable** à A1 **sans** intervention admin (R36) ; le coach ne peut
+    **pas** créer de prêt lui-même (R13/R35).
   - `[manuel]` vérifier à l'œil : le badge « Prêté » est bien rendu en **violet**
     (couleur, R13).
 

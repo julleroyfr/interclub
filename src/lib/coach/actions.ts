@@ -274,13 +274,22 @@ export async function ajouterGrimpeurEquipe(
     throw e
   }
 
-  const [{ data: grimpeur }, { data: membres }, { data: engages }] = await Promise.all([
-    supabase.from('grimpeur').select('club_id').eq('id', grimpeurId).maybeSingle(),
-    supabase.from('composition').select('grimpeur_id').eq('equipe_id', equipeId),
-    supabase.from('composition').select('grimpeur_id').eq('rencontre_id', appartenance.rencontreId),
-  ])
+  const [{ data: grimpeur }, { data: membres }, { data: engages }, { data: pret }] =
+    await Promise.all([
+      supabase.from('grimpeur').select('club_id').eq('id', grimpeurId).maybeSingle(),
+      supabase.from('composition').select('grimpeur_id').eq('equipe_id', equipeId),
+      supabase.from('composition').select('grimpeur_id').eq('rencontre_id', appartenance.rencontreId),
+      // Prêt actif de ce grimpeur au club du coach pour cette rencontre (R13/R36).
+      supabase
+        .from('pret')
+        .select('grimpeur_id')
+        .eq('rencontre_id', appartenance.rencontreId)
+        .eq('grimpeur_id', grimpeurId)
+        .eq('club_accueil_id', coach.clubId)
+        .maybeSingle(),
+    ])
   if (!grimpeur) {
-    return { erreur: "Ce grimpeur n'appartient pas à votre club (prêt réservé à l'admin, R13)." }
+    return { erreur: "Ce grimpeur n'appartient ni à votre club ni à vos prêts (R13)." }
   }
 
   try {
@@ -288,6 +297,7 @@ export async function ajouterGrimpeurEquipe(
       grimpeurId,
       grimpeurClubId: grimpeur.club_id as string,
       equipeClubId: coach.clubId,
+      estPrete: !!pret,
       membresActuels: (membres ?? []).map((m) => m.grimpeur_id as string),
       dejaEngagesRencontre: (engages ?? []).map((e) => e.grimpeur_id as string),
     })

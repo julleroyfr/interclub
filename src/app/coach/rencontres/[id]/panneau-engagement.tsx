@@ -337,7 +337,9 @@ function FormAjoutGrimpeur({
         tonLabel="accent"
         options={disponibles.map((g) => ({
           value: g.id,
-          label: `${g.prenom} ${g.nom}`,
+          label: g.prete
+            ? `${g.prenom} ${g.nom} (prêté · ${g.clubOrigineNom})`
+            : `${g.prenom} ${g.nom}`,
         }))}
         placeholder="— Choisir un grimpeur —"
         required

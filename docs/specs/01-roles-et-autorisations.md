@@ -226,14 +226,21 @@ conditionne les accès temporels.
 
 ### Grimpeurs prêtés (prêt inter-clubs / équipe CT33)
 
-- **R35.** Le **rattachement** d'un grimpeur **prêté** (issu d'un autre club) à
-  une équipe d'accueil, ou à l'**équipe CT33**, est réservé à l'**admin**. Un
-  coach ne peut pas rattacher à ses équipes un grimpeur d'un autre club.
-- **R36.** Une fois un grimpeur prêté rattaché à une équipe d'accueil (R35), le
-  **coach de cette équipe** le gère comme un grimpeur de son équipe : saisie et
-  modification de ses **résultats** (R19), dans son périmètre et en phase ③
-  compétition (R7). Le grimpeur reste rattaché à son **club d'origine** pour ses
-  résultats individuels (classement — hors périmètre de cette spec).
+- **R35.** Le **prêt** d'un grimpeur — la **mise à disposition** d'un grimpeur
+  issu d'un autre club (ou de l'**équipe CT33**) à un **club d'accueil**, pour une
+  **rencontre donnée** — est **créé et révoqué par l'admin seul**. Le prêt est une
+  **relation distincte de l'affectation en équipe** : il exprime « ce grimpeur est
+  disponible pour le club d'accueil sur cette rencontre », indépendamment de
+  l'équipe où il est (ou n'est pas) composé. Un coach ne peut ni **créer** ni
+  **révoquer** un prêt.
+- **R36.** Tant qu'un prêt est actif (R35), le **coach du club d'accueil gère le
+  grimpeur prêté comme un grimpeur de son club** pour cette rencontre : il peut
+  l'**affecter à une équipe, l'en retirer, le déplacer** entre ses équipes
+  (espace coach, R12/R18) et **saisir ses résultats** (R19) en phase ③ compétition
+  (R7), dans son périmètre. Le **retrait d'une équipe ne met pas fin au prêt** : le
+  grimpeur **redevient disponible** (roster) et peut être ré-affecté par le coach ;
+  seul l'**admin** met fin au prêt (R35). Le grimpeur reste rattaché à son **club
+  d'origine** pour ses résultats individuels (classement — hors périmètre).
 
 ### Saison
 
@@ -371,10 +378,10 @@ acceptée (R29, R30, R31).
 
 ### Nominal — grimpeur prêté
 
-Étant donné un grimpeur du club B rattaché par l'admin à une équipe du club A
-(prêt), quand le coach du club A saisit ses résultats en phase ③ compétition,
-alors la saisie est acceptée (R35, R36) ; le coach du club A ne pouvait pas
-l'ajouter lui-même (R35).
+Étant donné un grimpeur du club B **prêté au club A** par l'admin (R35), quand le
+coach du club A l'**affecte** à une équipe puis **saisit ses résultats** en phase ③
+compétition, alors c'est accepté (R36) ; le coach du club A ne pouvait pas **créer
+le prêt** lui-même (R35).
 
 ### Cas limites / erreurs
 

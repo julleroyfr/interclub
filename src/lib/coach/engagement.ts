@@ -131,6 +131,10 @@ export type OptionGrimpeur = {
   nom: string
   prenom: string
   dejaEngage: boolean
+  /** Vrai si proposé au titre d'un prêt admin actif (R13) ; sinon grimpeur du club. */
+  prete: boolean
+  /** Club d'origine si prêté, pour le badge « prêté · club ». */
+  clubOrigineNom: string | null
 }
 
 /** Détail d'engagement d'une rencontre pour le club du coach (R9–R14). */
@@ -165,7 +169,7 @@ export async function getEngagementRencontre(
   if (errR) throw errR
   if (!rencontre) return null
 
-  const [clubRes, equipesRes, rosterRes] = await Promise.all([
+  const [clubRes, equipesRes, rosterRes, pretsRes] = await Promise.all([
     supabase.from('club').select('nom').eq('id', rencontre.club_porteur_id as string).maybeSingle(),
     supabase
       .from('equipe')
@@ -179,9 +183,27 @@ export async function getEngagementRencontre(
       .eq('club_id', clubId)
       .order('nom')
       .order('prenom'),
+    // Grimpeurs PRÊTÉS à ce club pour cette rencontre (R12/R13) — s'ajoutent au
+    // roster comme des grimpeurs du club, avec badge « prêté · club d'origine ».
+    supabase
+      .from('pret')
+      .select('grimpeur:grimpeur_id(id, nom, prenom, club_id)')
+      .eq('rencontre_id', rencontreId)
+      .eq('club_accueil_id', clubId),
   ])
   if (equipesRes.error) throw equipesRes.error
   if (rosterRes.error) throw rosterRes.error
+  if (pretsRes.error) throw pretsRes.error
+
+  // Grimpeurs prêtés (aplatis depuis la relation pret → grimpeur ; l'embed peut
+  // être typé objet ou tableau selon l'inférence).
+  type GrimpeurPrete = { id: string; nom: string; prenom: string; club_id: string }
+  const grimpeursPretes = (pretsRes.data ?? [])
+    .map((p) => {
+      const g = p.grimpeur as unknown
+      return (Array.isArray(g) ? g[0] : g) as GrimpeurPrete | null | undefined
+    })
+    .filter((g): g is GrimpeurPrete => g != null)
 
   // Grimpeurs référencés dans les compositions (dont d'éventuels prêtés d'un
   // autre club) → une seule lecture pour nom/prénom/club d'origine.
@@ -210,7 +232,10 @@ export async function getEngagementRencontre(
     })
   }
   const nomClubs = new Map<string, string>()
-  const clubIdsPrete = [...infoGrimpeur.values()].map((g) => g.clubId).filter((id) => id !== clubId)
+  const clubIdsPrete = [
+    ...[...infoGrimpeur.values()].map((g) => g.clubId),
+    ...grimpeursPretes.map((g) => g.club_id),
+  ].filter((id) => id !== clubId)
   if (clubIdsPrete.length > 0) {
     const { data } = await supabase.from('club').select('id, nom').in('id', clubIdsPrete)
     for (const c of data ?? []) nomClubs.set(c.id as string, c.nom as string)
@@ -237,12 +262,24 @@ export async function getEngagementRencontre(
       .sort((a, b) => a.nom.localeCompare(b.nom) || a.prenom.localeCompare(b.prenom)),
   }))
 
-  const roster: OptionGrimpeur[] = (rosterRes.data ?? []).map((g) => ({
-    id: g.id as string,
-    nom: g.nom as string,
-    prenom: g.prenom as string,
-    dejaEngage: dejaEngages.has(g.id as string),
-  }))
+  const roster: OptionGrimpeur[] = [
+    ...(rosterRes.data ?? []).map((g) => ({
+      id: g.id as string,
+      nom: g.nom as string,
+      prenom: g.prenom as string,
+      dejaEngage: dejaEngages.has(g.id as string),
+      prete: false,
+      clubOrigineNom: null,
+    })),
+    ...grimpeursPretes.map((g) => ({
+      id: g.id,
+      nom: g.nom,
+      prenom: g.prenom,
+      dejaEngage: dejaEngages.has(g.id),
+      prete: true,
+      clubOrigineNom: nomClubs.get(g.club_id) ?? '(autre club)',
+    })),
+  ]
 
   return {
     id: rencontre.id as string,

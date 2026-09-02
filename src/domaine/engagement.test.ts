@@ -80,10 +80,16 @@ describe('Ajout d’un grimpeur à une équipe (R13/R14/R15)', () => {
     expect(() => verifierAjoutComposition(base)).not.toThrow()
   })
 
-  it('refuse un grimpeur d’un autre club (R13)', () => {
+  it('refuse un grimpeur d’un autre club NON prêté (R13)', () => {
     expect(() =>
       verifierAjoutComposition({ ...base, grimpeurClubId: 'club-B' }),
     ).toThrow(EngagementInvalideError)
+  })
+
+  it('accepte un grimpeur d’un autre club s’il est prêté (estPrete, spec #1 R36)', () => {
+    expect(() =>
+      verifierAjoutComposition({ ...base, grimpeurClubId: 'club-B', estPrete: true }),
+    ).not.toThrow()
   })
 
   it('refuse un grimpeur déjà engagé dans une autre équipe de la rencontre (R14)', () => {

@@ -86,20 +86,23 @@ export type AjoutComposition = {
   membresActuels: string[]
   /** Grimpeurs déjà engagés dans une autre équipe de la même rencontre. */
   dejaEngagesRencontre: string[]
+  /** Vrai si un prêt admin actif met ce grimpeur à disposition du club (R36). */
+  estPrete?: boolean
 }
 
 /**
  * Vérifie qu'un grimpeur peut être ajouté à une équipe (R13/R14/R15) :
- * - R13 : le grimpeur appartient au club de l'équipe (un prêté d'un autre club
- *   est rattaché par l'admin, hors de ce chemin) ;
+ * - R13 : le grimpeur appartient au club de l'équipe, OU il est **prêté** au club
+ *   par l'admin (`estPrete`, spec #1 R35/R36) — le coach le gère alors comme les
+ *   siens ; sinon l'ajout d'un grimpeur hors club est refusé ;
  * - R14 : il n'est pas déjà engagé dans une autre équipe de la rencontre ;
  * - R15 : l'équipe n'a pas atteint le plafond de 8.
  * Lance `EngagementInvalideError` au premier invariant violé.
  */
 export function verifierAjoutComposition(ajout: AjoutComposition): void {
-  if (ajout.grimpeurClubId !== ajout.equipeClubId) {
+  if (ajout.grimpeurClubId !== ajout.equipeClubId && !ajout.estPrete) {
     throw new EngagementInvalideError(
-      "Un grimpeur d'un autre club ne peut être ajouté par le coach (prêt réservé à l'admin, R13).",
+      "Un grimpeur d'un autre club ne peut être ajouté que s'il est prêté au club (prêt réservé à l'admin, R13).",
     )
   }
   if (ajout.dejaEngagesRencontre.includes(ajout.grimpeurId)) {

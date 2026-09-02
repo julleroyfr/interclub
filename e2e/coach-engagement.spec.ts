@@ -3,6 +3,7 @@ import { expect, test, type Page } from '@playwright/test'
 import { infosApi } from './helpers/api'
 import { commeAdmin, commeCoach, commeSansMapping } from './helpers/auth'
 import {
+  CLUB_A,
   COMPTES,
   EQUIPES,
   GRIMPEURS,
@@ -41,9 +42,10 @@ async function ajouterGrimpeur(
       .selectOption({ label: `Groupe ${groupe}` })
   }
   await carte.getByRole('button', { name: /Ajouter à l.équipe/ }).click()
-  // Confirmer via la LIGNE de composition (li), pas le texte brut : le libellé
-  // existe aussi comme <option> caché dans les sélecteurs de roster.
-  await expect(carte.locator('li', { hasText: labelGrimpeur })).toBeVisible()
+  // Confirmer via la LIGNE de composition (li). La composition affiche le NOM
+  // seul ; le libellé du roster peut porter un suffixe « (prêté · club) ».
+  const nomAffiche = labelGrimpeur.replace(/\s*\(prêté.*\)\s*$/, '')
+  await expect(carte.locator('li', { hasText: nomAffiche })).toBeVisible()
 }
 
 /**
@@ -187,41 +189,55 @@ test.describe('Cahier 13 — Espace coach : engagement', () => {
     // Le formulaire d'ajout a disparu (aucun 9ᵉ possible).
     await expect(cartePlein.locator('select[name="grimpeurId"]')).toHaveCount(0)
   })
-  // CT-05 est `[mixte]` : le cœur (roster, badge « Prêté », retrait) est auto ;
-  // la couleur violette du badge reste `[manuel]` (hors E2E). Dépend de la
-  // migration 202609020900 (lecture R13 + retrait R36 du prêté).
-  test('CT-05 — Grimpeur prêté : rattachement admin, gestion coach (R13, R35, R36)', async ({
+  // CT-05 est `[mixte]` : le cœur (roster, badge « prêté », affectation, groupe,
+  // retrait, persistance) est auto ; la couleur violette du badge reste `[manuel]`.
+  // Dépend des migrations 202609020900 (R13 lecture, R36 retrait/groupe) et
+  // 202609021000 (prêt persistant : roster + ré-affectation).
+  test('CT-05 — Grimpeur prêté : prêt admin persistant, gestion coach (R12, R13, R21, R35, R36)', async ({
     page,
   }) => {
     poserPhase('pre_competition')
     await commeCoach(page)
     await page.goto(URL_RENCONTRE)
 
-    // R13 : un grimpeur d'un autre club n'est pas proposé au roster du coach A.
     const carteA2 = carteEquipe(page, 'Équipe A2')
-    const roster = await carteA2.locator('select[name="grimpeurId"] option').allInnerTexts()
-    expect(roster).not.toContain('Devi Bravo')
+    const DEVI = 'Devi Bravo (prêté · Club B)'
 
-    // R35 : l'admin rattache Devi (Club B) à A2 — prêt réservé à l'admin (simulé en base).
+    // R13 : sans prêt, un grimpeur d'un autre club n'est pas au roster.
+    let roster = await carteA2.locator('select[name="grimpeurId"] option').allInnerTexts()
+    expect(roster.join(' ')).not.toContain('Devi')
+
+    // R35 : l'admin crée le PRÊT (réservé à l'admin ; simulé en base).
     execSql(
-      `insert into interclub.composition (equipe_id, grimpeur_id) values ('${EQUIPES.A2}','${GRIMPEURS.devi}') on conflict do nothing;`,
+      `insert into interclub.pret (rencontre_id, grimpeur_id, club_accueil_id) values ('${RENCONTRE_PILOTE}','${GRIMPEURS.devi}','${CLUB_A}') on conflict do nothing;`,
     )
     await page.reload()
 
-    // R13 : le prêté apparaît avec son NOM et le badge « Prêté · Club B ».
+    // R12/R13 : le prêté apparaît dans le roster (badge « prêté · Club B »).
+    roster = await carteA2.locator('select[name="grimpeurId"] option').allInnerTexts()
+    expect(roster).toContain(DEVI)
+
+    // R13/R36 : le coach affecte le prêté à A2 (nom + badge « Prêté · Club B »).
+    await ajouterGrimpeur(page, 'Équipe A2', DEVI)
     const ligneDevi = carteA2.locator('li', { hasText: 'Devi Bravo' })
-    await expect(ligneDevi).toBeVisible()
     await expect(ligneDevi.getByText(/Prêté · Club B/)).toBeVisible()
 
-    // R21 : le coach d'accueil définit le groupe de départ du prêté → il persiste
-    // (le PATCH sur le prêté était bloqué avant la migration 202609020900).
+    // R21 : le groupe de départ du prêté persiste.
     await ligneDevi.locator('select[name="groupeDepart"]').selectOption({ label: 'Groupe M2' })
     await ligneDevi.getByRole('button', { name: 'OK' }).click()
     await expect(ligneDevi.locator('select[name="groupeDepart"]')).toHaveValue('M2')
 
-    // R36 : le coach d'accueil peut le retirer.
+    // R36 (persistance) : le retrait le renvoie au roster ; il reste ré-affectable.
     await ligneDevi.getByRole('button', { name: 'Retirer Devi Bravo' }).click()
     await expect(carteA2.locator('li', { hasText: 'Devi Bravo' })).toHaveCount(0)
+    roster = await carteA2.locator('select[name="grimpeurId"] option').allInnerTexts()
+    expect(roster).toContain(DEVI)
+
+    // Ré-affectation à une autre équipe (A1) — sans intervention admin.
+    await ajouterGrimpeur(page, 'Équipe A1', DEVI)
+    await expect(
+      carteEquipe(page, 'Équipe A1').locator('li', { hasText: 'Devi Bravo' }),
+    ).toBeVisible()
   })
 
   test('CT-06 — Garde-fou date : préparation jour J seulement (spec #1 R5)', async ({
