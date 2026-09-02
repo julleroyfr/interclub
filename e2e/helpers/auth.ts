@@ -1,6 +1,6 @@
 import { expect, type Page } from '@playwright/test'
 
-import { COMPTES } from './donnees'
+import { COMPTES, JETON } from './donnees'
 
 type Compte = { email: string; mdp: string }
 
@@ -20,3 +20,13 @@ export async function seConnecter(page: Page, compte: Compte): Promise<void> {
 export const commeCoach = (page: Page) => seConnecter(page, COMPTES.coach)
 export const commeAdmin = (page: Page) => seConnecter(page, COMPTES.admin)
 export const commeSansMapping = (page: Page) => seConnecter(page, COMPTES.sansMapping)
+
+/**
+ * Ouvre une session **coach temporaire** par scan du QR (utilisateur anonyme) et
+ * attend la redirection vers `/coach`. La rencontre doit être dans la fenêtre du
+ * coach temp (préparation ou compétition) au moment du scan.
+ */
+export async function commeCoachTemporaire(page: Page): Promise<void> {
+  await page.goto(`/scan?jeton=${JETON.coachTemp}`)
+  await page.waitForURL('**/coach')
+}

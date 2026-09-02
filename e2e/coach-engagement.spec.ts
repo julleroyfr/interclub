@@ -1,7 +1,12 @@
 import { expect, test, type Page } from '@playwright/test'
 
 import { infosApi } from './helpers/api'
-import { commeAdmin, commeCoach, commeSansMapping } from './helpers/auth'
+import {
+  commeAdmin,
+  commeCoach,
+  commeCoachTemporaire,
+  commeSansMapping,
+} from './helpers/auth'
 import {
   CLUB_A,
   COMPTES,
@@ -338,10 +343,102 @@ test.describe('Cahier 13 — Espace coach : engagement', () => {
     await expect(pageJuge).toHaveURL(/\/scan/)
     await ctxJuge.close()
   })
-  test.fixme('CT-08 — Coach temporaire édite en préparation (R16 ; spec #1 R6, R27)', async () => {})
-  test.fixme('CT-09 — Coach temporaire borné à SA rencontre (spec #1 R27)', async () => {})
-  test.fixme('CT-10 — Gel de l’engagement en compétition (R16, R17)', async () => {})
-  test.fixme('CT-11 — Gel dès la pré-compétition pour le coach temp (R16 ; spec #1 R28)', async () => {})
+  test('CT-08 — Coach temporaire édite en préparation (R16 ; spec #1 R6, R27)', async ({
+    page,
+  }) => {
+    nettoyerSessionsQr()
+    poserPhase('preparation')
+    await commeCoachTemporaire(page)
+
+    // Mêmes droits que le permanent le jour J : créer une équipe, composer,
+    // fixer un groupe de départ (R16 ; spec #1 R27).
+    await page.goto(URL_RENCONTRE)
+    await creerEquipe(page, 'TMP')
+    await ajouterGrimpeur(page, 'TMP', 'Chloé Alpha', 'M2')
+    const ligne = carteEquipe(page, 'TMP').locator('li', { hasText: 'Chloé Alpha' })
+    await expect(ligne.locator('select[name="groupeDepart"]')).toHaveValue('M2')
+
+    // Négatif : le coach temporaire n'accède pas à /coach/jetons (permanent seul).
+    const resp = await page.goto('/coach/jetons')
+    expect(resp?.status()).toBe(404)
+  })
+  test('CT-09 — Coach temporaire borné à SA rencontre (spec #1 R27)', async ({
+    page,
+  }) => {
+    nettoyerSessionsQr()
+    poserPhase('preparation')
+    // 2ᵉ rencontre Club A (même saison) — hors du périmètre de la session temp.
+    const R2 = '33333333-3333-3333-3333-333333333334'
+    execSql(
+      `insert into interclub.rencontre (id, club_porteur_id, date_rencontre, categorie, phase) values ('${R2}','${CLUB_A}','2026-10-10','enfant','pre_competition') on conflict (id) do nothing;`,
+    )
+    try {
+      await commeCoachTemporaire(page)
+      // L'autre rencontre : 404 (session bornée à celle du jeton).
+      const resp2 = await page.goto(`/coach/rencontres/${R2}`)
+      expect(resp2?.status()).toBe(404)
+      // Sur /coach, seule sa rencontre est listée.
+      await page.goto('/coach')
+      await expect(page.getByRole('link', { name: /19 septembre 2026/ })).toBeVisible()
+      expect(await page.locator('a[href^="/coach/rencontres/"]').count()).toBe(1)
+    } finally {
+      execSql(`delete from interclub.rencontre where id='${R2}';`)
+    }
+  })
+
+  test('CT-10 — Gel de l’engagement en compétition (R16, R17)', async ({
+    page,
+    browser,
+    request,
+  }) => {
+    nettoyerSessionsQr()
+    poserPhase('competition')
+
+    // Permanent : écran en lecture seule, aucun formulaire d'édition (R17).
+    await commeCoach(page)
+    await page.goto(URL_RENCONTRE)
+    await expect(page.getByText(/lecture seule/)).toBeVisible()
+    await expect(page.getByLabel('Nouvelle équipe')).toHaveCount(0)
+
+    // Temporaire (fenêtre couvre la compétition) : lecture seule aussi.
+    const ctxTmp = await browser.newContext()
+    const pageTmp = await ctxTmp.newPage()
+    await commeCoachTemporaire(pageTmp)
+    await pageTmp.goto(URL_RENCONTRE)
+    await expect(pageTmp.getByLabel('Nouvelle équipe')).toHaveCount(0)
+    await ctxTmp.close()
+
+    // RLS : une écriture du coach permanent sur composition est refusée (gel, R16).
+    const { url, anon } = infosApi()
+    const login = await request.post(`${url}/auth/v1/token?grant_type=password`, {
+      headers: { apikey: anon, 'Content-Type': 'application/json' },
+      data: { email: COMPTES.coach.email, password: COMPTES.coach.mdp },
+    })
+    const token = (await login.json()).access_token
+    const insert = await request.post(`${url}/rest/v1/composition`, {
+      headers: {
+        apikey: anon,
+        Authorization: `Bearer ${token}`,
+        'Content-Profile': 'interclub',
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal',
+      },
+      data: { equipe_id: EQUIPES.A2, grimpeur_id: POOL_LIBRES[0].id },
+    })
+    expect([401, 403]).toContain(insert.status())
+  })
+
+  test('CT-11 — Gel dès la pré-compétition pour le coach temp (R16 ; spec #1 R28)', async ({
+    page,
+  }) => {
+    nettoyerSessionsQr()
+    poserPhase('pre_competition')
+    // Le jeton coach temp n'est pas ouvert avant le jour J (fenêtre = préparation
+    // + compétition) : le scan est refusé.
+    await page.goto(`/scan?jeton=${JETON.coachTemp}`)
+    await expect(page.getByText(/n.est pas encore ouvert/)).toBeVisible()
+    await expect(page).toHaveURL(/\/scan/)
+  })
   test('CT-12 — Lecture seule : rencontre terminée (R17)', async ({ page }) => {
     await commeCoach(page)
 

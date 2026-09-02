@@ -198,7 +198,8 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
 - **Pré-condition** : phase `preparation`.
 - **Étapes** :
   1. Sur `/coach`, ouvrir la rencontre (la seule visible pour la session).
-  2. Créer une équipe **« TMP »**, y ajouter **Ana Alpha**, fixer un groupe de départ.
+  2. Créer une équipe **« TMP »**, y ajouter **Chloé Alpha** (grimpeur libre ;
+     Ana/Bob sont déjà engagés en A1, R14), fixer un **groupe de départ « M2 »**.
 - **Résultat attendu** :
   - Les opérations sont **acceptées** — **mêmes droits** que le coach permanent le
     jour J (R16, spec #1 R27). L'écran reflète l'état à jour (R18).
