@@ -8,8 +8,8 @@ import {
   CATEGORIES,
   PHASES,
   labelSaison,
-  peutEntrerEnPreparation,
-  phasePrecedente,
+  peutEntrerEnPhase,
+  phasePrecedenteEffective,
   phaseSuivante,
   type Phase,
 } from '@/domaine/rencontre'
@@ -46,13 +46,16 @@ function LigneRencontreTdb({ rencontre }: { rencontre: RencontreTdb }) {
     etatInitial,
   )
 
-  const precedente = phasePrecedente(rencontre.phase)
+  const aujourdhui = aujourdhuiISO()
+  // Garde-fou jour J (R5) reflété dans l'IHM : préparation ET compétition ne
+  // s'activent que le jour de la rencontre ; reculer depuis la compétition hors
+  // jour J ramène en pré-compétition (l'action reste la garde autoritaire).
+  const precedente = phasePrecedenteEffective(rencontre.phase, rencontre.dateRencontre, aujourdhui)
   const suivante = phaseSuivante(rencontre.phase)
-  // Garde-fou jour J (R5) reflété dans l'IHM : entrée en préparation seulement
-  // le jour de la rencontre (l'action reste la garde autoritaire).
-  const preparationHorsJourJ =
-    suivante === 'preparation' &&
-    !peutEntrerEnPreparation(rencontre.dateRencontre, aujourdhuiISO())
+  const suivanteBloquee =
+    suivante !== null && !peutEntrerEnPhase(suivante, rencontre.dateRencontre, aujourdhui)
+  const precedenteBloquee =
+    precedente !== null && !peutEntrerEnPhase(precedente, rencontre.dateRencontre, aujourdhui)
 
   return (
     <li
@@ -78,7 +81,17 @@ function LigneRencontreTdb({ rencontre }: { rencontre: RencontreTdb }) {
           <form action={actionPhase}>
             <input type="hidden" name="id" value={rencontre.id} />
             <input type="hidden" name="phase" value={precedente} />
-            <Bouton type="submit" variante="fantome" taille="sm" disabled={phaseEnCours}>
+            <Bouton
+              type="submit"
+              variante="fantome"
+              taille="sm"
+              disabled={phaseEnCours || precedenteBloquee}
+              title={
+                precedenteBloquee
+                  ? 'Activable seulement le jour de la rencontre (R5).'
+                  : undefined
+              }
+            >
               ← {labelPhase(precedente)}
             </Bouton>
           </form>
@@ -90,9 +103,9 @@ function LigneRencontreTdb({ rencontre }: { rencontre: RencontreTdb }) {
             <Bouton
               type="submit"
               taille="sm"
-              disabled={phaseEnCours || preparationHorsJourJ}
+              disabled={phaseEnCours || suivanteBloquee}
               title={
-                preparationHorsJourJ
+                suivanteBloquee
                   ? 'Activable seulement le jour de la rencontre (R5).'
                   : undefined
               }

@@ -115,6 +115,13 @@ conditionne les accès temporels.
   - **Précision (rév. 2026-09-01)** : la phase **② préparation** n'est
     **activable par l'admin que le jour de la rencontre** (date du jour) ; c'est
     un garde-fou « jour J ». Hors de ce jour, la rencontre reste en pré-compétition.
+  - **Précision (rév. 2026-09-02)** : le garde-fou « jour J » couvre **aussi la
+    phase ③ compétition**. Les deux phases **② préparation** et **③ compétition**
+    se déroulent le jour J : l'admin ne peut les activer que **le jour de la
+    rencontre**. Hors jour J, la rencontre ne peut être **ni en préparation ni en
+    compétition**. En conséquence, **reculer depuis la ③ compétition** ramène en
+    **② préparation le jour J**, mais **hors jour J** — la préparation étant
+    elle-même bornée au jour J — ramène directement en **① pré-compétition**.
   - **Précision (rév. 2026-08-29)** : en phase ④ **clôture**, **seul l'admin**
     peut saisir/corriger les résultats et temps ; coachs et juges n'y écrivent
     plus (leurs droits étaient bornés à la phase ③ compétition, R7/R9). Chaque

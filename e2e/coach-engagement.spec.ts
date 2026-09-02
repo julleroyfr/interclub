@@ -240,9 +240,12 @@ test.describe('Cahier 13 — Espace coach : engagement', () => {
     ).toBeVisible()
   })
 
-  test('CT-06 — Garde-fou date : préparation jour J seulement (spec #1 R5)', async ({
+  test('CT-06 — Garde-fou date : préparation ET compétition jour J (spec #1 R5)', async ({
     page,
   }) => {
+    const phaseEnBase = () =>
+      execSql(`select phase from interclub.rencontre where id='${RENCONTRE_PILOTE}';`)
+
     poserPhase('pre_competition')
     poserDate('2026-09-19') // ≠ aujourd'hui
 
@@ -263,11 +266,24 @@ test.describe('Cahier 13 — Espace coach : engagement', () => {
     // d'entrée en préparation disparaît. On attend cette transition avant de lire.
     await expect(boutonPrepa).toHaveCount(0)
     await expect(page.getByRole('button', { name: /Compétition →/ })).toBeVisible()
-    expect(
-      execSql(
-        `select phase from interclub.rencontre where id='${RENCONTRE_PILOTE}';`,
-      ),
-    ).toBe('preparation')
+    expect(phaseEnBase()).toBe('preparation')
+
+    // Compétition = jour J aussi (R5, rév. 2026-09-02) : en préparation HORS jour
+    // J, « Compétition → » est désactivé.
+    poserPhase('preparation')
+    poserDate('2026-09-19')
+    await page.reload()
+    await expect(page.getByRole('button', { name: /Compétition →/ })).toBeDisabled()
+
+    // Retour arrière depuis la compétition HORS jour J → pré-compétition (saute la
+    // préparation jour-J) : le bouton de retour cible « Pré-compétition ».
+    poserPhase('competition')
+    await page.reload()
+    const retour = page.getByRole('button', { name: /← Pré-compétition/ })
+    await expect(retour).toBeVisible()
+    await retour.click()
+    await expect(page.getByRole('button', { name: /← Pré-compétition/ })).toHaveCount(0)
+    expect(phaseEnBase()).toBe('pre_competition')
   })
   test.fixme('CT-07 — Ouverture session QR coach temp en préparation (spec #2 R12)', async () => {})
   test.fixme('CT-08 — Coach temporaire édite en préparation (R16 ; spec #1 R6, R27)', async () => {})

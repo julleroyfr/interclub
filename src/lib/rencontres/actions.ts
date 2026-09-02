@@ -3,8 +3,9 @@
 import { revalidatePath } from 'next/cache'
 
 import {
+  estPhaseJourJ,
   normaliserSaisieRencontre,
-  peutEntrerEnPreparation,
+  peutEntrerEnPhase,
   PHASES,
   SaisieRencontreInvalideError,
   type Phase,
@@ -134,19 +135,20 @@ export async function changerPhaseRencontre(
 
   const supabase = await createClient()
 
-  // Garde-fou « jour J » (spec #1 R5, spec #4 R6) : l'entrée en préparation n'est
-  // permise que le jour de la rencontre. La date fait autorité en base.
-  if (phase === 'preparation') {
+  // Garde-fou « jour J » (spec #1 R5, rév. 2026-09-02) : l'entrée dans une phase
+  // jour-J (préparation OU compétition) n'est permise que le jour de la
+  // rencontre. La date fait autorité en base.
+  if (estPhaseJourJ(phase as Phase)) {
     const { data: renc } = await supabase
       .from('rencontre')
       .select('date_rencontre')
       .eq('id', id)
       .maybeSingle()
     if (!renc) return { erreur: 'Rencontre introuvable.' }
-    if (!peutEntrerEnPreparation(renc.date_rencontre as string, aujourdhuiISO())) {
+    if (!peutEntrerEnPhase(phase as Phase, renc.date_rencontre as string, aujourdhuiISO())) {
+      const quoi = phase === 'preparation' ? 'La préparation' : 'La compétition'
       return {
-        erreur:
-          'La préparation ne peut être activée que le jour de la rencontre (R5).',
+        erreur: `${quoi} ne peut être activée que le jour de la rencontre (R5).`,
       }
     }
   }

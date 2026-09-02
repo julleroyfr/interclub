@@ -149,23 +149,30 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
   - `[manuel]` vérifier à l'œil : le badge « Prêté » est bien rendu en **violet**
     (couleur, R13).
 
-### CT-06 `[auto]` — Garde-fou date : préparation activable le jour J seulement   (couvre : spec #1 R5 ; cas limite)
+### CT-06 `[auto]` — Garde-fou date : préparation ET compétition jour J   (couvre : spec #1 R5 rév. 2026-09-02 ; cas limite)
 
 - **Rôle / compte** : `admin@test.local`.
 - **Pré-condition** : phase `pre_competition` ; **date ≠ aujourd'hui**
   (`date_rencontre = '2026-09-19'`).
 - **Étapes** :
   1. Sur `/admin/rencontres` (ou le tableau de bord), repérer la rencontre.
-  2. Observer le bouton **« Préparation jour J → »**.
-  3. Passer la date à aujourd'hui (`date_rencontre = current_date`), recharger.
-  4. Cliquer **« Préparation jour J → »**.
+  2. Observer le bouton **« Préparation jour J → »** (hors jour J).
+  3. Passer la date à aujourd'hui (`date_rencontre = current_date`), recharger,
+     cliquer **« Préparation jour J → »**.
+  4. Repasser la date à `'2026-09-19'` (hors jour J), recharger, observer
+     **« Compétition → »**.
+  5. Basculer en `competition` (SQL), toujours hors jour J, recharger, observer le
+     bouton de **retour arrière**.
 - **Résultat attendu** :
-  - Étape 2 : le bouton est **désactivé**, avec l'indice « … le jour de la
-    rencontre (R5) ».
-  - Étape 4 : le passage en **préparation** est **accepté**.
-- **RLS / sécurité** : un POST direct de l'action `changerPhaseRencontre` vers
-  `preparation` **hors jour J** est **refusé** côté serveur (message R5), même sans
-  passer par le bouton.
+  - Étape 2 : bouton **désactivé**, indice « … le jour de la rencontre (R5) ».
+  - Étape 3 : passage en **préparation accepté**.
+  - Étape 4 : **« Compétition → » désactivé** hors jour J (la compétition est aussi
+    jour J).
+  - Étape 5 : le bouton de retour cible **« ← Pré-compétition »** (et non
+    « préparation ») ; un clic ramène la rencontre en **pré-compétition** (hors jour
+    J, la préparation jour-J est sautée).
+- **RLS / sécurité** : un POST direct de `changerPhaseRencontre` vers `preparation`
+  **ou** `competition` **hors jour J** est **refusé** côté serveur (message R5).
 
 ### CT-07 `[auto]` — Ouverture de session QR coach temporaire en préparation   (couvre : spec #2 R12, migration 202609011500 ; nominal)
 

@@ -8,8 +8,8 @@ import {
   CATEGORIES,
   PHASES,
   labelSaison,
-  peutEntrerEnPreparation,
-  phasePrecedente,
+  peutEntrerEnPhase,
+  phasePrecedenteEffective,
   phaseSuivante,
   type Phase,
 } from '@/domaine/rencontre'
@@ -102,14 +102,17 @@ function LigneRencontre({
   const idCat = useId()
 
   const optionsClub = clubs.map((c) => ({ value: c.id, label: c.nom }))
-  const precedente = phasePrecedente(rencontre.phase)
+  const aujourdhui = aujourdhuiISO()
+  // Garde-fou jour J (R5) reflété dans l'IHM : préparation ET compétition ne
+  // s'activent que le jour de la rencontre ; reculer depuis la compétition hors
+  // jour J ramène en pré-compétition (l'action reste la garde autoritaire).
+  const precedente = phasePrecedenteEffective(rencontre.phase, rencontre.dateRencontre, aujourdhui)
   const suivante = phaseSuivante(rencontre.phase)
   const aDependances = rencontre.nbEquipes > 0 || rencontre.nbEpreuves > 0
-  // Garde-fou jour J (R5) reflété dans l'IHM : la préparation ne s'active que le
-  // jour de la rencontre (l'action reste la garde autoritaire).
-  const preparationHorsJourJ =
-    suivante === 'preparation' &&
-    !peutEntrerEnPreparation(rencontre.dateRencontre, aujourdhuiISO())
+  const suivanteBloquee =
+    suivante !== null && !peutEntrerEnPhase(suivante, rencontre.dateRencontre, aujourdhui)
+  const precedenteBloquee =
+    precedente !== null && !peutEntrerEnPhase(precedente, rencontre.dateRencontre, aujourdhui)
 
   return (
     <div className="rounded-2xl border border-bordure bg-black/20 p-4">
@@ -175,7 +178,16 @@ function LigneRencontre({
               <form action={actionPhase}>
                 <input type="hidden" name="id" value={rencontre.id} />
                 <input type="hidden" name="phase" value={precedente} />
-                <Bouton type="submit" variante="fantome" disabled={phaseEnCours}>
+                <Bouton
+                  type="submit"
+                  variante="fantome"
+                  disabled={phaseEnCours || precedenteBloquee}
+                  title={
+                    precedenteBloquee
+                      ? 'Activable seulement le jour de la rencontre (R5).'
+                      : undefined
+                  }
+                >
                   ← {labelPhase(precedente)}
                 </Bouton>
               </form>
@@ -187,9 +199,9 @@ function LigneRencontre({
                   <input type="hidden" name="phase" value={suivante} />
                   <Bouton
                     type="submit"
-                    disabled={phaseEnCours || preparationHorsJourJ}
+                    disabled={phaseEnCours || suivanteBloquee}
                     title={
-                      preparationHorsJourJ
+                      suivanteBloquee
                         ? 'Activable seulement le jour de la rencontre (R5).'
                         : undefined
                     }
@@ -197,9 +209,9 @@ function LigneRencontre({
                     {labelPhase(suivante)} →
                   </Bouton>
                 </form>
-                {preparationHorsJourJ && (
+                {suivanteBloquee && (
                   <span className="basis-full text-xs text-texte-doux">
-                    La préparation ne s’active que le jour de la rencontre (R5).
+                    {labelPhase(suivante)} ne s’active que le jour de la rencontre (R5).
                   </span>
                 )}
               </>

@@ -126,10 +126,44 @@ export function phasePrecedente(phase: Phase): Phase | null {
 }
 
 /**
- * Garde-fou « jour J » de la phase préparation (R5, rév. 2026-09-01) : l'admin ne
- * peut faire entrer une rencontre en `preparation` que **le jour de la
- * rencontre**. `dateRencontre` et `aujourdhui` sont des dates ISO `AAAA-MM-JJ`.
+ * Phases se déroulant **le jour de la rencontre** (jour J) : ② préparation et ③
+ * compétition (R5, rév. 2026-09-02). Hors jour J, une rencontre ne peut être dans
+ * aucune de ces deux phases.
  */
-export function peutEntrerEnPreparation(dateRencontre: string, aujourdhui: string): boolean {
-  return dateRencontre === aujourdhui
+export const PHASES_JOUR_J: Phase[] = ['preparation', 'competition']
+
+/** Vrai si `phase` se déroule le jour J (préparation ou compétition, R5). */
+export function estPhaseJourJ(phase: Phase): boolean {
+  return PHASES_JOUR_J.includes(phase)
+}
+
+/**
+ * Garde-fou « jour J » (R5, rév. 2026-09-02) : l'admin ne peut faire entrer une
+ * rencontre dans une **phase jour-J** (② préparation, ③ compétition) que **le jour
+ * de la rencontre**. Les autres phases ne sont pas bornées par la date.
+ * `dateRencontre` et `aujourdhui` sont des dates ISO `AAAA-MM-JJ`.
+ */
+export function peutEntrerEnPhase(
+  cible: Phase,
+  dateRencontre: string,
+  aujourdhui: string,
+): boolean {
+  return estPhaseJourJ(cible) ? dateRencontre === aujourdhui : true
+}
+
+/**
+ * Cible **effective** d'un retour arrière depuis `phase`, compte tenu de la date
+ * (R5, rév. 2026-09-02). Depuis la ③ compétition **hors jour J**, la ② préparation
+ * étant elle-même bornée au jour J, on recule directement en ① pré-compétition.
+ * Sinon, retour séquentiel classique.
+ */
+export function phasePrecedenteEffective(
+  phase: Phase,
+  dateRencontre: string,
+  aujourdhui: string,
+): Phase | null {
+  if (phase === 'competition' && dateRencontre !== aujourdhui) {
+    return 'pre_competition'
+  }
+  return phasePrecedente(phase)
 }

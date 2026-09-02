@@ -6,10 +6,12 @@ import {
   SaisieRencontreInvalideError,
   anneeSaison,
   bornesSaison,
+  estPhaseJourJ,
   labelSaison,
   normaliserSaisieRencontre,
-  peutEntrerEnPreparation,
+  peutEntrerEnPhase,
   phasePrecedente,
+  phasePrecedenteEffective,
   phaseSuivante,
 } from './rencontre'
 
@@ -158,16 +160,54 @@ describe('Cycle de vie en cinq phases (R5, rév. 2026-09-01)', () => {
   })
 })
 
-describe('Garde-fou « jour J » de la phase préparation (R5, rév. 2026-09-01)', () => {
-  it('autorise l’entrée en préparation le jour de la rencontre', () => {
-    expect(peutEntrerEnPreparation('2026-10-12', '2026-10-12')).toBe(true)
+describe('Garde-fou « jour J » — préparation ET compétition (R5, rév. 2026-09-02)', () => {
+  it('marque préparation et compétition comme phases jour J', () => {
+    expect(estPhaseJourJ('preparation')).toBe(true)
+    expect(estPhaseJourJ('competition')).toBe(true)
+    expect(estPhaseJourJ('pre_competition')).toBe(false)
+    expect(estPhaseJourJ('cloture')).toBe(false)
+    expect(estPhaseJourJ('resultats_publics')).toBe(false)
   })
 
-  it('refuse l’entrée en préparation la veille', () => {
-    expect(peutEntrerEnPreparation('2026-10-12', '2026-10-11')).toBe(false)
+  it('autorise l’entrée en préparation/compétition le jour de la rencontre', () => {
+    expect(peutEntrerEnPhase('preparation', '2026-10-12', '2026-10-12')).toBe(true)
+    expect(peutEntrerEnPhase('competition', '2026-10-12', '2026-10-12')).toBe(true)
   })
 
-  it('refuse l’entrée en préparation le lendemain', () => {
-    expect(peutEntrerEnPreparation('2026-10-12', '2026-10-13')).toBe(false)
+  it('refuse l’entrée en préparation/compétition hors du jour J', () => {
+    expect(peutEntrerEnPhase('preparation', '2026-10-12', '2026-10-11')).toBe(false)
+    expect(peutEntrerEnPhase('competition', '2026-10-12', '2026-10-13')).toBe(false)
+  })
+
+  it('n’impose pas de date pour les phases hors jour J', () => {
+    expect(peutEntrerEnPhase('pre_competition', '2026-10-12', '2026-01-01')).toBe(true)
+    expect(peutEntrerEnPhase('cloture', '2026-10-12', '2026-12-31')).toBe(true)
+    expect(peutEntrerEnPhase('resultats_publics', '2026-10-12', '2026-12-31')).toBe(true)
+  })
+})
+
+describe('Retour arrière effectif depuis la compétition (R5, rév. 2026-09-02)', () => {
+  it('le jour J : compétition → préparation', () => {
+    expect(phasePrecedenteEffective('competition', '2026-10-12', '2026-10-12')).toBe(
+      'preparation',
+    )
+  })
+
+  it('hors jour J : compétition → pré-compétition (saute la préparation jour-J)', () => {
+    expect(phasePrecedenteEffective('competition', '2026-10-12', '2026-10-13')).toBe(
+      'pre_competition',
+    )
+  })
+
+  it('préparation → pré-compétition (quelle que soit la date)', () => {
+    expect(phasePrecedenteEffective('preparation', '2026-10-12', '2026-10-13')).toBe(
+      'pre_competition',
+    )
+  })
+
+  it('clôture → compétition (retour normal ; l’entrée reste gardée par la date)', () => {
+    expect(phasePrecedenteEffective('cloture', '2026-10-12', '2026-10-13')).toBe(
+      'competition',
+    )
   })
 })
