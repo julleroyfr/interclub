@@ -1,6 +1,14 @@
 import { execFileSync } from 'node:child_process'
 
-import { CLUB_A, CLUB_B, EQUIPES, GRIMPEURS, RENCONTRE_PILOTE, type Phase } from './donnees'
+import {
+  CLUB_A,
+  CLUB_B,
+  EQUIPES,
+  GRIMPEURS,
+  JETON,
+  RENCONTRE_PILOTE,
+  type Phase,
+} from './donnees'
 
 // Exécution SQL contre la stack Supabase LOCALE via `docker exec … psql`.
 // Sert à poser les PRÉ-CONDITIONS des cas de test (bascule de phase, de date,
@@ -27,9 +35,11 @@ export function poserPhase(phase: Phase, rencontreId = RENCONTRE_PILOTE): void {
 }
 
 /**
- * Nettoie les sessions QR de la rencontre pilote (idempotence des tests de scan) :
- * supprime les utilisateurs anonymes liés puis leurs sessions (mêmes gestes que la
- * purge 99). À appeler avant un test qui ouvre une session par scan.
+ * Prépare l'état QR de la rencontre pilote pour un test de scan (idempotence) :
+ * supprime les utilisateurs anonymes liés + leurs sessions, **retire les jetons
+ * régénérés** et **réactive les jetons du seed** (une régénération manuelle via
+ * l'espace coach révoque le jeton et en crée un nouveau). À appeler avant un test
+ * qui ouvre une session par scan.
  */
 export function nettoyerSessionsQr(rencontreId = RENCONTRE_PILOTE): void {
   execSql(
@@ -39,7 +49,13 @@ export function nettoyerSessionsQr(rencontreId = RENCONTRE_PILOTE): void {
          join interclub.jeton_qr j on j.id = s.jeton_qr_id
          where j.rencontre_id = '${rencontreId}');
      delete from interclub.session_qr
-       where jeton_qr_id in (select id from interclub.jeton_qr where rencontre_id = '${rencontreId}');`,
+       where jeton_qr_id in (select id from interclub.jeton_qr where rencontre_id = '${rencontreId}');
+     -- Restaurer l'état seed des jetons : retirer les régénérés, réactiver le seed.
+     delete from interclub.jeton_qr
+       where rencontre_id = '${rencontreId}'
+         and valeur not in ('${JETON.coachTemp}', '${JETON.juge}');
+     update interclub.jeton_qr set actif = true
+       where valeur in ('${JETON.coachTemp}', '${JETON.juge}');`,
   )
 }
 

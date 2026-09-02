@@ -324,7 +324,9 @@ test.describe('Cahier 13 — Espace coach : engagement', () => {
     browser,
   }) => {
     nettoyerSessionsQr()
+    // État réel « jour J » : préparation n'existe que le jour de la rencontre (R5).
     poserPhase('preparation')
+    poserDate('today')
 
     // Navigateur anonyme (contexte vierge) : scan du QR coach temporaire.
     await page.goto(`/scan?jeton=${JETON.coachTemp}`)
@@ -348,6 +350,7 @@ test.describe('Cahier 13 — Espace coach : engagement', () => {
   }) => {
     nettoyerSessionsQr()
     poserPhase('preparation')
+    poserDate('today') // jour J (R5)
     await commeCoachTemporaire(page)
 
     // Mêmes droits que le permanent le jour J : créer une équipe, composer,
@@ -367,6 +370,7 @@ test.describe('Cahier 13 — Espace coach : engagement', () => {
   }) => {
     nettoyerSessionsQr()
     poserPhase('preparation')
+    poserDate('today') // jour J (R5)
     // 2ᵉ rencontre Club A (même saison) — hors du périmètre de la session temp.
     const R2 = '33333333-3333-3333-3333-333333333334'
     execSql(
@@ -377,9 +381,11 @@ test.describe('Cahier 13 — Espace coach : engagement', () => {
       // L'autre rencontre : 404 (session bornée à celle du jeton).
       const resp2 = await page.goto(`/coach/rencontres/${R2}`)
       expect(resp2?.status()).toBe(404)
-      // Sur /coach, seule sa rencontre est listée.
+      // Sur /coach, seule sa rencontre est listée (lien vers la rencontre du jeton).
       await page.goto('/coach')
-      await expect(page.getByRole('link', { name: /19 septembre 2026/ })).toBeVisible()
+      await expect(
+        page.locator(`a[href="/coach/rencontres/${RENCONTRE_PILOTE}"]`),
+      ).toBeVisible()
       expect(await page.locator('a[href^="/coach/rencontres/"]').count()).toBe(1)
     } finally {
       execSql(`delete from interclub.rencontre where id='${R2}';`)
@@ -393,6 +399,7 @@ test.describe('Cahier 13 — Espace coach : engagement', () => {
   }) => {
     nettoyerSessionsQr()
     poserPhase('competition')
+    poserDate('today') // compétition = jour J (R5, rév. 2026-09-02)
 
     // Permanent : écran en lecture seule, aucun formulaire d'édition (R17).
     await commeCoach(page)
