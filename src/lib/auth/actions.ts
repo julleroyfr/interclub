@@ -25,7 +25,7 @@ export async function seConnecter(
   }
 
   const supabase = await createClient()
-  const { error } = await supabase.auth.signInWithPassword({
+  const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password: motDePasse,
   })
@@ -34,9 +34,20 @@ export async function seConnecter(
     return { erreur: 'Identifiants invalides.' }
   }
 
+  // Redirection vers l'espace du rôle (spec #2 R1) : on lit le mapping avec le
+  // client déjà authentifié (session en mémoire). Sans rôle → accueil générique.
+  const { data: mapping } = await supabase
+    .from('compte')
+    .select('role')
+    .eq('utilisateur_id', data.user.id)
+    .maybeSingle()
+
+  const destination =
+    mapping?.role === 'admin' ? '/admin' : mapping?.role === 'coach' ? '/coach' : '/'
+
   // La session (cookies) a changé : rafraîchir tout l'arbre puis rediriger.
   revalidatePath('/', 'layout')
-  redirect('/')
+  redirect(destination)
 }
 
 /** Déconnexion : ferme la session Supabase et renvoie vers la connexion. */

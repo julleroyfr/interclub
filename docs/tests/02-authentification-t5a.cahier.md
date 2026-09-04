@@ -58,8 +58,8 @@ affichage du rôle, déconnexion) restent à dérouler à la main dans l'app.
 - **Étapes** :
   1. Aller sur `/connexion`.
   2. Saisir e-mail + mot de passe de l'admin, valider.
-- **Résultat attendu** : redirection vers `/` ; l'accueil affiche l'e-mail et
-  « Rôle : admin ».
+- **Résultat attendu** : redirection **directe vers l'espace du rôle** →
+  `/admin` (tableau de bord admin).
 - **RLS / sécurité** : aucune donnée d'un autre compte n'est exposée à l'écran.
 
 ### CT-02 — Connexion coach   (couvre : R1, R16 ; scénario nominal)
@@ -68,7 +68,7 @@ affichage du rôle, déconnexion) restent à dérouler à la main dans l'app.
 - **Pré-condition** : déconnecté.
 - **Étapes** :
   1. Se connecter avec les identifiants du coach.
-- **Résultat attendu** : accueil affiche « Rôle : coach ».
+- **Résultat attendu** : redirection **directe vers l'espace coach** → `/coach`.
 
 ### CT-03 — Identifiants invalides   (couvre : R1 ; cas erreur)
 
@@ -83,8 +83,9 @@ affichage du rôle, déconnexion) restent à dérouler à la main dans l'app.
 - **Rôle / compte** : `sansmapping@test.local`
 - **Étapes** :
   1. Se connecter.
-- **Résultat attendu** : accueil affiche « Rôle : aucun rôle attribué ». Le
-  compte est authentifié mais **sans droit applicatif**.
+- **Résultat attendu** : sans rôle, la redirection reste sur l'**accueil `/`**
+  qui affiche « Rôle : aucun rôle attribué ». Le compte est authentifié mais
+  **sans droit applicatif**.
 
 ### CT-05 — RLS : un coach ne lit que sa ligne `compte`   (couvre : R4 ; négatif)
 
