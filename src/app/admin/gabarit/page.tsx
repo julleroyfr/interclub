@@ -25,7 +25,7 @@ export default async function PageGabarit() {
   ])
 
   return (
-    <Coquille liens={liens}>
+    <Coquille liens={liens} largeur="large">
       <div className="flex flex-col gap-6">
         <EnTetePage
           titre="Gabarit de rencontre"

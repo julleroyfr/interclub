@@ -46,7 +46,7 @@ export default async function PageRencontres({
   ])
 
   return (
-    <Coquille liens={liens}>
+    <Coquille liens={liens} largeur="large">
       <div className="flex flex-col gap-6">
         <EnTetePage
           titre="Rencontres"

@@ -31,6 +31,8 @@ export function PanneauEquipes({
   estEnfant: boolean
   clubs: EngagementClub[]
 }) {
+  // « Engagé » = club ayant au moins une équipe (R41c).
+  const clubsEngages = clubs.filter((c) => c.engagement.equipes.length > 0)
   return (
     <section className="flex flex-col gap-4">
       <div>
@@ -44,10 +46,13 @@ export function PanneauEquipes({
       {clubs.map((c) => {
         const nbEquipes = c.engagement.equipes.length
         const nbGrimpeurs = c.engagement.equipes.reduce((n, eq) => n + eq.membres.length, 0)
+        // Repliés par défaut (R41c) ; ouvert d'office si ce club est le seul
+        // engagé (une seule vue à lire, autant l'ouvrir).
+        const ouvertParDefaut = clubsEngages.length === 1 && nbEquipes > 0
         return (
           <Carte key={c.clubId} className="p-0">
             {/* Repliable par club : une dizaine d'équipes reste scannable. */}
-            <details open className="group" data-club={c.clubNom}>
+            <details open={ouvertParDefaut} className="group" data-club={c.clubNom}>
               <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-2xl p-4 hover:bg-surface-forte">
                 <h3 className="text-sm font-bold text-texte-fort">{c.clubNom}</h3>
                 <span className="flex items-center gap-2 text-xs text-texte-attenue">

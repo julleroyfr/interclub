@@ -4,7 +4,7 @@ import { useActionState, useId, useState } from 'react'
 
 import { Bouton, Carte, Etiquette, TitreSection } from '@/composants'
 import { NIVEAUX_MOULINETTE, NIVEAUX_TETE, champsPointsVoie } from '@/domaine/gabarit'
-import { CATEGORIES, PHASES, type Categorie } from '@/domaine/rencontre'
+import { PHASES, type Categorie } from '@/domaine/rencontre'
 import {
   ajouterBlocRencontre,
   ajouterEpreuveRencontre,
@@ -32,8 +32,6 @@ const labelTypeVoie: Record<string, string> = {
   tete: 'Tête',
 }
 
-const labelCategorie = (v: Categorie) =>
-  CATEGORIES.find((c) => c.value === v)?.labelCourt ?? v
 const labelPhase = (v: string) => PHASES.find((p) => p.value === v)?.label ?? v
 
 const champTexte =
@@ -41,18 +39,6 @@ const champTexte =
 const champSelect =
   'rounded-lg border border-bordure bg-black/30 px-2 py-1.5 text-sm text-texte-fort [color-scheme:dark]'
 const champNombre = `w-16 ${champTexte}`
-
-/** Date ISO (AAAA-MM-JJ) affichée en français, sans dérive de fuseau. */
-function formaterDate(iso: string): string {
-  const [a, m, j] = iso.split('-')
-  if (!a || !m || !j) return iso
-  return new Date(Date.UTC(Number(a), Number(m) - 1, Number(j))).toLocaleDateString('fr-FR', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-    timeZone: 'UTC',
-  })
-}
 
 /** Petit champ de points (entier ≥ 0) avec libellé compact. */
 function ChampPoints({
@@ -376,17 +362,7 @@ export function PanneauStructure({ structure }: { structure: StructureRencontre 
 
   return (
     <Carte className="flex flex-col gap-5 p-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <TitreSection>{formaterDate(structure.dateRencontre)}</TitreSection>
-          <p className="mt-1 text-xs text-texte-doux">
-            {labelCategorie(structure.categorie)} · {structure.clubPorteurNom}
-          </p>
-        </div>
-        <Etiquette variante={editable ? 'accent' : 'neutre'}>
-          {labelPhase(structure.phase)}
-        </Etiquette>
-      </div>
+      <TitreSection>Structure</TitreSection>
 
       {!editable && <NoteLectureSeule phase={structure.phase} />}
 

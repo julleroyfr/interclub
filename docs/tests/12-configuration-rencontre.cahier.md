@@ -1,9 +1,11 @@
-# Cahier de test : Configuration de la structure d'une rencontre (spec #3, R40–R45)
+# Cahier de test : Tableau de bord d'une rencontre (spec #3, R40–R45)
 
-> Couvre l'écran **`/admin/rencontres/[id]`** : consultation et modification de la
-> structure d'une rencontre (voies de difficulté, blocs, voies de vitesse),
-> organisée en **onglets**, avec édition réservée à la phase **pré-compétition**.
-> Complète le cahier [11-gabarit-rencontre.cahier.md](11-gabarit-rencontre.cahier.md)
+> Couvre l'écran **`/admin/rencontres/[id]`**, le **tableau de bord** d'une
+> rencontre : en-tête à **titre dynamique**, **pilotage de phase** (R41a), accès
+> aux **jetons QR** (R41b), **structure** en onglets (R42–R45, édition réservée à
+> la pré-compétition) et **équipes** regroupées par club en blocs repliables
+> (R41c). Complète le cahier
+> [11-gabarit-rencontre.cahier.md](11-gabarit-rencontre.cahier.md)
 > (CT-09/CT-10) en détaillant l'IHM dédiée.
 > Règles : [docs/conventions/06-cahier-de-test.md](../conventions/06-cahier-de-test.md) ;
 > IHM : [08-ihm-responsive.md](../conventions/08-ihm-responsive.md).
@@ -18,9 +20,16 @@
   `src/lib/rencontres/structure-actions.ts` (`ajouterEpreuveRencontre`,
   `ajouterVoieDifficulteRencontre`, `ajouterBlocRencontre`,
   `ajouterVoieVitesseRencontre` — garde admin + phase pré-compétition).
-- **IHM** : `src/app/admin/rencontres/[id]/page.tsx` (garde admin, chargement) ;
-  `panneau-structure.tsx` (onglets, formulaires, lecture seule, état vide) ;
-  lien **« Configurer »** ajouté dans `liste-rencontres.tsx`.
+- **IHM** : `src/app/admin/rencontres/[id]/page.tsx` (garde admin, chargement,
+  en-tête à titre dynamique, mise en page tableau de bord — cf. maquette
+  `docs/maquettes/rencontre-dashboard.html`) ; `panneau-pilotage.tsx` (phase R41a
+  et lien QR R41b) ; `panneau-structure.tsx` (onglets, formulaires, lecture seule,
+  état vide) ; `panneau-equipes.tsx` (blocs par club repliables R41c) ; action
+  d'ouverture du tableau de bord dans `liste-rencontres.tsx`.
+- **Phase (réutilisé)** : `changerPhaseRencontre` (`src/lib/rencontres/actions.ts`)
+  et helpers domaine `phaseSuivante` / `phasePrecedenteEffective` /
+  `peutEntrerEnPhase` (`src/domaine/rencontre.ts`, garde jour J R5) — déjà
+  couverts par Vitest.
 - **Migration** : aucune nouvelle (réutilise les tables `epreuve`,
   `voie_difficulte`, `bloc`, `bloc_palier`, `voie_vitesse` du gabarit —
   `202607291000_gabarit_et_voies_epreuve.sql`, **déjà appliquée**).
@@ -38,14 +47,14 @@
 
 ## Accès
 
-Connecté **admin** : `/admin/rencontres` → sur une ligne de rencontre, bouton
-**« Configurer »** → `/admin/rencontres/<id>`.
+Connecté **admin** : `/admin/rencontres` → sur une ligne de rencontre, l'action
+d'ouverture du **tableau de bord** → `/admin/rencontres/<id>`.
 
 ## Cas de test
 
 ### CT-01 — Accès réservé à l'admin (couvre R40, R12)
 
-- **admin** : depuis `/admin/rencontres`, cliquer **« Configurer »** sur une
+- **admin** : depuis `/admin/rencontres`, ouvrir le **tableau de bord** d'une
   rencontre → l'écran `/admin/rencontres/<id>` s'affiche. ✅
 - **coach** (`coach@test.local`) : ouvrir directement l'URL
   `/admin/rencontres/<id>` → **404** (écran masqué). ✅
@@ -55,10 +64,12 @@ Connecté **admin** : `/admin/rencontres` → sur une ligne de rencontre, bouton
 ### CT-02 — En-tête, onglets et compteurs (couvre R41, R42)
 
 - **Rôle** : admin. **Pré-condition** : rencontre **ado** au format seed.
-- **Étapes** : ouvrir l'écran de configuration de la rencontre.
+- **Étapes** : ouvrir le tableau de bord de la rencontre.
 - **Résultat attendu** :
-  - En-tête : **date** (format long), **catégorie** (« Ado »), **club porteur**,
-    et **badge de phase** « Pré-compétition ».
+  - **Titre dynamique** : « **Rencontre &lt;club porteur&gt; du &lt;date&gt;** »
+    (date en format long).
+  - En-tête : **catégorie** (« Ado »), **club porteur**, **badge de phase**
+    « Pré-compétition » et **compteurs** (équipes, épreuves).
   - Trois onglets : **Voies de difficulté · 10**, **Blocs · 2**,
     **Vitesse · 2** (compteurs conformes au contenu copié).
   - Un seul onglet visible à la fois ; cliquer un onglet change le contenu.
@@ -166,6 +177,44 @@ Connecté **admin** : `/admin/rencontres` → sur une ligne de rencontre, bouton
   - Listes de voies/blocs empilées sans débordement horizontal ; focus clavier
     visible ; messages d'erreur/succès reliés (lecteur d'écran).
 
+### CT-13 — Pilotage de phase depuis le tableau de bord (couvre R41a, R17, R5)
+
+- **Rôle** : admin. **Pré-condition** : rencontre **ado**, phase
+  **pré-compétition**, **datée du jour même**.
+- **Étapes / Résultat attendu** :
+  1. Le bloc **Phase** affiche le badge courant, le **fil des 5 phases** et les
+     boutons **← / →**. Avancer → « Préparation » : le badge et le fil se
+     mettent à jour (état à jour, R41a).
+  2. Reculer → « Pré-compétition ». On **ne saute pas** de phase ; on ne recule
+     pas avant la première ni n'avance après la dernière (boutons absents/inactifs
+     aux extrémités).
+  3. **Garde jour J (R5)** : sur une rencontre **non datée du jour**, le passage
+     en **préparation** est **inactif** (info-bulle « le jour de la rencontre »).
+     Cohérent avec la même commande sur la **liste** `/admin/rencontres` (R41a :
+     seconde surface de la même action).
+  4. Contournement : invoquer `changerPhaseRencontre` vers une phase **non
+     adjacente** ou en préparation hors jour J → **refus** (garde autoritaire).
+
+### CT-14 — Lien vers les jetons QR de la rencontre (couvre R41b)
+
+- **Rôle** : admin. **Étapes** : depuis le tableau de bord, activer le lien
+  **« Jetons QR »**.
+- **Résultat attendu** : redirection vers `/admin/jetons?rencontre=<id>`, la
+  rencontre étant **déjà sélectionnée** (sections coach temporaire / juge
+  affichées, spec #2). Retour au tableau de bord possible.
+
+### CT-15 — Équipes regroupées par club, blocs repliés (couvre R41c)
+
+- **Rôle** : admin. **Pré-condition** : une rencontre à **plusieurs clubs**
+  engagés et une rencontre à **un seul club** engagé.
+- **Résultat attendu** :
+  - Plusieurs clubs : chaque club forme un **bloc repliable** avec ses
+    **compteurs** (équipes, grimpeurs), **replié par défaut** ; on déplie/replie
+    au clic.
+  - Un seul club : son bloc est **ouvert d'office**.
+  - Déplier un bloc montre les équipes du club (composition, effectif n/8, tag
+    « Prêté » le cas échéant).
+
 ## Registre d'exécution
 
 | Cas | Environnement | Date | Testeur | Verdict | Notes |
@@ -182,6 +231,9 @@ Connecté **admin** : `/admin/rencontres` → sur une ligne de rencontre, bouton
 | CT-10 | | | | ⬜ | |
 | CT-11 | | | | ⬜ | |
 | CT-12 | | | | ⬜ | |
+| CT-13 | | | | ⬜ | phase (R41a) |
+| CT-14 | | | | ⬜ | lien QR (R41b) |
+| CT-15 | | | | ⬜ | blocs équipes (R41c) |
 
 > Le domaine (`validerNiveauVoie` R37, `validerPoints` R38, `champsPointsVoie`
 > R38/R43) est couvert par Vitest (`npm run test`, `src/domaine/gabarit.test.ts`).

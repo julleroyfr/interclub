@@ -254,22 +254,45 @@ saisie, les flux CRUD, et les règles de suppression (dépendances / cascade).
   Les **points de vitesse** (barème par rang) sont **hors du périmètre de cette
   itération** et seront traités séparément.
 
-### Écran Configuration d'une rencontre (`/admin/rencontres/[id]`)
+### Écran Tableau de bord d'une rencontre (`/admin/rencontres/[id]`)
 
-> Cet écran met en œuvre côté IHM la modification de structure définie en **R36**.
-> Maquette de référence validée : `docs/maquettes/rencontre-structure.html`
-> (disposition « onglets » + variantes lecture seule et sans format).
+> Cet écran est le **tableau de bord** d'une rencontre : il agrège son pilotage
+> (phase, jetons QR), sa **structure** (mise en œuvre de R36) et ses **équipes**
+> et **prêts**. Maquette de référence validée : `docs/maquettes/rencontre-dashboard.html`
+> (piste « pile guidée », responsive pleine largeur : colonne unique en mobile,
+> **rail de pilotage collant** + contenu 2 colonnes en bureau). La maquette
+> `docs/maquettes/rencontre-structure.html` reste la référence détaillée du bloc
+> **structure** (onglets + variantes lecture seule et sans format).
 
 - **R40.** Chaque ligne de la **liste des rencontres** (R19) offre une action
-  **« Configurer »** ouvrant l'écran `/admin/rencontres/[id]` de la rencontre.
-  L'écran est **réservé à l'admin** (R2) ; un autre rôle est refusé.
-- **R41.** L'écran présente un **en-tête récapitulatif** — date, catégorie, club
-  porteur et **phase courante** de la rencontre — puis la structure organisée en
-  **trois onglets** : **Voies de difficulté**, **Blocs**, **Vitesse**. Chaque
-  onglet indique le **nombre d'éléments** qu'il contient et n'affiche qu'un seul
-  type à la fois.
-- **R42.** Chaque onglet **liste les éléments existants** de la rencontre, dans
-  leur ordre (`ordre`, R38/R39) :
+  ouvrant le **tableau de bord** de la rencontre à `/admin/rencontres/[id]`.
+  L'écran est **réservé à l'admin** (R2) ; un autre rôle est refusé (404). La RLS
+  reste la frontière.
+- **R41.** L'écran est le **tableau de bord** de la rencontre. Son **titre**
+  reprend l'identité de la rencontre — « **Rencontre &lt;club porteur&gt; du
+  &lt;date&gt;** » — et un **en-tête récapitulatif** rappelle la **catégorie**, le
+  **club porteur**, la **phase courante** (badge d'état) et les **compteurs**
+  (équipes, épreuves). Le tableau de bord regroupe : le **pilotage de phase**
+  (R41a), l'accès aux **jetons QR** (R41b), la **structure** en onglets (R42–R45),
+  les **équipes & engagements** de tous les clubs (R41c ; règles spec #1 R17 /
+  spec #5) et les **prêts** (spec #1 R35).
+- **R41a.** Depuis le tableau de bord, l'admin peut **faire évoluer la phase** de
+  la rencontre pas à pas (avancer/reculer entre phases adjacentes), selon les
+  **mêmes règles et garde-fou jour J** que la liste (R17). C'est une **seconde
+  surface** de la même action ; la liste (R19) la conserve. L'état affiché
+  **reflète la phase à jour** après transition.
+- **R41b.** Le tableau de bord offre un **lien vers les jetons QR** de la
+  rencontre (`/admin/jetons?rencontre=[id]`) pour générer, afficher, révoquer ou
+  régénérer les jetons **coach temporaire** et **juge** (spec #2).
+- **R41c.** Les **équipes & engagements** sont regroupés **par club** en blocs
+  **repliables**, **repliés par défaut** — sauf s'il n'y a **qu'un seul club
+  engagé** (au moins une équipe), auquel cas son bloc est **ouvert d'office**.
+  Chaque en-tête de bloc affiche les **compteurs** du club (nombre d'équipes, de
+  grimpeurs).
+- **R42.** La **structure** est organisée en **trois onglets** — **Voies de
+  difficulté**, **Blocs**, **Vitesse** — chacun indiquant son **nombre
+  d'éléments** et n'affichant qu'un seul type à la fois. Chaque onglet **liste les
+  éléments existants** de la rencontre, dans leur ordre (`ordre`, R38/R39) :
   - **Voies** : niveau, type (moulinette/tête), cotation et points (voie entière,
     et prise valorisée ou zones selon la catégorie, R38).
   - **Blocs** : code et **paliers** (libellé + points, R39).

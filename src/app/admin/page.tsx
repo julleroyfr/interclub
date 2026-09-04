@@ -25,7 +25,7 @@ export default async function PageTableauDeBord() {
   const { stats, rencontres, totalRencontres, saison } = await chargerTableauDeBord(aujourdhui)
 
   return (
-    <Coquille liens={liens}>
+    <Coquille liens={liens} largeur="large">
       <div className="flex flex-col gap-6">
         <EnTetePage
           titre="Tableau de bord"

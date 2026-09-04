@@ -221,7 +221,7 @@ function LigneRencontre({
               href={`/admin/rencontres/${rencontre.id}`}
               className="inline-flex items-center rounded-xl border border-bordure px-3 py-1.5 text-sm text-texte-fort transition hover:bg-surface-forte"
             >
-              Configurer
+              Tableau de bord
             </Link>
 
             <Bouton variante="fantome" onClick={() => setEdition(true)}>

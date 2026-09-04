@@ -33,6 +33,8 @@ test.describe('Écran admin — équipes tous clubs (R10)', () => {
       page.getByRole('heading', { name: 'Équipes & engagement (tous clubs)' }),
     ).toBeVisible()
     const carteB = carteClub(page, 'Club B')
+    // Blocs repliés par défaut (spec #3 R41c) : déplier le Club B au clic.
+    await carteB.locator('summary').first().click()
     await expect(carteB.getByRole('heading', { name: 'Équipe B1' })).toBeVisible()
 
     // Créer une équipe « B2 » pour le Club B (en compétition).

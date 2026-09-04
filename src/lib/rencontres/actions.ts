@@ -159,7 +159,10 @@ export async function changerPhaseRencontre(
     .eq('id', id)
   if (error) return { erreur: messageErreur(error.code, 'ecriture') }
 
+  // Deux surfaces pour la même action (spec #3 R41a) : la liste ET le tableau de
+  // bord de la rencontre doivent refléter la nouvelle phase.
   revalidatePath('/admin/rencontres')
+  revalidatePath(`/admin/rencontres/${id}`)
   const label = PHASES.find((p) => p.value === phase)?.label ?? phase
   return { succes: `Phase : ${label}.` }
 }
