@@ -224,9 +224,10 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
   2. **Coach temporaire** (session encore active) : ouvrir la rencontre.
   3. **Admin** : corriger l'engagement (ex. retirer un grimpeur) via l'IHM/SQL.
 - **Résultat attendu** :
-  - Étapes 1 & 2 : l'écran est en **lecture seule** — **aucun formulaire**
-    (création/ajout/retrait/groupe) n'est affiché (R17) ; une note « phase sans
-    édition » est visible.
+  - Étapes 1 & 2 : la **composition est figée** — **aucun formulaire**
+    (création/ajout/retrait/groupe) n'est affiché (R17) ; une note indiquant que
+    la composition est **consultable mais non modifiable** est visible. Le badge
+    ne libelle **que la phase** (aucune mention « lecture seule »).
   - Toute écriture directe d'un coach (permanent **ou** temporaire) sur `equipe`/
     `composition` est **refusée par la RLS** (R16, spec #1 R6/R27).
   - Étape 3 : **seul l'admin** peut encore modifier l'engagement.
@@ -241,15 +242,16 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
     (fenêtre = préparation + compétition, R12). Aucune édition temp. possible avant
     le jour J.
 
-### CT-12 `[auto]` — Lecture seule : rencontre terminée (permanent)   (couvre : R17 ; cas limite)
+### CT-12 `[auto]` — Composition figée : rencontre terminée (permanent)   (couvre : R17 ; cas limite)
 
 - **Rôle / compte** : `coach@test.local`.
 - **Pré-condition** : phase `cloture` puis `resultats_publics`.
 - **Étapes** :
   1. Ouvrir la rencontre depuis `/coach`.
 - **Résultat attendu** :
-  - Badge de phase « Clôture » / « Résultats publics », écran **consultable**,
-    **aucun formulaire** (R17). Le badge reflète la phase (lecture seule).
+  - Badge « Clôture » / « Résultats publics » reflétant **uniquement la phase**
+    (aucune mention « lecture seule »), composition **consultable**, **aucun
+    formulaire** (R17).
 
 ### CT-13 `[auto]` — Périmètre inter-club interdit   (couvre : R2 ; spec #1 R16 ; RLS négative)
 
@@ -282,5 +284,5 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
 | | | | CT-09 | auto | ✅ / ❌ | bornage rencontre |
 | | | | CT-10 | auto | ✅ / ❌ | gel compétition |
 | | | | CT-11 | auto | ✅ / ❌ | gel pré-compétition |
-| | | | CT-12 | auto | ✅ / ❌ | lecture seule |
+| | | | CT-12 | auto | ✅ / ❌ | composition figée |
 | | | | CT-13 | auto | ✅ / ❌ | RLS inter-club |

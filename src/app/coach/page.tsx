@@ -109,7 +109,6 @@ function CarteRencontre({ rencontre: r }: { rencontre: RencontreCoach }) {
       </p>
       <p className="mt-1 text-xs text-texte-doux">
         {r.nbEquipesClub} équipe(s) · {r.nbGrimpeursClub} grimpeur(s)
-        {r.editable && <span className="text-secondaire"> · édition ouverte</span>}
       </p>
     </Link>
   )

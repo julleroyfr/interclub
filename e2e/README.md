@@ -30,7 +30,7 @@ npm run test:e2e              # tous les cahiers E2E
 - **CT-01 → CT-13 : tous implémentés et verts** — accueil + 404, création/
   composition, groupe de départ, double engagement + plafond, prêt persistant,
   garde-fou date (préparation + compétition), sessions QR coach temporaire
-  (ouverture, édition, périmètre, gel), lecture seule, périmètre inter-club. Plus
+  (ouverture, édition, périmètre, gel), composition figée, périmètre inter-club. Plus
   un test dédié « filtre catégorie » (R34).
 - **Résidu manuel** : CT-05, couleur violette du badge « Prêté » (`[mixte]`).
 - Voir aussi `admin-prets.spec.ts` (écran admin de prêts, cahier 14).

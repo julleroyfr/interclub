@@ -401,13 +401,17 @@ test.describe('Cahier 13 — Espace coach : engagement', () => {
     poserPhase('competition')
     poserDate('today') // compétition = jour J (R5, rév. 2026-09-02)
 
-    // Permanent : écran en lecture seule, aucun formulaire d'édition (R17).
+    // Permanent : composition figée, aucun formulaire d'édition (R17). Le badge
+    // ne libelle que la phase — aucune mention « lecture seule ».
     await commeCoach(page)
     await page.goto(URL_RENCONTRE)
-    await expect(page.getByText(/lecture seule/)).toBeVisible()
+    await expect(
+      page.getByText(/consultable mais ne peut plus être modifiée/),
+    ).toBeVisible()
+    await expect(page.getByText(/lecture seule/)).toHaveCount(0)
     await expect(page.getByLabel('Nouvelle équipe')).toHaveCount(0)
 
-    // Temporaire (fenêtre couvre la compétition) : lecture seule aussi.
+    // Temporaire (fenêtre couvre la compétition) : composition figée aussi.
     const ctxTmp = await browser.newContext()
     const pageTmp = await ctxTmp.newPage()
     await commeCoachTemporaire(pageTmp)
@@ -446,7 +450,7 @@ test.describe('Cahier 13 — Espace coach : engagement', () => {
     await expect(page.getByText(/n.est pas encore ouvert/)).toBeVisible()
     await expect(page).toHaveURL(/\/scan/)
   })
-  test('CT-12 — Lecture seule : rencontre terminée (R17)', async ({ page }) => {
+  test('CT-12 — Composition figée : rencontre terminée (R17)', async ({ page }) => {
     await commeCoach(page)
 
     for (const [phase, label] of [
@@ -456,8 +460,10 @@ test.describe('Cahier 13 — Espace coach : engagement', () => {
       poserPhase(phase)
       await page.goto(URL_RENCONTRE)
 
-      // Badge de phase en lecture seule, note R17, aucun formulaire d'édition.
-      await expect(page.getByText(`${label} — lecture seule`)).toBeVisible()
+      // Badge = phase seule (aucune mention « lecture seule »), note R17, aucun
+      // formulaire d'édition.
+      await expect(page.getByText(label, { exact: true })).toBeVisible()
+      await expect(page.getByText(/lecture seule/)).toHaveCount(0)
       await expect(page.getByText(/consultable mais ne peut plus être modifiée/)).toBeVisible()
       await expect(page.getByLabel('Nouvelle équipe')).toHaveCount(0)
       await expect(page.getByRole('button', { name: /Ajouter à l.équipe/ })).toHaveCount(0)

@@ -33,7 +33,7 @@ function formaterDate(iso: string): string {
  * du club avec composition et effectif n/8, formulaires d'édition. Ouvert au
  * coach de son club (permanent ou temporaire) ; l'édition suit le bornage de
  * phase (R16) : permanent en pré-compétition/préparation, temporaire en
- * préparation seule. Hors fenêtre → lecture seule (R17). La RLS reste la frontière.
+ * préparation seule. Hors fenêtre → composition figée (R17). La RLS reste la frontière.
  */
 export default async function PageEngagement({
   params,
@@ -66,7 +66,6 @@ export default async function PageEngagement({
           <div className="mt-2">
             <Etiquette variante={variantePhase[engagement.phase]}>
               {labelPhase(engagement.phase)}
-              {peutEditer ? ' — édition ouverte' : ' — lecture seule'}
             </Etiquette>
           </div>
         </div>

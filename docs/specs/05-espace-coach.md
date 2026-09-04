@@ -115,10 +115,14 @@ cette spec. (Spec #1 R6/R27, rév. 2026-09-01.)
 - **R8.** La liste affiche les rencontres **triées par priorité** : d'abord la
   **préparation** (② jour J, la plus actionnable), puis les **compétitions en
   cours** (③), puis les **pré-compétitions** (①), enfin les rencontres
-  **terminées** — ④ **clôture** puis ⑤ **résultats publics**. L'engagement est
-  éditable par le coach en **① et ②** ; ailleurs la rencontre est en **lecture
-  seule** côté coach. L'état (éditable / lecture seule) est signalé sur chaque
-  ligne (R16/R17).
+  **terminées** — ④ **clôture** puis ⑤ **résultats publics**. La **composition de
+  l'engagement** (équipes + groupe de départ) est éditable par le coach en **① et
+  ②** ; ailleurs elle est **figée** côté coach (R16/R17) — ce qui n'exclut pas
+  d'autres saisies propres à une phase, comme la **saisie des résultats** en
+  compétition ③ (traitée séparément). Chaque ligne affiche l'**état (phase) de la
+  rencontre** ; le caractère éditable ou figé de la composition n'est **pas**
+  libellé sur la ligne — il se traduit uniquement, sur l'écran d'engagement, par
+  la **présence ou l'absence des formulaires de composition** (R17).
 
 ### Écran d'engagement — équipes du club pour une rencontre
 
@@ -170,10 +174,15 @@ cette spec. (Spec #1 R6/R27, rév. 2026-09-01.)
   QR de coach temporaire (R26). (Gating par la **RLS** — `peut_ecrire_equipe` =
   permanent en ①/② ou temporaire en ② ; cf. « Contraintes de données » ; l'IHM le
   **reflète** en masquant les formulaires hors ①/②.)
-- **R17.** **Hors des phases d'édition** (① pré-compétition, ② préparation), côté
-  coach l'écran d'engagement est en **lecture seule** : la composition est
-  **consultable** (spec #1 R21) mais aucun formulaire d'ajout/retrait/CRUD n'est
-  affiché, et toute écriture directe d'un coach est **refusée** par la RLS.
+- **R17.** **Hors des phases d'édition** (① pré-compétition, ② préparation), la
+  **composition de l'engagement** (équipes, ajout/retrait de grimpeurs, groupe de
+  départ) est **figée** côté coach : elle reste **consultable** (spec #1 R21) mais
+  aucun formulaire d'ajout/retrait/CRUD n'est affiché, et toute écriture directe
+  d'un coach sur la composition est **refusée** par la RLS. Le figement porte sur
+  la **composition** uniquement ; d'autres saisies liées à la phase (p. ex. les
+  **résultats** en compétition ③) sont hors de ce périmètre. L'en-tête ne libelle
+  **que la phase** de la rencontre ; le caractère figé n'est **pas** mentionné
+  dans le badge, il se déduit de l'absence des formulaires de composition.
 - **R18.** Après une écriture réussie, l'écran **reflète l'état à jour**
   (revalidation) et le formulaire de saisie se vide/réinitialise. (Aligné spec #3
   R6.)
@@ -228,10 +237,11 @@ les opérations sont **acceptées** — mêmes droits que le coach permanent
 ### Nominal — engagement figé en compétition
 
 Étant donné une rencontre passée en **phase ③ compétition**, quand un coach
-(permanent **ou** temporaire) ouvre l'écran d'engagement, alors celui-ci est en
-**lecture seule** : aucun formulaire d'ajout/retrait/CRUD ni de groupe de départ
-n'est affiché (R16/R17). Seul l'**admin** peut encore corriger l'engagement
-(spec #1 R6/R27).
+(permanent **ou** temporaire) ouvre l'écran d'engagement, alors la **composition
+est figée** : aucun formulaire d'ajout/retrait/CRUD ni de groupe de départ n'est
+affiché (R16/R17). Seul l'**admin** peut encore corriger la composition (spec #1
+R6/R27). (La **saisie des résultats** propre à cette phase est hors de ce
+périmètre.)
 
 ### Nominal — grimpeur prêté (prêt admin persistant)
 
