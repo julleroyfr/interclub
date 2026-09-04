@@ -63,20 +63,33 @@ function LigneRencontreTdb({ rencontre }: { rencontre: RencontreTdb }) {
       className="flex flex-col gap-2 rounded-xl border border-bordure bg-black/20 p-3"
     >
       <div className="flex flex-wrap items-start justify-between gap-2">
-        <div className="min-w-0">
+        {/* Accès direct : cliquer sur l'en-tête ouvre la page de la rencontre. */}
+        <Link
+          href={`/admin/rencontres/${rencontre.id}`}
+          className="min-w-0 flex-1 rounded-lg -m-1 p-1 transition hover:bg-surface-forte focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+        >
           <p className="text-sm font-medium text-texte-fort">
             {labelCategorie(rencontre.categorie)} · {rencontre.clubPorteurNom}
           </p>
           <p className="mt-0.5 text-xs text-texte-doux">
             {formaterDate(rencontre.dateRencontre)}
           </p>
-        </div>
-        <Etiquette variante={variantePhase[rencontre.phase]}>
-          {labelPhase(rencontre.phase)}
-        </Etiquette>
+        </Link>
+        {/* État courant, clairement distinct des actions de changement ci-dessous. */}
+        <span className="flex flex-col items-end gap-0.5">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-texte-doux">
+            Phase
+          </span>
+          <Etiquette variante={variantePhase[rencontre.phase]}>
+            {labelPhase(rencontre.phase)}
+          </Etiquette>
+        </span>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2 border-t border-bordure/60 pt-2">
+        <span className="text-[10px] font-semibold uppercase tracking-wide text-texte-doux">
+          Changer :
+        </span>
         {precedente && (
           <form action={actionPhase}>
             <input type="hidden" name="id" value={rencontre.id} />
@@ -118,7 +131,7 @@ function LigneRencontreTdb({ rencontre }: { rencontre: RencontreTdb }) {
           href={`/admin/jetons?rencontre=${rencontre.id}`}
           aria-label="Jetons QR de cette rencontre"
           title="Jetons QR"
-          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-bordure text-texte-attenue transition hover:border-accent/40 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+          className="ml-auto inline-flex h-8 w-8 items-center justify-center rounded-lg border border-bordure text-texte-attenue transition hover:border-accent/40 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
         >
           <IconeQR />
         </Link>
