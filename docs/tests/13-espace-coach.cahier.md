@@ -273,16 +273,16 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
 
 | Date | Testeur | Version/commit | Cas | Marque | Résultat | Remarque |
 |------|---------|----------------|-----|--------|----------|----------|
-| | | | CT-01 | auto | ✅ / ❌ | IHM |
-| | | | CT-02 | auto | ✅ / ❌ | IHM |
-| | | | CT-03 | auto | ✅ / ❌ | IHM (enfant) |
-| | | | CT-04 | auto | ✅ / ❌ | IHM |
-| | | | CT-05 | mixte | ✅ / ❌ | auto: SQL admin + badge ; manuel: couleur violette |
-| | | | CT-06 | auto | ✅ / ❌ | garde-fou date |
-| | | | CT-07 | auto | ✅ / ❌ | session QR prépa |
-| | | | CT-08 | auto | ✅ / ❌ | coach temp édite |
-| | | | CT-09 | auto | ✅ / ❌ | bornage rencontre |
-| | | | CT-10 | auto | ✅ / ❌ | gel compétition |
-| | | | CT-11 | auto | ✅ / ❌ | gel pré-compétition |
-| | | | CT-12 | auto | ✅ / ❌ | composition figée |
-| | | | CT-13 | auto | ✅ / ❌ | RLS inter-club |
+| 2026-09-04 | agent/playwright | 0a9f8bf | CT-01 | auto | ✅ | IHM (+ négatif 404) |
+| 2026-09-04 | agent/playwright | 0a9f8bf | CT-02 | auto | ✅ | IHM |
+| 2026-09-04 | agent/playwright | 0a9f8bf | CT-03 | auto | ✅ | IHM (enfant) |
+| 2026-09-04 | agent/playwright | 0a9f8bf | CT-04 | auto | ✅ | IHM |
+| 2026-09-04 | agent/playwright + Julien | 0a9f8bf | CT-05 | mixte | ✅ | auto: SQL admin + badge ✅ ; manuel: couleur violette validée |
+| 2026-09-04 | agent/playwright | 0a9f8bf | CT-06 | auto | ✅ | garde-fou date |
+| 2026-09-04 | agent/playwright | 0a9f8bf | CT-07 | auto | ✅ | session QR prépa |
+| 2026-09-04 | agent/playwright | 0a9f8bf | CT-08 | auto | ✅ | coach temp édite |
+| 2026-09-04 | agent/playwright | 0a9f8bf | CT-09 | auto | ✅ | bornage rencontre |
+| 2026-09-04 | agent/playwright | 0a9f8bf | CT-10 | auto | ✅ | gel compétition |
+| 2026-09-04 | agent/playwright | 0a9f8bf | CT-11 | auto | ✅ | gel pré-compétition |
+| 2026-09-04 | agent/playwright | 0a9f8bf | CT-12 | auto | ✅ | composition figée |
+| 2026-09-04 | agent/playwright | 0a9f8bf | CT-13 | auto | ✅ | RLS inter-club |
