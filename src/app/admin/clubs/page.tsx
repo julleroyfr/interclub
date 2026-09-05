@@ -10,7 +10,9 @@ import {
 } from '@/composants'
 import { getUtilisateurCourant } from '@/lib/auth/session'
 import { listerClubs } from '@/lib/clubs/clubs'
+import { listerInvitationsActives } from '@/lib/invitations/invitations'
 
+import { AfficheurInvitation } from './afficheur-invitation'
 import { FormulaireClub } from './formulaire-club'
 import { ListeClubs } from './liste-clubs'
 
@@ -29,7 +31,10 @@ export default async function PageClubs() {
   const utilisateur = await getUtilisateurCourant()
   if (utilisateur?.role !== 'admin') notFound()
 
-  const clubs = await listerClubs()
+  const [clubs, invitations] = await Promise.all([
+    listerClubs(),
+    listerInvitationsActives(),
+  ])
 
   return (
     <Coquille liens={liens} largeur="large">
@@ -47,6 +52,29 @@ export default async function PageClubs() {
         <section className="flex flex-col gap-3">
           <TitreSection>Clubs ({clubs.length})</TitreSection>
           <ListeClubs clubs={clubs} />
+        </section>
+
+        <section className="flex flex-col gap-3">
+          <TitreSection>Invitations coach permanent</TitreSection>
+          <p className="text-sm text-texte-attenue">
+            Affichez le QR (ou l’URL) d’un club pour qu’un nouveau coach permanent
+            crée son compte, automatiquement rattaché à ce club.
+          </p>
+          {clubs.length === 0 ? (
+            <p className="text-sm text-texte-attenue">Aucun club.</p>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {clubs.map((c) => (
+                <AfficheurInvitation
+                  key={c.id}
+                  titre={c.nom}
+                  clubId={c.id}
+                  chemin="/admin/clubs"
+                  invitation={invitations.get(c.id) ?? null}
+                />
+              ))}
+            </div>
+          )}
         </section>
       </div>
     </Coquille>

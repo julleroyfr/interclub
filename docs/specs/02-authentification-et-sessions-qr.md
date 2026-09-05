@@ -11,6 +11,11 @@
   2026-07-22) : la saisie juge porte sur un **résultat de vitesse**
   (temps/chute/non-présentation) et la **voie cloisonne** cette saisie (R11,
   R18, R24) ; jeton QR propre à chaque demi-journée/rencontre.
+- **Révision** : 2026-09-04 — ajout de l'**invitation coach permanent** (R26–R33) :
+  l'admin affiche, par club, un QR/URL durable d'onboarding permettant à un futur
+  coach de créer son compte email + mot de passe, **automatiquement** rattaché à
+  ce club. Fait entrer la **création de compte permanent** dans le périmètre
+  (décision du 2026-09-04).
 
 ## Objectif
 
@@ -27,6 +32,11 @@ alimente le modèle de données (mapping, jetons) et les policies **RLS**.
   applicatif (admin ou coach). Cf. spec #1 R2, R23.
 - **Mapping de rôle** : association administrée reliant un compte permanent à son
   rôle applicatif (et, pour un coach, à son club).
+- **Invitation coach permanent** : lien d'onboarding **durable**, propre à **un
+  club**, matérialisé par un **QR code** et une **URL** équivalents ; suivre une
+  invitation active permet de créer un **compte coach permanent** rattaché à ce
+  club (R26–R33). À ne pas confondre avec le **jeton QR** (session éphémère liée à
+  une rencontre).
 - **Session QR éphémère** : session authentifiée, temporaire, ouverte en scannant
   un jeton QR, valide uniquement pendant la fenêtre d'une rencontre (spec #1 R9).
 - **Jeton QR** : jeton d'accès anonyme, matérialisé par un QR code, ouvrant des
@@ -59,7 +69,10 @@ alimente le modèle de données (mapping, jetons) et les policies **RLS**.
   cours d'une session.
 - **R4.** Seul l'**admin** administre le mapping d'un compte permanent (attribuer
   le rôle, et le club pour un coach). C'est une action de paramétrage (spec #1
-  R13).
+  R13). **Exception** : le rôle `coach` d'un club peut aussi être **attribué
+  automatiquement** à l'inscription via une **invitation coach permanent** émise
+  par l'admin (R26–R33) — l'admin garde la maîtrise puisqu'il émet et révoque
+  l'invitation.
 - **R5.** Un compte permanent sans mapping de rôle n'a **aucun droit applicatif**
   (fail-closed) : il ne peut agir qu'après attribution d'un rôle par l'admin.
 
@@ -143,6 +156,41 @@ alimente le modèle de données (mapping, jetons) et les policies **RLS**.
 - **R25.** Toute action d'une session éphémère **hors de son périmètre** ou **hors
   de sa fenêtre de validité** (R12) est **refusée** (spec #1 R28, R33).
 
+### Invitation coach permanent (onboarding)
+
+- **R26.** L'admin peut, **pour un club**, générer et afficher une **invitation
+  coach permanent**, matérialisée par un **QR code** et une **URL** équivalents
+  (le QR encode l'URL). Suivre cette invitation ouvre l'inscription d'un nouveau
+  **coach permanent rattaché à ce club**.
+- **R27.** Une invitation coach permanent est **durable et multi-usage** :
+  réutilisable tant qu'elle est **active**, plusieurs personnes peuvent créer
+  chacune leur compte via la **même** invitation. Sa validité **ne dépend ni
+  d'une rencontre ni d'une phase** (contrairement aux sessions QR éphémères, R12) :
+  elle dépend **uniquement** de son état actif.
+- **R28.** Une invitation est liée à **exactement un club** et porte une **valeur**
+  (secret de l'URL/QR) **unique** et non devinable. Il existe **au plus une**
+  invitation **active par club**.
+- **R29.** **Seul l'admin** génère, affiche, **révoque** ou **régénère** une
+  invitation coach permanent. La **révocation** l'invalide immédiatement (elle
+  n'ouvre plus d'inscription) ; la **régénération** produit une **nouvelle**
+  valeur et **révoque** l'ancienne.
+- **R30.** Suivre une invitation **active** mène à un **écran d'inscription
+  public** où la personne crée un **compte permanent email + mot de passe**
+  (spec #1 R2/R23). Suivre une invitation **révoquée ou inexistante** n'ouvre
+  **aucune** inscription (message d'erreur) et **ne crée aucun compte**.
+- **R31.** À l'issue d'une inscription **réussie** via une invitation active, le
+  compte se voit attribuer **automatiquement** le rôle **coach** rattaché au
+  **club de l'invitation** (mapping créé sans action manuelle supplémentaire de
+  l'admin, cf. exception R4). C'est un **coach permanent** ordinaire ensuite
+  (spec #1 R23–R25).
+- **R32.** Un email **déjà associé à un compte** existant **ne crée pas** de
+  doublon : l'inscription est **refusée** avec un message invitant à se connecter.
+  Le rattachement d'un compte **déjà existant** reste du ressort du **mapping**
+  admin (R4).
+- **R33.** Une invitation **ne confère aucun droit par elle-même** avant
+  inscription : tant qu'aucun compte n'est créé, aucune session ni aucun rôle
+  n'existe (fail-closed, cohérent avec R5).
+
 ## Scénarios
 
 ### Nominal — attribution d'un compte coach
@@ -150,6 +198,14 @@ alimente le modèle de données (mapping, jetons) et les policies **RLS**.
 Étant donné un nouveau compte Supabase, quand l'admin lui attribue le rôle
 `coach` rattaché au club A, alors le titulaire peut se connecter et agir sur le
 périmètre du club A (R1, R3, R4), et pas avant (R5).
+
+### Nominal — invitation coach permanent
+
+Étant donné le club A, quand l'admin affiche l'**invitation coach permanent** du
+club A (QR + URL) et qu'un futur coach la suit, alors il arrive sur l'écran
+d'inscription (R26, R30), crée son compte email + mot de passe, et se retrouve
+**coach permanent du club A** sans autre action de l'admin (R31). Une **deuxième**
+personne peut suivre la **même** invitation et créer aussi son compte (R27).
 
 ### Nominal — session coach temporaire
 
@@ -183,6 +239,12 @@ alors une session juge s'ouvre et permet de saisir les **résultats de vitesse**
 - Tentative de créer un **second** jeton « juge » actif sur la **même voie** →
   refusé (R18) ; idem un second jeton « coach temporaire » actif pour le même
   club (R19).
+- Suivre une invitation coach permanent **révoquée/régénérée** (ancienne valeur)
+  → aucune inscription, aucun compte créé (R29, R30).
+- Inscription via une invitation avec un email **déjà utilisé** → refusée, invite
+  à se connecter ; aucun doublon (R32).
+- Régénérer l'invitation d'un club **ne déconnecte pas** les coachs déjà créés :
+  leurs comptes restent valides (l'invitation ne sert qu'à l'onboarding, R31/R33).
 
 ## Diagrammes
 
@@ -194,7 +256,7 @@ sequenceDiagram
   participant App
   participant DB as Supabase (RLS)
   U->>App: Scan du jeton QR (rôle + périmètre + rencontre)
-  App->>DB: Jeton actif ? Rencontre dans la fenêtre du jeton (coach temp. : ②③ ; juge : ③) ?
+  App->>DB: Jeton actif ? Rencontre dans la fenêtre du jeton (coach temp. ②③ / juge ③) ?
   alt Jeton actif ET dans la fenêtre
     DB-->>App: Session éphémère ouverte (rôle + périmètre)
     U->>App: Action (saisie / CRUD selon rôle et phase)
@@ -223,6 +285,29 @@ stateDiagram-v2
   end note
 ```
 
+### Onboarding par invitation coach permanent
+
+```mermaid
+sequenceDiagram
+  actor A as Admin
+  actor C as Futur coach
+  participant App
+  participant DB as Supabase (Auth + RLS)
+  A->>App: Afficher l'invitation du club X (QR + URL)
+  App->>DB: Invitation active du club X ? (sinon générer)
+  DB-->>App: Valeur de l'invitation (secret)
+  A-->>C: Transmet le QR / l'URL
+  C->>App: Suit l'URL d'invitation
+  App->>DB: Invitation active ? (R30)
+  alt Invitation active
+    C->>App: Inscription (email + mot de passe)
+    App->>DB: Créer le compte + mapping coach(club X) (R31)
+    DB-->>App: Compte coach permanent du club X
+  else Invitation révoquée / inexistante
+    App-->>C: Erreur, aucune inscription (R29, R30)
+  end
+```
+
 ## Contraintes de données
 
 - **Mapping de rôle** : un compte permanent porte **au plus un** rôle applicatif
@@ -243,11 +328,20 @@ stateDiagram-v2
 - **Validité** : la validité d'une session se **calcule** (phase de la rencontre
   dans la fenêtre du jeton — coach temp. ②③ / juge ③ — + jeton non révoqué), elle
   n'est pas figée en base (R12, R22).
+- **Invitation coach permanent** : liée à **un** club ; **valeur unique** et non
+  devinable ; état **actif / révoqué** ; **au plus une** invitation active par
+  club (R26–R29). **Indépendante** de toute rencontre/voie. La régénération crée
+  une nouvelle valeur et révoque l'ancienne (R29).
 - **RLS attendue** :
   - administration du mapping de rôle **réservée à l'admin** (R4) ;
   - génération / affichage / révocation des jetons `coach_temporaire` d'un club
     **réservée à l'admin ou au coach permanent de ce club** (R15, R16, R21) ;
   - génération / révocation des jetons `juge` **réservée à l'admin** (R17, R20) ;
+  - génération / affichage / révocation / régénération des **invitations coach
+    permanent** **réservée à l'admin** (R29) ; la **lecture** d'une invitation par
+    sa valeur (résolution de l'URL) et la **création du compte + mapping** relèvent
+    d'une **RPC dédiée** (droits élevés côté serveur), pas d'un accès direct
+    `authenticated` (R30, R31) ;
   - une session éphémère n'agit **que** dans son périmètre et **que** dans sa
     fenêtre de validité (R24, R25), en cohérence avec les policies de la spec #1.
 
@@ -263,8 +357,9 @@ Cette spec ne couvre pas (à traiter ailleurs) :
 - Le **format graphique** et le **canal d'affichage** du QR (écran, impression).
 - Les **transitions de phase** d'une rencontre — qui les déclenche et à quelles
   conditions (hors périmètre déjà posé par la spec #1).
-- La **gestion des comptes permanents** au-delà du mapping de rôle (création
-  Supabase, réinitialisation de mot de passe, e-mails).
+- La **gestion des comptes permanents** au-delà du mapping de rôle et de
+  l'**onboarding par invitation** (R26–R33) : réinitialisation de mot de passe,
+  e-mails transactionnels, modification/suppression d'un compte existant.
 - L'accès **visiteur non authentifié** aux infos publiques.
 - Le **cumul de rôles** par une même personne (spec #1 R4 : une session = un
   rôle).
