@@ -20,9 +20,10 @@
   résultats publics. La compétition terminée, **l'admin vérifie et corrige la
   saisie** (résultats non encore publics) ; coachs et juges ne saisissent plus
   (leurs sessions/écritures étaient déjà bornées à la phase ③ compétition, R7/R9,
-  donc exclues de la clôture sans changement de RLS). Chaque coach peut consulter
-  les résultats **de son club** (marqués **provisoires**) ; rien n'est public
-  cross-club avant la phase ⑤. La phase « résultats publics » devient **⑤**.
+  donc exclues de la clôture sans changement de RLS). La phase « résultats
+  publics » devient **⑤**. *(La partie « résultats provisoires visibles du seul
+  club, rien de public cross-club avant ⑤ » de cette révision est **caduque** —
+  voir rév. 2026-09-08 : visibilité au fil de l'eau pour tous dès la ③.)*
 - **Révision** : 2026-09-01 — **phase « préparation jour J »** (validée le
   2026-09-01) : insertion d'une phase **② préparation** entre pré-compétition et
   compétition. Le cycle passe à **5 phases**. La préparation n'est **activable par
@@ -37,6 +38,32 @@
   en clôture. Impact RLS : helpers `est_coach_temp_actif_club` /
   `est_coach_temp_engagement` ; `peut_ecrire_equipe` = permanent (pré-compét/prépa)
   OU temporaire (prépa) ; résultats inchangés (compétition).
+- **Révision** : 2026-09-08 — **visibilité des résultats au fil de l'eau**
+  (validée le 2026-09-08, sur clarification produit). Les résultats **et les
+  classements** d'une rencontre sont **calculés et consultables au fil de l'eau**
+  dès leur saisie en **③ compétition**, **pour tous** — tous clubs confondus **et
+  visiteurs non authentifiés** (accès public en lecture). *(⚠️ Précisé le
+  2026-09-09 : la lecture au fil de l'eau dès la ③ vaut pour les **authentifiés** ;
+  le visiteur **non authentifié** ne voit résultats/classements qu'à la **⑤**. Voir
+  révision 2026-09-09 et R8.)* La phase **⑤ résultats
+  publics** n'est **plus** le moment où les résultats deviennent visibles : c'est
+  l'**officialisation** (rendu **définitif/figé**) des résultats déjà consultables.
+  **Annule** la précision de la rév. 2026-08-29 (« résultats provisoires visibles
+  du seul club, rien de public cross-club avant ⑤ ») : la restriction cross-club
+  et le masquage public **disparaissent**. Impact : R8 réécrite ; R6 (précision
+  2026-08-29) corrigée ; matrice, diagramme, contraintes RLS et « hors périmètre »
+  alignés. Rien n'est visible **avant** la ③ (aucun résultat n'existe en ①/②). Le
+  **calcul** du score/classement reste détaillé dans une **spec dédiée** ; la
+  **saisie** dans la **spec #6** (`06-saisie-des-resultats.md`).
+- **Révision** : 2026-09-09 — **précision de la visibilité publique** (validée le
+  2026-09-09). La visibilité « au fil de l'eau dès la ③ » (rév. 2026-09-08) vaut
+  pour **tout compte authentifié** ; le **visiteur non authentifié** (`anon`) ne
+  voit résultats et classements **qu'une fois la rencontre publiée (⑤)**. Avant, il
+  n'accède qu'aux **informations de tête** (date, club d'accueil ; nb
+  clubs/équipes/grimpeurs dès les engagements). La **surface publique** (routes,
+  écrans, accès `anon`) est spécifiée en **spec #8** (`08-espace-public.md`).
+  Impact : **R8 précisée** ; matrice, contraintes RLS et « hors périmètre » alignés
+  (lecture `anon` = ⑤ ; authentifié = ③).
 
 ## Objectif
 
@@ -108,10 +135,12 @@ conditionne les accès temporels.
   pré-compétition** (pré-saisie de l'engagement à distance par le coach permanent),
   **② préparation** (fenêtre d'édition **sur place le jour J**, ouverte par
   l'admin, où coach permanent **et** temporaire finalisent l'engagement), **③
-  compétition** (déroulement et saisies des résultats ; engagement gelé), **④
+  compétition** (déroulement et saisies des résultats ; engagement gelé ;
+  résultats et classements **consultables au fil de l'eau par tous**, R8), **④
   clôture** (compétition terminée : vérification et correction de la saisie par
-  l'**admin**, résultats non encore publics), **⑤ résultats publics** (rendu
-  public des résultats).
+  l'**admin** ; résultats toujours consultables mais **pas encore officiels**),
+  **⑤ résultats publics** (**officialisation** : résultats rendus **définitifs /
+  figés**, R8).
   - **Précision (rév. 2026-09-01)** : la phase **② préparation** n'est
     **activable par l'admin que le jour de la rencontre** (date du jour) ; c'est
     un garde-fou « jour J ». Hors de ce jour, la rencontre reste en pré-compétition.
@@ -122,12 +151,13 @@ conditionne les accès temporels.
     compétition**. En conséquence, **reculer depuis la ③ compétition** ramène en
     **② préparation le jour J**, mais **hors jour J** — la préparation étant
     elle-même bornée au jour J — ramène directement en **① pré-compétition**.
-  - **Précision (rév. 2026-08-29)** : en phase ④ **clôture**, **seul l'admin**
-    peut saisir/corriger les résultats et temps ; coachs et juges n'y écrivent
-    plus (leurs droits étaient bornés à la phase ③ compétition, R7/R9). Chaque
-    coach peut **consulter** les résultats **de son club** (statut
-    **provisoire**), mais aucune donnée n'est publique cross-club avant la phase
-    ⑤ (R8).
+  - **Précision (rév. 2026-08-29, corrigée 2026-09-08)** : en phase ④ **clôture**,
+    **seul l'admin** peut saisir/corriger les résultats et temps ; coachs et juges
+    n'y écrivent plus (leurs droits étaient bornés à la phase ③ compétition,
+    R7/R9). Les résultats restent **consultables par tous** (au fil de l'eau, dès
+    la ③), mais **non encore officiels** tant que la rencontre n'est pas en ⑤
+    (R8). *(La formulation initiale « consultation limitée au club, provisoire,
+    rien de public cross-club avant ⑤ » est caduque — rév. 2026-09-08.)*
 - **R6.** L'édition de l'**engagement** (équipes, compositions, groupes de départ)
   n'est possible qu'en phases **① pré-compétition** et **② préparation**.
   - **Précision (rév. 2026-07-25)** : « grimpeurs » désigne ici leur
@@ -143,8 +173,19 @@ conditionne les accès temporels.
     **verrouillé pour les coachs** ; **seul l'admin** peut le corriger.
 - **R7.** La saisie des résultats (coach) et des temps de vitesse (juge) n'est
   possible qu'en phase ③ compétition.
-- **R8.** Les résultats deviennent consultables comme **infos publiques** en
-  phase ⑤ résultats publics.
+- **R8.** Les résultats **et les classements** d'une rencontre sont **calculés et
+  consultables au fil de l'eau** dès leur saisie en **③ compétition**, pour **tout
+  compte authentifié**, **tous clubs confondus**. Le **visiteur non authentifié**
+  (`anon`) ne voit résultats et classements **qu'une fois la rencontre publiée
+  (⑤)** ; avant, il n'accède qu'aux **informations de tête** (date, club d'accueil,
+  et — dès les engagements — nombre de clubs/équipes/grimpeurs), sans résultats
+  (surface publique détaillée en **spec #8**). Rien n'est visible **avant** la ③
+  (aucun résultat n'existe encore). La phase **⑤ résultats publics** n'ouvre
+  **pas** la visibilité pour les authentifiés (ils voyaient déjà dès la ③) : elle
+  **officialise** les résultats (rendu **définitif / figé**) **et** ouvre la
+  lecture au **public** non authentifié. En **④ clôture**, les résultats restent
+  consultables **par les authentifiés** mais **non encore officiels ni publics**
+  (correction admin possible, R6). *(Précisé le 2026-09-09.)*
 - **R9.** Les sessions QR éphémères ne sont valides que pendant la **fenêtre du
   jour de la rencontre** : pour le **coach temporaire**, phases **② préparation**
   et **③ compétition** ; pour le **juge**, phase **③ compétition**. Hors de cette
@@ -301,6 +342,12 @@ temporaires de son club (R26). Un grimpeur prêté est rattaché par l'admin (R3
 puis saisi par le coach de son équipe d'accueil comme un grimpeur de son
 périmètre (R36) — d'où l'absence de ligne dédiée « saisie » pour le prêt.
 
+La ligne « Consulter les infos publiques » couvre l'accès **par rôle** ; par
+ailleurs, les **résultats et classements** d'une rencontre sont **consultables par
+tout compte authentifié** (tous clubs confondus) dès la **③ compétition** (R8). Le
+**visiteur non authentifié** ne les voit qu'**une fois la rencontre publiée (⑤)** ;
+avant, il n'a que les **informations de tête** (surface publique, spec #8).
+
 ## Diagrammes
 
 ### Typologie des rôles
@@ -339,13 +386,14 @@ stateDiagram-v2
   note right of Competition
     Engagement gelé (admin seul). Saisies coach (résultats) & juge (temps) — R7
     Sessions QR temporaires valides (préparation + compétition) — R9
+    Résultats & classements consultables au fil de l'eau, pour tous (public inclus) — R8
   end note
   note right of Cloture
     Compétition terminée : vérification/correction par l'admin — R5
-    Coachs & juges n'écrivent plus ; résultats provisoires (club uniquement)
+    Coachs & juges n'écrivent plus ; résultats consultables mais non officiels — R8
   end note
   note right of ResultatsPublics
-    Résultats consultables (infos publiques) — R8
+    Officialisation : résultats rendus définitifs / figés — R8
   end note
 ```
 
@@ -443,9 +491,15 @@ le prêt** lui-même (R35).
   pas de colonne `saison` en base ; elle est calculée à la lecture. Les
   classements sont partitionnés par saison (R38).
 - **RLS attendue** :
-  - lecture/écriture des équipes, grimpeurs et résultats **restreinte au club**
-    du coach (R17–R20) ;
+  - **écriture** des équipes, grimpeurs et résultats **restreinte au club** du
+    coach (R17–R20) ; la **lecture** des équipes/grimpeurs reste au périmètre
+    métier, mais la **lecture des résultats** est ouverte à **tout authentifié dès
+    la ③** (R8, voir ci-dessous) ;
   - lecture des infos publiques ouverte aux coachs, tous clubs (R21) ;
+  - **lecture des résultats et classements ouverte à tout compte authentifié dès
+    la phase ③ compétition** ; pour `anon` (visiteur non authentifié) la lecture
+    n'est ouverte **qu'à la ⑤ résultats publics** (R8, rév. 2026-09-09) ; la ⑤
+    **fige** les résultats **et** ouvre la lecture publique ;
   - écriture des **résultats de vitesse** d'un juge **restreinte à la voie de
     l'épreuve de vitesse qui lui est affectée** (R30) ;
   - rattachement d'un grimpeur **prêté** à une équipe d'accueil / équipe CT33
@@ -464,7 +518,11 @@ Cette spec ne couvre pas (à traiter dans des specs dédiées) :
 
 - Le **mécanisme d'authentification** détaillé (génération/scan du QR, durée de
   validité, révocation) et le mapping utilisateur ↔ rôle ↔ joueur.
-- L'accès **visiteur non authentifié** aux infos publiques.
+- La **surface publique** concrète (routes/pages de consultation, mécanique
+  d'accès `anon`, enchaînements d'écran) : **désormais spécifiée** dans la **spec
+  #8** (`08-espace-public.md`). La présente spec fixe le **droit** (R8 :
+  authentifié dès ③ ; `anon` seulement à ⑤) ; la spec #8 décrit **ce que voit** le
+  visiteur non authentifié et **comment il navigue**.
 - Le modèle détaillé de **scoring et de classement** (barèmes voie / bloc /
   vitesse, classements filles / garçons, cotations par catégorie).
 - Le **calcul d'éligibilité par âge** d'un grimpeur à une catégorie (matin /

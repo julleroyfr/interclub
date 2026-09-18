@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 import { Coquille, EnTetePage, Etiquette, variantePhase, type LienNav } from '@/composants'
@@ -63,10 +64,18 @@ export default async function PageEngagement({
             titre={`${formaterDate(engagement.dateRencontre)} — ${engagement.clubPorteurNom}`}
             sousTitre={`Catégorie ${labelCategorie(engagement.categorie)}`}
           />
-          <div className="mt-2">
+          <div className="mt-2 flex flex-wrap items-center gap-3">
             <Etiquette variante={variantePhase[engagement.phase]}>
               {labelPhase(engagement.phase)}
             </Etiquette>
+            {engagement.phase !== 'pre_competition' && engagement.phase !== 'preparation' && (
+              <Link
+                href={`/coach/rencontres/${id}/resultats`}
+                className="text-sm font-semibold text-accent-doux underline-offset-2 hover:underline"
+              >
+                Saisir / voir les résultats →
+              </Link>
+            )}
           </div>
         </div>
 

@@ -13,6 +13,7 @@ import {
 import { getUtilisateurCourant } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
 
+import { materialiserNpCloture } from './cloture'
 import { type EtatRencontre } from './rencontres'
 
 // CRUD des rencontres (spec #1 R12) — réservé à l'admin. Server Actions :
@@ -158,6 +159,17 @@ export async function changerPhaseRencontre(
     .update({ phase: phase as Phase })
     .eq('id', id)
   if (error) return { erreur: messageErreur(error.code, 'ecriture') }
+
+  // Passage en clôture (③→④) : poser le NP automatique sur les attendus non
+  // saisis (spec #6 R18). Idempotent, exécuté en tant qu'admin. Un échec ne doit
+  // pas masquer le changement de phase réussi ; on l'isole.
+  if (phase === 'cloture') {
+    try {
+      await materialiserNpCloture(supabase, id)
+    } catch {
+      // Le NP pourra être reposé (idempotent) ; la phase est déjà changée.
+    }
+  }
 
   // Deux surfaces pour la même action (spec #3 R41a) : la liste ET le tableau de
   // bord de la rencontre doivent refléter la nouvelle phase.
