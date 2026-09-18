@@ -2,19 +2,15 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
-import { Coquille, EnTetePage, Etiquette, variantePhase, type LienNav } from '@/composants'
+import { Coquille, EnTetePage, Etiquette, variantePhase } from '@/composants'
 import { CATEGORIES, PHASES, type Categorie, type Phase } from '@/domaine/rencontre'
 import { getContexteCoach } from '@/lib/auth/session'
 import { getEngagementRencontre } from '@/lib/coach/engagement'
+import { liensCoach } from '@/lib/coach/navigation'
 
 import { PanneauEngagement } from './panneau-engagement'
 
 export const metadata: Metadata = { title: 'Engagement — Interclub' }
-
-const liens: LienNav[] = [
-  { href: '/', label: 'Accueil' },
-  { href: '/coach', label: 'Mes rencontres' },
-]
 
 const labelPhase = (v: Phase) => PHASES.find((p) => p.value === v)?.label ?? v
 const labelCategorie = (v: Categorie) =>
@@ -57,7 +53,7 @@ export default async function PageEngagement({
     (contexte.type === 'permanent' || engagement.phase === 'preparation')
 
   return (
-    <Coquille liens={liens}>
+    <Coquille liens={liensCoach(contexte)}>
       <div className="flex flex-col gap-6">
         <div>
           <EnTetePage

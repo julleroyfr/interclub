@@ -128,6 +128,11 @@ cette spec. (Spec #1 R6/R27, rév. 2026-09-01.)
   rencontre** ; le caractère éditable ou figé de la composition n'est **pas**
   libellé sur la ligne — il se traduit uniquement, sur l'écran d'engagement, par
   la **présence ou l'absence des formulaires de composition** (R17).
+- **R8bis.** Pour un **coach temporaire**, dont la session QR est **bornée à une
+  seule rencontre** (spec #1 R27/R28), l'espace coach est **limité à cette
+  rencontre** : la navigation **ne propose pas** la liste « Mes rencontres »
+  (notion multi-rencontres sans objet pour lui) mais un **accès direct à sa
+  rencontre**. Le coach **permanent** conserve la liste (R6).
 
 ### Écran d'engagement — équipes du club pour une rencontre
 

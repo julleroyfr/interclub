@@ -279,6 +279,18 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
     cf. CT-10).
   - Aux autres phases, la carte mène toujours à l'écran d'engagement (CT-01/CT-12).
 
+### CT-15 `[auto]` — Coach temporaire : navigation bornée à sa rencontre   (couvre : R8bis ; spec #1 R27/R28)
+
+- **Rôle / compte** : coach **temporaire** Club A (scan du jeton).
+- **Pré-condition** : session ouverte (préparation ou compétition, jour J).
+- **Étapes** :
+  1. Depuis un écran coach, inspecter la navigation.
+- **Résultat attendu** :
+  - **Aucun** lien « Mes rencontres » (liste multi-rencontres) ; à la place, un
+    lien **« Ma rencontre »** pointant directement vers **sa** rencontre
+    (`…/rencontres/33333333-…`), qui **s'ouvre sans 404** (R8bis).
+  - Le coach **permanent**, lui, conserve « Mes rencontres » (CT-01).
+
 ## Registre d'exécution
 
 > **Testeur** : `agent/playwright` pour un passage machine, un nom pour un passage
@@ -301,3 +313,4 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
 | 2026-09-04 | agent/playwright | 0a9f8bf | CT-12 | auto | ✅ | composition figée |
 | 2026-09-04 | agent/playwright | 0a9f8bf | CT-13 | auto | ✅ | RLS inter-club |
 | 2026-09-18 | agent/playwright | develop | CT-14 | auto | ✅ | carte → saisie en ③ (R7) |
+| 2026-09-18 | agent/playwright | develop | CT-15 | auto | ✅ | nav coach temp → « Ma rencontre » (R8bis) |

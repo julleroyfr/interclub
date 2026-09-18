@@ -2,23 +2,13 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 
-import {
-  Coquille,
-  EnTetePage,
-  Etiquette,
-  variantePhase,
-  type LienNav,
-} from '@/composants'
+import { Coquille, EnTetePage, Etiquette, variantePhase } from '@/composants'
 import { CATEGORIES, PHASES, type Categorie, type Phase } from '@/domaine/rencontre'
 import { getContexteCoach } from '@/lib/auth/session'
 import { listerRencontresCoach, type RencontreCoach } from '@/lib/coach/engagement'
+import { liensCoach } from '@/lib/coach/navigation'
 
 export const metadata: Metadata = { title: 'Mes rencontres — Interclub' }
-
-const liens: LienNav[] = [
-  { href: '/', label: 'Accueil' },
-  { href: '/coach', label: 'Mes rencontres' },
-]
 
 const labelPhase = (v: Phase) => PHASES.find((p) => p.value === v)?.label ?? v
 const labelCategorie = (v: Categorie) =>
@@ -62,7 +52,7 @@ export default async function PageCoach() {
       : toutes
 
   return (
-    <Coquille liens={liens}>
+    <Coquille liens={liensCoach(contexte)}>
       <div className="flex flex-col gap-6">
         <EnTetePage
           titre="Mes rencontres"

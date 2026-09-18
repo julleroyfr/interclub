@@ -146,6 +146,29 @@ test.describe('Cahier 13 — Espace coach : engagement', () => {
     )
   })
 
+  test('CT-15 — Coach temporaire : nav bornée à sa rencontre, pas de « Mes rencontres » (R8bis)', async ({
+    page,
+  }) => {
+    nettoyerSessionsQr()
+    // Session temp valable le jour J (préparation ou compétition).
+    poserPhase('preparation')
+    poserDate('today')
+
+    await commeCoachTemporaire(page)
+    await page.goto('/coach')
+
+    // Pas de lien liste « Mes rencontres » ; un lien direct « Ma rencontre ».
+    await expect(page.getByRole('link', { name: 'Mes rencontres' })).toHaveCount(0)
+    const maRencontre = page.getByRole('link', { name: 'Ma rencontre' })
+    await expect(maRencontre).toHaveAttribute(
+      'href',
+      `/coach/rencontres/${RENCONTRE_PILOTE}`,
+    )
+    // Le lien s'ouvre sans 404.
+    const reponse = await page.goto(`/coach/rencontres/${RENCONTRE_PILOTE}`)
+    expect(reponse?.status()).toBe(200)
+  })
+
   test('CT-02 — Créer une équipe et composer (R9, R10, R11, R12, R15)', async ({
     page,
   }) => {
@@ -407,12 +430,22 @@ test.describe('Cahier 13 — Espace coach : engagement', () => {
       // L'autre rencontre : 404 (session bornée à celle du jeton).
       const resp2 = await page.goto(`/coach/rencontres/${R2}`)
       expect(resp2?.status()).toBe(404)
-      // Sur /coach, seule sa rencontre est listée (lien vers la rencontre du jeton).
+      // Sur /coach, seule SA rencontre est atteignable : tous les liens vers une
+      // rencontre (carte + nav « Ma rencontre », R8bis) pointent vers la sienne,
+      // aucune AUTRE rencontre n'est listée.
       await page.goto('/coach')
       await expect(
-        page.locator(`a[href="/coach/rencontres/${RENCONTRE_PILOTE}"]`),
+        page.locator(`a[href="/coach/rencontres/${RENCONTRE_PILOTE}"]`).first(),
       ).toBeVisible()
-      expect(await page.locator('a[href^="/coach/rencontres/"]').count()).toBe(1)
+      const liensRencontre = page.locator('a[href^="/coach/rencontres/"]')
+      const n = await liensRencontre.count()
+      expect(n).toBeGreaterThanOrEqual(1)
+      for (let i = 0; i < n; i++) {
+        await expect(liensRencontre.nth(i)).toHaveAttribute(
+          'href',
+          new RegExp(`/coach/rencontres/${RENCONTRE_PILOTE}`),
+        )
+      }
     } finally {
       execSql(`delete from interclub.rencontre where id='${R2}';`)
     }

@@ -1,19 +1,15 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
-import { Coquille, EnTetePage, Etiquette, variantePhase, type LienNav } from '@/composants'
+import { Coquille, EnTetePage, Etiquette, variantePhase } from '@/composants'
 import { CATEGORIES, PHASES, type Categorie, type Phase } from '@/domaine/rencontre'
 import { getContexteCoach } from '@/lib/auth/session'
+import { liensCoach } from '@/lib/coach/navigation'
 import { getSaisieRencontre } from '@/lib/coach/resultats'
 
 import { PanneauResultats } from './panneau-resultats'
 
 export const metadata: Metadata = { title: 'Saisie des résultats — Interclub' }
-
-const liens: LienNav[] = [
-  { href: '/', label: 'Accueil' },
-  { href: '/coach', label: 'Mes rencontres' },
-]
 
 const labelPhase = (v: Phase) => PHASES.find((p) => p.value === v)?.label ?? v
 const labelCategorie = (v: Categorie) =>
@@ -50,7 +46,7 @@ export default async function PageResultats({
   if (!saisie) notFound()
 
   return (
-    <Coquille liens={liens}>
+    <Coquille liens={liensCoach(contexte)}>
       <div className="flex flex-col gap-6">
         <div>
           <EnTetePage
