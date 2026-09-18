@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Maquettes — Espace public (spec #8)</title>
+<style>
+  :root {
+    --fond: #020617;
+    --surface: rgba(255, 255, 255, 0.04);
+    --surface-forte: rgba(255, 255, 255, 0.08);
+    --bordure: rgba(255, 255, 255, 0.12);
+    --accent: #22d3ee;
+    --accent-doux: #67e8f9;
+    --secondaire: #bef264;
+    --prete: #c084fc;
+    --danger: #fb7185;
+    --or: #fbbf24;
+    --texte-fort: #ffffff;
+    --texte: #e2e8f0;
+    --texte-attenue: #94a3b8;
+    --texte-doux: #64748b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--fond); color: var(--texte);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif; line-height: 1.4;
+    padding: 24px 16px 80px;
+  }
+  h1 { color: var(--texte-fort); font-size: 20px; text-align: center; }
+  .intro { text-align: center; color: var(--texte-attenue); max-width: 680px; margin: 0 auto 32px; font-size: 14px; }
+  .grille { display: flex; flex-wrap: wrap; gap: 28px; justify-content: center; align-items: flex-start; }
+  .colonne { width: 340px; max-width: 100%; }
+  .colonne > .titre-option { color: var(--accent); font-size: 13px; text-transform: uppercase; letter-spacing: .08em; font-weight: 700; margin: 0 0 4px; }
+  .colonne > .desc-option { color: var(--texte-doux); font-size: 12.5px; margin: 0 0 12px; min-height: 34px; }
+
+  .tel {
+    border: 1px solid var(--bordure); border-radius: 22px; overflow: hidden;
+    background: linear-gradient(180deg, rgba(34,211,238,0.06), rgba(2,6,23,0) 220px), var(--fond);
+    box-shadow: 0 12px 40px rgba(0,0,0,.5);
+  }
+  .barre-haut { padding: 12px 16px 14px; border-bottom: 1px solid var(--bordure); display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .marque { display:flex; align-items:center; gap:8px; }
+  .logo { display:grid; place-items:center; width:28px; height:28px; border-radius:9px; background:rgba(34,211,238,.2); color:var(--accent-doux); font-weight:800; font-size:14px; box-shadow: inset 0 0 0 1px rgba(34,211,238,.4); }
+  .marque .nom { color: var(--texte-fort); font-weight:700; font-size:15px; }
+  .btn-cnx { color: var(--accent-doux); font-size:12px; font-weight:600; border:1px solid rgba(34,211,238,.3); border-radius:999px; padding:5px 11px; background:rgba(34,211,238,.08); }
+
+  .corps { padding: 14px; }
+  .h-ecran { color: var(--texte-doux); font-size: 11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; margin: 2px 2px 10px; }
+  .lien-retour { color: var(--texte-attenue); font-size: 12.5px; margin-bottom: 8px; display:block; }
+
+  /* carte rencontre (liste) */
+  .rc { background: var(--surface); border: 1px solid var(--bordure); border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; display:block; }
+  .rc:hover { background: var(--surface-forte); }
+  .rc-haut { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .rc-date { color: var(--texte-fort); font-weight:700; font-size:14px; }
+  .rc-accueil { color: var(--texte-attenue); font-size:12.5px; margin-top:2px; }
+  .rc-compteurs { display:flex; flex-wrap:wrap; gap:6px; margin-top:9px; }
+  .cpt { display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:700; border-radius:999px; padding:2px 9px; border:1px solid var(--bordure); background:rgba(0,0,0,.25); color:var(--texte-attenue); }
+  .cpt .n { color: var(--texte-fort); }
+  .chev { color: var(--texte-doux); font-size:18px; }
+
+  .etat { display:inline-flex; align-items:center; gap:5px; font-size:10.5px; font-weight:700; border-radius:999px; padding:2px 9px; white-space:nowrap; }
+  .etat.venir { color: var(--texte-attenue); background: rgba(148,163,184,.12); border:1px solid var(--bordure); }
+  .etat.cours { color: var(--accent-doux); background: rgba(34,211,238,.12); border:1px solid rgba(34,211,238,.3); }
+  .etat.publie { color: var(--secondaire); background: rgba(190,242,100,.12); border:1px solid rgba(190,242,100,.3); }
+
+  .note { font-size:12px; border-radius:10px; padding:10px 12px; margin-bottom:12px; }
+  .note.neutre { color: var(--texte-attenue); background: rgba(148,163,184,.08); border:1px solid var(--bordure); }
+  .note.live { color: var(--accent-doux); background: rgba(34,211,238,.07); border:1px solid rgba(34,211,238,.25); }
+  .note.publie { color: var(--secondaire); background: rgba(190,242,100,.07); border:1px solid rgba(190,242,100,.25); }
+
+  /* détail : bloc de tête */
+  .tete { text-align:center; padding: 6px 0 12px; }
+  .tete .d { color: var(--texte-fort); font-size:20px; font-weight:800; }
+  .tete .a { color: var(--texte-attenue); font-size:13px; margin-top:4px; }
+  .tete .etat { margin-top:10px; }
+
+  .compteurs-gr { display:flex; gap:10px; margin: 6px 0 14px; }
+  .compteurs-gr .box { flex:1; text-align:center; background: var(--surface); border:1px solid var(--bordure); border-radius:12px; padding:12px 6px; }
+  .compteurs-gr .v { color: var(--texte-fort); font-size:20px; font-weight:800; }
+  .compteurs-gr .l { color: var(--texte-doux); font-size:10.5px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; margin-top:2px; }
+
+  .verrou { text-align:center; color: var(--texte-doux); font-size:12px; font-style:italic; border:1px dashed var(--bordure); border-radius:12px; padding:16px 12px; }
+
+  /* onglets classement */
+  .tabs { display:flex; gap:6px; margin-bottom:12px; }
+  .tabs button { flex:1; background:rgba(0,0,0,.28); color:var(--texte-attenue); border:1px solid var(--bordure); border-radius:9px; padding:7px 6px; font-size:12px; font-weight:600; }
+  .tabs button.actif { background: var(--accent); color:#04222a; border-color: var(--accent); }
+  .sous-tabs button { padding:5px 6px; font-size:11.5px; }
+  .sous-tabs button.actif { background: rgba(34,211,238,.16); color: var(--accent-doux); border-color: rgba(34,211,238,.5); }
+
+  .carte { background: var(--surface); border:1px solid var(--bordure); border-radius:14px; padding:10px 12px; margin-bottom:12px; }
+  .carte-entete { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+  .carte-titre { color: var(--texte-fort); font-size:13px; font-weight:700; }
+  .officiel { display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:700; border-radius:999px; padding:2px 10px; color: var(--secondaire); background: rgba(190,242,100,.12); border:1px solid rgba(190,242,100,.3); }
+  .carte-sous { color: var(--texte-doux); font-size:11.5px; margin-top:8px; }
+
+  table.clsmt { width:100%; border-collapse: collapse; font-size:13px; }
+  table.clsmt th { color: var(--texte-doux); font-weight:600; text-align:left; font-size:10.5px; text-transform:uppercase; letter-spacing:.04em; padding:4px 6px; }
+  table.clsmt th.pts { text-align:right; }
+  table.clsmt td { padding:8px 6px; border-top:1px solid rgba(255,255,255,.06); color: var(--texte); }
+  td.rang { color: var(--texte-doux); font-weight:800; width:26px; text-align:center; }
+  td.rang.p1 { color: var(--or); } td.rang.p2 { color:#cbd5e1; } td.rang.p3 { color:#d8a06a; }
+  td.nom { color: var(--texte-fort); font-weight:600; }
+  td.nom .club { color: var(--texte-doux); font-weight:500; font-size:11.5px; display:block; margin-top:1px; }
+  td.pts { text-align:right; color: var(--secondaire); font-weight:800; white-space:nowrap; }
+  td.pts .u { font-size:9.5px; color: var(--texte-doux); font-weight:700; margin-left:2px; }
+
+  /* pagination bas de liste (façon moteur de recherche) */
+  .pagination { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:4px; margin:10px 0 2px; }
+  .pagination a, .pagination span.gap {
+    min-width:30px; height:30px; padding:0 8px; display:inline-flex; align-items:center; justify-content:center;
+    border-radius:8px; font-size:12.5px; font-weight:700; color:var(--accent-doux);
+    background:rgba(0,0,0,.28); border:1px solid var(--bordure); cursor:pointer;
+  }
+  .pagination a.actif { background:var(--accent); color:#04222a; border-color:var(--accent); }
+  .pagination a.fleche { color:var(--texte-attenue); font-weight:800; }
+  .pagination span.gap { border:none; background:none; color:var(--texte-doux); cursor:default; min-width:18px; }
+  .page-info { text-align:center; color:var(--texte-doux); font-size:11px; margin-top:6px; }
+
+  .legende { max-width: 940px; margin: 44px auto 0; color: var(--texte-attenue); font-size: 13px; }
+  .legende h2 { color: var(--texte-fort); font-size: 15px; margin-bottom: 6px; }
+  .legende h3 { color: var(--accent-doux); font-size: 13px; margin: 16px 0 4px; }
+  .legende li { margin-bottom: 6px; }
+  .legende code { background: var(--surface-forte); padding: 1px 5px; border-radius: 5px; color: var(--texte-fort); font-size: 12px; }
+</style>
+</head>
+<body>
+  <h1>Espace public — maquettes (spec #8)</h1>
+  <p class="intro">Un visiteur <strong>non connecté</strong> voit la liste des rencontres (triées par date, la plus récente
+  en premier) et le détail de chacune <strong>selon son état</strong> : à venir → date + club d'accueil ; en cours →
+  + compteurs, sans résultats ; <strong>publiée (⑤)</strong> → classement <strong>individuel (Filles/Garçons) + par équipe</strong>.
+  Pas de classement par club en public. Design « Nuit », mobile-first.</p>
+
+  <div class="grille">
+
+    <!-- ============ 1 · LISTE PUBLIQUE ============ -->
+    <section class="colonne">
+      <p class="titre-option">1 · Liste des rencontres (R1/R3/R4)</p>
+      <p class="desc-option">Toutes les rencontres, date décroissante (à venir en tête, puis passées). Badge d'état ; compteurs dès les engagements.</p>
+      <div class="tel">
+        <div class="barre-haut">
+          <div class="marque"><span class="logo">I</span><span class="nom">Interclub</span></div>
+          <span class="btn-cnx">Se connecter</span>
+        </div>
+        <div class="corps">
+          <div class="h-ecran">Rencontres du championnat</div>
+
+          <a class="rc">
+            <div class="rc-haut">
+              <div><div class="rc-date">7 févr. 2026</div><div class="rc-accueil">🏠 CAF Bègles</div></div>
+              <span class="etat venir">À venir</span>
+            </div>
+          </a>
+
+          <a class="rc">
+            <div class="rc-haut">
+              <div><div class="rc-date">17 janv. 2026</div><div class="rc-accueil">🏠 ASPTT Talence</div></div>
+              <span class="etat venir">À venir</span>
+            </div>
+          </a>
+
+          <a class="rc">
+            <div class="rc-haut">
+              <div><div class="rc-date">11 oct. 2025</div><div class="rc-accueil">🏠 Stade Bordelais</div></div>
+              <span class="etat cours">En cours</span>
+            </div>
+            <div class="rc-compteurs">
+              <span class="cpt">🏛️ <span class="n">4</span> clubs</span>
+              <span class="cpt">👥 <span class="n">7</span> équipes</span>
+              <span class="cpt">🧗 <span class="n">96</span> grimpeurs</span>
+            </div>
+          </a>
+
+          <a class="rc">
+            <div class="rc-haut">
+              <div><div class="rc-date">14 juin 2025</div><div class="rc-accueil">🏠 US Cenon</div></div>
+              <span class="etat publie">Publiée</span>
+            </div>
+            <div class="rc-compteurs">
+              <span class="cpt">🏛️ <span class="n">5</span> clubs</span>
+              <span class="cpt">👥 <span class="n">9</span> équipes</span>
+              <span class="cpt">🧗 <span class="n">112</span> grimpeurs</span>
+              <span class="chev" style="margin-left:auto">›</span>
+            </div>
+          </a>
+          <div class="carte-sous" style="text-align:center">Touchez une rencontre pour son détail (résultats si publiée).</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 2 · DÉTAIL — À VENIR ============ -->
+    <section class="colonne">
+      <p class="titre-option">2 · Détail — à venir ① (R5)</p>
+      <p class="desc-option">Pré-compétition : le public ne voit que la date et le club qui reçoit. Aucun compteur, aucun résultat.</p>
+      <div class="tel">
+        <div class="barre-haut">
+          <div class="marque"><span class="logo">I</span><span class="nom">Interclub</span></div>
+          <span class="btn-cnx">Se connecter</span>
+        </div>
+        <div class="corps">
+          <a class="lien-retour">← Toutes les rencontres</a>
+          <div class="tete">
+            <div class="d">7 février 2026</div>
+            <div class="a">🏠 Reçue par <strong>CAF Bègles</strong></div>
+            <span class="etat venir">À venir · pré-compétition</span>
+          </div>
+          <div class="verrou">Engagements et résultats non encore disponibles.<br>Revenez le jour de la rencontre.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 3 · DÉTAIL — EN COURS NON PUBLIÉE ============ -->
+    <section class="colonne">
+      <p class="titre-option">3 · Détail — en cours ②/③/④ (R6)</p>
+      <p class="desc-option">Compétition non publiée : date + accueil + compteurs (clubs/équipes/grimpeurs), mais aucun résultat pour le public.</p>
+      <div class="tel">
+        <div class="barre-haut">
+          <div class="marque"><span class="logo">I</span><span class="nom">Interclub</span></div>
+          <span class="btn-cnx">Se connecter</span>
+        </div>
+        <div class="corps">
+          <a class="lien-retour">← Toutes les rencontres</a>
+          <div class="tete">
+            <div class="d">11 octobre 2025</div>
+            <div class="a">🏠 Reçue par <strong>Stade Bordelais</strong></div>
+            <span class="etat cours">En cours · compétition</span>
+          </div>
+          <div class="compteurs-gr">
+            <div class="box"><div class="v">4</div><div class="l">Clubs</div></div>
+            <div class="box"><div class="v">7</div><div class="l">Équipes</div></div>
+            <div class="box"><div class="v">96</div><div class="l">Grimpeurs</div></div>
+          </div>
+          <div class="note live">Les résultats sont en cours de saisie. Ils seront <strong>publics une fois la rencontre
+            officialisée</strong> (⑤). <br><span style="color:var(--texte-doux)">Les clubs connectés suivent le classement au fil de l'eau.</span></div>
+          <div class="verrou">Classement non disponible publiquement avant publication (R6/R8).</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 4 · DÉTAIL — PUBLIÉE (⑤) ============ -->
+    <section class="colonne">
+      <p class="titre-option">4 · Détail — publiée ⑤ (R7/R9/R10)</p>
+      <p class="desc-option">Classement officiel : individuel séparé Filles/Garçons + par équipe. Pas de classement par club en public.</p>
+      <div class="tel">
+        <div class="barre-haut">
+          <div class="marque"><span class="logo">I</span><span class="nom">Interclub</span></div>
+          <span class="btn-cnx">Se connecter</span>
+        </div>
+        <div class="corps">
+          <a class="lien-retour">← Toutes les rencontres</a>
+          <div class="tete">
+            <div class="d">14 juin 2025</div>
+            <div class="a">🏠 Reçue par <strong>US Cenon</strong> · 5 clubs · 112 grimpeurs</div>
+            <span class="etat publie">Publiée · résultats officiels</span>
+          </div>
+
+          <div class="tabs">
+            <button class="actif">Individuel</button>
+            <button>Par équipe</button>
+          </div>
+          <div class="tabs sous-tabs">
+            <button class="actif">Filles</button>
+            <button>Garçons</button>
+          </div>
+
+          <div class="carte">
+            <div class="carte-entete">
+              <span class="carte-titre">Individuel — Filles</span>
+              <span class="officiel">✓ Officiel</span>
+            </div>
+            <table class="clsmt">
+              <thead><tr><th>#</th><th>Grimpeuse</th><th class="pts">Score</th></tr></thead>
+              <tbody>
+                <tr><td class="rang p1">1</td><td class="nom">Léa Martin <span class="club">CAF Bègles</span></td><td class="pts">28<span class="u">pts</span></td></tr>
+                <tr><td class="rang p2">2</td><td class="nom">Jade Lopez <span class="club">ASPTT Talence</span></td><td class="pts">27<span class="u">pts</span></td></tr>
+                <tr><td class="rang p3">3</td><td class="nom">Chloé Perez <span class="club">Stade Bordelais</span></td><td class="pts">26<span class="u">pts</span></td></tr>
+                <tr><td class="rang">4</td><td class="nom">Anna Vidal <span class="club">ASPTT Talence</span></td><td class="pts">25<span class="u">pts</span></td></tr>
+                <tr><td class="rang">5</td><td class="nom">Manon Faure <span class="club">US Cenon</span></td><td class="pts">24<span class="u">pts</span></td></tr>
+                <tr><td class="rang">6</td><td class="nom">Zoé Blanc <span class="club">ASPTT Talence</span></td><td class="pts">22<span class="u">pts</span></td></tr>
+              </tbody>
+            </table>
+            <div class="pagination">
+              <a class="fleche" aria-disabled="true">‹ Préc.</a>
+              <a class="actif">1</a>
+              <a>2</a>
+              <a>3</a>
+              <span class="gap">…</span>
+              <a>6</a>
+              <a class="fleche">Suiv. ›</a>
+            </div>
+            <div class="page-info">Page 1 sur 6 · grimpeuses 1–6 sur 56</div>
+            <div class="carte-sous">Individuel séparé Filles / Garçons (spec #7 R8b) ; navigation par <strong>pages en bas</strong> (R12b). Le prêté figure sous son club d'origine.</div>
+          </div>
+
+          <div class="note publie">La vue « Par équipe » liste les équipes classées par score. <strong>Aucun classement par club</strong> côté public (R9).</div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <div class="legende">
+    <h2>Correspondance maquettes → règles (spec #8)</h2>
+    <h3>Écran 1 — Liste publique</h3>
+    <ul>
+      <li><strong>R1/R2</strong> — routes <code>/rencontres</code> (liste) et <code>/rencontres/[id]</code> (détail), sans authentification, lecture seule. Accès « Se connecter » conservé.</li>
+      <li><strong>R3</strong> — toutes les rencontres, <strong>date décroissante</strong> (à venir en tête, puis passées) ; liste continue.</li>
+      <li><strong>R4/R5/R6</strong> — date + club d'accueil toujours ; <strong>compteurs</strong> (clubs/équipes/grimpeurs) dès les engagements ; badge d'état.</li>
+    </ul>
+    <h3>Écran 2 — À venir ①</h3>
+    <ul>
+      <li><strong>R5</strong> — pré-compétition : <strong>date + club d'accueil uniquement</strong> ; ni compteurs, ni résultats.</li>
+    </ul>
+    <h3>Écran 3 — En cours ②/③/④ (non publiée)</h3>
+    <ul>
+      <li><strong>R6</strong> — date + accueil + <strong>compteurs</strong>, mais <strong>aucun résultat ni classement</strong> pour le public.</li>
+      <li><strong>R8/R11</strong> — aucun résultat nominatif public avant la ⑤ ; les authentifiés (clubs), eux, suivent au fil de l'eau (spec #1 R8).</li>
+    </ul>
+    <h3>Écran 4 — Publiée ⑤</h3>
+    <ul>
+      <li><strong>R7/R9</strong> — classement <strong>individuel Filles / Garçons</strong> (spec #7 R8b) + <strong>par équipe</strong> ; <strong>pas</strong> de classement par club.</li>
+      <li><strong>R10</strong> — rang / libellé / score, marqués <span class="officiel">✓ Officiel</span> (la ⑤ fige, spec #1 R8) ; longues listes → recherche + <strong>pagination en bas</strong> (spec #7 R12b).</li>
+    </ul>
+    <p style="margin-top:16px;color:var(--texte-doux)">Sécurité (R11 / Contraintes de données) : pages <strong>rendues côté serveur</strong>
+      (<code>service_role</code>), <strong>gating par état dans le loader</strong> — aucune policy RLS ouverte à <code>anon</code>, donc
+      aucun résultat exposé avant la ⑤, quel que soit le chemin d'accès.</p>
+  </div>
+</body>
+</html>
