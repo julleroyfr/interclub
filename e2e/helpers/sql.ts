@@ -102,9 +102,10 @@ export function reinitialiserEngagement(): void {
      delete from interclub.pret where rencontre_id='${RENCONTRE_PILOTE}';
      delete from interclub.equipe
        where rencontre_id='${RENCONTRE_PILOTE}' and id not in ('${A1}','${A2}','${B1}');
-     -- 3. Compositions baseline : A1 = {Ana, Bob}, B1 = {Cléo}.
-     insert into interclub.composition (equipe_id, grimpeur_id) values
-       ('${A1}','${ana}'),('${A1}','${bob}'),('${B1}','${cleo}')
+     -- 3. Compositions baseline : A1 = {Ana (M2), Bob (T1)}, B1 = {Cléo (T2)}.
+     --    Les groupes de départ reflètent le seed (sinon chaque run les efface).
+     insert into interclub.composition (equipe_id, grimpeur_id, groupe_depart) values
+       ('${A1}','${ana}','M2'),('${A1}','${bob}','T1'),('${B1}','${cleo}','T2')
      on conflict (equipe_id, grimpeur_id) do nothing;`,
   )
 }

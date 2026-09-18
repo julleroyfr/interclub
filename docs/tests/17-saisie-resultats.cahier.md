@@ -29,7 +29,8 @@ paliers), et l'équipe **A1** déjà composée avec un **groupe de départ** :
 jouable directement, sans passer par l'admin.
 
 La rencontre **ADO** `adadadad-…-adad` (compétition) est **aussi seedée** — barème
-« Après-midi » : voies **tête T1–T10** avec zones, blocs **B1/B2** à paliers ado
+« Après-midi » : voies **tête T1–T10** (dont un **2ᵉ T5** pour tester le choix
+libre de deux voies de même niveau, R11) avec zones, blocs **B1/B2** à paliers ado
 (Zone / Zone 1 / Zone 2 / Bloc complet), et l'équipe **« Ados A1 »** composée de
 **Nora** et **Owen** (nés 2011, sans groupe de départ : choix libre de 6 voies).
 Les deux parcours sont donc jouables directement, sans passer par l'admin.

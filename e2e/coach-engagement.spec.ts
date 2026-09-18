@@ -95,10 +95,11 @@ test.describe('Cahier 13 — Espace coach : engagement', () => {
     await commeCoach(page)
     await page.goto('/coach')
 
-    // La carte de la rencontre pilote : date + club porteur, badge de phase,
-    // effectif du club, et lien vers l'écran d'engagement.
+    // La carte de la rencontre pilote (enfant) : date + club porteur, badge de
+    // phase, effectif du club, et lien vers l'écran d'engagement. On cible la
+    // catégorie car le seed expose aussi une rencontre ADO Club A du même jour.
     const carte = page.getByRole('link', {
-      name: new RegExp(`19 septembre 2026`),
+      name: /Enfant.*19 septembre 2026/,
     })
     await expect(carte).toBeVisible()
     await expect(carte).toContainText('Club A')
@@ -125,6 +126,24 @@ test.describe('Cahier 13 — Espace coach : engagement', () => {
     const reponseAnonyme = await pageAnonyme.goto('/coach')
     expect(reponseAnonyme?.status()).toBe(404)
     await contexteAnonyme.close()
+  })
+
+  test('CT-14 — En compétition, la carte d’accueil mène à la saisie (R7)', async ({
+    page,
+  }) => {
+    // Exception R7 : en ③, la ligne pointe directement vers l'écran de saisie.
+    poserPhase('competition')
+
+    await commeCoach(page)
+    await page.goto('/coach')
+
+    // Carte enfant (le seed expose aussi une rencontre ADO Club A du même jour).
+    const carte = page.getByRole('link', { name: /Enfant.*19 septembre 2026/ })
+    await expect(carte).toBeVisible()
+    await expect(carte).toHaveAttribute(
+      'href',
+      `/coach/rencontres/${RENCONTRE_PILOTE}/resultats`,
+    )
   })
 
   test('CT-02 — Créer une équipe et composer (R9, R10, R11, R12, R15)', async ({
@@ -286,8 +305,15 @@ test.describe('Cahier 13 — Espace coach : engagement', () => {
     await commeAdmin(page)
     await page.goto('/admin')
 
+    // Le dashboard liste TOUTES les rencontres (le seed expose aussi une ADO
+    // Club A) : on borne les contrôles à la carte du pilote — le <li> qui
+    // contient le lien vers son détail.
+    const cartePilote = page.locator('li', {
+      has: page.locator(`a[href="/admin/rencontres/${RENCONTRE_PILOTE}"]`),
+    })
+
     // Hors jour J, le bouton d'entrée en préparation est désactivé (R5).
-    const boutonPrepa = page.getByRole('button', { name: /Préparation jour J/ })
+    const boutonPrepa = cartePilote.getByRole('button', { name: /Préparation jour J/ })
     await expect(boutonPrepa).toBeDisabled()
 
     // Le jour J, il s'active et l'entrée en préparation est acceptée.
@@ -299,7 +325,7 @@ test.describe('Cahier 13 — Espace coach : engagement', () => {
     // Une fois en préparation, la « suivante » devient Compétition : le bouton
     // d'entrée en préparation disparaît. On attend cette transition avant de lire.
     await expect(boutonPrepa).toHaveCount(0)
-    await expect(page.getByRole('button', { name: /Compétition →/ })).toBeVisible()
+    await expect(cartePilote.getByRole('button', { name: /Compétition →/ })).toBeVisible()
     expect(phaseEnBase()).toBe('preparation')
 
     // Compétition = jour J aussi (R5, rév. 2026-09-02) : en préparation HORS jour
@@ -307,16 +333,16 @@ test.describe('Cahier 13 — Espace coach : engagement', () => {
     poserPhase('preparation')
     poserDate('2026-09-19')
     await page.reload()
-    await expect(page.getByRole('button', { name: /Compétition →/ })).toBeDisabled()
+    await expect(cartePilote.getByRole('button', { name: /Compétition →/ })).toBeDisabled()
 
     // Retour arrière depuis la compétition HORS jour J → pré-compétition (saute la
     // préparation jour-J) : le bouton de retour cible « Pré-compétition ».
     poserPhase('competition')
     await page.reload()
-    const retour = page.getByRole('button', { name: /← Pré-compétition/ })
+    const retour = cartePilote.getByRole('button', { name: /← Pré-compétition/ })
     await expect(retour).toBeVisible()
     await retour.click()
-    await expect(page.getByRole('button', { name: /← Pré-compétition/ })).toHaveCount(0)
+    await expect(cartePilote.getByRole('button', { name: /← Pré-compétition/ })).toHaveCount(0)
     expect(phaseEnBase()).toBe('pre_competition')
   })
   test('CT-07 — Ouverture session QR coach temporaire en préparation (spec #2 R12)', async ({

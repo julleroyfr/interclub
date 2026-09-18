@@ -265,6 +265,20 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
     pas côté coach A.
   - L'écriture sur une équipe d'un autre club est **refusée par la RLS** (R2).
 
+### CT-14 `[auto]` — En ③, la carte d'accueil mène à la saisie   (couvre : R7 ; nominal)
+
+- **Rôle / compte** : `coach@test.local`.
+- **Pré-condition** : phase **`competition`** (jour J).
+- **Étapes** :
+  1. Aller sur `/coach` ; inspecter la carte de la rencontre pilote.
+  2. La suivre.
+- **Résultat attendu** :
+  - La carte pointe vers `…/rencontres/33333333-…/**resultats**` (et non l'écran
+    d'engagement) : le coach arrive **directement sur la saisie** (R7, exception ③).
+  - L'écran d'engagement reste **accessible par URL directe** (consultation figée,
+    cf. CT-10).
+  - Aux autres phases, la carte mène toujours à l'écran d'engagement (CT-01/CT-12).
+
 ## Registre d'exécution
 
 > **Testeur** : `agent/playwright` pour un passage machine, un nom pour un passage
@@ -286,3 +300,4 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
 | 2026-09-04 | agent/playwright | 0a9f8bf | CT-11 | auto | ✅ | gel pré-compétition |
 | 2026-09-04 | agent/playwright | 0a9f8bf | CT-12 | auto | ✅ | composition figée |
 | 2026-09-04 | agent/playwright | 0a9f8bf | CT-13 | auto | ✅ | RLS inter-club |
+| 2026-09-18 | agent/playwright | develop | CT-14 | auto | ✅ | carte → saisie en ③ (R7) |

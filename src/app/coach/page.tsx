@@ -91,11 +91,19 @@ export default async function PageCoach() {
   )
 }
 
-/** Carte-lien d'une rencontre vers son écran d'engagement (R7). */
+/**
+ * Carte-lien d'une rencontre (R7). En ③ compétition, la composition est figée et
+ * la tâche du coach est la saisie : la carte mène directement à l'écran de saisie
+ * des résultats ; aux autres phases, vers l'écran d'engagement.
+ */
 function CarteRencontre({ rencontre: r }: { rencontre: RencontreCoach }) {
+  const href =
+    r.phase === 'competition'
+      ? `/coach/rencontres/${r.id}/resultats`
+      : `/coach/rencontres/${r.id}`
   return (
     <Link
-      href={`/coach/rencontres/${r.id}`}
+      href={href}
       className="block rounded-2xl border border-bordure bg-black/20 p-4 transition hover:bg-surface-forte focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
     >
       <div className="flex items-center justify-between gap-3">

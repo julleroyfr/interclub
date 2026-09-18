@@ -275,7 +275,10 @@ values
   ('adadadad-0000-0000-0000-000000000007', 'adadadad-0000-0000-0000-0000000000a1', 'T7',  'tete', '6c',  7, 16, 13, 14),
   ('adadadad-0000-0000-0000-000000000008', 'adadadad-0000-0000-0000-0000000000a1', 'T8',  'tete', '7a',  8, 18, 15, 16),
   ('adadadad-0000-0000-0000-000000000009', 'adadadad-0000-0000-0000-0000000000a1', 'T9',  'tete', '7b',  9, 20, 17, 18),
-  ('adadadad-0000-0000-0000-000000000010', 'adadadad-0000-0000-0000-0000000000a1', 'T10', 'tete', '7c', 10, 22, 19, 20)
+  ('adadadad-0000-0000-0000-000000000010', 'adadadad-0000-0000-0000-0000000000a1', 'T10', 'tete', '7c', 10, 22, 19, 20),
+  -- 2ᵉ voie de niveau T5 : un même niveau peut être doublé (R11/R37). Permet de
+  -- tester le choix libre de deux voies de MÊME niveau (cahier 17 CT-07).
+  ('adadadad-0000-0000-0000-000000000015', 'adadadad-0000-0000-0000-0000000000a1', 'T5',  'tete', '6a', 11, 12,  9, 10)
 on conflict (id) do nothing;
 
 -- Blocs ado B1/B2 + paliers (Zone / Bloc complet ; Zone 1 / Zone 2 / Bloc complet).

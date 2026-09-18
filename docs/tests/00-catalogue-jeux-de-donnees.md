@@ -61,7 +61,7 @@ Mot de passe des trois comptes permanents : `interclub`.
 | ID | Description | Données (seed) | Utilisé par |
 |----|-------------|----------------|-------------|
 | JD-RENCONTRE-ADO | Rencontre **ado**, Club A, du **19/09/2026**, phase `competition` | `adadadad-adad-…-adad` · épreuves voie `adadadad-…-a1`, bloc `…-a2`, vitesse `…-a3` | 17:CT-07 |
-| JD-STRUCTURE-ADO | 10 voies **tête T1–T10** avec `points_zone1`/`points_zone2` (barème « Après-midi ») | voies `adadadad-…-0001`…`…-0010` sur épreuve `…-a1` | 17:CT-07 |
+| JD-STRUCTURE-ADO | Voies **tête T1–T10** avec `points_zone1`/`points_zone2` (barème « Après-midi ») **+ un 2ᵉ T5** (niveau dupliqué, R11) pour le choix libre de deux voies de même niveau | voies `adadadad-…-0001`…`…-0010` + `…-0015` (T5 bis) sur épreuve `…-a1` | 17:CT-07 |
 | JD-BLOCS-ADO | Blocs ado + paliers : **B1** (Zone=10, Bloc complet=30), **B2** (Zone 1=20, Zone 2=40, Bloc complet=60) | B1 `adadadad-…-b1`, B2 `…-b2` | 17:CT-09 (variante ado) |
 | JD-EQUIPE-ADO | Équipe **« Ados A1 »** (Club A) avec 2 grimpeurs ado (**Nora**, **Owen**, nés 2011) — support du choix libre 6 voies | équipe `adadadad-…-e001` · grimpeurs `adadadad-…-c1`/`…-c2` | 17:CT-07/CT-08 |
 

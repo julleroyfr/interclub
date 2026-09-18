@@ -111,7 +111,12 @@ cette spec. (Spec #1 R6/R27, rév. 2026-09-01.)
   (date, catégorie, club organisateur, **phase** courante) et le **nombre
   d'équipes déjà engagées par le club** pour cette rencontre.
 - **R7.** Depuis chaque ligne, le coach accède à l'**écran d'engagement** de la
-  rencontre (composition des équipes du club pour cette rencontre).
+  rencontre (composition des équipes du club pour cette rencontre). **Exception en
+  ③ compétition** : la composition y étant **figée** (R16/R17) et la tâche du coach
+  étant la **saisie des résultats** (spec #6), la ligne mène **directement à
+  l'écran de saisie des résultats** ; l'écran d'engagement reste **accessible** (URL
+  directe) pour consulter la composition figée. Aux autres phases (①/②/④/⑤), la
+  ligne mène à l'écran d'engagement.
 - **R8.** La liste affiche les rencontres **triées par priorité** : d'abord la
   **préparation** (② jour J, la plus actionnable), puis les **compétitions en
   cours** (③), puis les **pré-compétitions** (①), enfin les rencontres
