@@ -25,14 +25,20 @@ Pour toute nouvelle fonctionnalité ou évolution :
 ```text
 1. SPEC     Rédiger / mettre à jour la spec fonctionnelle détaillée.
             → Validation avant de continuer.
-2. TESTS    Écrire les tests qui encodent la spec. Ils échouent (RED).
-3. CODE     Implémenter le minimum pour faire passer les tests (GREEN).
-4. REFACTOR Nettoyer sans changer le comportement. Tests toujours verts.
-5. VÉRIF    Suite complète verte + revue vis-à-vis de la spec.
+2. MAQUETTE (si écrans) Créer / mettre à jour la ou les maquettes illustrant les
+            écrans décrits par la spec (docs/maquettes/). Support de validation
+            visuelle de la spec, avant d'écrire des tests ou du code.
+3. TESTS    Écrire les tests qui encodent la spec. Ils échouent (RED).
+4. CODE     Implémenter le minimum pour faire passer les tests (GREEN).
+5. REFACTOR Nettoyer sans changer le comportement. Tests toujours verts.
+6. VÉRIF    Suite complète verte + revue vis-à-vis de la spec (et des maquettes).
 ```
 
 Aucune étape n'est sautée. On **n'écrit pas de code sans test**, et on **n'écrit
-pas de test sans spec**.
+pas de test sans spec**. L'étape **MAQUETTE** ne s'applique qu'aux fonctionnalités
+comportant des **écrans** (une spec purement métier/données peut la sauter) ; c'est
+un **support d'illustration de la spec**, pas un niveau de vérité — en cas d'écart,
+**la spec prime** (la maquette est mise à jour, cf. §4).
 
 Le skill [`nouvelle-fonctionnalite`](../../.claude/skills/nouvelle-fonctionnalite/SKILL.md)
 guide ce cycle de bout en bout.
@@ -142,6 +148,26 @@ stateDiagram-v2
 Garder les diagrammes **synchrones avec les règles** : un diagramme qui contredit
 une règle `Rn` est un bug de spec.
 
+### Maquettes — illustrer les écrans d'une spec
+
+Toute spec comportant des **écrans** est illustrée par une ou plusieurs
+**maquettes** dans `docs/maquettes/`, créées à l'**étape 2 du cycle** (§2), après
+validation de la spec et **avant** les tests/le code. Elles servent de **support
+de validation visuelle** de la spec (parcours, états, hiérarchie de l'information)
+et de référence pour l'implémentation IHM.
+
+- **Format** : un fichier **HTML autonome** par spec (styles inline, aucune
+  dépendance externe), nommé d'après le domaine (ex. `espace-coach.html`) et titré
+  avec la **référence de spec** (ex. « Maquettes — Espace Coach (spec #5) »).
+- **Design** : design system **« Nuit »** (mêmes tokens de couleur/typo que
+  l'application) et **mobile-first**, conformément à
+  [`08-ihm-responsive.md`](08-ihm-responsive.md) et au skill
+  [`expertise-ihm-responsive`](../../.claude/skills/expertise-ihm-responsive/SKILL.md).
+- **Traçabilité** : la maquette illustre des **règles `Rn`** de la spec ; elle
+  reste **synchrone** avec elle. Une maquette qui contredit une règle est corrigée
+  (**la spec prime**). Ce n'est **pas** un niveau de vérité (à la différence des
+  specs/tests) : elle n'est ni exécutée ni testée.
+
 ## 5. Traçabilité spec ↔ test
 
 - Nommer les tests d'après les règles/scénarios de la spec.
@@ -154,6 +180,8 @@ une règle `Rn` est un bug de spec.
 Une fonctionnalité est terminée quand :
 
 - [ ] La spec est **validée** (statut `validée`).
+- [ ] **Si la fonctionnalité comporte des écrans** : la ou les **maquettes**
+      (`docs/maquettes/`) sont créées / à jour et **cohérentes avec la spec**.
 - [ ] Chaque règle de la spec est couverte par au moins un test **automatisé
       (Vitest)** ou un **cas de cahier de test** manuel.
 - [ ] Tous les tests automatisés passent.

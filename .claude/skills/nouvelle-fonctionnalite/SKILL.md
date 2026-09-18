@@ -6,7 +6,7 @@ description: Piloter une nouvelle fonctionnalité ou évolution de bout en bout 
 # Nouvelle fonctionnalité (spec-first / TDD)
 
 Conventions de référence : `docs/conventions/`. La spécification est la vérité.
-Ordre non négociable : **spec → tests → implémentation**.
+Ordre non négociable : **spec → (maquette si écrans) → tests → implémentation**.
 
 ## Étape 0 — Cadrer et détecter l'impact
 
@@ -22,6 +22,17 @@ Ordre non négociable : **spec → tests → implémentation**.
 - Rédiger ou compléter la spec avec le skill `rediger-spec`.
 - Chaque règle est atomique, testable, numérotée `Rn`.
 - Faire **valider la spec** (statut `validée`) avant d'écrire des tests.
+
+## Étape 1bis — Maquette (si écrans)
+
+- **Uniquement si la fonctionnalité comporte des écrans** (une spec purement
+  métier/données saute cette étape).
+- Créer / mettre à jour une **maquette HTML autonome** dans `docs/maquettes/`
+  illustrant les écrans de la spec — design **« Nuit »**, **mobile-first** (skill
+  `expertise-ihm-responsive`, convention `08-ihm-responsive.md`).
+- La maquette illustre des règles `Rn` et **reste synchrone** avec la spec ; c'est
+  un **support de validation visuelle**, pas un niveau de vérité (la spec prime).
+  cf. `docs/conventions/01-workflow-spec-first-tdd.md` §2 et §4.
 
 ## Étape 2 — Tests (RED)
 
