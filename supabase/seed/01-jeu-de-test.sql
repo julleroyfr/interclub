@@ -124,6 +124,51 @@ insert into interclub.epreuve (id, rencontre_id, type) values
 on conflict (id) do nothing;
 
 -- ===========================================================================
+-- 5bis. Structure d'épreuve COMPLÈTE (voies de difficulté + blocs + paliers) —
+--    reproduit fidèlement le GABARIT ENFANT (spec #3 R33/R38/R39 ; cf. migrations
+--    202607291000 / 202607311000, barème « Matin ») afin que la SAISIE DES
+--    RÉSULTATS (spec #6) dispose de l'ensemble réel : 4 voies moulinette (M1–M4),
+--    10 voies tête (T1–T10), 2 blocs (B1/B2) et TOUS leurs paliers par essai.
+--    UUID fixes (plage de test), connus des tests RLS (test-t6, test-resultats) et
+--    des cahiers : la voie T1 (…9901), le bloc B1 (…9902) et son palier « 1er
+--    essai » (…99a1) CONSERVENT leurs identifiants historiques. La purge (99-…)
+--    supprime tout par cascade sur les épreuves de la rencontre — rien à lister.
+-- ===========================================================================
+-- Voies de difficulté (épreuve voie 8801) — moulinette M1–M4 puis tête T1–T10.
+insert into interclub.voie_difficulte
+  (id, epreuve_id, niveau, type_voie, cotation, ordre, points, points_prise_valorisee)
+values
+  ('99999999-9999-9999-9999-999999999911', '88888888-8888-8888-8888-888888888801', 'M1',  'moulinette', '4c',  1,  1, null),
+  ('99999999-9999-9999-9999-999999999912', '88888888-8888-8888-8888-888888888801', 'M2',  'moulinette', '5a',  2,  2, null),
+  ('99999999-9999-9999-9999-999999999913', '88888888-8888-8888-8888-888888888801', 'M3',  'moulinette', '5b',  3,  3, null),
+  ('99999999-9999-9999-9999-999999999914', '88888888-8888-8888-8888-888888888801', 'M4',  'moulinette', '5c',  4,  4, null),
+  ('99999999-9999-9999-9999-999999999901', '88888888-8888-8888-8888-888888888801', 'T1',  'tete',       '4c',  5,  5, 3),
+  ('99999999-9999-9999-9999-999999999921', '88888888-8888-8888-8888-888888888801', 'T2',  'tete',       '5a',  6,  6, 3),
+  ('99999999-9999-9999-9999-999999999922', '88888888-8888-8888-8888-888888888801', 'T3',  'tete',       '5b',  7,  7, 4),
+  ('99999999-9999-9999-9999-999999999923', '88888888-8888-8888-8888-888888888801', 'T4',  'tete',       '5c',  8,  8, 4),
+  ('99999999-9999-9999-9999-999999999924', '88888888-8888-8888-8888-888888888801', 'T5',  'tete',       '6a',  9,  9, 5),
+  ('99999999-9999-9999-9999-999999999925', '88888888-8888-8888-8888-888888888801', 'T6',  'tete',       '6b', 10, 10, 5),
+  ('99999999-9999-9999-9999-999999999926', '88888888-8888-8888-8888-888888888801', 'T7',  'tete',       '6c', 11, 11, 6),
+  ('99999999-9999-9999-9999-999999999927', '88888888-8888-8888-8888-888888888801', 'T8',  'tete',       '7a', 12, 12, 6),
+  ('99999999-9999-9999-9999-999999999928', '88888888-8888-8888-8888-888888888801', 'T9',  'tete',       '7b', 13, 13, 7),
+  ('99999999-9999-9999-9999-999999999929', '88888888-8888-8888-8888-888888888801', 'T10', 'tete',       '7c', 14, 14, 8)
+on conflict (id) do nothing;
+
+-- Blocs (épreuve bloc 8802) + paliers par essai (R39). B1 garde son UUID.
+insert into interclub.bloc (id, epreuve_id, code, ordre) values
+  ('99999999-9999-9999-9999-999999999902', '88888888-8888-8888-8888-888888888802', 'B1', 1),
+  ('99999999-9999-9999-9999-999999999903', '88888888-8888-8888-8888-888888888802', 'B2', 2)
+on conflict (id) do nothing;
+
+insert into interclub.bloc_palier (id, bloc_id, libelle, points, ordre) values
+  ('99999999-9999-9999-9999-9999999999a1', '99999999-9999-9999-9999-999999999902', '1er essai', 4, 1),
+  ('99999999-9999-9999-9999-9999999999a2', '99999999-9999-9999-9999-999999999902', '2e essai',  3, 2),
+  ('99999999-9999-9999-9999-9999999999b1', '99999999-9999-9999-9999-999999999903', '1er essai', 6, 1),
+  ('99999999-9999-9999-9999-9999999999b2', '99999999-9999-9999-9999-999999999903', '2e essai',  5, 2),
+  ('99999999-9999-9999-9999-9999999999b3', '99999999-9999-9999-9999-999999999903', '3e essai',  4, 3)
+on conflict (id) do nothing;
+
+-- ===========================================================================
 -- 6. Équipes engagées : deux pour Club A (A1, A2), une pour Club B (B1).
 -- ===========================================================================
 insert into interclub.equipe (id, rencontre_id, club_id, nom) values
@@ -161,11 +206,14 @@ on conflict (id) do nothing;
 -- ===========================================================================
 -- 8. Compositions : gA1+gA2 dans l'équipe A1 ; gB1 dans l'équipe B1.
 --    (A2 reste vide ; gB2 non engagé — matière à prêt dans le cahier.)
+--    `groupe_depart` renseigné (R19/R20) : chaque grimpeur engagé a un NIVEAU
+--    sélectionné → l'enfant enchaîne 3 voies croissantes à partir de son groupe
+--    (M2 → M2·M3·M4, T1 → T1·T2·T3). `rencontre_id` est posé par trigger.
 -- ===========================================================================
-insert into interclub.composition (equipe_id, grimpeur_id) values
-  ('66666666-6666-6666-6666-666666666666', 'a0000000-0000-0000-0000-0000000000a1'),
-  ('66666666-6666-6666-6666-666666666666', 'a0000000-0000-0000-0000-0000000000a2'),
-  ('77777777-7777-7777-7777-777777777777', 'b0000000-0000-0000-0000-0000000000b1')
+insert into interclub.composition (equipe_id, grimpeur_id, groupe_depart) values
+  ('66666666-6666-6666-6666-666666666666', 'a0000000-0000-0000-0000-0000000000a1', 'M2'),
+  ('66666666-6666-6666-6666-666666666666', 'a0000000-0000-0000-0000-0000000000a2', 'T1'),
+  ('77777777-7777-7777-7777-777777777777', 'b0000000-0000-0000-0000-0000000000b1', 'T2')
 on conflict (equipe_id, grimpeur_id) do nothing;
 
 -- ===========================================================================
@@ -185,3 +233,78 @@ on conflict (id) do nothing;
 
 -- Les résultats (voie/bloc) et temps de vitesse sont saisis PENDANT le cahier
 -- (phase ② compétition) — non seedés ici pour partir d'un état « avant saisie ».
+
+-- ===========================================================================
+-- 10. Rencontre ADO (Club A, compétition) — jeu de test complémentaire.
+--     La catégorie ado change le FORMAT : voies tête T1–T10 avec ZONES (z1/z2,
+--     R12), pas de moulinette ni de prise valorisée ; blocs à paliers ado
+--     (Zone / Zone 1 / Zone 2 / Bloc complet, R39) ; saisie en CHOIX LIBRE de 6
+--     voies (R11/R14, pas de groupe de départ). Barème « Après-midi » du gabarit
+--     (cf. migrations 202607291000 / 202607311000). Famille d'UUID `adadadad…`
+--     (reconnaissable). Purge : voir 99-… (ajoutée à la plage supprimée).
+-- ===========================================================================
+insert into interclub.rencontre (id, date_rencontre, club_porteur_id, categorie, phase)
+values (
+  'adadadad-adad-adad-adad-adadadadadad', '2026-09-19',
+  '11111111-1111-1111-1111-111111111111', 'ado', 'competition'
+)
+on conflict (id) do nothing;
+
+insert into interclub.epreuve (id, rencontre_id, type) values
+  ('adadadad-0000-0000-0000-0000000000a1', 'adadadad-adad-adad-adad-adadadadadad', 'voie'),
+  ('adadadad-0000-0000-0000-0000000000a2', 'adadadad-adad-adad-adad-adadadadadad', 'bloc'),
+  ('adadadad-0000-0000-0000-0000000000a3', 'adadadad-adad-adad-adad-adadadadadad', 'vitesse')
+on conflict (id) do nothing;
+
+-- Voies de vitesse (Filles / Garçons).
+insert into interclub.voie_vitesse (id, rencontre_id, numero, libelle) values
+  ('adadadad-0000-0000-0000-0000000000f1', 'adadadad-adad-adad-adad-adadadadadad', 1, 'Filles'),
+  ('adadadad-0000-0000-0000-0000000000f2', 'adadadad-adad-adad-adad-adadadadadad', 2, 'Garçons')
+on conflict (id) do nothing;
+
+-- Voies de difficulté ado : tête T1–T10 (zones z1/z2, barème « Après-midi »).
+insert into interclub.voie_difficulte
+  (id, epreuve_id, niveau, type_voie, cotation, ordre, points, points_zone1, points_zone2)
+values
+  ('adadadad-0000-0000-0000-000000000001', 'adadadad-0000-0000-0000-0000000000a1', 'T1',  'tete', '4c',  1,  4,  1,  2),
+  ('adadadad-0000-0000-0000-000000000002', 'adadadad-0000-0000-0000-0000000000a1', 'T2',  'tete', '5a',  2,  6,  3,  4),
+  ('adadadad-0000-0000-0000-000000000003', 'adadadad-0000-0000-0000-0000000000a1', 'T3',  'tete', '5b',  3,  8,  5,  6),
+  ('adadadad-0000-0000-0000-000000000004', 'adadadad-0000-0000-0000-0000000000a1', 'T4',  'tete', '5c',  4, 10,  7,  8),
+  ('adadadad-0000-0000-0000-000000000005', 'adadadad-0000-0000-0000-0000000000a1', 'T5',  'tete', '6a',  5, 12,  9, 10),
+  ('adadadad-0000-0000-0000-000000000006', 'adadadad-0000-0000-0000-0000000000a1', 'T6',  'tete', '6b',  6, 14, 11, 12),
+  ('adadadad-0000-0000-0000-000000000007', 'adadadad-0000-0000-0000-0000000000a1', 'T7',  'tete', '6c',  7, 16, 13, 14),
+  ('adadadad-0000-0000-0000-000000000008', 'adadadad-0000-0000-0000-0000000000a1', 'T8',  'tete', '7a',  8, 18, 15, 16),
+  ('adadadad-0000-0000-0000-000000000009', 'adadadad-0000-0000-0000-0000000000a1', 'T9',  'tete', '7b',  9, 20, 17, 18),
+  ('adadadad-0000-0000-0000-000000000010', 'adadadad-0000-0000-0000-0000000000a1', 'T10', 'tete', '7c', 10, 22, 19, 20)
+on conflict (id) do nothing;
+
+-- Blocs ado B1/B2 + paliers (Zone / Bloc complet ; Zone 1 / Zone 2 / Bloc complet).
+insert into interclub.bloc (id, epreuve_id, code, ordre) values
+  ('adadadad-0000-0000-0000-0000000000b1', 'adadadad-0000-0000-0000-0000000000a2', 'B1', 1),
+  ('adadadad-0000-0000-0000-0000000000b2', 'adadadad-0000-0000-0000-0000000000a2', 'B2', 2)
+on conflict (id) do nothing;
+
+insert into interclub.bloc_palier (id, bloc_id, libelle, points, ordre) values
+  ('adadadad-0000-0000-0000-00000000b101', 'adadadad-0000-0000-0000-0000000000b1', 'Zone',         10, 1),
+  ('adadadad-0000-0000-0000-00000000b102', 'adadadad-0000-0000-0000-0000000000b1', 'Bloc complet', 30, 2),
+  ('adadadad-0000-0000-0000-00000000b201', 'adadadad-0000-0000-0000-0000000000b2', 'Zone 1',        20, 1),
+  ('adadadad-0000-0000-0000-00000000b202', 'adadadad-0000-0000-0000-0000000000b2', 'Zone 2',        40, 2),
+  ('adadadad-0000-0000-0000-00000000b203', 'adadadad-0000-0000-0000-0000000000b2', 'Bloc complet',  60, 3)
+on conflict (id) do nothing;
+
+-- Grimpeurs ADO Club A (nés vers 2011) — distincts du pool enfant.
+insert into interclub.grimpeur (id, club_id, nom, prenom, annee_naissance) values
+  ('adadadad-0000-0000-0000-0000000000c1', '11111111-1111-1111-1111-111111111111', 'Delta', 'Nora', 2011),
+  ('adadadad-0000-0000-0000-0000000000c2', '11111111-1111-1111-1111-111111111111', 'Delta', 'Owen', 2011)
+on conflict (id) do nothing;
+
+-- Équipe ado « Ados A1 » + composition (choix libre → pas de groupe_depart).
+insert into interclub.equipe (id, rencontre_id, club_id, nom) values
+  ('adadadad-0000-0000-0000-00000000e001', 'adadadad-adad-adad-adad-adadadadadad',
+   '11111111-1111-1111-1111-111111111111', 'Ados A1')
+on conflict (id) do nothing;
+
+insert into interclub.composition (equipe_id, grimpeur_id) values
+  ('adadadad-0000-0000-0000-00000000e001', 'adadadad-0000-0000-0000-0000000000c1'),
+  ('adadadad-0000-0000-0000-00000000e001', 'adadadad-0000-0000-0000-0000000000c2')
+on conflict (equipe_id, grimpeur_id) do nothing;

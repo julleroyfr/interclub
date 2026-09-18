@@ -12,7 +12,7 @@
 -- Cycle « rejouer un cahier » : exécuter cette purge, puis `01-jeu-de-test.sql`.
 
 -- Constantes de test (rappel) :
---   Rencontre 33333333-3333-3333-3333-333333333333
+--   Rencontre 33333333-… (enfant) · adadadad-… (ado)
 --   Clubs     11111111-… (A) · 22222222-… (B)
 --   Comptes   aaaaaaaa-… · cccccccc-… · 55555555-5555-…-555555555555
 
@@ -27,29 +27,39 @@ delete from auth.users u
      select s.utilisateur_id
        from interclub.session_qr s
        join interclub.jeton_qr j on j.id = s.jeton_qr_id
-      where j.rencontre_id = '33333333-3333-3333-3333-333333333333'
+      where j.rencontre_id in ('33333333-3333-3333-3333-333333333333', 'adadadad-adad-adad-adad-adadadadadad')
    );
 
 -- 2. Saisies (feuilles) rattachées aux épreuves de la rencontre de test.
 delete from interclub.temps_vitesse
- where epreuve_id in (select id from interclub.epreuve where rencontre_id = '33333333-3333-3333-3333-333333333333');
-delete from interclub.resultat
- where epreuve_id in (select id from interclub.epreuve where rencontre_id = '33333333-3333-3333-3333-333333333333');
+ where epreuve_id in (select id from interclub.epreuve where rencontre_id in ('33333333-3333-3333-3333-333333333333', 'adadadad-adad-adad-adad-adadadadadad'));
+delete from interclub.resultat_voie
+ where voie_difficulte_id in (
+   select vd.id from interclub.voie_difficulte vd
+   join interclub.epreuve e on e.id = vd.epreuve_id
+   where e.rencontre_id in ('33333333-3333-3333-3333-333333333333', 'adadadad-adad-adad-adad-adadadadadad')
+ );
+delete from interclub.resultat_bloc
+ where bloc_id in (
+   select b.id from interclub.bloc b
+   join interclub.epreuve e on e.id = b.epreuve_id
+   where e.rencontre_id in ('33333333-3333-3333-3333-333333333333', 'adadadad-adad-adad-adad-adadadadadad')
+ );
 
 -- 3. Compositions des équipes de la rencontre de test.
 delete from interclub.composition
- where equipe_id in (select id from interclub.equipe where rencontre_id = '33333333-3333-3333-3333-333333333333');
+ where equipe_id in (select id from interclub.equipe where rencontre_id in ('33333333-3333-3333-3333-333333333333', 'adadadad-adad-adad-adad-adadadadadad'));
 
 -- 4. Sessions QR puis jetons de la rencontre de test.
 delete from interclub.session_qr
- where jeton_qr_id in (select id from interclub.jeton_qr where rencontre_id = '33333333-3333-3333-3333-333333333333');
-delete from interclub.jeton_qr where rencontre_id = '33333333-3333-3333-3333-333333333333';
+ where jeton_qr_id in (select id from interclub.jeton_qr where rencontre_id in ('33333333-3333-3333-3333-333333333333', 'adadadad-adad-adad-adad-adadadadadad'));
+delete from interclub.jeton_qr where rencontre_id in ('33333333-3333-3333-3333-333333333333', 'adadadad-adad-adad-adad-adadadadadad');
 
 -- 5. Équipes, épreuves, voies, puis la rencontre.
-delete from interclub.equipe       where rencontre_id = '33333333-3333-3333-3333-333333333333';
-delete from interclub.epreuve      where rencontre_id = '33333333-3333-3333-3333-333333333333';
-delete from interclub.voie_vitesse where rencontre_id = '33333333-3333-3333-3333-333333333333';
-delete from interclub.rencontre    where id = '33333333-3333-3333-3333-333333333333';
+delete from interclub.equipe       where rencontre_id in ('33333333-3333-3333-3333-333333333333', 'adadadad-adad-adad-adad-adadadadadad');
+delete from interclub.epreuve      where rencontre_id in ('33333333-3333-3333-3333-333333333333', 'adadadad-adad-adad-adad-adadadadadad');
+delete from interclub.voie_vitesse where rencontre_id in ('33333333-3333-3333-3333-333333333333', 'adadadad-adad-adad-adad-adadadadadad');
+delete from interclub.rencontre    where id in ('33333333-3333-3333-3333-333333333333', 'adadadad-adad-adad-adad-adadadadadad');
 
 -- 6. Grimpeurs des clubs de test.
 delete from interclub.grimpeur

@@ -8,6 +8,7 @@ description: Générer ou mettre à jour un cahier de test manuel (docs/tests/) 
 Contexte : **pas de Docker ni de CLI Supabase**. Tout ce qui touche la base
 réelle est validé à la main via un cahier. Règles :
 `docs/conventions/06-cahier-de-test.md`. Modèle : `docs/tests/MODELE.cahier.md`.
+Catalogue des jeux de données réutilisables : `docs/tests/00-catalogue-jeux-de-donnees.md`.
 
 ## Entrée
 
@@ -24,7 +25,10 @@ Une **spec validée** (`docs/specs/<spec>.md`). Le cahier en découle directemen
 
 1. Copier `docs/tests/MODELE.cahier.md` en `docs/tests/<domaine>.cahier.md`.
 2. Renseigner **spec de référence**, **pré-requis**, **environnement**.
-3. Définir le **jeu de données initial** (rejouable à l'identique).
+3. Définir le **jeu de données initial** (rejouable à l'identique) : d'abord
+   **réutiliser** les jeux `JD-xxx` du catalogue
+   (`docs/tests/00-catalogue-jeux-de-donnees.md`) au lieu d'en redéfinir ;
+   n'ajouter au seed qu'une donnée réellement nouvelle et durable.
 4. Lister les **comptes de test par rôle** (capitaine, arbitre, admin…) pour
    pouvoir vérifier les policies RLS.
 5. Pour **chaque scénario** de la spec et **chaque règle d'accès** :
@@ -32,6 +36,9 @@ Une **spec validée** (`docs/specs/<spec>.md`). Le cahier en découle directemen
    - étapes numérotées, **résultat attendu observable et non ambigu** ;
    - ajouter le **négatif** : ce qu'un autre rôle NE doit PAS pouvoir faire/voir.
 6. Préparer le **registre d'exécution** (date, testeur, commit, résultat).
+7. **Mettre à jour le catalogue** (`00-catalogue-jeux-de-donnees.md`) : pour chaque
+   `JD-xxx` consommé, reporter le CT dans **Utilisé par** ; créer l'entrée `JD-xxx`
+   de toute donnée seed nouvelle et réutilisable.
 
 ## Qualité
 
