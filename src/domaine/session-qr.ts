@@ -63,10 +63,13 @@ export function interpreterResultatScan(data: unknown): ResultatScan {
 }
 
 /**
- * Retourne le chemin de redirection après ouverture de session (R10, R11) :
- * coach temporaire → `/coach`, juge → `/juge`.
+ * Retourne le chemin de redirection après ouverture de session. Le coach
+ * temporaire est mené **directement à sa rencontre** (spec #5 R8bis : session
+ * bornée à une seule rencontre, pas de liste) ; le juge va à `/juge`.
  */
-export function urlDeRedirection(nature: NatureJeton): string {
-  if (nature === 'coach_temporaire') return '/coach'
+export function urlDeRedirection(resultat: ResultatScan): string {
+  if (resultat.nature === 'coach_temporaire') {
+    return `/coach/rencontres/${resultat.rencontreId}`
+  }
   return '/juge'
 }

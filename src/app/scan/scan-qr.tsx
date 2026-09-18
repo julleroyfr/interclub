@@ -62,7 +62,7 @@ export function ScanQr() {
       try {
         const resultat = interpreterResultatScan(data)
         setEtat({ type: 'succes' })
-        router.replace(urlDeRedirection(resultat.nature))
+        router.replace(urlDeRedirection(resultat))
       } catch {
         setEtat({ type: 'erreur', message: 'Résultat inattendu du serveur.' })
       }

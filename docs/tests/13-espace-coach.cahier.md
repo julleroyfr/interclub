@@ -184,9 +184,9 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
 - **Étapes** :
   1. Ouvrir `http://localhost:3011/scan?jeton=aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa`.
 - **Résultat attendu** :
-  - La page `/scan` affiche « Session ouverte — redirection… » puis redirige vers
-    `/coach` (auparavant refusé hors compétition ; désormais la fenêtre coach temp.
-    couvre **préparation + compétition**, R12).
+  - La page `/scan` affiche « Session ouverte — redirection… » puis redirige
+    **directement vers sa rencontre** `…/rencontres/33333333-…` (spec #5 R8bis —
+    pas la liste ; la fenêtre coach temp. couvre **préparation + compétition**, R12).
   - Une ligne est créée dans `interclub.session_qr`.
 - **RLS / sécurité** : scanner le **jeton juge**
   (`bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb`) en **préparation** → **refusé**

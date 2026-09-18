@@ -379,10 +379,11 @@ test.describe('Cahier 13 — Espace coach : engagement', () => {
 
     // Navigateur anonyme (contexte vierge) : scan du QR coach temporaire.
     await page.goto(`/scan?jeton=${JETON.coachTemp}`)
-    // Session ouverte → redirection vers /coach (fenêtre coach temp = préparation
-    // + compétition, R12) ; l'espace coach s'affiche (session temp valide).
-    await page.waitForURL('**/coach')
-    await expect(page.getByRole('heading', { name: 'Mes rencontres' })).toBeVisible()
+    // Session ouverte → redirection DIRECTE vers sa rencontre (spec #5 R8bis ;
+    // fenêtre coach temp = préparation + compétition, R12), pas vers la liste.
+    await page.waitForURL(`**/coach/rencontres/${RENCONTRE_PILOTE}`)
+    // Le titre inclut le club porteur (la date = aujourd'hui via poserDate).
+    await expect(page.getByRole('heading', { name: /Club A/ })).toBeVisible()
     expect(compterSessionsQr()).toBeGreaterThanOrEqual(1)
 
     // Négatif : le QR juge n'est PAS ouvert en préparation (fenêtre juge =

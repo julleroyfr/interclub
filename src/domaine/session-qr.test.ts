@@ -92,11 +92,25 @@ describe('interpreterResultatScan', () => {
 // urlDeRedirection — chemin cible après ouverture de session (R10, R11)
 // ---------------------------------------------------------------------------
 describe('urlDeRedirection', () => {
-  it('redirige un coach temporaire vers /coach (R10)', () => {
-    expect(urlDeRedirection('coach_temporaire')).toBe('/coach')
+  it('redirige un coach temporaire DIRECTEMENT vers sa rencontre (spec #5 R8bis)', () => {
+    expect(
+      urlDeRedirection({
+        nature: 'coach_temporaire',
+        clubId: '11111111-1111-1111-1111-111111111111',
+        voieVitesseId: null,
+        rencontreId: '33333333-3333-3333-3333-333333333333',
+      }),
+    ).toBe('/coach/rencontres/33333333-3333-3333-3333-333333333333')
   })
 
   it('redirige un juge vers /juge (R11)', () => {
-    expect(urlDeRedirection('juge')).toBe('/juge')
+    expect(
+      urlDeRedirection({
+        nature: 'juge',
+        clubId: null,
+        voieVitesseId: '44444444-4444-4444-4444-444444444444',
+        rencontreId: '33333333-3333-3333-3333-333333333333',
+      }),
+    ).toBe('/juge')
   })
 })

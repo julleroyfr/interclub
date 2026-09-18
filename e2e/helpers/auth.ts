@@ -28,5 +28,6 @@ export const commeSansMapping = (page: Page) => seConnecter(page, COMPTES.sansMa
  */
 export async function commeCoachTemporaire(page: Page): Promise<void> {
   await page.goto(`/scan?jeton=${JETON.coachTemp}`)
-  await page.waitForURL('**/coach')
+  // Le scan mène directement à SA rencontre (spec #5 R8bis), pas à la liste.
+  await page.waitForURL('**/coach/rencontres/**')
 }

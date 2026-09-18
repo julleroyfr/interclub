@@ -57,7 +57,8 @@ Seeds `01`, `02`, `03` appliqués via `supabase db reset` :
 - **Résultat attendu** :
   - La page `/scan` affiche « Connexion en cours… » puis « Session ouverte —
     redirection… ».
-  - L'app redirige vers `/coach`.
+  - L'app redirige **directement vers sa rencontre** `…/coach/rencontres/<id>`
+    (coach temporaire borné à une seule rencontre, spec #5 R8bis).
   - Dans `auth.users` : un nouvel utilisateur **anonyme** est créé.
   - Dans `interclub.session_qr` : une ligne lie cet utilisateur au jeton.
 - **RLS / sécurité** : un utilisateur sans jeton ne peut pas insérer directement

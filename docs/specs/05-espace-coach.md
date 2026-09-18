@@ -132,7 +132,9 @@ cette spec. (Spec #1 R6/R27, rév. 2026-09-01.)
   seule rencontre** (spec #1 R27/R28), l'espace coach est **limité à cette
   rencontre** : la navigation **ne propose pas** la liste « Mes rencontres »
   (notion multi-rencontres sans objet pour lui) mais un **accès direct à sa
-  rencontre**. Le coach **permanent** conserve la liste (R6).
+  rencontre**. En particulier, l'**arrivée après scan** du QR (spec #2 R10) le
+  mène **directement à sa rencontre**, sans passer par la liste. Le coach
+  **permanent** conserve la liste (R6).
 
 ### Écran d'engagement — équipes du club pour une rencontre
 
