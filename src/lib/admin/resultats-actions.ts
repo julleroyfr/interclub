@@ -12,58 +12,40 @@ import {
   validerResultatBloc,
   verifierAjoutVoieAdo,
 } from '@/domaine/resultat'
-import { type ContexteCoach, getContexteCoach } from '@/lib/auth/session'
+import { getUtilisateurCourant } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
 
-// Saisie des résultats voie/bloc par le coach (spec #6). Chaque action revérifie
-// le contexte coach, la phase (③ compétition, R5/R7) et le périmètre du coach
-// temporaire ; le domaine valide l'issue (R10/R12/R16), le plafond et l'unicité
-// ado (R11/R13/R14). La RLS (peut_ecrire_resultat_voie/_bloc) reste la frontière
-// ultime (périmètre-club via composition, prêté inclus R36).
+// Saisie / correction des résultats voie/bloc par l'ADMIN (spec #9). L'admin agit
+// sur TOUT grimpeur, tous clubs (R2), en ③ compétition (saisie de plein droit) OU
+// ④ clôture (correction, R5). Le gating de phase est porté ICI ; l'écriture passe
+// par la branche est_admin() de la RLS resultat_* (frontière ultime). Le domaine
+// valide l'issue (R7 = spec #6 R10/R12/R16), le plafond et l'unicité ado. L'auteur
+// (admin) est tracé (R14).
 
 /** Client Supabase du projet (schéma `interclub`). */
 type Client = Awaited<ReturnType<typeof createClient>>
 
 export type EtatSaisie = { erreur?: string; succes?: string } | undefined
 
-/**
- * Id de l'utilisateur auth courant, pour tracer l'auteur d'une écriture (spec #9
- * R14). Couvre le coach permanent ET temporaire (session anonyme). `null` si non
- * résolu (l'écriture reste possible, auteur inconnu).
- */
-async function idUtilisateurAuth(supabase: Client): Promise<string | null> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  return user?.id ?? null
+/** Phases où l'admin peut saisir/corriger un résultat (R5). */
+const PHASES_ECRITURE_ADMIN: Phase[] = ['competition', 'cloture']
+
+/** Vérifie le rôle admin ; renvoie son id auth, ou un état d'erreur. */
+async function exigerAdmin(): Promise<{ utilisateurId: string } | { erreur: string }> {
+  const u = await getUtilisateurCourant()
+  if (u?.role !== 'admin') {
+    return { erreur: 'Action réservée à un administrateur.' }
+  }
+  return { utilisateurId: u.id }
 }
 
-/** Vérifie le contexte coach et renvoie son club + contexte, ou un état d'erreur. */
-async function exigerCoachClub(): Promise<
-  { clubId: string; contexte: ContexteCoach } | { erreur: string }
-> {
-  const contexte = await getContexteCoach()
-  if (!contexte) {
-    return { erreur: 'Action réservée à un coach (compte rattaché à un club ou session QR active).' }
-  }
-  return { clubId: contexte.clubId, contexte }
-}
-
-/**
- * Refuse la saisie hors de la fenêtre autorisée : phase ③ compétition (R5/R7) ;
- * un coach temporaire est borné à SA rencontre (session du jour). Renvoie un état
- * d'erreur, ou `null` si la saisie est permise pour ce contexte.
- */
-function refuserSiHorsSaisie(
-  contexte: ContexteCoach,
-  rencontreId: string,
-  phase: Phase,
-): EtatSaisie | null {
-  if (phase !== 'competition') {
-    return { erreur: "La saisie des résultats n'est ouverte qu'en phase compétition (R5)." }
-  }
-  if (contexte.type === 'temporaire' && contexte.rencontreId !== rencontreId) {
-    return { erreur: 'Votre session QR ne couvre pas cette rencontre.' }
+/** Refuse l'écriture hors de la fenêtre admin (③ compétition ou ④ clôture, R5). */
+function refuserSiHorsFenetre(phase: Phase): EtatSaisie | null {
+  if (!PHASES_ECRITURE_ADMIN.includes(phase)) {
+    return {
+      erreur:
+        "La saisie admin n'est possible qu'en compétition (③) ou clôture (④) (R5).",
+    }
   }
   return null
 }
@@ -71,12 +53,12 @@ function refuserSiHorsSaisie(
 /** Traduit un refus d'écriture (RLS) ou une erreur base en message lisible (R4). */
 function messageEcriture(code: string | undefined): string {
   if (code === '42501') {
-    return 'Saisie non autorisée : hors compétition, ou grimpeur hors de votre club.'
+    return 'Écriture non autorisée : rôle ou phase invalide.'
   }
   return 'La saisie a échoué. Réessayez.'
 }
 
-/** Contexte d'une voie de difficulté : rencontre, épreuve, catégorie, phase, type. */
+/** Contexte d'une voie : rencontre, épreuve, catégorie, phase, type de voie. */
 async function chargerContexteVoie(
   supabase: Client,
   voieId: string,
@@ -138,17 +120,16 @@ async function chargerContexteBloc(
 }
 
 /**
- * Enregistre (ou corrige) l'issue d'un grimpeur sur une voie de difficulté
- * (R8/R10/R12). Correction = remplacement (une seule issue par voie, R13). Pour
- * l'ado, contrôle le plafond de 6 et l'unicité à l'AJOUT d'une nouvelle voie
- * (R11/R14).
+ * Enregistre / corrige l'issue d'un grimpeur (tout club) sur une voie (R2/R5/R7).
+ * Correction = remplacement (une seule issue par voie). Ado : plafond 6 + unicité
+ * à l'ajout d'une nouvelle voie. Trace l'auteur admin (R14).
  */
-export async function saisirResultatVoie(
+export async function saisirResultatVoieAdmin(
   _etat: EtatSaisie,
   formData: FormData,
 ): Promise<EtatSaisie> {
-  const coach = await exigerCoachClub()
-  if ('erreur' in coach) return coach
+  const admin = await exigerAdmin()
+  if ('erreur' in admin) return admin
 
   const voieId = String(formData.get('voieDifficulteId') ?? '')
   const grimpeurId = String(formData.get('grimpeurId') ?? '')
@@ -158,7 +139,7 @@ export async function saisirResultatVoie(
   const supabase = await createClient()
   const ctx = await chargerContexteVoie(supabase, voieId)
   if (!ctx) return { erreur: 'Voie introuvable.' }
-  const refus = refuserSiHorsSaisie(coach.contexte, ctx.rencontreId, ctx.phase)
+  const refus = refuserSiHorsFenetre(ctx.phase)
   if (refus) return refus
 
   try {
@@ -168,8 +149,7 @@ export async function saisirResultatVoie(
     throw e
   }
 
-  // Ado : plafond 6 + unicité, uniquement quand on AJOUTE une voie non encore
-  // saisie (une correction sur une voie déjà saisie est un remplacement, R13).
+  // Ado : plafond 6 + unicité, uniquement à l'AJOUT d'une voie non encore saisie.
   if (ctx.categorie === 'ado') {
     const { data: voiesEp } = await supabase
       .from('voie_difficulte')
@@ -192,34 +172,32 @@ export async function saisirResultatVoie(
     }
   }
 
-  const { error } = await supabase
-    .from('resultat_voie')
-    .upsert(
-      {
-        voie_difficulte_id: voieId,
-        grimpeur_id: grimpeurId,
-        issue,
-        auteur_utilisateur_id: await idUtilisateurAuth(supabase),
-        auteur_role: 'coach',
-      },
-      { onConflict: 'voie_difficulte_id,grimpeur_id' },
-    )
+  const { error } = await supabase.from('resultat_voie').upsert(
+    {
+      voie_difficulte_id: voieId,
+      grimpeur_id: grimpeurId,
+      issue,
+      auteur_utilisateur_id: admin.utilisateurId,
+      auteur_role: 'admin',
+    },
+    { onConflict: 'voie_difficulte_id,grimpeur_id' },
+  )
   if (error) return { erreur: messageEcriture(error.code) }
 
-  revalidatePath(`/coach/rencontres/${ctx.rencontreId}/resultats`)
+  revalidatePath(`/admin/rencontres/${ctx.rencontreId}/resultats`)
   return { succes: 'Résultat enregistré.' }
 }
 
 /**
- * Enregistre (ou corrige) l'issue d'un grimpeur sur un bloc (R15/R16/R17) :
- * palier atteint (parmi les paliers du bloc) ou échec. Correction = remplacement.
+ * Enregistre / corrige l'issue d'un grimpeur (tout club) sur un bloc (R2/R5/R7) :
+ * palier atteint (parmi les paliers du bloc) ou échec. Trace l'auteur admin (R14).
  */
-export async function saisirResultatBloc(
+export async function saisirResultatBlocAdmin(
   _etat: EtatSaisie,
   formData: FormData,
 ): Promise<EtatSaisie> {
-  const coach = await exigerCoachClub()
-  if ('erreur' in coach) return coach
+  const admin = await exigerAdmin()
+  if ('erreur' in admin) return admin
 
   const blocId = String(formData.get('blocId') ?? '')
   const grimpeurId = String(formData.get('grimpeurId') ?? '')
@@ -231,7 +209,7 @@ export async function saisirResultatBloc(
   const supabase = await createClient()
   const ctx = await chargerContexteBloc(supabase, blocId)
   if (!ctx) return { erreur: 'Bloc introuvable.' }
-  const refus = refuserSiHorsSaisie(coach.contexte, ctx.rencontreId, ctx.phase)
+  const refus = refuserSiHorsFenetre(ctx.phase)
   if (refus) return refus
 
   const { data: paliers } = await supabase
@@ -247,35 +225,33 @@ export async function saisirResultatBloc(
     throw e
   }
 
-  const { error } = await supabase
-    .from('resultat_bloc')
-    .upsert(
-      {
-        bloc_id: blocId,
-        grimpeur_id: grimpeurId,
-        issue,
-        palier_id: issue === 'palier' ? palierId : null,
-        auteur_utilisateur_id: await idUtilisateurAuth(supabase),
-        auteur_role: 'coach',
-      },
-      { onConflict: 'bloc_id,grimpeur_id' },
-    )
+  const { error } = await supabase.from('resultat_bloc').upsert(
+    {
+      bloc_id: blocId,
+      grimpeur_id: grimpeurId,
+      issue,
+      palier_id: issue === 'palier' ? palierId : null,
+      auteur_utilisateur_id: admin.utilisateurId,
+      auteur_role: 'admin',
+    },
+    { onConflict: 'bloc_id,grimpeur_id' },
+  )
   if (error) return { erreur: messageEcriture(error.code) }
 
-  revalidatePath(`/coach/rencontres/${ctx.rencontreId}/resultats`)
+  revalidatePath(`/admin/rencontres/${ctx.rencontreId}/resultats`)
   return { succes: 'Résultat enregistré.' }
 }
 
 /**
- * Retire le résultat d'un grimpeur sur une voie (utile en ado pour libérer un des
- * 6 emplacements, R11/R14). Bornée à la ③ compétition et au périmètre coach.
+ * Retire le résultat d'un grimpeur sur une voie (ado : libère un des 6 emplacements).
+ * Réservé à l'admin, en ③/④ (R5).
  */
-export async function retirerResultatVoie(
+export async function retirerResultatVoieAdmin(
   _etat: EtatSaisie,
   formData: FormData,
 ): Promise<EtatSaisie> {
-  const coach = await exigerCoachClub()
-  if ('erreur' in coach) return coach
+  const admin = await exigerAdmin()
+  if ('erreur' in admin) return admin
 
   const voieId = String(formData.get('voieDifficulteId') ?? '')
   const grimpeurId = String(formData.get('grimpeurId') ?? '')
@@ -284,7 +260,7 @@ export async function retirerResultatVoie(
   const supabase = await createClient()
   const ctx = await chargerContexteVoie(supabase, voieId)
   if (!ctx) return { erreur: 'Voie introuvable.' }
-  const refus = refuserSiHorsSaisie(coach.contexte, ctx.rencontreId, ctx.phase)
+  const refus = refuserSiHorsFenetre(ctx.phase)
   if (refus) return refus
 
   const { error } = await supabase
@@ -294,6 +270,6 @@ export async function retirerResultatVoie(
     .eq('grimpeur_id', grimpeurId)
   if (error) return { erreur: messageEcriture(error.code) }
 
-  revalidatePath(`/coach/rencontres/${ctx.rencontreId}/resultats`)
+  revalidatePath(`/admin/rencontres/${ctx.rencontreId}/resultats`)
   return { succes: 'Résultat retiré.' }
 }

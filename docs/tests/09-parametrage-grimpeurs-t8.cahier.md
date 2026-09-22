@@ -11,10 +11,14 @@
   coach gère les grimpeurs de son club ; R11/R13 : l'admin paramètre ; R6 :
   roster éditable hors phase). Cet écran est le **volet admin** (gère tout club) ;
   le volet **coach** (son seul club) relèvera d'une tranche coach ultérieure.
-- **Domaine** : `src/domaine/grimpeur.ts` (`normaliserSaisieGrimpeur`, 9 tests
-  Vitest).
-- **Migration** : aucune (table `grimpeur` + policies `grimpeur_*` déjà en place
-  — T6, migration `202607251000`).
+  Le champ **sexe** (obligatoire, `F`/`G`) est un **prérequis de la spec #7
+  Classement** (`docs/specs/07-classement.md`, R8b : classement individuel séparé
+  Filles / Garçons).
+- **Domaine** : `src/domaine/grimpeur.ts` (`normaliserSaisieGrimpeur`, 12 tests
+  Vitest — dont la validation du **sexe** `F`/`G`).
+- **Migration** : `202609181000_grimpeur_sexe.sql` (ajout de `grimpeur.sexe`
+  `not null check (sexe in ('F','G'))`, avec fenêtre de backfill). La table
+  `grimpeur` et les policies `grimpeur_*` préexistent (T6, `202607251000`).
 - **Pré-requis** :
   - Migrations + seed `01-jeu-de-test.sql` chargés (`supabase db reset` en local).
   - Comptes (mdp `interclub`) : `admin@test.local` (admin), `coach@test.local`
@@ -39,16 +43,30 @@ Depuis l'accueil (connecté **admin**) : bouton **« Grimpeurs »** →
 ### CT-02 — Ajouter un grimpeur (nominal, R18)
 
 - **Étapes** : choisir un **club**, saisir **prénom**, **nom**, **année de
-  naissance** → **Ajouter le grimpeur**.
+  naissance**, choisir le **sexe** (Filles / Garçons) → **Ajouter le grimpeur**.
 - **Attendu** : message « Grimpeur « Prénom Nom » ajouté. » ; il apparaît dans la
-  liste (club, année, 0 engagement) ; le formulaire se vide.
+  liste (club, année, **sexe**, 0 engagement) ; le formulaire se vide.
 
 ### CT-03 — Champs obligatoires (validation domaine)
 
-- **Étapes** : soumettre sans prénom (ou sans nom, ou sans année).
+- **Étapes** : soumettre sans prénom (ou sans nom, sans année, ou **sans sexe**).
 - **Attendu** : erreur explicite (« Le nom du grimpeur est obligatoire. » /
-  « Le prénom du grimpeur est obligatoire. »/ message sur l'année) ; aucune
-  création.
+  « Le prénom du grimpeur est obligatoire. » / message sur l'année / « Le sexe du
+  grimpeur doit être « F » ou « G ». ») ; aucune création.
+
+### CT-03b — Sexe : prérequis classement par sexe (R8b spec #7)
+
+- **Objet** : le sexe est **obligatoire** et borné à `F`/`G` (schéma + domaine).
+- **Étapes** :
+  1. Créer un grimpeur en choisissant **Filles**, un autre en **Garçons** ;
+     vérifier l'affichage du sexe dans la liste.
+  2. Contournement API : invoquer `creerGrimpeur` avec `sexe` **absent** ou
+     `sexe = 'X'` (valeur hors `F`/`G`).
+- **Attendu** :
+  - Cas nominal : les deux grimpeurs sont créés, sexe correct affiché.
+  - Contournement : **refus** (« Le sexe du grimpeur doit être « F » ou « G ». »),
+    aucune création. En dernier ressort, le `check (sexe in ('F','G'))` en base
+    rejette toute valeur invalide.
 
 ### CT-04 — Année de naissance invalide (validation domaine)
 
@@ -60,9 +78,10 @@ Depuis l'accueil (connecté **admin**) : bouton **« Grimpeurs »** →
 
 ### CT-05 — Modifier un grimpeur (R18)
 
-- **Étapes** : sur une ligne, **Modifier** → changer club/prénom/nom/année →
-  **Enregistrer**.
-- **Attendu** : la liste reflète les nouvelles valeurs ; l'éditeur se referme.
+- **Étapes** : sur une ligne, **Modifier** → l'éditeur pré-remplit les valeurs, y
+  compris le **sexe** ; changer club/prénom/nom/année/**sexe** → **Enregistrer**.
+- **Attendu** : la liste reflète les nouvelles valeurs (sexe inclus) ; l'éditeur
+  se referme.
 
 ### CT-06 — Supprimer un grimpeur sans engagement (R18)
 
@@ -92,10 +111,31 @@ Depuis l'accueil (connecté **admin**) : bouton **« Grimpeurs »** →
 
 - **Étapes** : sur téléphone (ou DevTools ~375 px) — parcourir CT-02, CT-05.
 - **Attendu** :
-  - Champs (sélecteur club, textes, année) et boutons ≥ 44 px de haut ; pas de
-    zoom iOS au focus (police 16 px).
+  - Champs (sélecteurs club **et sexe**, textes, année) et boutons ≥ 44 px de
+    haut ; pas de zoom iOS au focus (police 16 px).
+  - Le sélecteur **sexe** est lisible en thème sombre (options `Filles`/`Garçons`
+    contrastées — pattern `ChampSelect`).
   - Formulaire et lignes empilés lisiblement, sans débordement horizontal.
   - Focus visible au clavier ; messages d'erreur/succès reliés (lecteur d'écran).
+
+### CT-10 — Application de la migration `grimpeur.sexe` (backfill, recette)
+
+- **Objet** : vérifier l'application **manuelle** de `202609181000_grimpeur_sexe`
+  sur une base contenant **déjà** des grimpeurs (recette/prod), conformément à la
+  règle « migrations appliquées à la main ».
+- **Étapes** :
+  1. Sur une base où des grimpeurs existent **sans** sexe, exécuter la migration
+     **sans** backfill préalable.
+  2. Renseigner le sexe (`F`/`G`) de chaque grimpeur existant, puis **rejouer**.
+- **Attendu** :
+  1. Le **garde-fou** interrompt l'exécution avec un message explicite (« Des
+     grimpeurs sans sexe subsistent : renseigner 'F'/'G'… »), **sans** poser la
+     contrainte `NOT NULL`.
+  2. Après backfill, la migration se termine ; `grimpeur.sexe` est `NOT NULL` avec
+     `check (sexe in ('F','G'))` ; une ligne apparaît dans `interclub.version`.
+- **Local** : sur base **vide** au moment des migrations (`supabase db reset`), la
+  migration passe directement (aucun backfill) ; le **seed** porte le sexe des
+  grimpeurs de test.
 
 ## Registre d'exécution
 
@@ -104,12 +144,14 @@ Depuis l'accueil (connecté **admin**) : bouton **« Grimpeurs »** →
 | CT-01 | | | | ⬜ | |
 | CT-02 | | | | ⬜ | |
 | CT-03 | | | | ⬜ | |
+| CT-03b | | | | ⬜ | |
 | CT-04 | | | | ⬜ | |
 | CT-05 | | | | ⬜ | |
 | CT-06 | | | | ⬜ | |
 | CT-07 | | | | ⬜ | |
 | CT-08 | | | | ⬜ | |
 | CT-09 | | | | ⬜ | |
+| CT-10 | | | | ⬜ | |
 
 > Le domaine (`normaliserSaisieGrimpeur`) est couvert par Vitest (`npm run test`,
 > `src/domaine/grimpeur.test.ts`). Le reste (UI, RLS, garde) se vérifie ici, sur

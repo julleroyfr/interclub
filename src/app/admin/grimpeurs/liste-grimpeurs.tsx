@@ -31,7 +31,7 @@ export function ListeGrimpeurs({
       {grimpeurs.map((g) => (
         // La clé inclut les champs mutables : après une écriture (revalidation),
         // la ligne se remonte à neuf — l'éditeur inline se referme sans effet.
-        <li key={`${g.id}:${g.nom}:${g.prenom}:${g.anneeNaissance}:${g.clubId}`}>
+        <li key={`${g.id}:${g.nom}:${g.prenom}:${g.anneeNaissance}:${g.sexe}:${g.clubId}`}>
           <LigneGrimpeur grimpeur={g} clubs={clubs} />
         </li>
       ))}
@@ -60,8 +60,13 @@ function LigneGrimpeur({
   const idNom = useId()
   const idPrenom = useId()
   const idAnnee = useId()
+  const idSexe = useId()
 
   const optionsClub = clubs.map((c) => ({ value: c.id, label: c.nom }))
+  const optionsSexe = [
+    { value: 'F', label: 'Filles' },
+    { value: 'G', label: 'Garçons' },
+  ]
 
   return (
     <div className="rounded-2xl border border-bordure bg-black/20 p-4">
@@ -105,6 +110,14 @@ function LigneGrimpeur({
             min={ANNEE_NAISSANCE_MIN}
             max={ANNEE_NAISSANCE_MAX}
           />
+          <ChampSelect
+            id={idSexe}
+            name="sexe"
+            label="Sexe"
+            options={optionsSexe}
+            defaultValue={grimpeur.sexe}
+            required
+          />
           {etatMod?.erreur && (
             <p role="alert" className="text-sm text-danger">
               {etatMod.erreur}
@@ -127,6 +140,7 @@ function LigneGrimpeur({
             </p>
             <p className="mt-1 text-xs text-texte-doux">
               {grimpeur.clubNom} · né(e) en {grimpeur.anneeNaissance} ·{' '}
+              {grimpeur.sexe === 'F' ? 'Filles' : 'Garçons'} ·{' '}
               {grimpeur.nbEngagements} engagement(s)
             </p>
           </div>

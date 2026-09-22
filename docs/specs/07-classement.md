@@ -1,14 +1,24 @@
 # Spec : Classement — score individuel, par équipe, par club
 
-- **Statut** : brouillon (à valider — voir « Points à valider », notamment
-  l'attribution du **grimpeur prêté**)
+- **Statut** : **validée** (le 2026-09-18) — points à valider tranchés :
+  séparation par sexe R8b (conséquence de l'attribution des points de vitesse par
+  sexe, cf. note ci-dessous), départage ex æquo R8 (classement standard), cadrage
+  `grimpeur.sexe` (obligatoire).
 - **Sources** :
-  - **Règlement** « 2025 Interclubs — Reglement v3 » (CT33 FFME) §8
-    (« Classements ») : « un classement **individuel** et **d'équipes de clubs**
+  - **Règlement** « CT33 FFME — 2025-2026 » (dernière version, `docs/reglement/`)
+    §8 (« Classements ») : « un classement **individuel** et **d'équipes de clubs**
     est établi et communiqué ». Le règlement **ne détaille pas** la formule
     d'agrégation équipe/club → arbitrages produit (décision du 2026-09-08). Le
-    barème chiffré des voies/blocs vient du règlement (Matin/Après-midi) et est
-    **stocké** (spec #3 R38/R39).
+    règlement établit un **classement Filles et un classement Garçons pour la
+    vitesse** (Matin p. 5, Après-midi p. 8), avec attribution des **points par
+    rang** ; ces points de vitesse **entrent dans le score individuel** (voie +
+    bloc + vitesse). La séparation par sexe du classement **individuel** (R8b) en
+    est donc la **conséquence** : le total contient une composante attribuée par
+    sexe, deux totaux de sexes différents ne se comparent pas. De même, l'**ex
+    æquo** n'est réglé par le règlement que pour la vitesse (« rang partagé, saut
+    de rang ») ; le classement standard retenu ici (R8) en est l'exacte
+    transposition. Le barème chiffré des voies/blocs vient du règlement
+    (Matin/Après-midi) et est **stocké** (spec #3 R38/R39).
   - **Spec #6 — Saisie des résultats** (`06-saisie-des-resultats.md`) : source des
     **issues** par voie (`top`/`prise_valorisee`/`zone1`/`zone2`/`echec`/`np`) et
     par bloc (`palier`/`echec`/`np`) ; le **score** y est affiché en lecture seule
@@ -30,6 +40,22 @@
   **mutualisé** avec l'itération vitesse/sexe (à traiter avant l'implémentation).
   **Aucune table de score/classement** : les scores/rangs restent **calculés à la
   volée**, rien n'est stocké ; la seule dépendance de schéma est `grimpeur.sexe`.
+  Décision du **2026-09-18** (validation de la spec) — après relecture du
+  règlement CT33 2025-2026 : la séparation Filles / Garçons du classement
+  individuel découle de ce que le **score individuel intègre les points de
+  vitesse**, eux‑mêmes attribués **par rang dans un classement Filles / Garçons**
+  (règlement §5/§8) ; un total individuel contient donc une composante propre au
+  sexe, et les totaux de deux sexes ne se comparent pas. La séparation (R8b)
+  s'applique à **toutes les catégories** (enfant **et** ado). En conséquence, le
+  champ **`grimpeur.sexe`** est **obligatoire** (`not null`, valeurs `'F'` /
+  `'G'`) : tout grimpeur est classé dans l'un des deux classements (pas de cas
+  « sans sexe »). Le **départage des ex æquo** (R8) retient le **classement
+  standard** (rangs partagés, saut de rang — 1, 2, 2, 4), sans critère de
+  départage fin (transposition de la règle vitesse du règlement).
+  **Séquencement** — la **saisie vitesse** (juge) n'existant pas encore, le score
+  livré par cette itération reste **voie + bloc** (R14) ; les classements par sexe
+  sont néanmoins établis dès maintenant pour que leur **structure soit stable**
+  quand la vitesse s'y ajoutera (voir « Note d'architecture — composante vitesse »).
 
 ## Objectif
 
@@ -101,8 +127,15 @@ classement, les résultats ne sont qu'une liste d'issues.
   4).
 - **R8b.** Le **classement individuel est établi séparément par sexe** : **deux
   classements distincts, Filles et Garçons** (chacun trié et rangé selon R8/R9,
-  les rangs repartant de 1 dans chaque). *(Précision 2026-09-09 ; prérequis :
-  champ `grimpeur.sexe`.)* Les classements **par équipe** et **par club** restent
+  les rangs repartant de 1 dans chaque). Cette séparation s'applique à **toutes
+  les catégories** — **enfant et ado** (décision 2026-09-18). Elle **découle** de
+  ce que le score individuel intègre les **points de vitesse**, attribués **par
+  rang dans un classement Filles / Garçons** (règlement §5/§8) : deux totaux de
+  sexes différents ne sont pas comparables. *(La vitesse n'entre pas encore dans le
+  total — R14 ; les classements par sexe sont établis dès maintenant pour rester
+  stables à son intégration.)* Prérequis : champ **`grimpeur.sexe`** **obligatoire**
+  (`'F'` / `'G'`, `not null`) — tout grimpeur relève donc de l'un des deux
+  classements (aucun cas « sans sexe »). Les classements **par équipe** et **par club** restent
   **mixtes** (une équipe mélange les sexes) — **pas** de séparation (R5/R6).
 - **R9.** À score égal, l'**ordre d'affichage** est **déterministe** (par nom, puis
   prénom pour l'individuel ; par nom d'équipe / club sinon), mais le **rang** reste
@@ -208,11 +241,41 @@ flowchart TD
   SB --> SI
   SI --> SE["Score équipe = Σ membres (R5)"]
   SE --> SC["Score club = Σ équipes (R6)"]
-  SI --> CI["Classement individuel (R8)"]
-  SE --> CE["Classement équipe (R8)"]
-  SC --> CC["Classement club (R8)"]
-  VIT["Vitesse (points par rang)"] -. "hors périmètre — plus tard (R14)" .-> SI
+  SI --> CI["Classement individuel — séparé Filles/Garçons (R8b)"]
+  SE --> CE["Classement équipe — mixte (R8)"]
+  SC --> CC["Classement club — mixte (R8)"]
+  VIT["Points de vitesse = rang dans le classement par sexe"] -. "pas encore — R14" .-> SI
 ```
+
+## Note d'architecture — composante vitesse
+
+*(Prospective : la vitesse n'entre pas encore dans le score — R14. Cette note
+cadre son intégration future et explique pourquoi le classement individuel est
+séparé par sexe dès maintenant.)*
+
+- **Le score individuel complet est `voie + bloc + vitesse`.** Les points de
+  vitesse sont attribués **par rang** dans un **classement Filles / Garçons**
+  (barème du règlement : Matin 15 → 0 pt, Après-midi 60 → 0 pt, chute / non
+  présentation). C'est cette composante par sexe qui **fonde la séparation par
+  sexe** du classement individuel (R8b) : deux totaux de sexes différents
+  contiennent des points de vitesse issus de **classements distincts** et ne se
+  comparent pas.
+- **Nature différente du calcul.** Les scores de **voie** et de **bloc** sont
+  **indépendants par grimpeur** (fonction de sa seule issue + barème). Les points
+  de **vitesse** sont **field-dependent** : ils dépendent du **rang** parmi
+  **tous les grimpeurs du même sexe** ayant un temps. Le calcul de la composante
+  vitesse a donc besoin du **champ complet des temps par sexe**, pas d'une seule
+  ligne de résultat.
+- **« Au fil de l'eau » au sens fort.** Une nouvelle saisie de temps peut
+  **modifier le rang — donc le score — de plusieurs grimpeurs** du même sexe
+  (« le classement de vitesse évolue à chaque nouveau temps »). C'est plus large
+  que voie/bloc, où une saisie n'affecte que le grimpeur concerné.
+- **Conséquence pour l'implémentation future.** La fonction domaine devra
+  exposer, à côté du score voie+bloc (par grimpeur), un calcul **`temps par sexe →
+  points de vitesse par grimpeur`** (rang + barème + ex æquo du règlement), puis
+  **agréger** les trois composantes. Rien n'est stocké : recalcul à la lecture,
+  borné à la rencontre. L'intégration reste conditionnée à la **saisie vitesse**
+  (juge, spec dédiée) et fera l'objet d'une **révision** de cette spec (R14).
 
 ## Contraintes de données
 
@@ -223,7 +286,12 @@ flowchart TD
 - **Prérequis de schéma : `grimpeur.sexe`** (R8b). Le classement individuel étant
   séparé Filles / Garçons, le calcul a besoin du **sexe** du grimpeur. C'est la
   **seule** évolution de schéma requise ; elle est **mutualisée** avec l'itération
-  vitesse/sexe (migration dédiée, à appliquer avant l'implémentation de cette spec).
+  vitesse/sexe (migration dédiée, à appliquer avant l'implémentation de cette
+  spec). Cadrage (décision 2026-09-18) : colonne **`sexe text not null check (sexe
+  in ('F','G'))`** sur `interclub.grimpeur` — **obligatoire**. La migration doit
+  **renseigner le sexe des grimpeurs existants** (backfill) avant de poser la
+  contrainte `not null`, et la **saisie** d'un grimpeur devient un champ requis
+  (couvert par la spec/écran de gestion des grimpeurs, hors de la présente spec).
 - Le **calcul** est une **fonction pure** du domaine (testable Vitest) : `(issue,
   barème) → points`, agrégations et rangs.
 - **Performance (décision 2026-09-08).** Volume cible ≈ **100 grimpeurs** par
@@ -252,20 +320,28 @@ flowchart TD
   transverses. L'ouverture à `anon` (visiteur non authentifié), **restreinte à la ⑤
   et aux vues individuel + équipe**, relève de la **surface publique (spec #8)**.
 
-## Points à valider
+## Décisions tranchées
+
+*(Historique des arbitrages ayant conduit à la validation de la spec le
+2026-09-18 — conservés pour mémoire.)*
 
 - **Attribution du grimpeur prêté (R7)** — **tranché le 2026-09-08** : il compte
   pour l'**équipe/club d'accueil** (où il est composé) au classement par
   équipe/club, et son **score individuel** est rattaché à son **club d'origine**
-  (règlement §6). *(Conservé ici pour mémoire de la décision.)*
-- **Départage des ex æquo** : la spec retient le **classement standard** (rangs
-  partagés, saut de rang, R8) sans critère de départage fin (le règlement n'en
-  donne pas pour l'individuel/équipe). À confirmer.
-- **Séparation par sexe (R8b)** — **précisé le 2026-09-09** : classement individuel
-  Filles / Garçons ; équipe/club mixtes. **À confirmer** : la séparation s'applique-t-elle
-  à **toutes les catégories** (y compris les plus jeunes en enfant) ou seulement à
-  certaines ? Source à vérifier dans le règlement CT33. Prérequis technique :
-  champ `grimpeur.sexe` (valeurs et obligatoire/optionnel à cadrer dans la spec sexe/vitesse).
+  (règlement §6).
+- **Départage des ex æquo (R8)** — **tranché le 2026-09-18** : **classement
+  standard** (rangs partagés, saut de rang — 1, 2, 2, 4), sans critère de
+  départage fin. Le règlement n'en donne pas pour l'individuel/équipe de
+  difficulté ; c'est la transposition de sa règle d'ex æquo de la vitesse.
+- **Séparation par sexe (R8b)** — **tranché le 2026-09-18** : classement
+  individuel **Filles / Garçons** pour **toutes les catégories** (enfant **et**
+  ado) ; équipe/club **mixtes**. **Conséquence du règlement**, non arbitrage
+  arbitraire : le score individuel intègre les **points de vitesse**, attribués
+  **par rang dans un classement Filles / Garçons** (règlement §5/§8) — un total
+  contient donc une composante propre au sexe et deux totaux de sexes différents
+  ne se comparent pas. Prérequis : champ **`grimpeur.sexe`** **obligatoire**
+  (`'F'` / `'G'`, `not null`), migration mutualisée vitesse/sexe (cf. Contraintes
+  de données).
 
 ## Hors périmètre
 
@@ -285,3 +361,10 @@ flowchart TD
   justifierait que pour un écran saison très sollicité, à réévaluer alors.)*
 - **Stockage / historisation** des classements et **export** (PDF, communication
   CT33) → hors périmètre.
+- **Temps réel (rafraîchissement en direct)** — *évolution future, différée (notée
+  le 2026-09-22).* Le classement est **recalculé à la lecture** (R10) : il reflète
+  l'état courant à chaque chargement/revalidation, mais n'est **pas poussé en
+  direct** vers un écran déjà ouvert. Un rafraîchissement **live** (le classement
+  d'un spectateur bouge quand un coach saisit) nécessitera **Supabase Realtime**
+  (abonnement à `resultat_voie` / `resultat_bloc`) — commun avec la saisie
+  (spec #6/#9). Hors périmètre ici.

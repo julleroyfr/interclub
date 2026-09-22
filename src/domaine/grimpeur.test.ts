@@ -15,14 +15,34 @@ import {
 // `between 1900 and 2100`). Aucune dépendance Supabase ici.
 
 describe('Saisie d’un grimpeur (R18)', () => {
-  const valide = { nom: 'Dupont', prenom: 'Léa', anneeNaissance: '2014' }
+  const valide = { nom: 'Dupont', prenom: 'Léa', anneeNaissance: '2014', sexe: 'F' }
 
   it('normalise une saisie valide', () => {
     expect(normaliserSaisieGrimpeur(valide)).toEqual({
       nom: 'Dupont',
       prenom: 'Léa',
       anneeNaissance: 2014,
+      sexe: 'F',
     })
+  })
+
+  // Sexe obligatoire 'F'/'G' — prérequis du classement individuel séparé par
+  // sexe (spec #7 R8b) ; reflet du check SQL `grimpeur.sexe in ('F','G')`.
+  it('conserve le sexe Filles ou Garçons', () => {
+    expect(normaliserSaisieGrimpeur({ ...valide, sexe: 'F' }).sexe).toBe('F')
+    expect(normaliserSaisieGrimpeur({ ...valide, sexe: 'G' }).sexe).toBe('G')
+  })
+
+  it('rejette un sexe absent', () => {
+    expect(() => normaliserSaisieGrimpeur({ ...valide, sexe: '' })).toThrow(
+      GrimpeurInvalideError,
+    )
+  })
+
+  it('rejette un sexe hors F/G', () => {
+    expect(() => normaliserSaisieGrimpeur({ ...valide, sexe: 'X' })).toThrow(
+      GrimpeurInvalideError,
+    )
   })
 
   it('retire les espaces de bord et réduit les espaces internes', () => {
@@ -30,6 +50,7 @@ describe('Saisie d’un grimpeur (R18)', () => {
       nom: '  Van   der Berg  ',
       prenom: '  Marie  Claire ',
       anneeNaissance: ' 2013 ',
+      sexe: 'F',
     })
     expect(g.nom).toBe('Van der Berg')
     expect(g.prenom).toBe('Marie Claire')

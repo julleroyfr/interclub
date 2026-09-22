@@ -1,5 +1,6 @@
 import 'server-only'
 
+import type { Sexe } from '@/domaine/grimpeur'
 import { createClient } from '@/lib/supabase/server'
 
 /** Option de club pour le formulaire de grimpeur. */
@@ -11,6 +12,7 @@ export type GrimpeurAvecDependances = {
   nom: string
   prenom: string
   anneeNaissance: number
+  sexe: Sexe
   clubId: string
   clubNom: string
   nbEngagements: number
@@ -38,7 +40,7 @@ export async function listerGrimpeurs(): Promise<GrimpeurAvecDependances[]> {
   const [grimpRes, clubsRes, compRes] = await Promise.all([
     supabase
       .from('grimpeur')
-      .select('id, nom, prenom, annee_naissance, club_id')
+      .select('id, nom, prenom, annee_naissance, sexe, club_id')
       .order('nom')
       .order('prenom'),
     supabase.from('club').select('id, nom'),
@@ -68,6 +70,7 @@ export async function listerGrimpeurs(): Promise<GrimpeurAvecDependances[]> {
         nom: g.nom as string,
         prenom: g.prenom as string,
         anneeNaissance: g.annee_naissance as number,
+        sexe: g.sexe as Sexe,
         clubId,
         clubNom: nomParClub.get(clubId) ?? '(club inconnu)',
         nbEngagements: parGrimpeur.get(g.id as string) ?? 0,

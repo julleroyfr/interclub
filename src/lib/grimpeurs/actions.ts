@@ -44,6 +44,7 @@ function lireSaisie(formData: FormData) {
     nom: String(formData.get('nom') ?? ''),
     prenom: String(formData.get('prenom') ?? ''),
     anneeNaissance: String(formData.get('anneeNaissance') ?? ''),
+    sexe: String(formData.get('sexe') ?? ''),
   })
 }
 
@@ -71,6 +72,7 @@ export async function creerGrimpeur(
     nom: saisie.nom,
     prenom: saisie.prenom,
     annee_naissance: saisie.anneeNaissance,
+    sexe: saisie.sexe,
   })
   if (error) return { erreur: messageErreur(error.code, 'ecriture') }
 
@@ -107,6 +109,7 @@ export async function modifierGrimpeur(
       nom: saisie.nom,
       prenom: saisie.prenom,
       annee_naissance: saisie.anneeNaissance,
+      sexe: saisie.sexe,
     })
     .eq('id', id)
   if (error) return { erreur: messageErreur(error.code, 'ecriture') }

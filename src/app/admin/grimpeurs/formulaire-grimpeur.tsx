@@ -16,6 +16,7 @@ export function FormulaireGrimpeur({ clubs }: { clubs: OptionClub[] }) {
   const idNom = useId()
   const idPrenom = useId()
   const idAnnee = useId()
+  const idSexe = useId()
   const formRef = useRef<HTMLFormElement>(null)
 
   useEffect(() => {
@@ -23,6 +24,10 @@ export function FormulaireGrimpeur({ clubs }: { clubs: OptionClub[] }) {
   }, [etat?.succes])
 
   const optionsClub = clubs.map((c) => ({ value: c.id, label: c.nom }))
+  const optionsSexe = [
+    { value: 'F', label: 'Filles' },
+    { value: 'G', label: 'Garçons' },
+  ]
 
   return (
     <form ref={formRef} action={action} className="mt-4 flex flex-col gap-4">
@@ -62,6 +67,14 @@ export function FormulaireGrimpeur({ clubs }: { clubs: OptionClub[] }) {
         min={ANNEE_NAISSANCE_MIN}
         max={ANNEE_NAISSANCE_MAX}
         placeholder="Ex. 2014"
+      />
+      <ChampSelect
+        id={idSexe}
+        name="sexe"
+        label="Sexe"
+        options={optionsSexe}
+        placeholder="Choisir…"
+        required
       />
 
       {etat?.erreur && (

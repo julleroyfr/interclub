@@ -4,14 +4,16 @@ import { GroupeDepartInvalideError, voiesDuGroupeDepart } from '@/domaine/engage
 import { type TypeVoie } from '@/domaine/gabarit'
 import { PLAFOND_VOIES_ADO, type IssueBloc, type IssueVoie } from '@/domaine/resultat'
 import { type Categorie, type Phase } from '@/domaine/rencontre'
+import { scoreBloc, scoreVoie, type BaremeVoie } from '@/domaine/score'
 import { createClient } from '@/lib/supabase/server'
 
 // Lecture de la saisie des résultats d'une rencontre pour le club du coach
 // (spec #6). Par grimpeur engagé (prêtés inclus, R2/R36) : ses voies (enfant : les
 // 3 du groupe de départ, R9 ; ado : les voies réalisées, R11) et ses blocs (B1/B2,
 // R15) avec l'issue courante, plus l'état de vitesse en lecture seule (R22) et sa
-// progression (R20). Le SCORE (R23) est hors périmètre tant que la spec classement
-// n'existe pas : non calculé ici. La RLS borne la lecture (club, phase ③+).
+// progression (R20). Le SCORE (R23) est calculé au fil de l'eau (voie + bloc) via
+// le domaine `score.ts` (spec #7) ; la vitesse n'y entre pas encore (R14). La RLS
+// borne la lecture (club, phase ③+).
 
 /** Nombre de voies attendues pour un enfant (les 3 du groupe de départ, R9). */
 const VOIES_ENFANT = 3
@@ -40,6 +42,8 @@ export type EtatVitesse = { statut: 'temps' | 'en_attente'; temps: number | null
 /** Ligne de saisie d'un grimpeur engagé. */
 export type GrimpeurSaisie = {
   grimpeurId: string
+  /** Score au fil de l'eau (voie + bloc, R23) ; vitesse non incluse (R14). */
+  score: number
   nom: string
   prenom: string
   equipeId: string
@@ -129,7 +133,9 @@ export async function getSaisieRencontre(
     epreuveVoie
       ? supabase
           .from('voie_difficulte')
-          .select('id, niveau, cotation, type_voie, ordre')
+          .select(
+            'id, niveau, cotation, type_voie, ordre, points, points_prise_valorisee, points_zone1, points_zone2',
+          )
           .eq('epreuve_id', epreuveVoie)
           .order('ordre')
       : Promise.resolve({ data: [] as Record<string, unknown>[] }),
@@ -139,7 +145,7 @@ export async function getSaisieRencontre(
     epreuveBloc
       ? supabase
           .from('bloc_palier')
-          .select('id, bloc_id, libelle, ordre')
+          .select('id, bloc_id, libelle, ordre, points')
           .order('ordre')
       : Promise.resolve({ data: [] as Record<string, unknown>[] }),
     equipeIds.length
@@ -158,6 +164,16 @@ export async function getSaisieRencontre(
     ordre: v.ordre as number,
   }))
   const voieParId = new Map(voies.map((v) => [v.voieDifficulteId, v]))
+  // Barème par voie (points stockés, spec #3 R38) — pour le score au fil de l'eau (R23).
+  const baremeParVoie = new Map<string, BaremeVoie>()
+  for (const v of voiesRes.data ?? []) {
+    baremeParVoie.set(v.id as string, {
+      points: (v.points as number) ?? 0,
+      pointsPriseValorisee: (v.points_prise_valorisee as number | null) ?? null,
+      pointsZone1: (v.points_zone1 as number | null) ?? null,
+      pointsZone2: (v.points_zone2 as number | null) ?? null,
+    })
+  }
   // Voie représentative par niveau (plus petit ordre) — cible du résultat enfant.
   const voieParNiveau = new Map<string, VoieOption>()
   for (const v of voies) {
@@ -173,6 +189,9 @@ export async function getSaisieRencontre(
   }
   const libellePalier = new Map<string, string>()
   for (const liste of paliersParBloc.values()) for (const p of liste) libellePalier.set(p.id, p.libelle)
+  // Points par palier (spec #3 R39) — pour le score de bloc (R23).
+  const pointsPalier = new Map<string, number>()
+  for (const p of paliersRes.data ?? []) pointsPalier.set(p.id as string, (p.points as number) ?? 0)
 
   const blocsConfig: BlocConfig[] = (blocsRes.data ?? []).map((b) => ({
     blocId: b.id as string,
@@ -315,8 +334,24 @@ export async function getSaisieRencontre(
     const voiesFaites = voiesGrimpeur.filter((v) => v.issue != null).length
     const blocsFaites = blocsGrimpeur.filter((b) => b.issue != null).length
 
+    // Score au fil de l'eau (voie + bloc, R23) — calcul du domaine (spec #7).
+    // La vitesse n'entre pas encore dans le total (R14).
+    const scoreVoies = voiesGrimpeur.reduce((s, v) => {
+      const bareme = v.issue ? baremeParVoie.get(v.voieDifficulteId) : undefined
+      return bareme && v.issue ? s + scoreVoie(v.issue, bareme) : s
+    }, 0)
+    const scoreBlocs = blocsGrimpeur.reduce(
+      (s, b) =>
+        b.issue
+          ? s + scoreBloc(b.issue, b.palierId ? (pointsPalier.get(b.palierId) ?? null) : null)
+          : s,
+      0,
+    )
+    const score = scoreVoies + scoreBlocs
+
     return {
       grimpeurId: c.grimpeurId,
+      score,
       nom: info?.nom ?? '(inconnu)',
       prenom: info?.prenom ?? '',
       equipeId: c.equipeId,

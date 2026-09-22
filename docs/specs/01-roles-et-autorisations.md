@@ -64,6 +64,13 @@
   écrans, accès `anon`) est spécifiée en **spec #8** (`08-espace-public.md`).
   Impact : **R8 précisée** ; matrice, contraintes RLS et « hors périmètre » alignés
   (lecture `anon` = ⑤ ; authentifié = ③).
+- **Révision** : 2026-09-22 — **saisie admin des résultats en ③** (validée le
+  2026-09-22, décision produit). L'**administrateur** peut **saisir et corriger**
+  les résultats de voie/bloc de **tout grimpeur, tous clubs**, **dès la ③
+  compétition** (et non plus seulement corriger en ④, R5) — pour dépanner un club
+  **sans coach présent**. Impact : **R7 étendue** (l'admin s'ajoute au coach comme
+  acteur d'écriture en ③). Le **détail** de l'écran/parcours relève de la **spec #9**
+  (`09-saisie-admin-resultats.md`) ; la saisie **coach** (spec #6) est inchangée.
 
 ## Objectif
 
@@ -173,6 +180,12 @@ conditionne les accès temporels.
     **verrouillé pour les coachs** ; **seul l'admin** peut le corriger.
 - **R7.** La saisie des résultats (coach) et des temps de vitesse (juge) n'est
   possible qu'en phase ③ compétition.
+  - **Précision (rév. 2026-09-22)** : l'**admin** peut **aussi** saisir/corriger
+    les **résultats de voie/bloc** en **③ compétition**, pour **tout grimpeur, tous
+    clubs** (décision produit ; dépannage d'un club sans coach). Il complète les
+    coachs (bornés à leur club, R19) sans les remplacer. L'admin écrit **déjà** en
+    **④ clôture** (R5). Détail du parcours : **spec #9**. *(La saisie de la vitesse
+    par l'admin dépend de la spec juge — hors périmètre à ce jour.)*
 - **R8.** Les résultats **et les classements** d'une rencontre sont **calculés et
   consultables au fil de l'eau** dès leur saisie en **③ compétition**, pour **tout
   compte authentifié**, **tous clubs confondus**. Le **visiteur non authentifié**

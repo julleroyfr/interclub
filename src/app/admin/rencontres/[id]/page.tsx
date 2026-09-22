@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 import { Carte, Coquille, EnTetePage, type LienNav } from '@/composants'
@@ -82,6 +83,14 @@ export default async function PageTableauDeBordRencontre({
               <Stat k="Épreuves" v={nbEpreuves} />
               <Stat k="Prêts" v={nbPrets} />
             </Carte>
+            {(structure.phase === 'competition' || structure.phase === 'cloture') && (
+              <Link
+                href={`/admin/rencontres/${id}/resultats`}
+                className="rounded-2xl border border-admin/40 bg-admin/10 px-4 py-3 text-center text-sm font-bold text-admin transition hover:bg-admin/20"
+              >
+                🛡️ {structure.phase === 'cloture' ? 'Corriger' : 'Saisir'} les résultats (tous clubs) →
+              </Link>
+            )}
           </aside>
 
           <div className="mt-4 flex flex-col gap-6 lg:mt-0 xl:grid xl:grid-cols-2 xl:items-start xl:gap-6">

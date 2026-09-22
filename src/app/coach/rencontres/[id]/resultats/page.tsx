@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 import { Coquille, EnTetePage, Etiquette, variantePhase } from '@/composants'
@@ -53,8 +54,16 @@ export default async function PageResultats({
             titre={`${formaterDate(saisie.dateRencontre)} — ${saisie.clubPorteurNom}`}
             sousTitre={`Saisie des résultats · catégorie ${labelCategorie(saisie.categorie)}`}
           />
-          <div className="mt-2">
+          <div className="mt-2 flex flex-wrap items-center gap-3">
             <Etiquette variante={variantePhase[saisie.phase]}>{labelPhase(saisie.phase)}</Etiquette>
+            {saisie.phase !== 'pre_competition' && saisie.phase !== 'preparation' && (
+              <Link
+                href={`/coach/rencontres/${id}/classement`}
+                className="text-sm font-semibold text-accent-doux underline-offset-2 hover:underline"
+              >
+                Voir le classement →
+              </Link>
+            )}
           </div>
         </div>
 

@@ -160,6 +160,9 @@ function Chips({ grimpeur }: { grimpeur: GrimpeurSaisie }) {
       >
         ⚡ {vitesse.statut === 'temps' ? `${vitesse.temps} s` : 'en attente'}
       </span>
+      <span className={`${chip} border-secondaire/30 text-secondaire`}>
+        🏆 {grimpeur.score} pts
+      </span>
     </span>
   )
 }
@@ -314,10 +317,14 @@ function DetailGrimpeur({
         ← glissez pour changer de grimpeur →
       </p>
 
-      {/* Score : calcul hors périmètre spec #6 (spec classement dédiée, R23). */}
-      <div className="flex items-center justify-between rounded-xl border border-bordure bg-surface px-3 py-2 text-sm">
-        <span className="text-texte-attenue">Score</span>
-        <span className="text-texte-doux">à venir (classement)</span>
+      {/* Score au fil de l'eau (voie + bloc, R23) — calcul du domaine (spec #7).
+          Vitesse non incluse (R14). */}
+      <div className="flex items-center justify-between rounded-xl border border-secondaire/25 bg-secondaire/5 px-3 py-2 text-sm">
+        <span className="text-texte-attenue">Score (voie + bloc)</span>
+        <span className="font-extrabold text-secondaire">
+          {grimpeur.score}
+          <span className="ml-1 text-[11px] font-bold text-texte-doux">pts</span>
+        </span>
       </div>
 
       <SectionVoies saisie={saisie} grimpeur={grimpeur} />
