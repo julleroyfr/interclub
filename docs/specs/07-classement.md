@@ -4,6 +4,17 @@
   séparation par sexe R8b (conséquence de l'attribution des points de vitesse par
   sexe, cf. note ci-dessous), départage ex æquo R8 (classement standard), cadrage
   `grimpeur.sexe` (obligatoire).
+- **Révision du 2026-09-22 — intégration de la vitesse au score** (règle de
+  changement appliquée, validée le 2026-09-22). La **saisie vitesse** étant
+  désormais livrée (spec #10), la composante **vitesse** **entre dans le score
+  individuel** (`voie + bloc + vitesse`) : R3, R13 et R14 sont révisées et une
+  section **« Score de vitesse »** (R15–R20) est ajoutée. Le **barème de vitesse**
+  (points par rang, chute, non-présentation) est **stocké et éditable par
+  rencontre** (ajout **spec #3 R46**, seed par catégorie) — le calcul ici s'appuie
+  dessus. **Exception au « rien n'est stocké »** (décision 2026-09-22) : les
+  **points de vitesse par grimpeur** sont **matérialisés** et **recalculés par un
+  trigger en base** à chaque changement de temps (R19–R20), pour la cohérence et le
+  **realtime** ; **voie et bloc restent calculés à la lecture** (R10).
 - **Sources** :
   - **Règlement** « CT33 FFME — 2025-2026 » (dernière version, `docs/reglement/`)
     §8 (« Classements ») : « un classement **individuel** et **d'équipes de clubs**
@@ -73,8 +84,16 @@ classement, les résultats ne sont qu'une liste d'issues.
 - **Score de voie** *(d'un grimpeur sur une voie)* : points de sa **meilleure
   tentative** selon l'issue enregistrée (R1).
 - **Score de bloc** : points du **palier atteint** (R2).
-- **Score individuel** : somme des scores de voie et de bloc d'un grimpeur pour la
-  rencontre (R3). *(Vitesse non incluse — hors périmètre, R14.)*
+- **Score individuel** : somme des scores de **voie**, de **bloc** et de
+  **vitesse** d'un grimpeur pour la rencontre (R3).
+- **Score de vitesse** *(d'un grimpeur)* : points attribués selon sa forme de
+  résultat de vitesse (spec #10) — par **rang** dans le **classement de vitesse
+  de son sexe** s'il a un **temps**, ou points fixes de **chute** /
+  **non-présentation** sinon (R15–R18).
+- **Classement de vitesse** : classement **par sexe** des grimpeurs ayant un
+  **temps**, par **temps croissant** (le plus rapide = rang 1, R15). Sert
+  uniquement à attribuer les **points de vitesse** ; ce n'est pas une des trois
+  vues de l'écran de classement (R12).
 - **Score d'équipe** : somme des scores individuels des grimpeurs de l'équipe (R5).
 - **Score de club** : somme des scores des équipes du club dans la rencontre (R6).
 - **Rang** : position dans un classement trié par score décroissant, avec gestion
@@ -100,8 +119,9 @@ classement, les résultats ne sont qu'une liste d'issues.
   (issue `palier` → points du `bloc_palier` référencé, spec #3 R39) ; `echec`, `np`
   et **aucun résultat** → **0**.
 - **R3.** Le **score individuel** d'un grimpeur pour la rencontre est la **somme**
-  de tous ses scores de voie et de tous ses scores de bloc. *(La vitesse n'entre
-  pas encore dans ce total, R14.)*
+  de tous ses scores de voie, de tous ses scores de bloc **et de son score de
+  vitesse** (R15–R18). *(Révision 2026-09-22 : la vitesse est désormais incluse ;
+  cf. R14.)*
 - **R4.** Une voie ou un bloc **sans résultat** (avant clôture) compte **0** dans
   le total au fil de l'eau — comme `echec`/`np`. Le total évolue à chaque saisie.
 
@@ -131,9 +151,9 @@ classement, les résultats ne sont qu'une liste d'issues.
   les catégories** — **enfant et ado** (décision 2026-09-18). Elle **découle** de
   ce que le score individuel intègre les **points de vitesse**, attribués **par
   rang dans un classement Filles / Garçons** (règlement §5/§8) : deux totaux de
-  sexes différents ne sont pas comparables. *(La vitesse n'entre pas encore dans le
-  total — R14 ; les classements par sexe sont établis dès maintenant pour rester
-  stables à son intégration.)* Prérequis : champ **`grimpeur.sexe`** **obligatoire**
+  sexes différents ne sont pas comparables. *(Depuis la révision 2026-09-22, la
+  vitesse entre effectivement dans le total, R15–R18 — ce qui **confirme** cette
+  séparation.)* Prérequis : champ **`grimpeur.sexe`** **obligatoire**
   (`'F'` / `'G'`, `not null`) — tout grimpeur relève donc de l'un des deux
   classements (aucun cas « sans sexe »). Les classements **par équipe** et **par club** restent
   **mixtes** (une équipe mélange les sexes) — **pas** de séparation (R5/R6).
@@ -150,6 +170,55 @@ classement, les résultats ne sont qu'une liste d'issues.
   fois la rencontre publiée (⑤)**, et alors **individuel + équipe** seulement (pas
   le classement par club) — surface publique détaillée en **spec #8**
   (`08-espace-public.md`).
+
+### Score de vitesse (points par rang, par sexe)
+
+*(Ajout de la révision 2026-09-22. Source : règlement CT33 §5/§8, Matin p. 5 /
+Après-midi p. 8 ; barème stocké et éditable par rencontre, spec #3 R46 ; matière
+première = résultats de vitesse saisis par le juge, spec #10.)*
+
+- **R15.** Un **classement de vitesse** est établi **par sexe** : les grimpeurs
+  ayant un **temps** (spec #10 R8) sont classés par **temps croissant** (le plus
+  rapide = **rang 1**). Les **ex æquo** (temps strictement égaux) partagent le
+  **même rang** avec **saut de rang** (classement standard 1, 2, 2, 4 — R8),
+  transposition directe de la règle d'ex æquo du règlement (« les n concurrents
+  marquent les points de leur rang ; le suivant reprend au rang qu'il aurait eu
+  sans ex æquo »). **Seuls** les grimpeurs **avec un temps** y prennent un rang :
+  **chute** et **non-présentation** n'y participent pas.
+- **R16.** Les **points de vitesse** d'un grimpeur **classé** (R15) valent le
+  **barème de la rencontre** (spec #3 R46) appliqué à son **rang** : dans
+  l'échelon `[rang_min, rang_max]` couvrant ce rang,
+  `points = points − (rang − rang_min) × décrément` (`décrément = 0` ⇒ palier
+  plat). L'échelon **au-delà** (`rang_max` nul) s'applique à **tout rang
+  supérieur** à son `rang_min`. Le barème (points par rang) est **identique F et
+  G** — seul le **classement** est séparé par sexe ; il ne dépend que de la
+  **catégorie** de la rencontre (enfant / ado).
+- **R17.** Une **chute** rapporte les **points de chute** du barème (spec #3 R46 ;
+  par défaut **1** enfant, **5** ado) ; une **non-présentation** rapporte les
+  **points de non-présentation** (par défaut **0**). Un grimpeur **sans aucun
+  résultat de vitesse** à la lecture compte **0** — équivalent non-présentation
+  (spec #10 R17) — **sans** ligne `temps_vitesse` matérialisée.
+- **R18.** Le **score de vitesse** d'un grimpeur est la valeur **unique**
+  déterminée par sa forme de résultat : par rang s'il a un temps (R16), sinon
+  points fixes de chute / non-présentation / absence (R17). Il **s'ajoute** à ses
+  scores de voie et de bloc dans le **score individuel** (R3).
+- **R19.** Le calcul de la composante vitesse est **field-dependent** : il dépend
+  de **l'ensemble des temps du même sexe** d'une rencontre — un **nouveau temps**
+  peut modifier le **rang, donc les points, de plusieurs grimpeurs** du même sexe
+  (au fil de l'eau au sens fort). C'est pourquoi, contrairement à voie/bloc, la
+  composante vitesse n'est **pas** recalculée à la lecture mais **matérialisée**
+  (R20).
+- **R20.** *(Décision 2026-09-22.)* Les **points de vitesse par grimpeur** sont
+  **stockés** dans une table dédiée et **recalculés automatiquement en base par un
+  trigger** à chaque **insert / update / delete** d'un `temps_vitesse` de
+  l'épreuve, **pour tous les grimpeurs du même sexe** de la rencontre (le rang de
+  plusieurs peut changer, R15). Le recalcul applique R15–R17 et lit le **barème
+  stocké** (spec #3 R46). C'est la **seule** composante matérialisée : **voie et
+  bloc restent calculés à la lecture** (R10), et le **score individuel** = voie +
+  bloc (agrégés à la lecture) **+ points de vitesse (lus depuis la table)** (R3).
+  Motivations : **cohérence** garantie quel que soit le chemin d'écriture et
+  **compatibilité realtime** (un écran coach/public peut s'abonner à la table des
+  points de vitesse). Le trigger est **borné à la rencontre** de l'épreuve.
 
 ### Écran de classement
 
@@ -169,14 +238,19 @@ classement, les résultats ne sont qu'une liste d'issues.
   en évidence** des grimpeurs du **club consulté**, et (d) le **compte total**
   affiché. L'en-tête de colonnes accompagne **chaque page**.
 - **R13.** Depuis le classement individuel, la **décomposition** d'un score
-  (total voie + total bloc) est consultable, pour tracer le calcul (R1–R3).
-- **R14.** **La vitesse n'entre pas dans le score** de cette spec (périmètre
-  voie + bloc, décision 2026-09-08). Son intégration future (points **par rang**,
-  classement de vitesse **filles / garçons**, chute/non-présentation) nécessitera
-  au préalable la **saisie vitesse complète** (spec vitesse/juge) ; elle fera
-  l'objet d'une **révision** de cette spec. *(Le champ `sexe`, autrefois listé ici,
-  est désormais un prérequis de la présente spec du fait de R8b, non plus propre à
-  la vitesse.)*
+  (**total voie + total bloc + vitesse**) est consultable, pour tracer le calcul
+  (R1–R3, R15–R18). La composante **vitesse** est présentée comme une **3e ligne**
+  de la décomposition (avec, à titre indicatif, le **rang de vitesse** du grimpeur
+  ou la mention **chute / non-présentation / à saisir**).
+- **R14.** *(Révisé le 2026-09-22 — la vitesse est désormais intégrée.)* La
+  **vitesse entre dans le score individuel** (`voie + bloc + vitesse`, R3) selon
+  les règles **R15–R19** : points **par rang** dans un **classement de vitesse
+  Filles / Garçons**, points fixes pour **chute / non-présentation**. Cette
+  intégration confirme la séparation par sexe du classement individuel (R8b).
+  *Historique : jusqu'au 2026-09-18, la vitesse était hors périmètre (décision
+  2026-09-08, en l'absence de saisie vitesse) ; les classements par sexe avaient
+  été établis dès cette étape pour rester stables à l'intégration — c'est
+  maintenant chose faite (saisie vitesse livrée, spec #10).*
 
 ## Scénarios
 
@@ -208,6 +282,22 @@ et **Garçons** — chacun trié par score décroissant avec des **rangs reparta
 Un score de fille et un score de garçon **ne se comparent pas** entre eux. Les
 classements par **équipe** et par **club** restent **mixtes** (R5/R6).
 
+### Nominal — points de vitesse (ado)
+
+Étant donné une rencontre **ado** en ③ dont l'épreuve de vitesse a des temps saisis
+(spec #10) et un barème par défaut (1er = 60, −1/rang… chute = 5, NP = 0), quand on
+calcule la composante vitesse par sexe (R15–R18), alors le grimpeur au **meilleur
+temps garçon** obtient **60 pts**, le 2e **59**, une **chute** vaut **5**, une
+**non-présentation** ou une **absence de résultat** vaut **0**, et ces points
+**s'ajoutent** aux scores voie + bloc dans le score individuel (R3).
+
+### Nominal — ex æquo de temps
+
+Étant donné deux filles au **même temps** (ex. 8,120 s), classées **1res ex æquo**
+(R15), quand on attribue les points (R16), alors **chacune** reçoit les points du
+**rang 1** (60 en ado / 15 en enfant) et la fille suivante est **rang 3** (le rang
+2 est sauté), avec les points du rang 3.
+
 ### Nominal — ex æquo
 
 Étant donné trois grimpeurs à **12, 12 et 9** points, quand on établit le classement
@@ -228,6 +318,12 @@ alors le classement **recalculé** reflète le nouveau total (R10), toujours mar
 - Rencontre **avant ③** → aucun classement (aucun résultat, R11).
 - Grimpeur **prêté** → compte pour l'équipe/club d'accueil ; individuel rattaché à
   l'origine (R7).
+- Vitesse **sans résultat** / **non-présentation** → **0** pt (R17) ; **chute** →
+  points de chute du barème (R17).
+- Grimpeur avec un **temps** mais **rang au-delà** du dernier échelon borné →
+  points de l'échelon **au-delà** (`rang_max` nul, R16).
+- **Aucun temps saisi** dans un sexe → **aucun rang** attribué ; tous comptent 0 à
+  la vitesse (chute exceptée), sans erreur (R15/R17).
 
 ## Calcul (vue d'ensemble)
 
@@ -237,21 +333,24 @@ flowchart TD
   RB["resultat_bloc (palier)"] --> SB["Score de bloc (R2)"]
   BAR["Barème stocké — points voie/paliers (spec #3)"] --> SV
   BAR --> SB
-  SV --> SI["Score individuel = Σ voies + Σ blocs (R3)"]
+  SV --> SI["Score individuel = Σ voies + Σ blocs + vitesse (R3)"]
   SB --> SI
+  TV["temps_vitesse (temps | chute | non_presentation, spec #10)"] -->|trigger insert/update/delete| CV["Recalcul classement vitesse par sexe — temps croissant (R15)"]
+  BV["Barème vitesse stocké — échelons + chute/NP (spec #3 R46)"] --> CV
+  CV --> PV["points_vitesse STOCKÉS par grimpeur = barème(rang) | chute | NP (R16/R17/R20)"]
+  PV -->|lu à la lecture| SI
   SI --> SE["Score équipe = Σ membres (R5)"]
   SE --> SC["Score club = Σ équipes (R6)"]
   SI --> CI["Classement individuel — séparé Filles/Garçons (R8b)"]
   SE --> CE["Classement équipe — mixte (R8)"]
   SC --> CC["Classement club — mixte (R8)"]
-  VIT["Points de vitesse = rang dans le classement par sexe"] -. "pas encore — R14" .-> SI
 ```
 
 ## Note d'architecture — composante vitesse
 
-*(Prospective : la vitesse n'entre pas encore dans le score — R14. Cette note
-cadre son intégration future et explique pourquoi le classement individuel est
-séparé par sexe dès maintenant.)*
+*(Intégrée depuis la révision 2026-09-22 — R14/R15–R19. Cette note, d'abord
+prospective, décrit désormais l'intégration effective et pourquoi le classement
+individuel est séparé par sexe.)*
 
 - **Le score individuel complet est `voie + bloc + vitesse`.** Les points de
   vitesse sont attribués **par rang** dans un **classement Filles / Garçons**
@@ -270,19 +369,46 @@ séparé par sexe dès maintenant.)*
   **modifier le rang — donc le score — de plusieurs grimpeurs** du même sexe
   (« le classement de vitesse évolue à chaque nouveau temps »). C'est plus large
   que voie/bloc, où une saisie n'affecte que le grimpeur concerné.
-- **Conséquence pour l'implémentation future.** La fonction domaine devra
-  exposer, à côté du score voie+bloc (par grimpeur), un calcul **`temps par sexe →
-  points de vitesse par grimpeur`** (rang + barème + ex æquo du règlement), puis
-  **agréger** les trois composantes. Rien n'est stocké : recalcul à la lecture,
-  borné à la rencontre. L'intégration reste conditionnée à la **saisie vitesse**
-  (juge, spec dédiée) et fera l'objet d'une **révision** de cette spec (R14).
+- **Implémentation (décision 2026-09-22).** Les **points de vitesse par grimpeur**
+  sont **matérialisés** dans une table dédiée et **recalculés par un trigger en
+  base** (R20) : à chaque changement d'un `temps_vitesse`, le trigger reclasse par
+  temps croissant les grimpeurs du **même sexe** (ex æquo standard), applique le
+  **barème par échelons** (spec #3 R46) et écrit leurs points ; chute / NP /
+  absence prennent les points fixes (R17). Le **score individuel** est ensuite
+  **assemblé à la lecture** : voie + bloc (agrégés depuis `resultat_*`) + points de
+  vitesse **lus** depuis la table (R3). Voie et bloc restent donc **calculés à la
+  lecture** ; seule la vitesse est stockée (motivations : cohérence tous chemins
+  d'écriture, realtime). Le domaine `score.ts` reste la référence de l'agrégation
+  voie+bloc et de la sémantique de rang/ex æquo (R8) ; la **logique du trigger**
+  (rang + barème vitesse) est validée via **Supabase local (Docker)** et le
+  **cahier de test**.
 
 ## Contraintes de données
 
-- **Aucune table de score/classement** : les scores et rangs sont **dérivés** à la
-  lecture depuis `resultat_voie` / `resultat_bloc` (spec #6) et le barème
-  (`voie_difficulte.points/…`, `bloc_palier.points`, spec #3). Rien n'est stocké ni
-  historisé (le figement officiel en ⑤ relève de la phase, spec #1).
+- **Une seule table de score : les points de vitesse** (`points_vitesse`, R20). Les
+  scores/rangs de **voie et bloc** restent **dérivés à la lecture** depuis
+  `resultat_voie` / `resultat_bloc` (spec #6) et les barèmes
+  (`voie_difficulte.points/…`, `bloc_palier.points`, spec #3 R38/R39) — **rien de
+  stocké** pour eux. La **composante vitesse**, elle, est **matérialisée** :
+  `points_vitesse(epreuve_id, grimpeur_id, rang, points)`, recalculée par **trigger**
+  sur `temps_vitesse` (spec #10) à partir du **barème stocké**
+  (`bareme_vitesse_echelon` + `epreuve.points_chute/points_non_presentation`, spec
+  #3 R46). Le figement officiel en ⑤ relève de la phase (spec #1).
+  - Colonnes : `epreuve_id` (FK épreuve vitesse), `grimpeur_id` (FK), `rang int
+    null` (null si chute/NP/absence — non classé), `points int not null default 0`,
+    unicité `(epreuve_id, grimpeur_id)`. Une ligne par grimpeur **avec un
+    `temps_vitesse`** ; la **chute** y figure avec ses points fixes et `rang null` ;
+    **NP et absence** valent 0 (une ligne NP possible, l'absence n'en crée pas — le
+    score assemblé traite « pas de ligne » comme 0, R17).
+  - **Trigger** (`AFTER INSERT/UPDATE/DELETE` sur `temps_vitesse`, `FOR EACH
+    STATEMENT` ou `ROW` avec recalcul de tout le sexe) : SECURITY DEFINER, borné à
+    l'`epreuve_id` concernée, réécrit les `points_vitesse` des grimpeurs du **même
+    sexe**. Idempotent (recalcul complet du sexe à chaque appel).
+- **Barème de vitesse (spec #3 R46).** Contrairement aux barèmes voie/bloc, il
+  n'est **pas porté par les voies/blocs** : c'est un barème **par rang** propre à
+  l'épreuve de vitesse de la rencontre (échelons `rang_min/rang_max/points/
+  décrément` + points de **chute** et de **non-présentation**), seedé par catégorie
+  et éditable. Le loader le charge avec les résultats et le passe au calcul.
 - **Prérequis de schéma : `grimpeur.sexe`** (R8b). Le classement individuel étant
   séparé Filles / Garçons, le calcul a besoin du **sexe** du grimpeur. C'est la
   **seule** évolution de schéma requise ; elle est **mutualisée** avec l'itération
@@ -292,17 +418,24 @@ séparé par sexe dès maintenant.)*
   **renseigner le sexe des grimpeurs existants** (backfill) avant de poser la
   contrainte `not null`, et la **saisie** d'un grimpeur devient un champ requis
   (couvert par la spec/écran de gestion des grimpeurs, hors de la présente spec).
-- Le **calcul** est une **fonction pure** du domaine (testable Vitest) : `(issue,
-  barème) → points`, agrégations et rangs.
+- Le **calcul voie/bloc** est une **fonction pure** du domaine (testable Vitest) :
+  `(issue, barème) → points`, agrégations et rangs. Le **calcul des points de
+  vitesse** est, lui, réalisé par le **trigger en base** (R20) et validé via
+  Supabase local + cahier (pas de Vitest sur le SQL). Le domaine garde la sémantique
+  de **rang/ex æquo** (R8) partagée par les deux mondes.
 - **Performance (décision 2026-09-08).** Volume cible ≈ **100 grimpeurs** par
   rencontre → ≈ **800 lignes** de résultats ; l'agrégation (somme par grimpeur →
   équipe → club + rangs) coûte **< 1 ms** en mémoire. On **calcule à la lecture,
   côté application** (fonction domaine appelée par les loaders) : c'est fidèle au
   « au fil de l'eau », garde la logique **testée en Vitest**, et évite toute double
-  source de vérité. **Ni vue matérialisée ni trigger de score** : optimisation
-  **prématurée** à cette échelle (utile seulement pour des volumes 2–3 ordres de
-  grandeur au-dessus, ou des lectures massives). **Évolution possible** si le besoin
-  apparaît : une **vue SQL non matérialisée** (agrégation + `RANK()` côté Postgres)
+  source de vérité. Pour **voie/bloc**, **ni vue matérialisée ni trigger de
+  score** : optimisation **prématurée** à cette échelle. *(Révision 2026-09-22 : ce
+  choix « rien de stocké » est **maintenu pour voie/bloc** mais **levé pour la
+  vitesse** — un `trigger` matérialise `points_vitesse`, R20. Le motif n'est **pas**
+  la performance mais l'activation du **realtime** et la cohérence de cette
+  composante par rang, field-dependent.)* **Évolution possible** côté voie/bloc si
+  le besoin apparaît : une **vue SQL non matérialisée** (agrégation + `RANK()` côté
+  Postgres)
   centralisant le calcul pour la saisie, le classement et la surface publique —
   changement local, non bloquant.
 - **Insensible au nombre de rencontres de la saison.** Le calcul d'un classement
@@ -345,9 +478,10 @@ séparé par sexe dès maintenant.)*
 
 ## Hors périmètre
 
-- **Vitesse dans le score** (points par rang, classement de vitesse
-  **filles/garçons**, chute/non-présentation) → **révision ultérieure** (R14) ;
-  dépend de la saisie vitesse (spec vitesse/juge).
+- **Vitesse dans le score** — **désormais dans le périmètre** (révision
+  2026-09-22, R14/R15–R19). En revanche, le **stockage et l'édition du barème de
+  vitesse** relèvent de la **spec #3** (R46) ; la **saisie du résultat brut** de
+  vitesse relève de la **spec #10**.
 - **Champ `sexe`** sur `grimpeur` : **plus hors périmètre** — c'est désormais un
   **prérequis** de cette spec (R8b), livré par la migration mutualisée
   vitesse/sexe (cf. Contraintes de données).
@@ -367,4 +501,7 @@ séparé par sexe dès maintenant.)*
   direct** vers un écran déjà ouvert. Un rafraîchissement **live** (le classement
   d'un spectateur bouge quand un coach saisit) nécessitera **Supabase Realtime**
   (abonnement à `resultat_voie` / `resultat_bloc`) — commun avec la saisie
-  (spec #6/#9). Hors périmètre ici.
+  (spec #6/#9). Hors périmètre ici. *(Note 2026-09-22 : la table
+  **`points_vitesse`** matérialisée par trigger (R20) est **prête pour un abonnement
+  Realtime** — elle a été introduite en partie pour cela ; l'abonnement lui-même
+  reste différé.)*

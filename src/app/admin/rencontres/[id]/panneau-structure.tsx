@@ -10,9 +10,11 @@ import {
   ajouterEpreuveRencontre,
   ajouterVoieDifficulteRencontre,
   ajouterVoieVitesseRencontre,
+  mettreAJourBaremeVitesse,
   type EtatStructure,
 } from '@/lib/rencontres/structure-actions'
 import type {
+  BaremeVitesseVue,
   EpreuveRencontreVue,
   StructureRencontre,
 } from '@/lib/rencontres/structure'
@@ -283,6 +285,145 @@ function OngletBlocs({
   )
 }
 
+/** Libellé lisible d'une plage de rangs d'un échelon (R46). */
+function libelleRang(e: { rangMin: number; rangMax: number | null }): string {
+  if (e.rangMax == null) return `${e.rangMin}e et +`
+  if (e.rangMin === e.rangMax) return `${e.rangMin}e`
+  return `${e.rangMin}–${e.rangMax}e`
+}
+
+/**
+ * Éditeur du barème de vitesse par rang (spec #3 R46) : points/décrément de chaque
+ * échelon + points de chute / non-présentation. Éditable en pré-compétition (R44) ;
+ * sinon lecture seule.
+ */
+function EditeurBaremeVitesse({
+  bareme,
+  rencontreId,
+  editable,
+}: {
+  bareme: BaremeVitesseVue
+  rencontreId: string
+  editable: boolean
+}) {
+  const [etat, action, enCours] = useActionState(mettreAJourBaremeVitesse, etatInitial)
+  const echelonIds = bareme.echelons.map((e) => e.id).join(',')
+
+  return (
+    <form action={action} className="flex flex-col gap-3 rounded-xl border border-bordure bg-black/20 p-3">
+      <input type="hidden" name="rencontreId" value={rencontreId} />
+      <input type="hidden" name="epreuveId" value={bareme.epreuveId} />
+      <input type="hidden" name="echelonIds" value={echelonIds} />
+
+      <TitreSection>Barème par rang</TitreSection>
+      <p className="text-[11px] text-texte-attenue">
+        Points d’un rang = points − (rang − rang min) × décrément. Le dernier échelon
+        (« et + ») s’applique au-delà (spec #3 R46).
+      </p>
+
+      {bareme.echelons.length === 0 ? (
+        <p className="text-sm text-texte-attenue">Aucun échelon de barème.</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-[11px] uppercase tracking-wide text-texte-attenue">
+                <th className="px-1 py-1 text-left font-semibold">Rangs</th>
+                <th className="px-1 py-1 text-left font-semibold">Points</th>
+                <th className="px-1 py-1 text-left font-semibold">Décrément</th>
+              </tr>
+            </thead>
+            <tbody>
+              {bareme.echelons.map((e) => (
+                <tr key={e.id} className="border-t border-bordure/40">
+                  <td className="px-1 py-1.5 font-medium text-texte-fort">{libelleRang(e)}</td>
+                  <td className="px-1 py-1.5">
+                    {editable ? (
+                      <input
+                        name={`points_${e.id}`}
+                        type="number"
+                        min={0}
+                        step={1}
+                        defaultValue={e.points}
+                        required
+                        className={champNombre}
+                      />
+                    ) : (
+                      <span className="text-texte">{e.points}</span>
+                    )}
+                  </td>
+                  <td className="px-1 py-1.5">
+                    {editable ? (
+                      <input
+                        name={`decrement_${e.id}`}
+                        type="number"
+                        min={0}
+                        step={1}
+                        defaultValue={e.decrement}
+                        required
+                        className={champNombre}
+                      />
+                    ) : (
+                      <span className="text-texte">{e.decrement}</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <div className="flex flex-wrap items-end gap-3 pt-1">
+        <label className="flex flex-col gap-0.5">
+          <span className="text-[0.7rem] text-texte-attenue">Chute</span>
+          {editable ? (
+            <input
+              name="pointsChute"
+              type="number"
+              min={0}
+              step={1}
+              defaultValue={bareme.pointsChute ?? 0}
+              required
+              className={champNombre}
+            />
+          ) : (
+            <span className="text-texte">{bareme.pointsChute ?? '—'}</span>
+          )}
+        </label>
+        <label className="flex flex-col gap-0.5">
+          <span className="text-[0.7rem] text-texte-attenue">Non-présentation</span>
+          {editable ? (
+            <input
+              name="pointsNonPresentation"
+              type="number"
+              min={0}
+              step={1}
+              defaultValue={bareme.pointsNonPresentation ?? 0}
+              required
+              className={champNombre}
+            />
+          ) : (
+            <span className="text-texte">{bareme.pointsNonPresentation ?? '—'}</span>
+          )}
+        </label>
+        {editable && (
+          <Bouton type="submit" taille="sm" disabled={enCours}>
+            Enregistrer le barème
+          </Bouton>
+        )}
+      </div>
+
+      {etat?.erreur && (
+        <p role="alert" className="text-xs text-danger">
+          {etat.erreur}
+        </p>
+      )}
+      {etat?.succes && <p className="text-xs text-secondaire">{etat.succes}</p>}
+    </form>
+  )
+}
+
 /** Onglet Vitesse : liste des voies (numéro + libellé) + ajout (R42, R43, R32). */
 function OngletVitesse({
   structure,
@@ -341,6 +482,14 @@ function OngletVitesse({
             </p>
           )}
         </form>
+      )}
+
+      {structure.baremeVitesse && (
+        <EditeurBaremeVitesse
+          bareme={structure.baremeVitesse}
+          rencontreId={structure.id}
+          editable={editable}
+        />
       )}
     </div>
   )

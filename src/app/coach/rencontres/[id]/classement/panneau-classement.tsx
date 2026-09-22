@@ -285,7 +285,8 @@ export function PanneauClassement({
                           {l.score}
                           <span className="ml-0.5 text-[9.5px] font-bold text-texte-doux">pts</span>
                           <span className="block text-[10px] font-semibold text-texte-doux">
-                            voie {l.decomposition.totalVoie} · bloc {l.decomposition.totalBloc}
+                            voie {l.decomposition.totalVoie} · bloc {l.decomposition.totalBloc} ·
+                            vit {l.decomposition.vitesse}
                           </span>
                         </td>
                         <td className="w-4 pr-1 text-right text-texte-doux">›</td>
@@ -559,10 +560,28 @@ function DecompositionScore({
         )}
       </SectionDecomp>
 
-      <p className="rounded-xl border border-dashed border-accent/25 bg-accent/5 px-3 py-2 text-[11px] italic text-texte-doux">
-        ⚡ La vitesse n’entre pas encore dans le score (R14) : son intégration
-        (points par rang, classements Filles/Garçons) fera l’objet d’une révision.
-      </p>
+      <SectionDecomp titre="Vitesse" sousTotal={d.vitesse}>
+        <div className="flex items-center gap-2 px-1.5 py-2 text-sm">
+          <span className="min-w-9 font-bold text-texte-fort">
+            {d.rangVitesse != null ? `#${d.rangVitesse}` : '—'}
+          </span>
+          <span
+            className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10.5px] font-bold ${
+              d.rangVitesse != null
+                ? 'border-secondaire/30 bg-secondaire/10 text-secondaire'
+                : 'border-white/10 bg-white/5 text-texte-doux'
+            }`}
+          >
+            {d.vitesseLibelle}
+          </span>
+          <span
+            className={`ml-auto font-bold ${d.vitesse > 0 ? 'text-secondaire' : 'text-texte-doux'}`}
+          >
+            {d.vitesse}
+            <span className="ml-0.5 text-[10px] font-semibold text-texte-doux">pts</span>
+          </span>
+        </div>
+      </SectionDecomp>
     </div>
   )
 }

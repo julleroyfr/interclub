@@ -115,6 +115,21 @@ describe('Score individuel (R3/R4)', () => {
     expect(scoreIndividuel([], [])).toBe(0)
   })
 
+  it('ajoute les points de vitesse au total (R3/R18)', () => {
+    // Spec #7 révisée : score individuel = voie + bloc + vitesse. Les points de
+    // vitesse sont fournis (matérialisés en base, R20) et simplement additionnés.
+    const voies = [{ issue: 'top' as const, bareme: bareme(5) }] // 5
+    const blocs = [{ issue: 'palier' as const, pointsPalier: 6 }] // 6
+    expect(scoreIndividuel(voies, blocs, 15)).toBe(26) // + 15 de vitesse
+  })
+
+  it('vitesse omise (0 ou absente) → total voie + bloc inchangé (R4/R17)', () => {
+    const voies = [{ issue: 'top' as const, bareme: bareme(5) }]
+    expect(scoreIndividuel(voies, [])).toBe(5) // pas d'argument vitesse → 0
+    expect(scoreIndividuel(voies, [], 0)).toBe(5) // NP / à saisir = 0
+    expect(scoreIndividuel([], [], 0)).toBe(0)
+  })
+
   it('évolue à chaque résultat ajouté (au fil de l’eau, R4)', () => {
     const avant = scoreIndividuel([{ issue: 'top', bareme: bareme(5) }], [])
     const apres = scoreIndividuel(

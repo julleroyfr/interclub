@@ -11,6 +11,17 @@ Règles : [docs/conventions/09-environnements-et-donnees.md](../../docs/conventi
   test en phase `competition`, voies, équipes, grimpeurs, épreuves,
   compositions, jetons QR. Chargé automatiquement en local au `supabase db
   reset` (`config.toml` → `[db.seed]`).
+- `02-volume-grimpeurs.sql` — **opt-in** (PAS dans `config.toml`, non chargé au
+  reset). ~50 grimpeurs Club A/B (sexes mixtes) engagés 2/3 sur la rencontre
+  **enfant**, 1/3 sur l'**ado** (+ équipe « Ados B1 »), pour tester le **calcul du
+  score et les classements** (spec #7) à l'échelle. À appliquer **à la main** après
+  `01`. UUID marqués `c0c0c0c0-…` ; purgé par `99` (clubs A/B + équipes des
+  rencontres de test).
+- `03-temps-vitesse-demo.sql` — **opt-in**. Saisit un **temps de vitesse** pour
+  ~2/3 des engagés de chaque rencontre (mix temps / chute / non-présentation) afin
+  de **peupler les classements de vitesse** sans saisie manuelle ; le trigger
+  calcule les points. À appliquer après `01` (+ `02`) et les migrations
+  vitesse. Purgé par `99` (via `temps_vitesse` des rencontres de test).
 - `99-purge-jeu-de-test.sql` — DELETE borné aux seules données de test
   (rejouable). **Jamais chargé automatiquement** (exclu de `config.toml`) pour
   ne pas effacer le seed au reset.

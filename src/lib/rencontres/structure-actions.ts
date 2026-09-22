@@ -249,3 +249,71 @@ export async function ajouterVoieVitesseRencontre(
   revalidatePath(`/admin/rencontres/${rencontreId}`)
   return { succes: 'Voie de vitesse ajoutée.' }
 }
+
+/**
+ * Met à jour le barème de vitesse d'une rencontre (spec #3 R46) : points fixes de
+ * chute / non-présentation (sur l'épreuve) et, pour chaque échelon, ses `points` et
+ * `decrement`. Les plages de rangs (structure réglementaire) ne sont pas éditées
+ * ici. Réservé à l'admin et à la phase pré-competition (R44) — donc avant toute
+ * saisie de temps : les `points_vitesse` (recalculés par trigger sur `temps_vitesse`)
+ * ne sont pas encore matérialisés, aucune donnée à rafraîchir.
+ */
+export async function mettreAJourBaremeVitesse(
+  _etat: EtatStructure,
+  formData: FormData,
+): Promise<EtatStructure> {
+  const refus = await refuserSiNonAdmin()
+  if (refus) return refus
+
+  const rencontreId = String(formData.get('rencontreId') ?? '')
+  const epreuveId = String(formData.get('epreuveId') ?? '')
+  if (!epreuveId) return { erreur: 'Épreuve de vitesse introuvable.' }
+
+  const echelonIds = String(formData.get('echelonIds') ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+
+  let pointsChute: number
+  let pointsNonPresentation: number
+  const echelons: { id: string; points: number; decrement: number }[] = []
+  try {
+    pointsChute = lirePointsObligatoire(formData, 'pointsChute')
+    pointsNonPresentation = lirePointsObligatoire(formData, 'pointsNonPresentation')
+    for (const id of echelonIds) {
+      echelons.push({
+        id,
+        points: lirePointsObligatoire(formData, `points_${id}`),
+        decrement: lirePointsObligatoire(formData, `decrement_${id}`),
+      })
+    }
+  } catch (e) {
+    if (e instanceof PointsInvalideError) return { erreur: e.message }
+    throw e
+  }
+
+  const supabase = await createClient()
+  const refusPhase = await refuserSiPasPreCompetition(supabase, rencontreId)
+  if (refusPhase) return refusPhase
+
+  const { error: errEp } = await supabase
+    .from('epreuve')
+    .update({
+      points_chute: pointsChute,
+      points_non_presentation: pointsNonPresentation,
+    })
+    .eq('id', epreuveId)
+  if (errEp) return { erreur: "La mise à jour du barème a échoué. Réessayez." }
+
+  for (const ech of echelons) {
+    const { error } = await supabase
+      .from('bareme_vitesse_echelon')
+      .update({ points: ech.points, decrement: ech.decrement })
+      .eq('id', ech.id)
+      .eq('epreuve_id', epreuveId)
+    if (error) return { erreur: "La mise à jour du barème a échoué. Réessayez." }
+  }
+
+  revalidatePath(`/admin/rencontres/${rencontreId}`)
+  return { succes: 'Barème de vitesse mis à jour.' }
+}

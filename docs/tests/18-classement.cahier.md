@@ -13,13 +13,16 @@
 - **Spec de référence** : `docs/specs/07-classement.md` (R1–R13) ;
   `docs/specs/06-saisie-des-resultats.md` (source des issues) ;
   `docs/specs/01-roles-et-autorisations.md` (R8 visibilité, R10 phases).
-- **Le calcul pur est couvert par Vitest** (`src/domaine/score.test.ts`, 26 tests,
-  R1–R9). Ce cahier vérifie l'**assemblage cross-club** (loader `service_role`),
-  la **RLS/visibilité** et l'**IHM** — non automatisables sans Supabase.
+- **Le calcul pur est couvert par Vitest** (`src/domaine/score.test.ts`, 28 tests,
+  R1–R9 + agrégation vitesse). Ce cahier vérifie l'**assemblage cross-club** (loader
+  `service_role`), la **RLS/visibilité** et l'**IHM** — non automatisables sans
+  Supabase. L'intégration **vitesse** au score (barème, trigger, décompo) a son
+  propre cahier : **21-vitesse-classement**.
 - **Pré-requis** :
-  - Migrations appliquées **jusqu'à `202609181000_grimpeur_sexe` incluse**
-    (prérequis R8b : la colonne `grimpeur.sexe` alimente les deux classements).
-    En local : `supabase db reset` (migrations + seed).
+  - Migrations appliquées **jusqu'à `202609221600_points_vitesse_trigger` incluse**
+    (prérequis R8b : `grimpeur.sexe` alimente les deux classements ; depuis la
+    révision 2026-09-22 le classement **lit `points_vitesse`** — table créée par
+    cette migration, sans quoi l'écran échoue). En local : `supabase db reset`.
   - `SUPABASE_SERVICE_ROLE_KEY` renseignée (assemblage cross-club, ADR 0002/0003).
   - `supabase/config.toml` → `enable_anonymous_sign_ins = true` (session **coach
     temporaire** par QR, CT-12).
@@ -85,10 +88,12 @@ T1 = 5 / pv 3, T2 = 6 / pv 3, T3 = 7 / pv 4 ; B1 : 1er = 4, 2e = 3 ; B2 : 1er = 
   1. Onglet **Individuel → Filles**, repérer Ana.
   2. **Toucher** la ligne d'Ana.
 - **Résultat attendu** :
-  - Ligne Ana : **9 pts** (sous-texte **voie 5 · bloc 4**).
+  - Ligne Ana : **9 pts** (sous-texte **voie 5 · bloc 4 · vit 0**).
   - Décomposition (R13) : section **Voies** sous-total **5** — M2 `Top` 2, M3
     `Top` 3, M4 `Échec` 0 ; section **Blocs** sous-total **4** — B1 `1er essai` 4,
-    B2 `Échec` 0 ; total **9**. Mention « vitesse hors score (R14) ».
+    B2 `Échec` 0 ; section **Vitesse** sous-total **0** — **« À saisir »** (aucun
+    temps saisi ici) ; total **9**. *(La vitesse au score est détaillée dans le
+    cahier 21.)*
 
 ### CT-03 — Au fil de l'eau (couvre R10)
 

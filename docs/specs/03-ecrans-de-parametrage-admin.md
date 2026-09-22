@@ -1,7 +1,9 @@
 # Spec : Écrans de paramétrage (admin)
 
 - **Statut** : validée (section « Configuration d'une rencontre » R40–R45 validée
-  le 2026-08-28)
+  le 2026-08-28). **Barème de vitesse (R46 « barème par rang », modèle de données
+  associé) ajouté et validé le 2026-09-22** — comble le report de R39 ; le
+  **calcul** des points relève de la spec #7 (R16–R20).
 - **Sources** : décision produit du 2026-07-25 (tranche T8 — premiers écrans
   d'administration). S'appuie sur la **spec #1 — Rôles & autorisations**
   (`01-roles-et-autorisations.md`), qui reste la vérité pour « qui peut faire
@@ -59,6 +61,14 @@ saisie, les flux CRUD, et les règles de suppression (dépendances / cascade).
   diffère selon la catégorie — enfant : un palier **par numéro d'essai** ; ado :
   un palier **par zone** puis « bloc complet ». Chaque palier porte un libellé
   (ex. « 1er essai », « Zone 1 », « Bloc complet ») et un nombre de points.
+- **Barème de vitesse** : barème de points **par rang** de l'épreuve de vitesse,
+  fixé par le règlement CT33 (§ Matin / § Après-midi) mais **stocké et éditable**
+  par gabarit et par rencontre (R46). Il se compose d'**échelons** — chacun couvre
+  une **plage de rangs** (`rang_min`..`rang_max`, `rang_max` nul = « au-delà »),
+  part d'un nombre de **points** et **décroît** d'un `décrément` par rang
+  (`0` = palier plat) — et de deux points fixes : **chute** et **non-présentation**.
+  Il ne porte **pas** sur une voie mais sur l'**épreuve de vitesse** entière. Le
+  calcul des points de vitesse à partir de ce barème relève de la **spec #7** (R16).
 
 ## Règles fonctionnelles
 
@@ -167,18 +177,19 @@ saisie, les flux CRUD, et les règles de suppression (dépendances / cascade).
   difficulté, bloc, vitesse) et leurs **voies** associées. L'admin peut
   consulter et modifier ces gabarits via l'IHM.
 - **R30.** À la **création** d'une rencontre, le gabarit de sa catégorie est
-  **copié** dans la rencontre : épreuves, voies, **points de voies** (R38) et
-  **paliers de blocs** (R39) sont instanciés tels qu'ils sont au moment de la
-  création. Toute modification ultérieure du gabarit est **sans effet** sur les
-  rencontres déjà créées.
+  **copié** dans la rencontre : épreuves, voies, **points de voies** (R38),
+  **paliers de blocs** (R39) et **barème de vitesse** (R46) sont instanciés tels
+  qu'ils sont au moment de la création. Toute modification ultérieure du gabarit
+  est **sans effet** sur les rencontres déjà créées.
 - **R31.** L'admin peut, dans un gabarit, **ajouter**, **modifier** ou
   **supprimer** des épreuves, des voies de difficulté, des blocs et des voies de
   vitesse. Pour une voie de difficulté, il choisit son **niveau** (parmi les
   niveaux réglementaires de la catégorie), sa **cotation** (libellé libre, ex.
   « 5c+ ») et ses **points** (voie entière + prise valorisée ou zones selon la
   catégorie, R38). Pour un bloc, il édite son **code** et ses **paliers** de
-  points (R39). Plusieurs voies peuvent partager le même niveau (doublées,
-  triplées).
+  points (R39). Pour l'**épreuve de vitesse**, il édite son **barème par rang**
+  (échelons + points de chute et de non-présentation, R46). Plusieurs voies peuvent
+  partager le même niveau (doublées, triplées).
 - **R32.** Une **voie de vitesse** (dans le gabarit ou dans une rencontre) porte
   un **libellé** indiquant le classement concerné (ex. « Filles »,
   « Garçons »). Ce libellé est utilisé dans les écrans de jetons QR et
@@ -190,7 +201,7 @@ saisie, les flux CRUD, et les règles de suppression (dépendances / cascade).
   |---------|---------|--------|
   | Voie de difficulté | 14 voies | M1 (4c), M2 (5a), M3 (5b), M4 (5c) moulinette · T1 (4c) à T10 (7c) tête ; points pré-remplis (R38) |
   | Bloc | 2 blocs | B1, B2 ; paliers par essai (R39) |
-  | Vitesse | 2 voies | Libellées « Filles » et « Garçons » (points hors périmètre) |
+  | Vitesse | 2 voies | Libellées « Filles » et « Garçons » ; **barème par rang** seedé (§ Matin : 1er = 15… au-delà 45e = 2, chute = 1, NP = 0 — R46) |
 
 - **R34.** Le gabarit **ado** est pré-initialisé avec le format du règlement CT33
   FFME 2025-2026 (§ Après-midi) :
@@ -199,7 +210,7 @@ saisie, les flux CRUD, et les règles de suppression (dépendances / cascade).
   |---------|---------|--------|
   | Voie de difficulté | 10 voies en tête | T1 (4c) à T10 (7c) — 1 voie par niveau ; points + zones pré-remplis (R38) |
   | Bloc | 2 blocs | B1, B2 ; paliers par zone (R39) |
-  | Vitesse | 2 voies | Libellées « Filles » et « Garçons » (points hors périmètre) |
+  | Vitesse | 2 voies | Libellées « Filles » et « Garçons » ; **barème par rang** seedé (§ Après-midi : 1er = 60… au-delà 50e = 10, chute = 5, NP = 0 — R46) |
 
   Les voies ado sont **exclusivement en tête** (pas de moulinette) et leur niveau
   est **toujours dans T1–T10**. L'admin peut doubler ou tripler certains niveaux
@@ -251,8 +262,32 @@ saisie, les flux CRUD, et les règles de suppression (dépendances / cascade).
   - **Ado** (par zone) : B1 → « Zone » 10, « Bloc complet » 30 ; B2 → « Zone 1 »
     20, « Zone 2 » 40, « Bloc complet » 60.
 
-  Les **points de vitesse** (barème par rang) sont **hors du périmètre de cette
-  itération** et seront traités séparément.
+- **R46.** *(Ajout du 2026-09-22.)* L'**épreuve de vitesse** d'un gabarit et d'une
+  rencontre porte un **barème par rang**, **pré-rempli au seed** selon la catégorie
+  et **éditable** (par gabarit et par rencontre, comme R38/R39). Il se compose :
+  - d'une liste ordonnée d'**échelons** `(rang_min, rang_max, points, décrément)` :
+    l'échelon couvre les rangs `rang_min`..`rang_max` (`rang_max` **nul** =
+    « au-delà », sans borne haute), le rang `r` valant
+    `points − (r − rang_min) × décrément` (`décrément = 0` ⇒ palier plat) ;
+    `points` et `décrément` sont des entiers ≥ 0 ; les échelons sont **contigus,
+    sans chevauchement**, couvrant les rangs à partir de 1, le **dernier** ayant
+    `rang_max` nul ;
+  - de deux points fixes entiers ≥ 0 : **points de chute** et **points de
+    non-présentation**.
+
+  Le barème est **identique Filles / Garçons** (une seule table par épreuve de
+  vitesse) ; seul le **classement** est séparé par sexe (spec #7 R15). Le calcul
+  des points de vitesse à partir de ce barème est **hors de cette spec** (spec #7
+  R16–R18). Barème pré-rempli **enfant** (§ Matin) :
+  - échelons : `1–5` points 15 décr 1 (→ 15,14,13,12,11) ; `6–10` points 10 ;
+    `11–15` points 9 ; `16–20` points 8 ; `21–25` points 7 ; `26–30` points 6 ;
+    `31–35` points 5 ; `36–40` points 4 ; `41–45` points 3 ; `46–∞` points 2 ;
+  - chute : **1** ; non-présentation : **0**.
+
+  Barème pré-rempli **ado** (§ Après-midi) :
+  - échelons : `1–5` points 60 décr 1 (→ 60,59,58,57,56) ; `6–50` points 55 décr 1
+    (→ 55…11) ; `51–∞` points 10 ;
+  - chute : **5** ; non-présentation : **0**.
 
 ### Écran Tableau de bord d'une rencontre (`/admin/rencontres/[id]`)
 
@@ -296,7 +331,8 @@ saisie, les flux CRUD, et les règles de suppression (dépendances / cascade).
   - **Voies** : niveau, type (moulinette/tête), cotation et points (voie entière,
     et prise valorisée ou zones selon la catégorie, R38).
   - **Blocs** : code et **paliers** (libellé + points, R39).
-  - **Vitesse** : numéro et libellé (R32).
+  - **Vitesse** : numéro et libellé (R32), **et le barème par rang** de l'épreuve
+    (échelons + points de chute / non-présentation, R46) — éditable.
 - **R43.** **En phase pré-compétition**, chaque onglet propose un **formulaire
   d'ajout** correspondant à son type (voie de difficulté, bloc, voie de vitesse),
   conforme à R36–R39 et R37 (niveaux contraints). Les **champs de points** du
@@ -431,6 +467,14 @@ année à 4 chiffres valide, alors le grimpeur est ajouté au roster de ce club
     points d'un bloc (R39) ; `points` entier ≥ 0 ; cascade sur `gabarit_bloc`.
   - `gabarit_voie_vitesse(id, gabarit_epreuve_id, libelle, ordre)` — libellé
     libre (ex. « Filles », « Garçons »).
+  - `gabarit_bareme_vitesse_echelon(id, gabarit_epreuve_id, rang_min, rang_max,
+    points, decrement, ordre)` — un **échelon** du barème par rang (R46) ;
+    `rang_min ≥ 1`, `rang_max` **nullable** (nul = « au-delà »), `points ≥ 0`,
+    `decrement ≥ 0` ; contrainte de cohérence `rang_max is null or rang_max ≥
+    rang_min` ; cascade sur `gabarit_epreuve` (type vitesse). Les **points de chute
+    et de non-présentation** sont portés par `gabarit_epreuve` (colonnes
+    `points_chute int`, `points_non_presentation int`, ≥ 0, non nulles pour une
+    épreuve de vitesse, nulles sinon).
 - **Entités rencontre instanciées** (déjà en base pour voie_vitesse ; nouvelles
   pour voie_difficulte et bloc) :
   - `voie_difficulte(id, epreuve_id, niveau, type_voie, cotation, points,
@@ -442,11 +486,18 @@ année à 4 chiffres valide, alors le grimpeur est ajouté au roster de ce club
     bloc de rencontre (R39) ; cascade sur `bloc`.
   - Colonne `libelle text` ajoutée sur `voie_vitesse` (ex. « Filles »,
     « Garçons »).
+  - `bareme_vitesse_echelon(id, epreuve_id, rang_min, rang_max, points, decrement,
+    ordre)` — même structure et contraintes que le gabarit (R46) ; copie au moment
+    de la création (R30) ou renseigné post-création. Les **points de chute /
+    non-présentation** sont portés par `epreuve` (colonnes `points_chute`,
+    `points_non_presentation`, ≥ 0, non nulles pour l'épreuve de vitesse). Cascade
+    sur `epreuve`.
 - La **cascade de suppression** d'une rencontre supprime ses épreuves et, par
-  transitivité, ses voies de difficulté, blocs (et leurs paliers) et voies de
-  vitesse (R18).
+  transitivité, ses voies de difficulté, blocs (et leurs paliers), voies de
+  vitesse **et échelons de barème de vitesse** (R18).
 - La **cascade de suppression** d'un gabarit_epreuve supprime ses voies/blocs
-  gabarit (et paliers de bloc), sans effet sur les rencontres existantes.
+  gabarit (et paliers de bloc) **et ses échelons de barème de vitesse**, sans effet
+  sur les rencontres existantes.
 
 ## Hors périmètre
 
@@ -456,8 +507,10 @@ année à 4 chiffres valide, alors le grimpeur est ajouté au roster de ce club
   l'ajout est couvert par R36 ; suppression = hors périmètre pour l'instant).
 - La gestion des **équipes / compositions** (engagement en rencontre, spec #1
   R6, R17) et des **jetons QR** (spec #2).
-- Le **scoring** et le classement (hors spec #1).
-- Les **points de vitesse** (barème par rang du règlement) : leur modélisation et
-  leur édition sont reportées à une itération dédiée (R39).
+- Le **scoring** et le classement (spec #7). Le **calcul** des points de vitesse à
+  partir du barème (R46) relève de la **spec #7** (R16–R18) ; la présente spec ne
+  couvre que le **stockage et l'édition** du barème.
+- La **saisie du résultat** de vitesse (temps / chute / non-présentation) par le
+  juge → **spec #10**.
 - La détermination automatique de la **catégorie** d'un grimpeur d'après son
   année de naissance et la saison (spec #1 R34) — non calculée par ces écrans.

@@ -117,11 +117,27 @@ on conflict (id) do nothing;
 -- ===========================================================================
 -- 5. Épreuves de la rencontre : voie, bloc, vitesse (une par type, R30).
 -- ===========================================================================
-insert into interclub.epreuve (id, rencontre_id, type) values
-  ('88888888-8888-8888-8888-888888888801', '33333333-3333-3333-3333-333333333333', 'voie'),
-  ('88888888-8888-8888-8888-888888888802', '33333333-3333-3333-3333-333333333333', 'bloc'),
-  ('88888888-8888-8888-8888-888888888803', '33333333-3333-3333-3333-333333333333', 'vitesse')
+insert into interclub.epreuve (id, rencontre_id, type, points_chute, points_non_presentation) values
+  ('88888888-8888-8888-8888-888888888801', '33333333-3333-3333-3333-333333333333', 'voie', null, null),
+  ('88888888-8888-8888-8888-888888888802', '33333333-3333-3333-3333-333333333333', 'bloc', null, null),
+  ('88888888-8888-8888-8888-888888888803', '33333333-3333-3333-3333-333333333333', 'vitesse', 1, 0)
 on conflict (id) do nothing;
+
+-- Barème de vitesse (enfant, § Matin) de l'épreuve vitesse 8803 (spec #3 R46) —
+-- nécessaire au calcul des points de vitesse (spec #7). Cascade à la purge.
+insert into interclub.bareme_vitesse_echelon
+  (epreuve_id, rang_min, rang_max, points, decrement, ordre) values
+  ('88888888-8888-8888-8888-888888888803',  1,   5, 15, 1,  1),
+  ('88888888-8888-8888-8888-888888888803',  6,  10, 10, 0,  2),
+  ('88888888-8888-8888-8888-888888888803', 11,  15,  9, 0,  3),
+  ('88888888-8888-8888-8888-888888888803', 16,  20,  8, 0,  4),
+  ('88888888-8888-8888-8888-888888888803', 21,  25,  7, 0,  5),
+  ('88888888-8888-8888-8888-888888888803', 26,  30,  6, 0,  6),
+  ('88888888-8888-8888-8888-888888888803', 31,  35,  5, 0,  7),
+  ('88888888-8888-8888-8888-888888888803', 36,  40,  4, 0,  8),
+  ('88888888-8888-8888-8888-888888888803', 41,  45,  3, 0,  9),
+  ('88888888-8888-8888-8888-888888888803', 46, null,  2, 0, 10)
+on conflict do nothing;
 
 -- ===========================================================================
 -- 5bis. Structure d'épreuve COMPLÈTE (voies de difficulté + blocs + paliers) —
@@ -250,11 +266,19 @@ values (
 )
 on conflict (id) do nothing;
 
-insert into interclub.epreuve (id, rencontre_id, type) values
-  ('adadadad-0000-0000-0000-0000000000a1', 'adadadad-adad-adad-adad-adadadadadad', 'voie'),
-  ('adadadad-0000-0000-0000-0000000000a2', 'adadadad-adad-adad-adad-adadadadadad', 'bloc'),
-  ('adadadad-0000-0000-0000-0000000000a3', 'adadadad-adad-adad-adad-adadadadadad', 'vitesse')
+insert into interclub.epreuve (id, rencontre_id, type, points_chute, points_non_presentation) values
+  ('adadadad-0000-0000-0000-0000000000a1', 'adadadad-adad-adad-adad-adadadadadad', 'voie', null, null),
+  ('adadadad-0000-0000-0000-0000000000a2', 'adadadad-adad-adad-adad-adadadadadad', 'bloc', null, null),
+  ('adadadad-0000-0000-0000-0000000000a3', 'adadadad-adad-adad-adad-adadadadadad', 'vitesse', 5, 0)
 on conflict (id) do nothing;
+
+-- Barème de vitesse (ado, § Après-midi) de l'épreuve vitesse a3 (spec #3 R46).
+insert into interclub.bareme_vitesse_echelon
+  (epreuve_id, rang_min, rang_max, points, decrement, ordre) values
+  ('adadadad-0000-0000-0000-0000000000a3',  1,   5, 60, 1, 1),
+  ('adadadad-0000-0000-0000-0000000000a3',  6,  50, 55, 1, 2),
+  ('adadadad-0000-0000-0000-0000000000a3', 51, null, 10, 0, 3)
+on conflict do nothing;
 
 -- Voies de vitesse (Filles / Garçons).
 insert into interclub.voie_vitesse (id, rencontre_id, numero, libelle) values

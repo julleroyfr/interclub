@@ -42,6 +42,25 @@ export type VoieVitesseRencontreVue = {
   libelle: string | null
 }
 
+/** Un échelon du barème de vitesse par rang (spec #3 R46). */
+export type BaremeVitesseEchelonVue = {
+  id: string
+  rangMin: number
+  /** `null` = « au-delà » (dernier échelon, sans borne haute). */
+  rangMax: number | null
+  points: number
+  decrement: number
+  ordre: number
+}
+
+/** Barème de vitesse d'une rencontre (spec #3 R46) — `null` si pas d'épreuve vitesse. */
+export type BaremeVitesseVue = {
+  epreuveId: string
+  pointsChute: number | null
+  pointsNonPresentation: number | null
+  echelons: BaremeVitesseEchelonVue[]
+}
+
 export type EpreuveRencontreVue = {
   id: string
   type: TypeEpreuve
@@ -57,6 +76,7 @@ export type StructureRencontre = {
   clubPorteurNom: string
   epreuves: EpreuveRencontreVue[]
   voiesVitesse: VoieVitesseRencontreVue[]
+  baremeVitesse: BaremeVitesseVue | null
 }
 
 /**
@@ -83,18 +103,20 @@ export async function getStructureRencontre(id: string): Promise<StructureRencon
 
   const { data: epreuves, error: errE } = await supabase
     .from('epreuve')
-    .select('id, type')
+    .select('id, type, points_chute, points_non_presentation')
     .eq('rencontre_id', id)
     .order('type')
   if (errE) throw errE
 
   const epreuveIds = (epreuves ?? []).map((e) => e.id as string)
+  const epreuveVitesse = (epreuves ?? []).find((e) => e.type === 'vitesse')
 
   const vide = { data: [] as Record<string, unknown>[], error: null }
   const [
     { data: voies, error: errV },
     { data: blocs, error: errB },
     { data: vitesses, error: errVV },
+    { data: echelons, error: errEch },
   ] = await Promise.all([
     epreuveIds.length === 0
       ? Promise.resolve(vide)
@@ -117,12 +139,20 @@ export async function getStructureRencontre(id: string): Promise<StructureRencon
       .select('id, numero, libelle')
       .eq('rencontre_id', id)
       .order('numero'),
+    epreuveVitesse
+      ? supabase
+          .from('bareme_vitesse_echelon')
+          .select('id, rang_min, rang_max, points, decrement, ordre')
+          .eq('epreuve_id', epreuveVitesse.id as string)
+          .order('ordre')
+      : Promise.resolve(vide),
   ])
   // Ne jamais avaler une erreur d'accès (ex. grant/RLS manquant) : elle
   // masquerait la structure derrière un « 0 » trompeur.
   if (errV) throw errV
   if (errB) throw errB
   if (errVV) throw errVV
+  if (errEch) throw errEch
 
   const blocIds = (blocs ?? []).map((b) => b.id as string)
   const { data: paliers, error: errP } =
@@ -178,5 +208,21 @@ export async function getStructureRencontre(id: string): Promise<StructureRencon
       numero: vv.numero as number,
       libelle: (vv.libelle as string | null) ?? null,
     })),
+    baremeVitesse: epreuveVitesse
+      ? {
+          epreuveId: epreuveVitesse.id as string,
+          pointsChute: (epreuveVitesse.points_chute as number | null) ?? null,
+          pointsNonPresentation:
+            (epreuveVitesse.points_non_presentation as number | null) ?? null,
+          echelons: (echelons ?? []).map((e) => ({
+            id: e.id as string,
+            rangMin: e.rang_min as number,
+            rangMax: (e.rang_max as number | null) ?? null,
+            points: e.points as number,
+            decrement: e.decrement as number,
+            ordre: e.ordre as number,
+          })),
+        }
+      : null,
   }
 }

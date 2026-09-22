@@ -47,10 +47,11 @@ Mot de passe des trois comptes permanents : `interclub`.
 
 | ID | Description | Données (seed) | Utilisé par |
 |----|-------------|----------------|-------------|
-| JD-RENCONTRE-ENFANT | Rencontre **enfant**, Club A, du **19/09/2026**, en phase `competition` (bascule possible en SQL) | `33333333-…-3333` · épreuves voie `…8801`, bloc `…8802`, vitesse `…8803` | 06 · 13 · 14 · 15 · 17 (toute) · 18 (toute) · 19 (toute) |
+| JD-RENCONTRE-ENFANT | Rencontre **enfant**, Club A, du **19/09/2026**, en phase `competition` (bascule possible en SQL) | `33333333-…-3333` · épreuves voie `…8801`, bloc `…8802`, vitesse `…8803` | 06 · 13 · 14 · 15 · 17 (toute) · 18 (toute) · 19 (toute) · 21 (toute) |
 | JD-STRUCTURE-ENFANT | Structure **complète** du gabarit enfant : 4 voies moulinette **M1–M4**, 10 voies tête **T1–T10** (cotations + points + prise valorisée) | voies `…9911`…`…9914` (M1–M4), `…9901` (T1)…`…9929` (T10) sur épreuve `…8801` | 17:CT-04/CT-05/CT-06/CT-07/CT-13 · 18:CT-02/CT-04/CT-05 |
 | JD-BLOCS-ENFANT | Deux blocs et **tous** leurs paliers par essai : **B1** (1er=4, 2e=3), **B2** (1er=6, 2e=5, 3e=4) | B1 `…9902` (paliers `…99a1`,`…99a2`) · B2 `…9903` (paliers `…99b1`,`…99b2`,`…99b3`) | 17:CT-09/CT-12 · 18:CT-02/CT-05 |
-| JD-VITESSE | Deux voies de vitesse (affectation juge) | `44444444-…-4444` (n°1) · `44444444-…-4445` (n°2) | 05 · 06 · 13 · 17:CT-14 · 20 (toute) |
+| JD-VITESSE | Deux voies de vitesse (affectation juge) | `44444444-…-4444` (n°1) · `44444444-…-4445` (n°2) | 05 · 06 · 13 · 17:CT-14 · 20 (toute) · 21 |
+| JD-BAREME-VITESSE-ENFANT | **Barème de vitesse enfant** (§ Matin, spec #3 R46) seedé sur l'épreuve vitesse `…8803` : échelons 1–5=15/décr 1, 6–10=10 … 46+=2 ; **chute=1**, **NP=0** | échelons `bareme_vitesse_echelon` (epreuve `…8803`) + `epreuve.points_chute/points_non_presentation` | 21 (toute) |
 
 ## Rencontre & structure d'épreuve — ADO
 
@@ -60,7 +61,8 @@ Mot de passe des trois comptes permanents : `interclub`.
 
 | ID | Description | Données (seed) | Utilisé par |
 |----|-------------|----------------|-------------|
-| JD-RENCONTRE-ADO | Rencontre **ado**, Club A, du **19/09/2026**, phase `competition` | `adadadad-adad-…-adad` · épreuves voie `adadadad-…-a1`, bloc `…-a2`, vitesse `…-a3` | 17:CT-07 |
+| JD-RENCONTRE-ADO | Rencontre **ado**, Club A, du **19/09/2026**, phase `competition` | `adadadad-adad-…-adad` · épreuves voie `adadadad-…-a1`, bloc `…-a2`, vitesse `…-a3` | 17:CT-07 · 21:CT-08 |
+| JD-BAREME-VITESSE-ADO | **Barème de vitesse ado** (§ Après-midi, spec #3 R46) seedé sur l'épreuve vitesse `…-a3` : 1–5=60/décr 1, 6–50=55/décr 1, 51+=10 ; **chute=5**, **NP=0** | échelons `bareme_vitesse_echelon` (epreuve `…-a3`) + `epreuve.points_chute/points_non_presentation` | 21:CT-08 |
 | JD-STRUCTURE-ADO | Voies **tête T1–T10** avec `points_zone1`/`points_zone2` (barème « Après-midi ») **+ un 2ᵉ T5** (niveau dupliqué, R11) pour le choix libre de deux voies de même niveau | voies `adadadad-…-0001`…`…-0010` + `…-0015` (T5 bis) sur épreuve `…-a1` | 17:CT-07 |
 | JD-BLOCS-ADO | Blocs ado + paliers : **B1** (Zone=10, Bloc complet=30), **B2** (Zone 1=20, Zone 2=40, Bloc complet=60) | B1 `adadadad-…-b1`, B2 `…-b2` | 17:CT-09 (variante ado) |
 | JD-EQUIPE-ADO | Équipe **« Ados A1 »** (Club A) avec 2 grimpeurs ado (**Nora**, **Owen**, nés 2011) — support du choix libre 6 voies | équipe `adadadad-…-e001` · grimpeurs `adadadad-…-c1`/`…-c2` | 17:CT-07/CT-08 |
@@ -88,7 +90,7 @@ Mot de passe des trois comptes permanents : `interclub`.
 | ID | Description | Données (seed) | Utilisé par |
 |----|-------------|----------------|-------------|
 | JD-JETON-COACHTEMP | Jeton **coach temporaire** Club A (scan → session éphémère, droits jour J), lié à la rencontre enfant `33333333` | id `55555555-…-5551` · valeur `aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa` | 17:CT-10 · 18:CT-12 · 19:CT-01 · 05 · 06 · 13 |
-| JD-JETON-JUGE | Jeton **juge** de la voie de vitesse n°1 (saisie des temps) | id `55555555-…-5552` · valeur `bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb` | 17:CT-14 · 05 · 06 · 13 · 20 (toute) |
+| JD-JETON-JUGE | Jeton **juge** de la voie de vitesse n°1 (saisie des temps) | id `55555555-…-5552` · valeur `bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb` | 17:CT-14 · 05 · 06 · 13 · 20 (toute) · 21 |
 
 ## Notes
 

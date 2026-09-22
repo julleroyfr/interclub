@@ -15,6 +15,7 @@ import {
   type GrimpeurClassable,
   type Rang,
 } from '@/domaine/score'
+import { formaterTempsVitesse } from '@/domaine/vitesse'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 // Assemblage du classement d'une rencontre (spec #7). Le calcul (score de voie/bloc,
@@ -23,11 +24,15 @@ import { createAdminClient } from '@/lib/supabase/admin'
 // entrées à partir des résultats saisis (spec #6) et du barème stocké (spec #3),
 // pour TOUS les clubs, et prépare la décomposition d'un score (R13).
 //
+// Composante VITESSE (R15–R20) : elle est *field-dependent* (points par rang, par
+// sexe) et donc **matérialisée en base** par un trigger sur `temps_vitesse` (R20).
+// Le loader la **lit** dans `points_vitesse` (points + rang) et l'ADDITIONNE au
+// score voie + bloc — voie/bloc restent, eux, calculés à la lecture (R10).
+//
 // Lecture cross-club via le client `service_role` (assemblage transverse, ADR
 // 0002/0003) : lire les noms de grimpeurs / équipes / clubs de tous les clubs
 // dépasse ce que la RLS ouvre à un simple `authenticated`. Le gating de phase
 // (③+ seulement, R11) est donc porté ICI, `service_role` contournant la RLS.
-// Rien n'est stocké : recalcul à la lecture, au fil de l'eau (R10).
 
 /** Phases où le classement est visible (dès la ③ compétition, R11). */
 const PHASES_VISIBLES: Phase[] = ['competition', 'cloture', 'resultats_publics']
@@ -49,10 +54,16 @@ export type LigneBlocDecomp = {
   points: number
 }
 
-/** Décomposition d'un score individuel (R13) : sous-totaux et détail voie/bloc. */
+/** Décomposition d'un score individuel (R13) : sous-totaux voie/bloc/vitesse. */
 export type Decomposition = {
   totalVoie: number
   totalBloc: number
+  /** Points de vitesse (R16/R17), matérialisés en base (R20) et lus ici. */
+  vitesse: number
+  /** Rang de vitesse (R15) ; `null` si chute / non-présentation / à saisir. */
+  rangVitesse: number | null
+  /** Libellé de la forme de vitesse : temps formaté, « Chute », « Non-présentation » ou « À saisir » (R13). */
+  vitesseLibelle: string
   voies: LigneVoieDecomp[]
   blocs: LigneBlocDecomp[]
 }
@@ -117,8 +128,8 @@ const individuelVide = (): ClassementIndividuel => ({ filles: [], garcons: [] })
  * Charge et calcule le classement d'une rencontre (individuel par sexe, équipe,
  * club) avec la décomposition de chaque score individuel (R13). Renvoie `null` si
  * la rencontre est introuvable. Avant la ③, `visible` est faux et les classements
- * sont vides (R11). Le total porte sur voie + bloc ; la vitesse s'ajoutera plus
- * tard (R14).
+ * sont vides (R11). Le total individuel porte sur **voie + bloc + vitesse** (R3,
+ * révision 2026-09-22) ; la vitesse est lue depuis `points_vitesse` (R20).
  */
 export async function getClassementRencontre(
   rencontreId: string,
@@ -154,6 +165,9 @@ export async function getClassementRencontre(
     .eq('rencontre_id', rencontreId)
   const epreuveVoie = (epreuves ?? []).find((e) => e.type === 'voie')?.id as string | undefined
   const epreuveBloc = (epreuves ?? []).find((e) => e.type === 'bloc')?.id as string | undefined
+  const epreuveVitesse = (epreuves ?? []).find((e) => e.type === 'vitesse')?.id as
+    | string
+    | undefined
 
   // Structure (barème + libellés) des voies et blocs, et équipes (tous clubs).
   const vide = Promise.resolve({ data: [] as Record<string, unknown>[] })
@@ -198,8 +212,9 @@ export async function getClassementRencontre(
   }))
   const equipeIds = equipes.map((e) => e.equipeId)
 
-  // Paliers (points + libellé), résultats voie/bloc, compositions (tous clubs).
-  const [paliersRes, rvRes, rbRes, composRes] = await Promise.all([
+  // Paliers, résultats voie/bloc, compositions, et VITESSE : points matérialisés
+  // (points_vitesse, R20) + forme saisie (temps_vitesse, pour le libellé R13).
+  const [paliersRes, rvRes, rbRes, composRes, pvRes, tvRes] = await Promise.all([
     blocIds.length
       ? admin.from('bloc_palier').select('id, points, libelle').in('bloc_id', blocIds)
       : vide,
@@ -218,6 +233,18 @@ export async function getClassementRencontre(
     equipeIds.length
       ? admin.from('composition').select('equipe_id, grimpeur_id').in('equipe_id', equipeIds)
       : vide,
+    epreuveVitesse
+      ? admin
+          .from('points_vitesse')
+          .select('grimpeur_id, rang, points')
+          .eq('epreuve_id', epreuveVitesse)
+      : vide,
+    epreuveVitesse
+      ? admin
+          .from('temps_vitesse')
+          .select('grimpeur_id, issue, temps')
+          .eq('epreuve_id', epreuveVitesse)
+      : vide,
   ])
 
   const pointsParPalier = new Map<string, number>()
@@ -225,6 +252,22 @@ export async function getClassementRencontre(
   for (const p of paliersRes.data ?? []) {
     pointsParPalier.set(p.id as string, (p.points as number) ?? 0)
     libellePalier.set(p.id as string, p.libelle as string)
+  }
+
+  // Vitesse : points + rang matérialisés (R20) et forme saisie (libellé R13).
+  const pointsVitesseDe = new Map<string, { points: number; rang: number | null }>()
+  for (const p of pvRes.data ?? []) {
+    pointsVitesseDe.set(p.grimpeur_id as string, {
+      points: (p.points as number) ?? 0,
+      rang: (p.rang as number | null) ?? null,
+    })
+  }
+  const formeVitesseDe = new Map<string, { issue: string; temps: number | null }>()
+  for (const t of tvRes.data ?? []) {
+    formeVitesseDe.set(t.grimpeur_id as string, {
+      issue: t.issue as string,
+      temps: (t.temps as number | null) ?? null,
+    })
   }
 
   // Décomposition (voie + bloc) par grimpeur — R13, et sous-totaux (R1/R2).
@@ -309,14 +352,32 @@ export async function getClassementRencontre(
     const blocs = decompBloc.get(gid) ?? []
     const totalVoie = voies.reduce((s, v) => s + v.points, 0)
     const totalBloc = blocs.reduce((s, b) => s + b.points, 0)
-    return { totalVoie, totalBloc, voies, blocs }
+    const pv = pointsVitesseDe.get(gid)
+    const forme = formeVitesseDe.get(gid)
+    const vitesseLibelle =
+      forme?.issue === 'temps' && forme.temps != null
+        ? formaterTempsVitesse(forme.temps)
+        : forme?.issue === 'chute'
+          ? 'Chute'
+          : forme?.issue === 'non_presentation'
+            ? 'Non-présentation'
+            : 'À saisir'
+    return {
+      totalVoie,
+      totalBloc,
+      vitesse: pv?.points ?? 0,
+      rangVitesse: pv?.rang ?? null,
+      vitesseLibelle,
+      voies,
+      blocs,
+    }
   }
   const scoreParGrimpeur = new Map<string, number>()
   const decompParGrimpeur = new Map<string, Decomposition>()
   for (const gid of grimpeurIds) {
     const d = decompositionDe(gid)
     decompParGrimpeur.set(gid, d)
-    scoreParGrimpeur.set(gid, d.totalVoie + d.totalBloc)
+    scoreParGrimpeur.set(gid, d.totalVoie + d.totalBloc + d.vitesse)
   }
 
   // Classement individuel par sexe (R8b) — rattaché au club d'origine (R7).
@@ -351,6 +412,9 @@ export async function getClassementRencontre(
       decomposition: decompParGrimpeur.get(r.element.grimpeurId) ?? {
         totalVoie: 0,
         totalBloc: 0,
+        vitesse: 0,
+        rangVitesse: null,
+        vitesseLibelle: 'À saisir',
         voies: [],
         blocs: [],
       },

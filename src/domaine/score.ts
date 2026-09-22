@@ -58,17 +58,24 @@ export type ResultatBlocScore = { issue: IssueBloc; pointsPalier: number | null 
 
 /**
  * Score individuel d'un grimpeur pour la rencontre (R3) : somme de tous ses
- * scores de voie et de bloc. Les voies / blocs sans résultat ne figurent tout
- * simplement pas dans les listes — ils comptent donc 0 (R4), et le total évolue
- * à chaque saisie (au fil de l'eau). *(Vitesse non incluse — R14.)*
+ * scores de voie, de bloc **et de vitesse**. Les voies / blocs sans résultat ne
+ * figurent tout simplement pas dans les listes — ils comptent donc 0 (R4), et le
+ * total évolue à chaque saisie (au fil de l'eau).
+ *
+ * La composante **vitesse** (R15–R20) est *field-dependent* (points par rang, par
+ * sexe) : elle est **calculée et matérialisée en base** (trigger sur
+ * `temps_vitesse`, R20) puis **lue** par le loader et fournie ici via
+ * `pointsVitesse`. Absente / chute-NP-à saisir sans points → 0 (R17), d'où la
+ * valeur par défaut.
  */
 export function scoreIndividuel(
   voies: readonly ResultatVoieScore[],
   blocs: readonly ResultatBlocScore[],
+  pointsVitesse = 0,
 ): number {
   const totalVoies = voies.reduce((s, v) => s + scoreVoie(v.issue, v.bareme), 0)
   const totalBlocs = blocs.reduce((s, b) => s + scoreBloc(b.issue, b.pointsPalier), 0)
-  return totalVoies + totalBlocs
+  return totalVoies + totalBlocs + pointsVitesse
 }
 
 /**
