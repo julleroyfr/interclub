@@ -111,3 +111,51 @@ export const getContexteCoach = cache(async (): Promise<ContexteCoach | null> =>
 
   return { type: 'temporaire', clubId, rencontreId }
 })
+
+/**
+ * Contexte d'accès à l'espace juge (spec #10 R1/R2). Session QR « juge »
+ * (anonyme) active en ③ compétition : périmètre = l'**épreuve de vitesse** de sa
+ * rencontre (le couloir n'est qu'une information d'organisation, spec #1 R30).
+ */
+export type ContexteJuge = {
+  rencontreId: string
+  epreuveVitesseId: string
+  couloirNumero: number | null
+  dateRencontre: string
+  clubPorteurNom: string
+  phase: string
+}
+
+/**
+ * Résout le contexte juge de la requête courante (spec #10 R1), ou `null` si
+ * l'utilisateur n'a pas de session QR juge active. Mémoïsé sur la durée d'un
+ * rendu. Passe par la RPC `contexte_juge` (SECURITY DEFINER — un anonyme ne peut
+ * pas lire `jeton_qr` directement) : elle ne renvoie un périmètre que si la
+ * session est « du jour » (③ compétition), le jeton actif et une épreuve de
+ * vitesse existe ; sinon `null` (fail-closed).
+ */
+export const getContexteJuge = cache(async (): Promise<ContexteJuge | null> => {
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc('contexte_juge')
+  if (error) {
+    console.error('Lecture du contexte juge impossible :', error.message)
+    return null
+  }
+  if (!data || typeof data !== 'object') return null
+
+  const d = data as Record<string, unknown>
+  const rencontreId = typeof d['rencontre_id'] === 'string' ? d['rencontre_id'] : null
+  const epreuveVitesseId =
+    typeof d['epreuve_vitesse_id'] === 'string' ? d['epreuve_vitesse_id'] : null
+  // Pas d'épreuve de vitesse → aucune saisie possible (fail-closed).
+  if (!rencontreId || !epreuveVitesseId) return null
+
+  return {
+    rencontreId,
+    epreuveVitesseId,
+    couloirNumero: typeof d['couloir_numero'] === 'number' ? d['couloir_numero'] : null,
+    dateRencontre: typeof d['date_rencontre'] === 'string' ? d['date_rencontre'] : '',
+    clubPorteurNom: typeof d['club_porteur_nom'] === 'string' ? d['club_porteur_nom'] : '',
+    phase: typeof d['phase'] === 'string' ? d['phase'] : '',
+  }
+})

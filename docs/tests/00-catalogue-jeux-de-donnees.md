@@ -50,7 +50,7 @@ Mot de passe des trois comptes permanents : `interclub`.
 | JD-RENCONTRE-ENFANT | Rencontre **enfant**, Club A, du **19/09/2026**, en phase `competition` (bascule possible en SQL) | `33333333-…-3333` · épreuves voie `…8801`, bloc `…8802`, vitesse `…8803` | 06 · 13 · 14 · 15 · 17 (toute) · 18 (toute) · 19 (toute) |
 | JD-STRUCTURE-ENFANT | Structure **complète** du gabarit enfant : 4 voies moulinette **M1–M4**, 10 voies tête **T1–T10** (cotations + points + prise valorisée) | voies `…9911`…`…9914` (M1–M4), `…9901` (T1)…`…9929` (T10) sur épreuve `…8801` | 17:CT-04/CT-05/CT-06/CT-07/CT-13 · 18:CT-02/CT-04/CT-05 |
 | JD-BLOCS-ENFANT | Deux blocs et **tous** leurs paliers par essai : **B1** (1er=4, 2e=3), **B2** (1er=6, 2e=5, 3e=4) | B1 `…9902` (paliers `…99a1`,`…99a2`) · B2 `…9903` (paliers `…99b1`,`…99b2`,`…99b3`) | 17:CT-09/CT-12 · 18:CT-02/CT-05 |
-| JD-VITESSE | Deux voies de vitesse (affectation juge) | `44444444-…-4444` (n°1) · `44444444-…-4445` (n°2) | 05 · 06 · 13 · 17:CT-14 |
+| JD-VITESSE | Deux voies de vitesse (affectation juge) | `44444444-…-4444` (n°1) · `44444444-…-4445` (n°2) | 05 · 06 · 13 · 17:CT-14 · 20 (toute) |
 
 ## Rencontre & structure d'épreuve — ADO
 
@@ -88,7 +88,7 @@ Mot de passe des trois comptes permanents : `interclub`.
 | ID | Description | Données (seed) | Utilisé par |
 |----|-------------|----------------|-------------|
 | JD-JETON-COACHTEMP | Jeton **coach temporaire** Club A (scan → session éphémère, droits jour J), lié à la rencontre enfant `33333333` | id `55555555-…-5551` · valeur `aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa` | 17:CT-10 · 18:CT-12 · 19:CT-01 · 05 · 06 · 13 |
-| JD-JETON-JUGE | Jeton **juge** de la voie de vitesse n°1 (saisie des temps) | id `55555555-…-5552` · valeur `bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb` | 17:CT-14 · 05 · 06 · 13 |
+| JD-JETON-JUGE | Jeton **juge** de la voie de vitesse n°1 (saisie des temps) | id `55555555-…-5552` · valeur `bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb` | 17:CT-14 · 05 · 06 · 13 · 20 (toute) |
 
 ## Notes
 
