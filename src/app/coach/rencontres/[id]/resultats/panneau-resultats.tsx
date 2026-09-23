@@ -3,6 +3,7 @@
 import { useActionState, useMemo, useState } from 'react'
 
 import { issuesVoieSaisissables, type IssueVoie } from '@/domaine/resultat'
+import { formaterTempsVitesse } from '@/domaine/vitesse'
 import {
   retirerResultatVoie,
   saisirResultatBloc,
@@ -53,11 +54,25 @@ function trierAlpha(a: GrimpeurSaisie, b: GrimpeurSaisie): number {
   return a.nom.localeCompare(b.nom) || a.prenom.localeCompare(b.prenom)
 }
 
+/** Libellé de l'état de vitesse (R22) : temps, chute, non-présentation, ou en attente. */
+function libelleVitesse(vitesse: GrimpeurSaisie['vitesse']): string {
+  switch (vitesse.statut) {
+    case 'temps':
+      return vitesse.temps != null ? formaterTempsVitesse(vitesse.temps) : 'temps'
+    case 'chute':
+      return 'Chute'
+    case 'non_presentation':
+      return 'Non-présentation'
+    case 'en_attente':
+      return 'en attente'
+  }
+}
+
 /**
  * Panneau de saisie des résultats (spec #6). Deux vues des grimpeurs du club
  * engagés — par équipe / alphabétique (R24) — puis saisie par grimpeur avec
  * navigation précédent/suivant et balayage (R25). Vitesse et score en lecture
- * seule (R22/R23 ; le score, calcul hors périmètre, est affiché « à venir »).
+ * seule (R22/R23) : le score, restitué ici, agrège voie + bloc + vitesse (R23).
  */
 export function PanneauResultats({ saisie }: { saisie: SaisieRencontre }) {
   const [vue, setVue] = useState<'equipe' | 'alpha'>('equipe')
@@ -156,9 +171,9 @@ function Chips({ grimpeur }: { grimpeur: GrimpeurSaisie }) {
       <span className={`${chip} ${voiesOk ? ok : ''}`}>🧗 {p.voiesFaites}/{p.voiesTotal}</span>
       <span className={`${chip} ${blocsOk ? ok : ''}`}>🧱 {p.blocsFaites}/{p.blocsTotal}</span>
       <span
-        className={`${chip} ${vitesse.statut === 'temps' ? 'border-accent/30 text-accent-doux' : 'border-dashed text-texte-doux'}`}
+        className={`${chip} ${vitesse.statut === 'en_attente' ? 'border-dashed text-texte-doux' : 'border-accent/30 text-accent-doux'}`}
       >
-        ⚡ {vitesse.statut === 'temps' ? `${vitesse.temps} s` : 'en attente'}
+        ⚡ {libelleVitesse(vitesse)}
       </span>
       <span className={`${chip} border-secondaire/30 text-secondaire`}>
         🏆 {grimpeur.score} pts
@@ -317,10 +332,9 @@ function DetailGrimpeur({
         ← glissez pour changer de grimpeur →
       </p>
 
-      {/* Score au fil de l'eau (voie + bloc, R23) — calcul du domaine (spec #7).
-          Vitesse non incluse (R14). */}
+      {/* Score au fil de l'eau (voie + bloc + vitesse, R23) — calcul du domaine (spec #7). */}
       <div className="flex items-center justify-between rounded-xl border border-secondaire/25 bg-secondaire/5 px-3 py-2 text-sm">
-        <span className="text-texte-attenue">Score (voie + bloc)</span>
+        <span className="text-texte-attenue">Score (voie + bloc + vitesse)</span>
         <span className="font-extrabold text-secondaire">
           {grimpeur.score}
           <span className="ml-1 text-[11px] font-bold text-texte-doux">pts</span>
@@ -637,15 +651,15 @@ function LigneBloc({
   )
 }
 
-/** Vitesse en lecture seule (R22) — saisie par le juge. */
+/** Vitesse en lecture seule (R22) — saisie par le juge ; points comptés au score (R23). */
 function SectionVitesse({ grimpeur }: { grimpeur: GrimpeurSaisie }) {
   return (
     <div className="flex items-center justify-between rounded-2xl border border-bordure bg-surface px-4 py-3">
       <h3 className="text-xs font-bold uppercase tracking-wide text-accent">⚡ Vitesse</h3>
       <span className="text-[11px] font-bold text-texte-doux">
-        {grimpeur.vitesse.statut === 'temps'
-          ? `${grimpeur.vitesse.temps} s`
-          : 'en attente'}{' '}
+        {grimpeur.vitesse.statut === 'en_attente'
+          ? 'en attente'
+          : `${libelleVitesse(grimpeur.vitesse)} · ${grimpeur.pointsVitesse} pts`}{' '}
         <span className="font-medium normal-case">· lecture (juge)</span>
       </span>
     </div>

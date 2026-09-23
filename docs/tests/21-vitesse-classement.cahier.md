@@ -189,12 +189,12 @@ tous, donc **aucune ligne `points_vitesse`**.
 
 | Date | Testeur | Version/commit | Cas | Résultat | Remarque |
 |------|---------|----------------|-----|----------|----------|
-| | | | CT-01 | ✅ / ❌ | |
-| | | | CT-02 | ✅ / ❌ | |
-| | | | CT-03 | ✅ / ❌ | |
-| | | | CT-04 | ✅ / ❌ | |
-| | | | CT-05 | ✅ / ❌ | |
-| | | | CT-06 | ✅ / ❌ | |
-| | | | CT-07 | ✅ / ❌ | |
-| | | | CT-08 | ✅ / ❌ | |
-| | | | CT-09 | ✅ / ❌ | |
+| 2026-09-23 | julleroyfr | 8a38bc8 (local) | CT-01 | ✅ | Barème enfant seedé & visible |
+| 2026-09-23 | julleroyfr | 8a38bc8 (local) | CT-02 | ✅ | Édition en ① ; lecture seule en ③ |
+| 2026-09-23 | julleroyfr | 8a38bc8 (local) | CT-03 | ✅ | Saisie temps → points matérialisés |
+| 2026-09-23 | julleroyfr | 8a38bc8 (local) | CT-04 | ✅ | Ex æquo & saut de rang |
+| 2026-09-23 | julleroyfr | 8a38bc8 (local) | CT-05 | ✅ | Chute / NP / à saisir |
+| 2026-09-23 | julleroyfr | 8a38bc8 (local) | CT-06 | ✅ | Recalcul au fil de l'eau (trigger) |
+| 2026-09-23 | julleroyfr | 8a38bc8 (local) | CT-07 | ✅ | Propagation équipe / club |
+| 2026-09-23 | julleroyfr | 8a38bc8 (local) | CT-08 | ✅ | Barème ado (1er = 60) |
+| 2026-09-23 | julleroyfr | 8a38bc8 (local) | CT-09 | ✅ | Écriture `points_vitesse` réservée au trigger |

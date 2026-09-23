@@ -11,9 +11,10 @@ import { createClient } from '@/lib/supabase/server'
 // (spec #6). Par grimpeur engagé (prêtés inclus, R2/R36) : ses voies (enfant : les
 // 3 du groupe de départ, R9 ; ado : les voies réalisées, R11) et ses blocs (B1/B2,
 // R15) avec l'issue courante, plus l'état de vitesse en lecture seule (R22) et sa
-// progression (R20). Le SCORE (R23) est calculé au fil de l'eau (voie + bloc) via
-// le domaine `score.ts` (spec #7) ; la vitesse n'y entre pas encore (R14). La RLS
-// borne la lecture (club, phase ③+).
+// progression (R20). Le SCORE (R23) est calculé au fil de l'eau (voie + bloc +
+// vitesse) via le domaine `score.ts` (spec #7), la composante vitesse étant lue
+// depuis `points_vitesse` (matérialisée par le trigger, R20). La RLS borne la
+// lecture (club, phase ③+).
 
 /** Nombre de voies attendues pour un enfant (les 3 du groupe de départ, R9). */
 const VOIES_ENFANT = 3
@@ -36,14 +37,23 @@ export type SaisieBloc = {
   palierLibelle: string | null
 }
 
-/** État de vitesse (lecture seule, R22). `chute`/`non_presentation` : à venir (spec vitesse). */
-export type EtatVitesse = { statut: 'temps' | 'en_attente'; temps: number | null }
+/**
+ * État de vitesse (lecture seule, R22) : la forme saisie par le juge — `temps`
+ * chronométré, `chute`, `non_presentation` — ou `en_attente` (pas encore saisi).
+ * `temps` (secondes) n'est renseigné que pour la forme `temps`.
+ */
+export type EtatVitesse = {
+  statut: 'temps' | 'chute' | 'non_presentation' | 'en_attente'
+  temps: number | null
+}
 
 /** Ligne de saisie d'un grimpeur engagé. */
 export type GrimpeurSaisie = {
   grimpeurId: string
-  /** Score au fil de l'eau (voie + bloc, R23) ; vitesse non incluse (R14). */
+  /** Score au fil de l'eau (voie + bloc + vitesse, R23). */
   score: number
+  /** Composante vitesse du score (points matérialisés, R20) ; 0 si non saisie. */
+  pointsVitesse: number
   nom: string
   prenom: string
   equipeId: string
@@ -207,8 +217,8 @@ export async function getSaisieRencontre(
   }))
   const grimpeurIds = [...new Set(compos.map((c) => c.grimpeurId))]
 
-  // Noms/clubs des grimpeurs engagés + résultats + vitesse.
-  const [grimpeursRes, rvRes, rbRes, tvRes] = await Promise.all([
+  // Noms/clubs des grimpeurs engagés + résultats + vitesse (temps saisi + points).
+  const [grimpeursRes, rvRes, rbRes, tvRes, pvRes] = await Promise.all([
     grimpeurIds.length
       ? supabase.from('grimpeur').select('id, nom, prenom, club_id').in('id', grimpeurIds)
       : Promise.resolve({ data: [] as Record<string, unknown>[] }),
@@ -227,7 +237,15 @@ export async function getSaisieRencontre(
     epreuveVitesse && grimpeurIds.length
       ? supabase
           .from('temps_vitesse')
-          .select('grimpeur_id, temps')
+          .select('grimpeur_id, issue, temps')
+          .eq('epreuve_id', epreuveVitesse)
+          .in('grimpeur_id', grimpeurIds)
+      : Promise.resolve({ data: [] as Record<string, unknown>[] }),
+    // Points de vitesse matérialisés par le trigger (R20), lus pour le score (R23).
+    epreuveVitesse && grimpeurIds.length
+      ? supabase
+          .from('points_vitesse')
+          .select('grimpeur_id, points')
           .eq('epreuve_id', epreuveVitesse)
           .in('grimpeur_id', grimpeurIds)
       : Promise.resolve({ data: [] as Record<string, unknown>[] }),
@@ -267,8 +285,15 @@ export async function getSaisieRencontre(
       palierId: (r.palier_id as string | null) ?? null,
     })
   }
-  const tempsParGrimpeur = new Map<string, number>()
-  for (const t of tvRes.data ?? []) tempsParGrimpeur.set(t.grimpeur_id as string, t.temps as number)
+  const formeVitesseParGrimpeur = new Map<string, { issue: string; temps: number | null }>()
+  for (const t of tvRes.data ?? [])
+    formeVitesseParGrimpeur.set(t.grimpeur_id as string, {
+      issue: t.issue as string,
+      temps: (t.temps as number | null) ?? null,
+    })
+  const pointsVitesseParGrimpeur = new Map<string, number>()
+  for (const p of pvRes.data ?? [])
+    pointsVitesseParGrimpeur.set(p.grimpeur_id as string, (p.points as number) ?? 0)
 
   const grimpeurs: GrimpeurSaisie[] = compos.map((c) => {
     const info = infoGrimpeur.get(c.grimpeurId)
@@ -326,16 +351,26 @@ export async function getSaisieRencontre(
       }
     })
 
-    const temps = tempsParGrimpeur.get(c.grimpeurId)
-    const vitesse: EtatVitesse =
-      temps != null ? { statut: 'temps', temps } : { statut: 'en_attente', temps: null }
+    const forme = formeVitesseParGrimpeur.get(c.grimpeurId)
+    const vitesse: EtatVitesse = forme
+      ? {
+          statut:
+            forme.issue === 'temps'
+              ? 'temps'
+              : forme.issue === 'chute'
+                ? 'chute'
+                : 'non_presentation',
+          temps: forme.temps,
+        }
+      : { statut: 'en_attente', temps: null }
 
     const voiesTotal = categorie === 'enfant' ? VOIES_ENFANT : PLAFOND_VOIES_ADO
     const voiesFaites = voiesGrimpeur.filter((v) => v.issue != null).length
     const blocsFaites = blocsGrimpeur.filter((b) => b.issue != null).length
 
-    // Score au fil de l'eau (voie + bloc, R23) — calcul du domaine (spec #7).
-    // La vitesse n'entre pas encore dans le total (R14).
+    // Score au fil de l'eau (voie + bloc + vitesse, R23) — mêmes primitives que le
+    // domaine (spec #7 `scoreIndividuel`) : voie/bloc calculés à la lecture, la
+    // vitesse lue depuis `points_vitesse` (matérialisée par le trigger, R20).
     const scoreVoies = voiesGrimpeur.reduce((s, v) => {
       const bareme = v.issue ? baremeParVoie.get(v.voieDifficulteId) : undefined
       return bareme && v.issue ? s + scoreVoie(v.issue, bareme) : s
@@ -347,11 +382,13 @@ export async function getSaisieRencontre(
           : s,
       0,
     )
-    const score = scoreVoies + scoreBlocs
+    const pointsVitesse = pointsVitesseParGrimpeur.get(c.grimpeurId) ?? 0
+    const score = scoreVoies + scoreBlocs + pointsVitesse
 
     return {
       grimpeurId: c.grimpeurId,
       score,
+      pointsVitesse,
       nom: info?.nom ?? '(inconnu)',
       prenom: info?.prenom ?? '',
       equipeId: c.equipeId,
