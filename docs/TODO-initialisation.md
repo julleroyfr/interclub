@@ -6,88 +6,93 @@ attente** (les tâches ✅ faites sont archivées en bas, pas rappelées).
 
 Statuts : ✅ fait · 🔄 en cours · ⏳ en attente (à faire) · 🚫 bloqué (dépendance non levée)
 
-Dernière mise à jour : 2026-07-25.
+Dernière mise à jour : 2026-09-23.
 
 ---
 
+> ℹ️ **La phase d'initialisation (T1→T8) est terminée.** Le projet est en
+> développement fonctionnel (specs #3→#10). Cette section suit désormais l'état
+> des specs métier et les tâches d'init résiduelles.
+
 ## 🔄 En cours
 
-**T6 codé** (2026-07-25) : migration `202607251000_rls_tables_metier` — 11
-helpers de périmètre `SECURITY DEFINER` (phase, coach temp./juge de rencontre,
-écritures équipe/composition/résultat/temps vitesse) + grants `authenticated` +
-policies par opération sur les **9 tables métier**, implémentant la matrice de la
-spec #1 et les 2 chemins d'acteur de l'[ADR 0001](decisions/0001-authentification-sessions-ephemeres-qr.md)
-(permanent via `compte`, éphémère via `session_qr`) avec gating de phase.
-Précisions spec #1 validées (rév. 2026-07-25) : périmètre juge = épreuve vitesse
-(R30) ; roster grimpeur éditable hors phase (R6). Validé en local :
-`npm run test:t6` (17/17) + cahier `docs/tests/06-rls-tables-metier-t6.cahier.md`
-(CT-01..12). **Prochaine étape : T8** (1er écran).
+**Développement fonctionnel (specs #3→#10) — codé & validé en local.**
+Implémenté depuis fin juillet 2026 (cf. `git log`) :
 
-**T7 codé** (2026-07-25) : jeu de données de test **consolidé** en source unique
-`supabase/seed/01-jeu-de-test.sql` (idempotent — clubs, comptes, rencontre,
-voies, équipes, grimpeurs, épreuves, compositions, jetons) + purge bornée
-`supabase/seed/99-purge-jeu-de-test.sql` (plage d'UUID réservée, rejouable).
-Anciens seeds `01-utilisateurs`/`02-jetons`/`03-session-qr` fusionnés et
-supprimés ; `config.toml` → `sql_paths` explicite (purge exclue). Validé en
-local : `db reset` + `test:t6` (17/17), `test:t5a/b/c` (8+4+4), purge → tout à 0,
-rejeu OK, idempotence OK.
+- **Spec #3 — Écrans de paramétrage admin** : gabarit de rencontre par catégorie
+  (voies difficulté/bloc/vitesse, points, paliers), configuration de rencontre,
+  **barème de vitesse par rang** éditable (gabarit + rencontre, R46/R47/R48).
+- **Spec #4 — Tableau de bord admin** d'une rencontre.
+- **Spec #5 — Espace coach** : engagement/compositions, groupes de départ,
+  **prêts de grimpeurs** persistants (admin + coach d'accueil), invitation coach
+  permanent par QR/URL, navigation du coach temporaire bornée à sa rencontre.
+- **Spec #6 — Saisie des résultats** (coach) : voie & bloc, intégration vitesse
+  au score, affichage chute/NP.
+- **Spec #7 — Classement** : calcul du score, points de vitesse matérialisés
+  (trigger, classement par sexe).
+- **Spec #9 — Saisie admin des résultats** (tous clubs).
+- **Spec #10 — Saisie de la vitesse par le juge** (temps/chute/NP).
 
-**T8 amorcé — 1er écran de paramétrage : Clubs** (2026-07-25) : domaine pur
-`src/domaine/club.ts` (`normaliserNomClub`, 6 tests Vitest), écran admin
-`/admin/clubs` (create/rename/delete, design « Nuit », mobile-first) — loader
-`src/lib/clubs/clubs.ts`, Server Actions `src/lib/clubs/actions.ts` (garde admin
-et RLS `club_*_admin`, R11), lien « Clubs » sur l'accueil admin. **Aucune
-migration** (table et policies datent de T6). Cahier
-`docs/tests/07-parametrage-clubs-t8.cahier.md` (CT-01..09). Validé : typecheck +
-ESLint + build OK, Vitest 48/48. Suite paramétrage : **rencontre**, **grimpeur**
-(même patron).
+Domaine pur couvert par Vitest (`src/domaine/` : gabarit, engagement, résultat,
+score, vitesse, pret, invitation-coach…) ; parcours couverts par cahiers
+`docs/tests/10→21` et E2E Playwright (`e2e/`).
 
-**T8 suite — écran de paramétrage : Rencontres** (2026-07-25) : domaine pur
-`src/domaine/rencontre.ts` (`normaliserSaisieRencontre` + cycle de phases
-`phaseSuivante`/`phasePrecedente`, 14 tests Vitest), écran admin
-`/admin/rencontres` (create/modify/change-phase/delete, design « Nuit »,
-mobile-first) — loader `src/lib/rencontres/rencontres.ts`, Server Actions
-`src/lib/rencontres/actions.ts` (garde admin et RLS `rencontre_*_admin`, R12 ;
-phases R5), lien « Rencontres » sur l'accueil admin. **Aucune migration** (table
-et policies datent de T6). Cahier
-`docs/tests/08-parametrage-rencontres-t8.cahier.md` (CT-01..09). Validé :
-typecheck + ESLint + build OK, Vitest 62/62. Reste : **grimpeur** (même patron).
-
-**T8 suite — écran de paramétrage : Grimpeurs (volet admin du roster)**
-(2026-07-25) : domaine pur `src/domaine/grimpeur.ts` (`normaliserSaisieGrimpeur`
-— nom/prénom + année de naissance bornée, 9 tests Vitest), écran admin
-`/admin/grimpeurs` (add/modify/delete par club, design « Nuit », mobile-first) —
-loader `src/lib/grimpeurs/grimpeurs.ts` (grimpeur + club + nb engagements),
-Server Actions `src/lib/grimpeurs/actions.ts` (garde admin R11/R13 ; la RLS
-`grimpeur_*` admet aussi le coach du club, R18 — futur écran coach), lien
-« Grimpeurs » sur l'accueil admin. **Aucune migration** (table et policies datent
-de T6). Cahier `docs/tests/09-parametrage-grimpeurs-t8.cahier.md` (CT-01..09).
-Validé : typecheck + ESLint + build OK, Vitest 71/71. **T8 (paramétrage admin :
-Clubs, Rencontres, Grimpeurs) terminé.**
-
-> 🧪 **À faire côté utilisateur** :
+> 🧪 **À faire côté utilisateur — appliquer les migrations en recette** (puis
+> prod à la bascule sur `main`). D'après `supabase/migrations/JOURNAL.md`, tout
+> le **lot fonctionnel reste `à appliquer`** en recette :
+> `202607291000` (gabarit) → `202609221600` (points de vitesse), soit les
+> gabarits/voies, phases (clôture, préparation), engagement, prêts, invitation
+> coach, saisie résultats, `grimpeur.sexe`, saisie vitesse juge et barème.
+> Appliquer dans l'ordre chronologique (SQL Editor), mettre à jour le JOURNAL,
+> puis dérouler les cahiers `docs/tests/11→21` en colonne **Recette**.
 >
-> 1. ✅ Migration `202607251000` appliquée en **recette** (2026-07-25) — et les
->    prérequis (voie, auth/jetons, rls_compte, rls_jeton, session_qr).
-> 2. Appliquer le seed **`01-jeu-de-test.sql`** en **recette** (SQL Editor), puis
->    dérouler le cahier T6 (colonne **Recette**, CT-01..12). Pour rejouer :
->    `99-purge-jeu-de-test.sql` puis `01-jeu-de-test.sql`.
->
-> ✅ **T5a / T5b / T5c / T5d** entièrement clos et validés.
+> ⚠️ Le JOURNAL n'a pas d'entrée pour `202609181000_grimpeur_sexe`,
+> `202609181100_grant_epreuve_service_role` et `202609221000_resultat_auteur` :
+> les ajouter à la table de suivi lors de l'application.
 
 ## ⏳ En attente (à faire)
 
 | ID | Tâche | Dépend de | Notes |
 | ---- | ------- | ----------- | ------- |
-| T8 | Écrans de paramétrage (admin) + cahiers (responsive, vérif mobile) — **Clubs ✅**, **Rencontres ✅**, **Grimpeurs ✅** | T4, T5 | Suivre `nouvelle-fonctionnalite` + `expertise-ihm-responsive`. |
-| T9 | `<html lang="en">` → `lang="fr"` dans `src/app/layout.tsx` | — | Reporté (a11y). cf. mémoire `todo-differes`. |
-| T10 | Export `viewport` (Next 16) dans le layout racine | — | cf. `07-standards-nextjs-16.md` §3 / `08` §3. |
-| T11 | (Option) Hook local pre-push : `lint` + `typecheck` + `test` | — | Filet de sécurité car `push` = déploiement. |
-| T12 | Supprimer `src/domaine/smoke.test.ts` | T-init | Dès le premier vrai test du domaine. |
-| T13 | (Plus tard) Étendre l'E2E Playwright sur parcours stabilisés | T7 | Tant que recette non stable, cahier manuel prioritaire. |
+| T10 | Export `viewport` (Next 16) dans le layout racine | — | cf. `07-standards-nextjs-16.md` §3 / `08` §3. Toujours absent de `src/app/layout.tsx`. |
+| T11 | (Option) Hook local pre-push : `lint` + `typecheck` + `test` | — | Filet de sécurité car `push` = déploiement. Pas de `.husky`. |
+| T13 | Étendre l'E2E Playwright sur parcours stabilisés | T7 | En cours : `admin-equipes`, `admin-prets`, `coach-engagement` couverts. Poursuivre au fil des specs stabilisées. |
+
+## 🧊 Différés fonctionnels (reportés volontairement)
+
+Tâches identifiées mais reportées, à traiter quand l'occasion se présente.
+
+| ID | Tâche | Origine | Notes |
+| ---- | ------- | --------- | ------- |
+| D1 | **Temps réel (Supabase Realtime)** : propager les MAJ (résultats, scores, classement) sur **tous les écrans ouverts** sans rechargement | demandé 2026-09-22 | Aujourd'hui seul l'écran de celui qui écrit se rafraîchit. S'abonner à `resultat_voie`/`resultat_bloc` et invalider les vues dérivées. Périmètre : specs #6, #7, #9 (noté « évolution future » dans #7 et #9). |
+| D2 | **Retirer les références `RXX` des IHM (avant prod)** : les écrans affichent « (R5) », « (R22) »… | demandé 2026-09-18 | Reformuler en langage clair pour l'utilisateur final ; garder la traçabilité `Rn` en commentaires/specs/cahiers. Balayage sur tout `src/app/**` (ex. `coach/rencontres/[id]/resultats/panneau-resultats.tsx`). |
+| D3 | **Cache/optimisation des bascules d'écran — saisie résultats (#6)** : navigation grimpeurs ‹/› (R25) et bascule par équipe / alphabétique (R24) | demandé 2026-09-08 | Éviter de recharger les données à chaque bascule (stratégie de cache). Point technique hors règles de spec. |
 
 ## ✅ Fait (archive — non rappelé)
 
+- **Specs #3→#10 codées & validées en local** (juil.→sept. 2026) : gabarit &
+  configuration de rencontre, tableau de bord admin, espace coach (engagement,
+  prêts, invitation), saisie des résultats voie/bloc, classement + points de
+  vitesse, saisie admin des résultats, saisie vitesse juge, barème de vitesse
+  par rang. Domaine Vitest + cahiers `docs/tests/10→21` + E2E. **Reste
+  utilisateur** : appliquer le lot de migrations en recette (cf. « En cours »).
+- **T12 — Suppression de `src/domaine/smoke.test.ts`** : fait (le domaine a de
+  vrais tests).
+- **T9 — `<html lang="fr">`** dans `src/app/layout.tsx` (+ `suppressHydrationWarning`
+  sur `body`, commit `9093a46`).
+- **T8 — Écrans de paramétrage admin (Clubs, Rencontres, Grimpeurs)** terminés
+  (2026-07-25) : domaines purs (`club`/`rencontre`/`grimpeur`), écrans
+  `/admin/*` (design « Nuit », mobile-first), loaders + Server Actions (gardes
+  admin + RLS), cahiers `docs/tests/07→09`. Aucune migration (tables/policies de
+  T6).
+- **T7 — Seed/purge consolidés** (2026-07-25) : `supabase/seed/01-jeu-de-test.sql`
+  (idempotent) + `99-purge-jeu-de-test.sql` (plage d'UUID réservée). Validé en
+  local (`db reset` + suites `test:t*`).
+- **T6 — RLS des 9 tables métier** (2026-07-25) : migration
+  `202607251000_rls_tables_metier` (helpers de périmètre `SECURITY DEFINER`,
+  grants `authenticated`, policies par opération — matrice spec #1 + ADR 0001,
+  gating de phase). Validé local `test:t6` (17/17) + cahier
+  `06-rls-tables-metier-t6.cahier.md`. Migration appliquée en recette.
 - **T5d — Ouverture de session QR au scan** (validée 2026-07-25) : domaine pur
   `src/domaine/session-qr.ts` (11 tests Vitest), migration `202607231000` (table
   `session_qr` + RLS select own + RPC `ouvrir_session_qr` SECURITY DEFINER —
