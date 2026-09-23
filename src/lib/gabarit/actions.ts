@@ -12,7 +12,9 @@ import {
 } from '@/domaine/gabarit'
 import type { TypeVoie } from '@/domaine/gabarit'
 import type { Categorie } from '@/domaine/rencontre'
+import { BaremeVitesseInvalideError, type EchelonBareme } from '@/domaine/vitesse'
 import { getUtilisateurCourant } from '@/lib/auth/session'
+import { lireEchelonsSoumis } from '@/lib/bareme-vitesse'
 import { createClient } from '@/lib/supabase/server'
 
 export type EtatGabarit = { erreur?: string; succes?: string } | undefined
@@ -348,6 +350,71 @@ export async function supprimerVoieVitesseGabarit(
 
   revalidatePath('/admin/gabarit')
   return { succes: 'Voie de vitesse supprimée.' }
+}
+
+/**
+ * Met à jour le barème de vitesse d'un gabarit (spec #3 R46/R47/R48) : points fixes
+ * de chute / non-présentation (sur `gabarit_epreuve`) et le **jeu complet d'échelons**
+ * — rangs, points, décrément, ajout/suppression. Le jeu soumis est **validé** (R48)
+ * avant écriture ; en cas de violation, rien n'est modifié et un message précis est
+ * renvoyé. L'écriture **remplace** l'ensemble des échelons (R47). Réservé à l'admin ;
+ * pas de contrainte de phase (un gabarit s'édite à tout moment, R31). Sans effet sur
+ * les rencontres déjà créées (R30).
+ */
+export async function mettreAJourBaremeVitesseGabarit(
+  _etat: EtatGabarit,
+  formData: FormData,
+): Promise<EtatGabarit> {
+  const refus = await refuserSiNonAdmin()
+  if (refus) return refus
+
+  const gabaritEpreuveId = String(formData.get('gabaritEpreuveId') ?? '')
+  if (!gabaritEpreuveId) return { erreur: 'Épreuve de vitesse introuvable.' }
+
+  let pointsChute: number
+  let pointsNonPresentation: number
+  let echelons: EchelonBareme[]
+  try {
+    pointsChute = lirePointsObligatoire(formData, 'pointsChute')
+    pointsNonPresentation = lirePointsObligatoire(formData, 'pointsNonPresentation')
+    echelons = lireEchelonsSoumis(formData)
+  } catch (e) {
+    if (e instanceof PointsInvalideError || e instanceof BaremeVitesseInvalideError) {
+      return { erreur: e.message }
+    }
+    throw e
+  }
+
+  const supabase = await createClient()
+
+  const { error: errEp } = await supabase
+    .from('gabarit_epreuve')
+    .update({ points_chute: pointsChute, points_non_presentation: pointsNonPresentation })
+    .eq('id', gabaritEpreuveId)
+  if (errEp) return { erreur: 'La mise à jour du barème a échoué. Réessayez.' }
+
+  // Remplacement du jeu d'échelons (R47) : suppression puis insertion du set validé.
+  const { error: errDel } = await supabase
+    .from('gabarit_bareme_vitesse_echelon')
+    .delete()
+    .eq('gabarit_epreuve_id', gabaritEpreuveId)
+  if (errDel) return { erreur: 'La mise à jour du barème a échoué. Réessayez.' }
+
+  const lignes = echelons.map((e, i) => ({
+    gabarit_epreuve_id: gabaritEpreuveId,
+    rang_min: e.rangMin,
+    rang_max: e.rangMax,
+    points: e.points,
+    decrement: e.decrement,
+    ordre: i + 1,
+  }))
+  const { error: errIns } = await supabase
+    .from('gabarit_bareme_vitesse_echelon')
+    .insert(lignes)
+  if (errIns) return { erreur: 'La mise à jour du barème a échoué. Réessayez.' }
+
+  revalidatePath('/admin/gabarit')
+  return { succes: 'Barème de vitesse mis à jour.' }
 }
 
 export { NIVEAUX_MOULINETTE, NIVEAUX_TETE }

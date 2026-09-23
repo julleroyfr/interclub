@@ -11,7 +11,9 @@ import {
 } from '@/domaine/gabarit'
 import type { TypeEpreuve, TypeVoie } from '@/domaine/gabarit'
 import type { Categorie } from '@/domaine/rencontre'
+import { BaremeVitesseInvalideError, type EchelonBareme } from '@/domaine/vitesse'
 import { getUtilisateurCourant } from '@/lib/auth/session'
+import { lireEchelonsSoumis } from '@/lib/bareme-vitesse'
 import { createClient } from '@/lib/supabase/server'
 
 /** Client Supabase du projet (schéma `interclub`), tel que renvoyé par `createClient`. */
@@ -251,12 +253,13 @@ export async function ajouterVoieVitesseRencontre(
 }
 
 /**
- * Met à jour le barème de vitesse d'une rencontre (spec #3 R46) : points fixes de
- * chute / non-présentation (sur l'épreuve) et, pour chaque échelon, ses `points` et
- * `decrement`. Les plages de rangs (structure réglementaire) ne sont pas éditées
- * ici. Réservé à l'admin et à la phase pré-competition (R44) — donc avant toute
- * saisie de temps : les `points_vitesse` (recalculés par trigger sur `temps_vitesse`)
- * ne sont pas encore matérialisés, aucune donnée à rafraîchir.
+ * Met à jour le barème de vitesse d'une rencontre (spec #3 R46/R47/R48) : points
+ * fixes de chute / non-présentation (sur l'épreuve) et le **jeu complet d'échelons**
+ * — rangs, points, décrément, ajout/suppression. Le jeu soumis est **validé** (R48)
+ * avant écriture ; en cas de violation, rien n'est modifié et un message précis est
+ * renvoyé. L'écriture **remplace** l'ensemble des échelons (R47). Réservé à l'admin
+ * et à la phase pré-competition (R44) — donc avant toute saisie de temps : aucun
+ * `points_vitesse` dérivé à préserver.
  */
 export async function mettreAJourBaremeVitesse(
   _etat: EtatStructure,
@@ -269,26 +272,17 @@ export async function mettreAJourBaremeVitesse(
   const epreuveId = String(formData.get('epreuveId') ?? '')
   if (!epreuveId) return { erreur: 'Épreuve de vitesse introuvable.' }
 
-  const echelonIds = String(formData.get('echelonIds') ?? '')
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean)
-
   let pointsChute: number
   let pointsNonPresentation: number
-  const echelons: { id: string; points: number; decrement: number }[] = []
+  let echelons: EchelonBareme[]
   try {
     pointsChute = lirePointsObligatoire(formData, 'pointsChute')
     pointsNonPresentation = lirePointsObligatoire(formData, 'pointsNonPresentation')
-    for (const id of echelonIds) {
-      echelons.push({
-        id,
-        points: lirePointsObligatoire(formData, `points_${id}`),
-        decrement: lirePointsObligatoire(formData, `decrement_${id}`),
-      })
-    }
+    echelons = lireEchelonsSoumis(formData)
   } catch (e) {
-    if (e instanceof PointsInvalideError) return { erreur: e.message }
+    if (e instanceof PointsInvalideError || e instanceof BaremeVitesseInvalideError) {
+      return { erreur: e.message }
+    }
     throw e
   }
 
@@ -303,16 +297,27 @@ export async function mettreAJourBaremeVitesse(
       points_non_presentation: pointsNonPresentation,
     })
     .eq('id', epreuveId)
-  if (errEp) return { erreur: "La mise à jour du barème a échoué. Réessayez." }
+  if (errEp) return { erreur: 'La mise à jour du barème a échoué. Réessayez.' }
 
-  for (const ech of echelons) {
-    const { error } = await supabase
-      .from('bareme_vitesse_echelon')
-      .update({ points: ech.points, decrement: ech.decrement })
-      .eq('id', ech.id)
-      .eq('epreuve_id', epreuveId)
-    if (error) return { erreur: "La mise à jour du barème a échoué. Réessayez." }
-  }
+  // Remplacement du jeu d'échelons (R47) : suppression puis insertion du set validé.
+  // Édition possible seulement en pré-compétition, avant toute saisie de temps : pas
+  // de `points_vitesse` matérialisé à préserver, la fenêtre delete→insert est sûre.
+  const { error: errDel } = await supabase
+    .from('bareme_vitesse_echelon')
+    .delete()
+    .eq('epreuve_id', epreuveId)
+  if (errDel) return { erreur: 'La mise à jour du barème a échoué. Réessayez.' }
+
+  const lignes = echelons.map((e, i) => ({
+    epreuve_id: epreuveId,
+    rang_min: e.rangMin,
+    rang_max: e.rangMax,
+    points: e.points,
+    decrement: e.decrement,
+    ordre: i + 1,
+  }))
+  const { error: errIns } = await supabase.from('bareme_vitesse_echelon').insert(lignes)
+  if (errIns) return { erreur: 'La mise à jour du barème a échoué. Réessayez.' }
 
   revalidatePath(`/admin/rencontres/${rencontreId}`)
   return { succes: 'Barème de vitesse mis à jour.' }

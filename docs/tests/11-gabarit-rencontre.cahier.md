@@ -112,6 +112,25 @@ Liste des rencontres : bouton **« Rencontres »** → `/admin/rencontres`.
   - Ajouter un palier (libellé + points) puis le supprimer fonctionne ; points
     négatifs/décimaux refusés.
 
+### CT-05e — Barème de vitesse par rang éditable (R46, R47, R48)
+
+- **Étapes** : section **Vitesse** → bloc **Barème par rang** (éditable en
+  permanence — un gabarit s'édite à tout moment, R31).
+- **Attendu** :
+  - Barème seedé visible — Enfant : `1–5` = 15 décr 1 … `46e et +` = 2 ; chute **1**,
+    NP **0**. Ado : `1–5` = 60 décr 1 ; `6–50` = 55 décr 1 ; `51e et +` = 10 ; chute
+    **5**, NP **0**.
+  - Modifier un **rang** (min/max), **ajouter** puis **supprimer** un échelon →
+    **Enregistrer** (« Barème de vitesse mis à jour. ») ; l'affichage se **retrie
+    par rang** et les valeurs **persistent** après rechargement.
+  - **Refus (R48)** avec message précis, rien enregistré : **trou**,
+    **chevauchement**, **dernier échelon borné**, couverture ne **commençant pas au
+    rang 1**.
+  - **Sans effet sur les rencontres déjà créées (R30)** : après modification du
+    barème gabarit, une rencontre créée **avant** conserve son barème copié ; seule
+    une **nouvelle** rencontre reprend le barème modifié (cf. CT-06/CT-07).
+  - **Rétablir** le barème seedé ensuite.
+
 ### CT-06 — Créer une rencontre : copie du gabarit (nominal, R30)
 
 - **Pré-condition** : gabarit enfant au format seed (CT-02).
@@ -208,6 +227,7 @@ Liste des rencontres : bouton **« Rencontres »** → `/admin/rencontres`.
 | CT-05b | | | | ⬜ | |
 | CT-05c | | | | ⬜ | |
 | CT-05d | | | | ⬜ | |
+| CT-05e | | | | ⬜ | barème vitesse par rang, édition + validation (R47/R48) |
 | CT-06 | | | | ⬜ | |
 | CT-07 | | | | ⬜ | |
 | CT-08 | | | | ⬜ | |

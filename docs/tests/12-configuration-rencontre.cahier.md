@@ -215,6 +215,38 @@ d'ouverture du **tableau de bord** → `/admin/rencontres/<id>`.
   - Déplier un bloc montre les équipes du club (composition, effectif n/8, tag
     « Prêté » le cas échéant).
 
+### CT-16 — Édition complète du barème de vitesse (couvre R46, R47, R48)
+
+- **Rôle** : admin. **Pré-condition** : rencontre enfant en **① pré-compétition** ;
+  onglet **Structure › Vitesse** → bloc **Barème par rang** (échelons éditables :
+  rang min, rang max, points, décrément + bouton **＋ Ajouter un échelon** et **×**
+  par ligne).
+- **Étapes / résultat attendu (nominal)** :
+  1. **Modifier un rang** : passer le rang max de l'échelon `1–5` à **4** et le rang
+     min du suivant à **5** → **Enregistrer** → « Barème de vitesse mis à jour. » ;
+     les rangs **persistent** après rechargement.
+  2. **Ajouter** un échelon (bouton en bas), lui donner une plage contiguë valide
+     avec un rang min « au milieu » (ex. `6–8`) → **Enregistrer** → la ligne se
+     **replace par rang croissant** (re-tri à l'affichage) et persiste.
+  3. **Supprimer** un échelon (**×**) puis compléter la couverture → **Enregistrer**
+     → l'échelon disparaît, la couverture reste valide.
+- **Refus (validation R48 — rien n'est enregistré, message précis)** — construire
+  puis **Enregistrer** :
+  - **Trou** : `1–5` puis `7 – et +` → « Trou de couverture entre les rangs 5 et 7 ».
+  - **Chevauchement** : `1–5` et `4 – et +` → « Chevauchement… ».
+  - **Dernier échelon borné** : aucune ligne « et + » (tous les rangs max remplis) →
+    « Le dernier échelon doit être « au-delà »… ».
+  - **Ne commence pas au rang 1** : premier échelon `2 – …` → « La couverture doit
+    commencer au rang 1 ».
+  Après chaque refus, **recharger** : le barème en base est **inchangé**.
+- **Négatif rôle / phase** :
+  - passer la rencontre en **③ compétition** → le barème passe en **lecture seule**
+    (ni champs ni bouton) ; un appel direct à `mettreAJourBaremeVitesse` est refusé
+    (« … qu'en phase pré-compétition », R44).
+  - un **coach** (`coach@test.local`) n'accède pas à `/admin/rencontres/…` (404).
+- **Rétablir** ensuite le barème enfant d'origine (`1–5` = 15 décr 1 … `46e et +` = 2,
+  chute 1, NP 0) pour les autres cahiers.
+
 ## Registre d'exécution
 
 | Cas | Environnement | Date | Testeur | Verdict | Notes |
@@ -234,6 +266,7 @@ d'ouverture du **tableau de bord** → `/admin/rencontres/<id>`.
 | CT-13 | | | | ⬜ | phase (R41a) |
 | CT-14 | | | | ⬜ | lien QR (R41b) |
 | CT-15 | | | | ⬜ | blocs équipes (R41c) |
+| CT-16 | | | | ⬜ | barème par rang, édition + validation (R47/R48) |
 
 > Le domaine (`validerNiveauVoie` R37, `validerPoints` R38, `champsPointsVoie`
 > R38/R43) est couvert par Vitest (`npm run test`, `src/domaine/gabarit.test.ts`).

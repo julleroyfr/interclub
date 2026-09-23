@@ -38,6 +38,25 @@ export type VoieVitesseGabaritVue = {
   ordre: number
 }
 
+/** Un échelon du barème de vitesse par rang du gabarit (spec #3 R46). */
+export type BaremeVitesseEchelonGabaritVue = {
+  id: string
+  rangMin: number
+  /** `null` = « au-delà » (dernier échelon, sans borne haute). */
+  rangMax: number | null
+  points: number
+  decrement: number
+  ordre: number
+}
+
+/** Barème de vitesse d'une épreuve de gabarit (spec #3 R46) — `null` hors vitesse. */
+export type BaremeVitesseGabaritVue = {
+  gabaritEpreuveId: string
+  pointsChute: number | null
+  pointsNonPresentation: number | null
+  echelons: BaremeVitesseEchelonGabaritVue[]
+}
+
 export type EpreuveGabaritVue = {
   id: string
   categorie: Categorie
@@ -45,6 +64,8 @@ export type EpreuveGabaritVue = {
   voiesDifficulte: VoieDifficulteVue[]
   blocs: BlocVue[]
   voiesVitesse: VoieVitesseGabaritVue[]
+  /** Barème par rang pour l'épreuve de vitesse (R46) ; `null` sinon. */
+  baremeVitesse: BaremeVitesseGabaritVue | null
 }
 
 /** Gabarit complet d'une catégorie (toutes épreuves + voies). */
@@ -53,7 +74,7 @@ export async function listerGabarit(categorie: Categorie): Promise<EpreuveGabari
 
   const { data: epreuves, error: errEpreuves } = await admin
     .from('gabarit_epreuve')
-    .select('id, categorie, type')
+    .select('id, categorie, type, points_chute, points_non_presentation')
     .eq('categorie', categorie)
     .order('type')
   if (errEpreuves) throw errEpreuves
@@ -61,11 +82,13 @@ export async function listerGabarit(categorie: Categorie): Promise<EpreuveGabari
   if (!epreuves || epreuves.length === 0) return []
 
   const ids = epreuves.map((e) => e.id as string)
+  const epreuveVitesse = epreuves.find((e) => e.type === 'vitesse')
 
   const [
     { data: voies, error: errVoies },
     { data: blocs, error: errBlocs },
     { data: vitesses, error: errVitesses },
+    { data: echelons, error: errEchelons },
   ] = await Promise.all([
     admin
       .from('gabarit_voie_difficulte')
@@ -84,10 +107,18 @@ export async function listerGabarit(categorie: Categorie): Promise<EpreuveGabari
       .select('id, gabarit_epreuve_id, libelle, ordre')
       .in('gabarit_epreuve_id', ids)
       .order('ordre'),
+    epreuveVitesse
+      ? admin
+          .from('gabarit_bareme_vitesse_echelon')
+          .select('id, rang_min, rang_max, points, decrement, ordre')
+          .eq('gabarit_epreuve_id', epreuveVitesse.id as string)
+          .order('ordre')
+      : Promise.resolve({ data: [] as Record<string, unknown>[], error: null }),
   ])
   if (errVoies) throw errVoies
   if (errBlocs) throw errBlocs
   if (errVitesses) throw errVitesses
+  if (errEchelons) throw errEchelons
 
   // Paliers de blocs (R39) — chargés séparément puis regroupés par bloc.
   const blocIds = (blocs ?? []).map((b) => b.id as string)
@@ -140,5 +171,21 @@ export async function listerGabarit(categorie: Categorie): Promise<EpreuveGabari
         libelle: vv.libelle as string,
         ordre: vv.ordre as number,
       })),
+    baremeVitesse:
+      e.type === 'vitesse'
+        ? {
+            gabaritEpreuveId: e.id as string,
+            pointsChute: (e.points_chute as number | null) ?? null,
+            pointsNonPresentation: (e.points_non_presentation as number | null) ?? null,
+            echelons: (echelons ?? []).map((ech) => ({
+              id: ech.id as string,
+              rangMin: ech.rang_min as number,
+              rangMax: (ech.rang_max as number | null) ?? null,
+              points: ech.points as number,
+              decrement: ech.decrement as number,
+              ordre: ech.ordre as number,
+            })),
+          }
+        : null,
   }))
 }

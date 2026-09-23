@@ -72,3 +72,107 @@ export function enregistrerResultat(
 export function formaterTempsVitesse(secondes: number): string {
   return `${secondes.toFixed(3).replace('.', ',')} s`
 }
+
+// ---------------------------------------------------------------------------
+// Barème de vitesse par rang — édition & validation (spec #3 R46/R47/R48)
+// ---------------------------------------------------------------------------
+
+/** Un échelon du barème de vitesse par rang (spec #3 R46) : plage + points/décrément. */
+export type EchelonBareme = {
+  rangMin: number
+  /** `null` = « au-delà » (dernier échelon, sans borne haute). */
+  rangMax: number | null
+  points: number
+  decrement: number
+}
+
+/** Jeu d'échelons invalide au regard de l'invariant R46 (conditions R48). */
+export class BaremeVitesseInvalideError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'BaremeVitesseInvalideError'
+  }
+}
+
+/**
+ * Valide un jeu d'échelons de barème de vitesse avant enregistrement (R47/R48) et
+ * le renvoie **trié par `rangMin` croissant**. Lève `BaremeVitesseInvalideError`
+ * avec un message précis dès qu'une condition de R48 est violée (rejet global,
+ * rien n'est « réparé »). Fonction pure : l'entrée n'est pas mutée.
+ */
+export function validerEchelonsBareme(
+  echelons: readonly EchelonBareme[],
+): EchelonBareme[] {
+  // a. au moins un échelon.
+  if (echelons.length === 0) {
+    throw new BaremeVitesseInvalideError('Le barème doit comporter au moins un échelon (R48).')
+  }
+
+  // b/c. champs de chaque échelon (rangs, points, décrément) — entiers, bornes.
+  for (const e of echelons) {
+    if (!Number.isInteger(e.rangMin) || e.rangMin < 1) {
+      throw new BaremeVitesseInvalideError(
+        `Le rang minimum doit être un entier ≥ 1 (reçu : ${e.rangMin}) (R48).`,
+      )
+    }
+    if (e.rangMax !== null && (!Number.isInteger(e.rangMax) || e.rangMax < e.rangMin)) {
+      throw new BaremeVitesseInvalideError(
+        `Le rang maximum doit être vide (« au-delà ») ou un entier ≥ rang minimum ` +
+          `(échelon ${e.rangMin}…${e.rangMax}) (R48).`,
+      )
+    }
+    if (!Number.isInteger(e.points) || e.points < 0) {
+      throw new BaremeVitesseInvalideError(
+        `Les points doivent être un entier ≥ 0 (reçu : ${e.points}) (R48).`,
+      )
+    }
+    if (!Number.isInteger(e.decrement) || e.decrement < 0) {
+      throw new BaremeVitesseInvalideError(
+        `Le décrément doit être un entier ≥ 0 (reçu : ${e.decrement}) (R48).`,
+      )
+    }
+  }
+
+  // Tri par rang_min croissant (copie — pas de mutation de l'entrée).
+  const tries = [...echelons].sort((a, b) => a.rangMin - b.rangMin)
+
+  // d. la couverture commence au rang 1.
+  if (tries[0].rangMin !== 1) {
+    throw new BaremeVitesseInvalideError(
+      `La couverture doit commencer au rang 1 (premier échelon : rang ${tries[0].rangMin}) (R48).`,
+    )
+  }
+
+  // e. contiguïté sans chevauchement ; seul le dernier échelon peut être « au-delà ».
+  for (let i = 0; i < tries.length - 1; i++) {
+    const cur = tries[i]
+    const suivant = tries[i + 1]
+    if (cur.rangMax === null) {
+      throw new BaremeVitesseInvalideError(
+        `Seul le dernier échelon peut être « au-delà » (échelon ouvert au rang ${cur.rangMin} ` +
+          `suivi d'un autre) (R48).`,
+      )
+    }
+    if (suivant.rangMin > cur.rangMax + 1) {
+      throw new BaremeVitesseInvalideError(
+        `Trou de couverture entre les rangs ${cur.rangMax} et ${suivant.rangMin} (R48).`,
+      )
+    }
+    if (suivant.rangMin < cur.rangMax + 1) {
+      throw new BaremeVitesseInvalideError(
+        `Chevauchement des échelons autour du rang ${suivant.rangMin} (R48).`,
+      )
+    }
+  }
+
+  // f. le dernier échelon est ouvert (couvre tous les rangs au-delà).
+  const dernier = tries[tries.length - 1]
+  if (dernier.rangMax !== null) {
+    throw new BaremeVitesseInvalideError(
+      `Le dernier échelon doit être « au-delà » (rang max vide) pour couvrir tous les ` +
+        `rangs supérieurs (R48).`,
+    )
+  }
+
+  return tries
+}

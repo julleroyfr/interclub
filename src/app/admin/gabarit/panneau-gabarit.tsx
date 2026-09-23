@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useId } from 'react'
+import { useActionState, useId, useRef, useState } from 'react'
 
 import { Bouton, Carte, Etiquette, TitreSection } from '@/composants'
 import { NIVEAUX_MOULINETTE, NIVEAUX_TETE } from '@/domaine/gabarit'
@@ -10,6 +10,7 @@ import {
   ajouterPalierBlocGabarit,
   ajouterVoieDifficulteGabarit,
   ajouterVoieVitesseGabarit,
+  mettreAJourBaremeVitesseGabarit,
   modifierPointsVoieGabarit,
   supprimerBlocGabarit,
   supprimerPalierBlocGabarit,
@@ -17,7 +18,12 @@ import {
   supprimerVoieVitesseGabarit,
   type EtatGabarit,
 } from '@/lib/gabarit/actions'
-import type { BlocVue, EpreuveGabaritVue, VoieDifficulteVue } from '@/lib/gabarit/gabarit'
+import type {
+  BaremeVitesseGabaritVue,
+  BlocVue,
+  EpreuveGabaritVue,
+  VoieDifficulteVue,
+} from '@/lib/gabarit/gabarit'
 
 const labelType: Record<string, string> = {
   voie: 'Voie de difficulté',
@@ -365,6 +371,200 @@ function SectionBlocs({ epreuve }: { epreuve: EpreuveGabaritVue }) {
   )
 }
 
+/** Une ligne d'échelon éditable (valeurs en chaînes pour un contrôle simple). */
+type LigneEchelon = {
+  key: string
+  rangMin: string
+  rangMax: string
+  points: string
+  decrement: string
+}
+
+/**
+ * Éditeur du barème de vitesse par rang d'un gabarit (spec #3 R46/R47/R48) : édition
+ * complète des échelons (rangs, points, décrément, ajout/suppression) + points de
+ * chute / non-présentation. Toujours éditable (un gabarit s'édite à tout moment, R31).
+ * La validation de l'invariant (contiguïté, pas de trou, dernier ouvert…) est refaite
+ * côté serveur (R48). Sans effet sur les rencontres déjà créées (R30).
+ */
+function EditeurBaremeVitesseGabarit({ bareme }: { bareme: BaremeVitesseGabaritVue }) {
+  const etatInitial: EtatGabarit = undefined
+  const compteur = useRef(bareme.echelons.length)
+  const [lignes, setLignes] = useState<LigneEchelon[]>(() =>
+    bareme.echelons.map((e, i) => ({
+      key: `e${i}`,
+      rangMin: String(e.rangMin),
+      rangMax: e.rangMax == null ? '' : String(e.rangMax),
+      points: String(e.points),
+      decrement: String(e.decrement),
+    })),
+  )
+  // Après un enregistrement réussi, réordonner l'affichage par rang croissant (R48 trie
+  // le jeu stocké). Les valeurs locales sont exactement celles persistées.
+  const [etat, action, enCours] = useActionState(
+    async (prec: EtatGabarit, formData: FormData): Promise<EtatGabarit> => {
+      const res = await mettreAJourBaremeVitesseGabarit(prec, formData)
+      if (res?.succes) {
+        setLignes((ls) => [...ls].sort((a, b) => Number(a.rangMin) - Number(b.rangMin)))
+      }
+      return res
+    },
+    etatInitial,
+  )
+
+  const majLigne = (key: string, champ: keyof Omit<LigneEchelon, 'key'>, valeur: string) =>
+    setLignes((ls) => ls.map((l) => (l.key === key ? { ...l, [champ]: valeur } : l)))
+  const ajouterLigne = () =>
+    setLignes((ls) => [
+      ...ls,
+      { key: `e${compteur.current++}`, rangMin: '', rangMax: '', points: '0', decrement: '0' },
+    ])
+  const supprimerLigne = (key: string) => setLignes((ls) => ls.filter((l) => l.key !== key))
+
+  const echelonsJson = JSON.stringify(
+    lignes.map((l) => ({
+      rangMin: l.rangMin,
+      rangMax: l.rangMax,
+      points: l.points,
+      decrement: l.decrement,
+    })),
+  )
+
+  return (
+    <form action={action} className="flex flex-col gap-3 rounded-xl border border-bordure bg-black/20 p-3">
+      <input type="hidden" name="gabaritEpreuveId" value={bareme.gabaritEpreuveId} />
+      <input type="hidden" name="echelons" value={echelonsJson} />
+
+      <TitreSection>Barème par rang</TitreSection>
+      <p className="text-[11px] text-texte-attenue">
+        Points d’un rang = points − (rang − rang min) × décrément. Laisser le rang max
+        vide pour le dernier échelon (« et + »), qui couvre tous les rangs au-delà. Les
+        échelons doivent être contigus, sans trou ni chevauchement, à partir du rang 1
+        (spec #3 R46/R48).
+      </p>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-[11px] uppercase tracking-wide text-texte-attenue">
+              <th className="px-1 py-1 text-left font-semibold">Rang min</th>
+              <th className="px-1 py-1 text-left font-semibold">Rang max</th>
+              <th className="px-1 py-1 text-left font-semibold">Points</th>
+              <th className="px-1 py-1 text-left font-semibold">Décrément</th>
+              <th className="px-1 py-1" />
+            </tr>
+          </thead>
+          <tbody>
+            {lignes.map((l) => (
+              <tr key={l.key} className="border-t border-bordure/40">
+                <td className="px-1 py-1.5">
+                  <input
+                    aria-label="Rang minimum"
+                    type="number"
+                    min={1}
+                    step={1}
+                    value={l.rangMin}
+                    onChange={(e) => majLigne(l.key, 'rangMin', e.target.value)}
+                    className={champNombre}
+                  />
+                </td>
+                <td className="px-1 py-1.5">
+                  <input
+                    aria-label="Rang maximum (vide = et +)"
+                    type="number"
+                    min={1}
+                    step={1}
+                    placeholder="et +"
+                    value={l.rangMax}
+                    onChange={(e) => majLigne(l.key, 'rangMax', e.target.value)}
+                    className={champNombre}
+                  />
+                </td>
+                <td className="px-1 py-1.5">
+                  <input
+                    aria-label="Points"
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={l.points}
+                    onChange={(e) => majLigne(l.key, 'points', e.target.value)}
+                    className={champNombre}
+                  />
+                </td>
+                <td className="px-1 py-1.5">
+                  <input
+                    aria-label="Décrément"
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={l.decrement}
+                    onChange={(e) => majLigne(l.key, 'decrement', e.target.value)}
+                    className={champNombre}
+                  />
+                </td>
+                <td className="px-1 py-1.5 text-right">
+                  <button
+                    type="button"
+                    onClick={() => supprimerLigne(l.key)}
+                    aria-label="Supprimer l’échelon"
+                    className="rounded-lg border border-danger/40 px-2 py-1 text-sm text-danger hover:bg-danger/10"
+                  >
+                    ×
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <button
+        type="button"
+        onClick={ajouterLigne}
+        className="self-start rounded-lg border border-accent/40 bg-accent/10 px-3 py-1.5 text-xs font-semibold text-accent-doux hover:bg-accent/20"
+      >
+        + Ajouter un échelon
+      </button>
+
+      <div className="flex flex-wrap items-end gap-3 pt-1">
+        <label className="flex flex-col gap-0.5">
+          <span className="text-[0.7rem] text-texte-attenue">Chute</span>
+          <input
+            name="pointsChute"
+            type="number"
+            min={0}
+            step={1}
+            defaultValue={bareme.pointsChute ?? 0}
+            required
+            className={champNombre}
+          />
+        </label>
+        <label className="flex flex-col gap-0.5">
+          <span className="text-[0.7rem] text-texte-attenue">Non-présentation</span>
+          <input
+            name="pointsNonPresentation"
+            type="number"
+            min={0}
+            step={1}
+            defaultValue={bareme.pointsNonPresentation ?? 0}
+            required
+            className={champNombre}
+          />
+        </label>
+        <Bouton type="submit" taille="sm" disabled={enCours}>
+          Enregistrer le barème
+        </Bouton>
+      </div>
+
+      {etat?.erreur && (
+        <p role="alert" className="text-xs text-danger">
+          {etat.erreur}
+        </p>
+      )}
+      {etat?.succes && <p className="text-xs text-secondaire">{etat.succes}</p>}
+    </form>
+  )
+}
+
 function SectionVitesse({ epreuve }: { epreuve: EpreuveGabaritVue }) {
   const etatInitial: EtatGabarit = undefined
   const [etatAjout, actionAjout, ajoutEnCours] = useActionState(
@@ -429,6 +629,8 @@ function SectionVitesse({ epreuve }: { epreuve: EpreuveGabaritVue }) {
           </p>
         )}
       </form>
+
+      {epreuve.baremeVitesse && <EditeurBaremeVitesseGabarit bareme={epreuve.baremeVitesse} />}
     </div>
   )
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useId, useState } from 'react'
+import { useActionState, useId, useRef, useState } from 'react'
 
 import { Bouton, Carte, Etiquette, TitreSection } from '@/composants'
 import { NIVEAUX_MOULINETTE, NIVEAUX_TETE, champsPointsVoie } from '@/domaine/gabarit'
@@ -292,10 +292,21 @@ function libelleRang(e: { rangMin: number; rangMax: number | null }): string {
   return `${e.rangMin}–${e.rangMax}e`
 }
 
+/** Une ligne d'échelon éditable (valeurs en chaînes pour un contrôle simple). */
+type LigneEchelon = {
+  key: string
+  rangMin: string
+  rangMax: string
+  points: string
+  decrement: string
+}
+
 /**
- * Éditeur du barème de vitesse par rang (spec #3 R46) : points/décrément de chaque
- * échelon + points de chute / non-présentation. Éditable en pré-compétition (R44) ;
- * sinon lecture seule.
+ * Éditeur du barème de vitesse par rang (spec #3 R46/R47/R48) : édition complète des
+ * échelons (rangs, points, décrément, ajout/suppression) + points de chute /
+ * non-présentation. Éditable en pré-compétition (R44) ; sinon lecture seule. La
+ * validation fine de l'invariant (contiguïté, pas de trou, dernier ouvert…) est
+ * refaite côté serveur (R48) — l'IHM ne fait que collecter la saisie.
  */
 function EditeurBaremeVitesse({
   bareme,
@@ -306,22 +317,150 @@ function EditeurBaremeVitesse({
   rencontreId: string
   editable: boolean
 }) {
-  const [etat, action, enCours] = useActionState(mettreAJourBaremeVitesse, etatInitial)
-  const echelonIds = bareme.echelons.map((e) => e.id).join(',')
+  // Clés stables : les échelons seedés prennent e0…e(n-1), les ajouts continuent après.
+  const compteur = useRef(bareme.echelons.length)
+  const [lignes, setLignes] = useState<LigneEchelon[]>(() =>
+    bareme.echelons.map((e, i) => ({
+      key: `e${i}`,
+      rangMin: String(e.rangMin),
+      rangMax: e.rangMax == null ? '' : String(e.rangMax),
+      points: String(e.points),
+      decrement: String(e.decrement),
+    })),
+  )
+
+  // Enveloppe l'action : après un enregistrement réussi, réordonner l'affichage par
+  // rang croissant — comme le barème est désormais stocké (R48 trie le jeu validé).
+  // Les valeurs locales sont exactement celles persistées (validation passée).
+  const [etat, action, enCours] = useActionState(
+    async (prec: EtatStructure, formData: FormData): Promise<EtatStructure> => {
+      const res = await mettreAJourBaremeVitesse(prec, formData)
+      if (res?.succes) {
+        setLignes((ls) => [...ls].sort((a, b) => Number(a.rangMin) - Number(b.rangMin)))
+      }
+      return res
+    },
+    etatInitial,
+  )
+
+  const majLigne = (key: string, champ: keyof Omit<LigneEchelon, 'key'>, valeur: string) =>
+    setLignes((ls) => ls.map((l) => (l.key === key ? { ...l, [champ]: valeur } : l)))
+  const ajouterLigne = () =>
+    setLignes((ls) => [
+      ...ls,
+      { key: `e${compteur.current++}`, rangMin: '', rangMax: '', points: '0', decrement: '0' },
+    ])
+  const supprimerLigne = (key: string) => setLignes((ls) => ls.filter((l) => l.key !== key))
+
+  // Jeu d'échelons transmis à la Server Action (validation R48 refaite côté serveur).
+  const echelonsJson = JSON.stringify(
+    lignes.map((l) => ({
+      rangMin: l.rangMin,
+      rangMax: l.rangMax,
+      points: l.points,
+      decrement: l.decrement,
+    })),
+  )
 
   return (
     <form action={action} className="flex flex-col gap-3 rounded-xl border border-bordure bg-black/20 p-3">
       <input type="hidden" name="rencontreId" value={rencontreId} />
       <input type="hidden" name="epreuveId" value={bareme.epreuveId} />
-      <input type="hidden" name="echelonIds" value={echelonIds} />
+      <input type="hidden" name="echelons" value={echelonsJson} />
 
       <TitreSection>Barème par rang</TitreSection>
       <p className="text-[11px] text-texte-attenue">
-        Points d’un rang = points − (rang − rang min) × décrément. Le dernier échelon
-        (« et + ») s’applique au-delà (spec #3 R46).
+        Points d’un rang = points − (rang − rang min) × décrément. Laisser le rang max
+        vide pour le dernier échelon (« et + »), qui couvre tous les rangs au-delà. Les
+        échelons doivent être contigus, sans trou ni chevauchement, à partir du rang 1
+        (spec #3 R46/R48).
       </p>
 
-      {bareme.echelons.length === 0 ? (
+      {editable ? (
+        <div className="flex flex-col gap-2">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-[11px] uppercase tracking-wide text-texte-attenue">
+                  <th className="px-1 py-1 text-left font-semibold">Rang min</th>
+                  <th className="px-1 py-1 text-left font-semibold">Rang max</th>
+                  <th className="px-1 py-1 text-left font-semibold">Points</th>
+                  <th className="px-1 py-1 text-left font-semibold">Décrément</th>
+                  <th className="px-1 py-1" />
+                </tr>
+              </thead>
+              <tbody>
+                {lignes.map((l) => (
+                  <tr key={l.key} className="border-t border-bordure/40">
+                    <td className="px-1 py-1.5">
+                      <input
+                        aria-label="Rang minimum"
+                        type="number"
+                        min={1}
+                        step={1}
+                        value={l.rangMin}
+                        onChange={(e) => majLigne(l.key, 'rangMin', e.target.value)}
+                        className={champNombre}
+                      />
+                    </td>
+                    <td className="px-1 py-1.5">
+                      <input
+                        aria-label="Rang maximum (vide = et +)"
+                        type="number"
+                        min={1}
+                        step={1}
+                        placeholder="et +"
+                        value={l.rangMax}
+                        onChange={(e) => majLigne(l.key, 'rangMax', e.target.value)}
+                        className={champNombre}
+                      />
+                    </td>
+                    <td className="px-1 py-1.5">
+                      <input
+                        aria-label="Points"
+                        type="number"
+                        min={0}
+                        step={1}
+                        value={l.points}
+                        onChange={(e) => majLigne(l.key, 'points', e.target.value)}
+                        className={champNombre}
+                      />
+                    </td>
+                    <td className="px-1 py-1.5">
+                      <input
+                        aria-label="Décrément"
+                        type="number"
+                        min={0}
+                        step={1}
+                        value={l.decrement}
+                        onChange={(e) => majLigne(l.key, 'decrement', e.target.value)}
+                        className={champNombre}
+                      />
+                    </td>
+                    <td className="px-1 py-1.5 text-right">
+                      <button
+                        type="button"
+                        onClick={() => supprimerLigne(l.key)}
+                        aria-label="Supprimer l’échelon"
+                        className="rounded-lg border border-danger/40 px-2 py-1 text-sm text-danger hover:bg-danger/10"
+                      >
+                        ×
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <button
+            type="button"
+            onClick={ajouterLigne}
+            className="self-start rounded-lg border border-accent/40 bg-accent/10 px-3 py-1.5 text-xs font-semibold text-accent-doux hover:bg-accent/20"
+          >
+            + Ajouter un échelon
+          </button>
+        </div>
+      ) : bareme.echelons.length === 0 ? (
         <p className="text-sm text-texte-attenue">Aucun échelon de barème.</p>
       ) : (
         <div className="overflow-x-auto">
@@ -337,36 +476,8 @@ function EditeurBaremeVitesse({
               {bareme.echelons.map((e) => (
                 <tr key={e.id} className="border-t border-bordure/40">
                   <td className="px-1 py-1.5 font-medium text-texte-fort">{libelleRang(e)}</td>
-                  <td className="px-1 py-1.5">
-                    {editable ? (
-                      <input
-                        name={`points_${e.id}`}
-                        type="number"
-                        min={0}
-                        step={1}
-                        defaultValue={e.points}
-                        required
-                        className={champNombre}
-                      />
-                    ) : (
-                      <span className="text-texte">{e.points}</span>
-                    )}
-                  </td>
-                  <td className="px-1 py-1.5">
-                    {editable ? (
-                      <input
-                        name={`decrement_${e.id}`}
-                        type="number"
-                        min={0}
-                        step={1}
-                        defaultValue={e.decrement}
-                        required
-                        className={champNombre}
-                      />
-                    ) : (
-                      <span className="text-texte">{e.decrement}</span>
-                    )}
-                  </td>
+                  <td className="px-1 py-1.5 text-texte">{e.points}</td>
+                  <td className="px-1 py-1.5 text-texte">{e.decrement}</td>
                 </tr>
               ))}
             </tbody>

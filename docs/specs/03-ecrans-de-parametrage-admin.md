@@ -3,7 +3,9 @@
 - **Statut** : validée (section « Configuration d'une rencontre » R40–R45 validée
   le 2026-08-28). **Barème de vitesse (R46 « barème par rang », modèle de données
   associé) ajouté et validé le 2026-09-22** — comble le report de R39 ; le
-  **calcul** des points relève de la spec #7 (R16–R20).
+  **calcul** des points relève de la spec #7 (R16–R20). **Édition complète des
+  échelons du barème (R47) + validation de l'invariant au save (R48) : validées le
+  2026-09-23** — le modèle R46 (dernier échelon ouvert) est inchangé.
 - **Sources** : décision produit du 2026-07-25 (tranche T8 — premiers écrans
   d'administration). S'appuie sur la **spec #1 — Rôles & autorisations**
   (`01-roles-et-autorisations.md`), qui reste la vérité pour « qui peut faire
@@ -288,6 +290,39 @@ saisie, les flux CRUD, et les règles de suppression (dépendances / cascade).
   - échelons : `1–5` points 60 décr 1 (→ 60,59,58,57,56) ; `6–50` points 55 décr 1
     (→ 55…11) ; `51–∞` points 10 ;
   - chute : **5** ; non-présentation : **0**.
+
+- **R47.** *(Ajout validé le 2026-09-23.)* L'admin **édite le jeu complet
+  d'échelons** du barème de vitesse — au **gabarit** (R31) comme dans une
+  **rencontre** (R42) : pour chaque échelon il peut modifier `rang_min`,
+  `rang_max`, `points` et `décrément`, **ajouter** un échelon et **supprimer** un
+  échelon. L'enregistrement **remplace atomiquement** l'ensemble des échelons de
+  l'épreuve (soit tout le nouveau jeu validé est écrit, soit rien). Les **points de
+  chute / non-présentation** restent éditables au même endroit (R46). Cette édition
+  fine est **propre au barème** (exception à R43, qui reste « ajout seul » pour les
+  voies et blocs). L'édition **en rencontre** n'est possible qu'en
+  **pré-compétition** (R44) ; l'édition **au gabarit** suit les règles d'édition du
+  gabarit (R31). Le barème reste **identique Filles / Garçons** (R46).
+- **R48.** *(Ajout validé le 2026-09-23.)* À l'enregistrement (R47), le jeu
+  d'échelons soumis est **validé avant toute écriture** ; s'il viole une seule des
+  conditions ci-dessous, l'enregistrement est **refusé en bloc** (aucune
+  modification en base) avec un **message précis** désignant le problème. Conditions
+  (ce sont exactement les invariants de R46) :
+  - a. il reste **au moins un** échelon ;
+  - b. `rang_min` est un **entier ≥ 1** ; `rang_max` est soit un **entier
+    ≥ `rang_min`**, soit **vide** (« au-delà ») ;
+  - c. `points` et `décrément` sont des **entiers ≥ 0** ;
+  - d. une fois les échelons **triés par `rang_min` croissant**, le premier
+    commence à **`rang_min = 1`** ;
+  - e. ils sont **contigus sans chevauchement** : chaque échelon non-dernier est
+    **borné** (`rang_max` non vide) et le suivant commence **exactement** à
+    `rang_max + 1` (**ni trou, ni recouvrement**) ;
+  - f. **exactement un** échelon est **ouvert** (`rang_max` vide), et c'est le
+    **dernier** (il couvre tous les rangs au-delà).
+
+  Aucune migration : les tables `gabarit_bareme_vitesse_echelon` /
+  `bareme_vitesse_echelon` et la RLS admin (`_all_admin`) existent déjà
+  (migration `202609221500`). La validation est une **fonction pure** du domaine
+  (testable hors Supabase), rejouée par la Server Action avant écriture.
 
 ### Écran Tableau de bord d'une rencontre (`/admin/rencontres/[id]`)
 
