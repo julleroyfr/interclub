@@ -2,19 +2,15 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
-import { Coquille, EnTetePage, Etiquette, type LienNav, TempsReel, variantePhase } from '@/composants'
+import { Coquille, EnTetePage, Etiquette, TempsReel, variantePhase } from '@/composants'
 import { CATEGORIES, PHASES, phaseEnDirect, type Categorie, type Phase } from '@/domaine/rencontre'
+import { liensAdmin } from '@/lib/admin/navigation'
 import { exigerAdmin } from '@/lib/auth/session'
 import { getSaisieAdminRencontre } from '@/lib/admin/resultats'
 
 import { PanneauSaisieAdmin } from './panneau-saisie-admin'
 
 export const metadata: Metadata = { title: 'Saisie admin des résultats — Interclub' }
-
-const liens: LienNav[] = [
-  { href: '/', label: 'Accueil' },
-  { href: '/admin/rencontres', label: 'Rencontres' },
-]
 
 const labelPhase = (v: Phase) => PHASES.find((p) => p.value === v)?.label ?? v
 const labelCategorie = (v: Categorie) =>
@@ -51,7 +47,7 @@ export default async function PageSaisieAdmin({
   const enCorrection = saisie.phase === 'cloture'
 
   return (
-    <Coquille liens={liens} largeur="large" deconnexion>
+    <Coquille liens={liensAdmin()} largeur="large" deconnexion>
       <div className="flex flex-col gap-6">
         <div>
           <EnTetePage

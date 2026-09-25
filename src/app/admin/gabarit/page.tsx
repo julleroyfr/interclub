@@ -1,18 +1,14 @@
 import type { Metadata } from 'next'
 
-import { Coquille, EnTetePage, TitreSection, type LienNav } from '@/composants'
+import { Coquille, EnTetePage, TitreSection } from '@/composants'
 import { CATEGORIES } from '@/domaine/rencontre'
+import { liensAdmin } from '@/lib/admin/navigation'
 import { exigerAdmin } from '@/lib/auth/session'
 import { listerGabarit } from '@/lib/gabarit/gabarit'
 
 import { PanneauGabarit } from './panneau-gabarit'
 
 export const metadata: Metadata = { title: 'Gabarit — Interclub' }
-
-const liens: LienNav[] = [
-  { href: '/', label: 'Accueil' },
-  { href: '/admin/gabarit', label: 'Gabarit' },
-]
 
 export default async function PageGabarit() {
   await exigerAdmin()
@@ -23,7 +19,7 @@ export default async function PageGabarit() {
   ])
 
   return (
-    <Coquille liens={liens} largeur="large" deconnexion>
+    <Coquille liens={liensAdmin()} largeur="large" deconnexion>
       <div className="flex flex-col gap-6">
         <EnTetePage
           titre="Gabarit de rencontre"

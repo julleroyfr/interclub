@@ -4,10 +4,10 @@ import {
   Carte,
   Coquille,
   EnTetePage,
-  TitreSection,
-  type LienNav,
+  TitreSection,
 } from '@/composants'
 import { anneeSaison, labelSaison } from '@/domaine/rencontre'
+import { liensAdmin } from '@/lib/admin/navigation'
 import { exigerAdmin } from '@/lib/auth/session'
 import { listerClubsOptions, listerRencontres } from '@/lib/rencontres/rencontres'
 
@@ -18,11 +18,6 @@ import { SelecteurSaison } from './selecteur-saison'
 export const metadata: Metadata = {
   title: 'Rencontres — Interclub',
 }
-
-const liens: LienNav[] = [
-  { href: '/', label: 'Accueil' },
-  { href: '/admin/rencontres', label: 'Rencontres' },
-]
 
 export default async function PageRencontres({
   searchParams,
@@ -44,7 +39,7 @@ export default async function PageRencontres({
   ])
 
   return (
-    <Coquille liens={liens} largeur="large" deconnexion>
+    <Coquille liens={liensAdmin()} largeur="large" deconnexion>
       <div className="flex flex-col gap-6">
         <EnTetePage
           titre="Rencontres"

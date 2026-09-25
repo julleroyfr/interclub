@@ -4,9 +4,9 @@ import {
   Carte,
   Coquille,
   EnTetePage,
-  TitreSection,
-  type LienNav,
+  TitreSection,
 } from '@/composants'
+import { liensAdmin } from '@/lib/admin/navigation'
 import { exigerAdmin } from '@/lib/auth/session'
 import { listerClubs } from '@/lib/clubs/clubs'
 import { listerInvitationsActives } from '@/lib/invitations/invitations'
@@ -19,11 +19,6 @@ export const metadata: Metadata = {
   title: 'Clubs — Interclub',
 }
 
-const liens: LienNav[] = [
-  { href: '/', label: 'Accueil' },
-  { href: '/admin/clubs', label: 'Clubs' },
-]
-
 export default async function PageClubs() {
   // Paramétrage des clubs réservé à l'admin (spec #1 R11). On masque l'écran aux
   // non-admins (404 plutôt que 403). La RLS reste la vraie frontière.
@@ -35,7 +30,7 @@ export default async function PageClubs() {
   ])
 
   return (
-    <Coquille liens={liens} largeur="large" deconnexion>
+    <Coquille liens={liensAdmin()} largeur="large" deconnexion>
       <div className="flex flex-col gap-6">
         <EnTetePage
           titre="Clubs"

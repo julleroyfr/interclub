@@ -345,6 +345,10 @@ Tout livré :
   (garantit la joignabilité après C1).
 - **C4** : « Rencontres » dans les accès rapides `/admin`.
 - **C3** : remontées via barre de nav + liens parent explicites.
+- **C8** : bandeau centralisé par rôle (`liensAdmin` / `liensCoach`), identique
+  sur toutes les pages d'un espace (fin des `const liens` ad hoc par page) ;
+  `NavPrincipale` surligne le lien le plus spécifique ; `/coach/jetons` retrouve
+  « Mes rencontres ». Spec #12 R23.
 
 ### Phase 5 — Cahier de test ✅
 

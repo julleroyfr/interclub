@@ -117,6 +117,21 @@
   `/admin/rencontres/{id}/classement` (tous clubs), **jamais** à `/coach/...` ;
   remontée « ← Tableau de bord » présente (R19). Détail : **cahier 18, CT-13**.
 
+### CT-11 — Bandeau de navigation cohérent par rôle (couvre R23, C8)
+
+- **Rôle** : `admin@` puis `coach@`.
+- **Étapes** :
+  1. En admin, ouvrir successivement `/admin`, `/admin/clubs`,
+     `/admin/grimpeurs`, `/admin/rencontres`, une rencontre et sa saisie.
+  2. En coach permanent, ouvrir `/coach` puis `/coach/jetons`.
+- **Résultat attendu** :
+  - Le bandeau admin est **identique** sur **toutes** les pages : Accueil ·
+    Tableau de bord · Rencontres · Clubs · Grimpeurs · Gabarit · Jetons · Rôles,
+    ainsi que « Se déconnecter ». L'onglet **le plus spécifique** est surligné (sur
+    `/admin/rencontres`, « Rencontres » seul est actif, pas « Tableau de bord »).
+  - Le bandeau coach affiche **Accueil · Mes rencontres · Jetons** — y compris sur
+    **`/coach/jetons`** (non-régression : « Mes rencontres » y est bien présent).
+
 ## Registre d'exécution
 
 | Date | Testeur | Version/commit | Cas | Résultat | Remarque |
@@ -131,3 +146,4 @@
 | | | | CT-08 | ✅ / ❌ | |
 | | | | CT-09 | ✅ / ❌ | |
 | | | | CT-10 | ✅ / ❌ | |
+| | | | CT-11 | ✅ / ❌ | |

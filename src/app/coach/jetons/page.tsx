@@ -6,19 +6,14 @@ import {
   EnTetePage,
   Etiquette,
   TitreSection,
-  type LienNav,
 } from '@/composants'
 import { exigerUtilisateur } from '@/lib/auth/session'
+import { liensCoach } from '@/lib/coach/navigation'
 import { listerJetonsActifs, listerRencontresDuClub } from '@/lib/jetons/jetons'
 
 import { AfficheurJeton } from '../../admin/jetons/afficheur-jeton'
 
 export const metadata: Metadata = { title: 'Mes jetons QR — Interclub' }
-
-const liens: LienNav[] = [
-  { href: '/', label: 'Accueil' },
-  { href: '/coach/jetons', label: 'Jetons' },
-]
 
 const libellePhase: Record<string, string> = {
   pre_competition: 'Préparation',
@@ -43,7 +38,7 @@ export default async function PageJetonsCoach({
   )
 
   return (
-    <Coquille liens={liens} deconnexion>
+    <Coquille liens={liensCoach({ type: 'permanent', clubId })} deconnexion>
       <div className="flex flex-col gap-6">
         <EnTetePage
           titre="Mes jetons QR"

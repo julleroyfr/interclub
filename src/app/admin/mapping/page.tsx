@@ -11,10 +11,10 @@ import {
   LigneTableau,
   Tableau,
   TeteTableau,
-  TitreSection,
-  type LienNav,
+  TitreSection,
 } from '@/composants'
 import { chargerContexteMapping } from '@/lib/auth/mapping'
+import { liensAdmin } from '@/lib/admin/navigation'
 import { exigerAdmin } from '@/lib/auth/session'
 
 import { FormulaireMapping } from './formulaire-mapping'
@@ -22,11 +22,6 @@ import { FormulaireMapping } from './formulaire-mapping'
 export const metadata: Metadata = {
   title: 'Mapping de rôle — Interclub',
 }
-
-const liens: LienNav[] = [
-  { href: '/', label: 'Accueil' },
-  { href: '/admin/mapping', label: 'Rôles' },
-]
 
 export default async function PageMappingRole() {
   // Administration du mapping réservée à l'admin (spec #2 R4). On masque
@@ -36,7 +31,7 @@ export default async function PageMappingRole() {
   const { comptes, clubs, mappings } = await chargerContexteMapping()
 
   return (
-    <Coquille liens={liens} largeur="large" deconnexion>
+    <Coquille liens={liensAdmin()} largeur="large" deconnexion>
       <div className="flex flex-col gap-6">
         <EnTetePage
           titre="Mapping de rôle"

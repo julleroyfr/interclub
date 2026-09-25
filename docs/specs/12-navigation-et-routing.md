@@ -125,6 +125,15 @@ menant à une impasse (404 non intentionnel).
   **fin de session** (R17 pour le juge ; retour `Accueil` pour le coach
   temporaire). Aucune action « Se déconnecter » ne leur est présentée.
 
+### Bandeau de navigation
+
+- **R23.** Le bandeau supérieur est un **composant commun** (coquille) dont les
+  liens proviennent d'un **jeu centralisé par rôle** — `liensAdmin` pour
+  l'espace admin, `liensCoach` pour l'espace coach. Le bandeau est **identique
+  sur toutes les pages d'un même espace** : aucune page ne définit sa propre
+  liste de liens. Le bandeau admin donne accès à toutes les sections admin ;
+  celui du coach dépend du type (permanent / temporaire, cf. R10/R11).
+
 ## Scénarios
 
 ### Nominal — entrée par rôle

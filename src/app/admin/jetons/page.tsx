@@ -6,9 +6,9 @@ import {
   Coquille,
   EnTetePage,
   Etiquette,
-  TitreSection,
-  type LienNav,
+  TitreSection,
 } from '@/composants'
+import { liensAdmin } from '@/lib/admin/navigation'
 import { exigerAdmin } from '@/lib/auth/session'
 import {
   listerClubsEngages,
@@ -20,12 +20,6 @@ import {
 import { AfficheurJeton } from './afficheur-jeton'
 
 export const metadata: Metadata = { title: 'Jetons QR — Interclub' }
-
-const liens: LienNav[] = [
-  { href: '/', label: 'Accueil' },
-  { href: '/admin/mapping', label: 'Rôles' },
-  { href: '/admin/jetons', label: 'Jetons' },
-]
 
 const libellePhase: Record<string, string> = {
   pre_competition: 'Préparation',
@@ -45,7 +39,7 @@ export default async function PageJetonsAdmin({
   const selection = rencontres.find((r) => r.id === rencontreId) ?? null
 
   return (
-    <Coquille liens={liens} largeur="large" deconnexion>
+    <Coquille liens={liensAdmin()} largeur="large" deconnexion>
       <div className="flex flex-col gap-6">
         <EnTetePage
           titre="Jetons QR"

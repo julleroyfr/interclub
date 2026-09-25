@@ -2,9 +2,10 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
-import { Carte, Coquille, EnTetePage, type LienNav } from '@/composants'
+import { Carte, Coquille, EnTetePage } from '@/composants'
 import { anneeSaison, CATEGORIES, labelSaison, type Categorie } from '@/domaine/rencontre'
 import { chargerEngagementTousClubs } from '@/lib/admin/engagement'
+import { liensAdmin } from '@/lib/admin/navigation'
 import { exigerAdmin } from '@/lib/auth/session'
 import { chargerPretsRencontre } from '@/lib/prets/prets'
 import { getStructureRencontre } from '@/lib/rencontres/structure'
@@ -17,11 +18,6 @@ import { PanneauStructure } from './panneau-structure'
 export const metadata: Metadata = {
   title: 'Tableau de bord d’une rencontre — Interclub',
 }
-
-const liens: LienNav[] = [
-  { href: '/', label: 'Accueil' },
-  { href: '/admin/rencontres', label: 'Rencontres' },
-]
 
 const labelCategorie = (v: Categorie) =>
   CATEGORIES.find((c) => c.value === v)?.labelCourt ?? v
@@ -63,7 +59,7 @@ export default async function PageTableauDeBordRencontre({
   const nbPrets = prets.length
 
   return (
-    <Coquille liens={liens} largeur="large" deconnexion>
+    <Coquille liens={liensAdmin()} largeur="large" deconnexion>
       <div className="flex flex-col gap-6">
         <EnTetePage
           titre={`Rencontre ${structure.clubPorteurNom} du ${formaterDate(structure.dateRencontre)}`}

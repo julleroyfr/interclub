@@ -1,7 +1,8 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 
-import { Carte, Coquille, EnTetePage, type LienNav } from '@/composants'
+import { Carte, Coquille, EnTetePage } from '@/composants'
+import { liensAdmin } from '@/lib/admin/navigation'
 import { exigerAdmin } from '@/lib/auth/session'
 import { chargerTableauDeBord } from '@/lib/tableau-de-bord/tableau-de-bord'
 
@@ -11,11 +12,6 @@ export const metadata: Metadata = {
   title: 'Tableau de bord — Interclub',
 }
 
-const liens: LienNav[] = [
-  { href: '/', label: 'Accueil' },
-  { href: '/admin', label: 'Tableau de bord' },
-]
-
 export default async function PageTableauDeBord() {
   await exigerAdmin()
 
@@ -23,7 +19,7 @@ export default async function PageTableauDeBord() {
   const { stats, rencontres, totalRencontres, saison } = await chargerTableauDeBord(aujourdhui)
 
   return (
-    <Coquille liens={liens} largeur="large" deconnexion>
+    <Coquille liens={liensAdmin()} largeur="large" deconnexion>
       <div className="flex flex-col gap-6">
         <EnTetePage
           titre="Tableau de bord"

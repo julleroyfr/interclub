@@ -4,9 +4,9 @@ import {
   Carte,
   Coquille,
   EnTetePage,
-  TitreSection,
-  type LienNav,
+  TitreSection,
 } from '@/composants'
+import { liensAdmin } from '@/lib/admin/navigation'
 import { exigerAdmin } from '@/lib/auth/session'
 import { listerClubsOptions, listerGrimpeurs } from '@/lib/grimpeurs/grimpeurs'
 
@@ -16,11 +16,6 @@ import { ListeGrimpeurs } from './liste-grimpeurs'
 export const metadata: Metadata = {
   title: 'Grimpeurs — Interclub',
 }
-
-const liens: LienNav[] = [
-  { href: '/', label: 'Accueil' },
-  { href: '/admin/grimpeurs', label: 'Grimpeurs' },
-]
 
 export default async function PageGrimpeurs() {
   // Volet admin du roster (spec #1 R11/R13). On masque l'écran aux non-admins
@@ -34,7 +29,7 @@ export default async function PageGrimpeurs() {
   ])
 
   return (
-    <Coquille liens={liens} largeur="large" deconnexion>
+    <Coquille liens={liensAdmin()} largeur="large" deconnexion>
       <div className="flex flex-col gap-6">
         <EnTetePage
           titre="Grimpeurs"
