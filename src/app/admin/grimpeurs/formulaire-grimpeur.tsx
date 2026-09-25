@@ -17,6 +17,7 @@ export function FormulaireGrimpeur({ clubs }: { clubs: OptionClub[] }) {
   const idPrenom = useId()
   const idAnnee = useId()
   const idSexe = useId()
+  const idLicence = useId()
   const formRef = useRef<HTMLFormElement>(null)
 
   useEffect(() => {
@@ -75,6 +76,16 @@ export function FormulaireGrimpeur({ clubs }: { clubs: OptionClub[] }) {
         options={optionsSexe}
         placeholder="Choisir…"
         required
+      />
+      <ChampTexte
+        id={idLicence}
+        name="licence"
+        type="number"
+        inputMode="numeric"
+        label="Numéro de licence"
+        required
+        min={1}
+        placeholder="Ex. 123456"
       />
 
       {etat?.erreur && (

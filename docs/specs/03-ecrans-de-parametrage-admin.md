@@ -6,6 +6,8 @@
   **calcul** des points relève de la spec #7 (R16–R20). **Édition complète des
   échelons du barème (R47) + validation de l'invariant au save (R48) : validées le
   2026-09-23** — le modèle R46 (dernier échelon ouvert) est inchangé.
+  **Champ `licence` (R21b) ajouté le 2026-09-25** : numéro de licence FFME,
+  optionnel, entier positif.
 - **Sources** : décision produit du 2026-07-25 (tranche T8 — premiers écrans
   d'administration). S'appuie sur la **spec #1 — Rôles & autorisations**
   (`01-roles-et-autorisations.md`), qui reste la vérité pour « qui peut faire
@@ -146,7 +148,11 @@ saisie, les flux CRUD, et les règles de suppression (dépendances / cascade).
   **hors périmètre** de cette spec (tranche coach ultérieure) ; la RLS
   `grimpeur_*` l'autorise déjà.
 - **R21.** Un grimpeur porte : un **club** de rattachement (obligatoire), un
-  **nom**, un **prénom**, et une **année de naissance**. (Source : modèle socle.)
+  **nom**, un **prénom**, une **année de naissance** et un **numéro de licence**
+  (optionnel). (Source : modèle socle + décision produit 2026-09-25.)
+- **R21b.** Le numéro de licence est **obligatoire** : entier strictement
+  positif, **unique** parmi tous les grimpeurs. Contrainte SQL :
+  `licence integer not null check (licence > 0) unique`.
 - **R22.** Nom et prénom sont obligatoires, d'au plus **100** caractères
   (normalisés, R4).
 - **R23.** L'année de naissance est un **entier à 4 chiffres** compris entre
@@ -159,7 +165,8 @@ saisie, les flux CRUD, et les règles de suppression (dépendances / cascade).
   **résultats** et **temps de vitesse**. La confirmation **signale** cette
   cascade lorsque le grimpeur a des engagements.
 - **R26.** La liste affiche, pour chaque grimpeur, son identité, son club, son
-  année de naissance et son **nombre d'engagements** (compositions).
+  année de naissance, son **numéro de licence** (si renseigné) et son **nombre
+  d'engagements** (compositions).
 
 ### Saison des rencontres
 
@@ -454,6 +461,8 @@ année à 4 chiffres valide, alors le grimpeur est ajouté au roster de ce club
 - Suppression d'un club portant une rencontre ou un grimpeur → bloquée (R11).
 - Date de rencontre impossible (30 février) → refus (R14).
 - Année de naissance non numérique ou hors bornes → refus (R23).
+- Numéro de licence absent, non entier ou ≤ 0 → refus (R21b).
+- Numéro de licence déjà utilisé par un autre grimpeur → refus (unicité R21b).
 - Un coach appelle directement une Server Action de paramétrage → refus (R2).
 - Suppression d'une rencontre / d'un grimpeur avec dépendances → confirmée, puis
   cascade appliquée (R18, R25).
@@ -483,7 +492,7 @@ année à 4 chiffres valide, alors le grimpeur est ajouté au roster de ce club
   (`*_admin`) ; écriture du `grimpeur` ouverte à l'admin **ou** au coach du club
   (`grimpeur_*`), cet écran n'exposant que le volet admin (R20).
 - Bornes de saisie : `club.nom` ≤ 100 ; `grimpeur.nom`/`prenom` ≤ 100 ;
-  `annee_naissance` ∈ [1900, 2100].
+  `annee_naissance` ∈ [1900, 2100] ; `licence` entier > 0, obligatoire, unique (R21b).
 - La **saison** d'une rencontre est une valeur **calculée** à partir de la date
   (spec #1 R37) — pas de colonne `saison` en base.
 - **Entités gabarit** (schéma à créer par migration) :

@@ -8,27 +8,67 @@ import {
   normaliserSaisieGrimpeur,
 } from './grimpeur'
 
-// Spec #1 « Rôles & autorisations » — roster de grimpeurs d'un club (R18 : le
-// coach gère les grimpeurs de son club ; R11/R13 : l'admin paramètre). Domaine
-// pur : valide/normalise nom, prénom et année de naissance avant écriture
-// Supabase (`grimpeur` : nom/prenom `text not null`, `annee_naissance int`
-// `between 1900 and 2100`). Aucune dépendance Supabase ici.
+// Spec #1 R18 / spec #3 R21–R21b — roster de grimpeurs d'un club. Domaine pur :
+// valide/normalise nom, prenom, annee_naissance, sexe et licence avant ecriture
+// Supabase. Aucune dependance Supabase ici.
 
-describe('Saisie d’un grimpeur (R18)', () => {
-  const valide = { nom: 'Dupont', prenom: 'Léa', anneeNaissance: '2014', sexe: 'F' }
+describe("Saisie d'un grimpeur (R18)", () => {
+  const valide = {
+    nom: 'Dupont',
+    prenom: 'Lea',
+    anneeNaissance: '2014',
+    sexe: 'F',
+    licence: '123456',
+  }
 
   it('normalise une saisie valide', () => {
     expect(normaliserSaisieGrimpeur(valide)).toEqual({
       nom: 'Dupont',
-      prenom: 'Léa',
+      prenom: 'Lea',
       anneeNaissance: 2014,
       sexe: 'F',
+      licence: 123456,
     })
   })
 
-  // Sexe obligatoire 'F'/'G' — prérequis du classement individuel séparé par
+  // Licence obligatoire, entier strictement positif (spec #3 R21b).
+  it('rejette une licence absente (R21b)', () => {
+    const { licence: _, ...sanslicence } = valide
+    expect(() => normaliserSaisieGrimpeur(sanslicence as never)).toThrow(
+      GrimpeurInvalideError,
+    )
+  })
+
+  it('rejette une licence vide (R21b)', () => {
+    expect(() => normaliserSaisieGrimpeur({ ...valide, licence: '' })).toThrow(
+      GrimpeurInvalideError,
+    )
+    expect(() => normaliserSaisieGrimpeur({ ...valide, licence: '   ' })).toThrow(
+      GrimpeurInvalideError,
+    )
+  })
+
+  it('rejette une licence non entiere (R21b)', () => {
+    expect(() => normaliserSaisieGrimpeur({ ...valide, licence: 'abc' })).toThrow(
+      GrimpeurInvalideError,
+    )
+    expect(() => normaliserSaisieGrimpeur({ ...valide, licence: '123.5' })).toThrow(
+      GrimpeurInvalideError,
+    )
+  })
+
+  it('rejette une licence <= 0 (R21b)', () => {
+    expect(() => normaliserSaisieGrimpeur({ ...valide, licence: '0' })).toThrow(
+      GrimpeurInvalideError,
+    )
+    expect(() => normaliserSaisieGrimpeur({ ...valide, licence: '-1' })).toThrow(
+      GrimpeurInvalideError,
+    )
+  })
+
+  // Sexe obligatoire 'F'/'G' — prerequis du classement individuel separe par
   // sexe (spec #7 R8b) ; reflet du check SQL `grimpeur.sexe in ('F','G')`.
-  it('conserve le sexe Filles ou Garçons', () => {
+  it('conserve le sexe Filles ou Garcons', () => {
     expect(normaliserSaisieGrimpeur({ ...valide, sexe: 'F' }).sexe).toBe('F')
     expect(normaliserSaisieGrimpeur({ ...valide, sexe: 'G' }).sexe).toBe('G')
   })
@@ -45,16 +85,18 @@ describe('Saisie d’un grimpeur (R18)', () => {
     )
   })
 
-  it('retire les espaces de bord et réduit les espaces internes', () => {
+  it('retire les espaces de bord et reduit les espaces internes', () => {
     const g = normaliserSaisieGrimpeur({
       nom: '  Van   der Berg  ',
       prenom: '  Marie  Claire ',
       anneeNaissance: ' 2013 ',
       sexe: 'F',
+      licence: ' 123456 ',
     })
     expect(g.nom).toBe('Van der Berg')
     expect(g.prenom).toBe('Marie Claire')
     expect(g.anneeNaissance).toBe(2013)
+    expect(g.licence).toBe(123456)
   })
 
   it('rejette un nom vide', () => {
@@ -63,7 +105,7 @@ describe('Saisie d’un grimpeur (R18)', () => {
     )
   })
 
-  it('rejette un prénom vide', () => {
+  it('rejette un prenom vide', () => {
     expect(() => normaliserSaisieGrimpeur({ ...valide, prenom: '' })).toThrow(
       GrimpeurInvalideError,
     )
@@ -75,19 +117,19 @@ describe('Saisie d’un grimpeur (R18)', () => {
     ).toThrow(GrimpeurInvalideError)
   })
 
-  it('rejette une année non numérique', () => {
+  it('rejette une annee non numerique', () => {
     expect(() =>
       normaliserSaisieGrimpeur({ ...valide, anneeNaissance: 'abcd' }),
     ).toThrow(GrimpeurInvalideError)
   })
 
-  it('rejette une année décimale', () => {
+  it('rejette une annee decimale', () => {
     expect(() =>
       normaliserSaisieGrimpeur({ ...valide, anneeNaissance: '2014.5' }),
     ).toThrow(GrimpeurInvalideError)
   })
 
-  it('rejette une année hors bornes', () => {
+  it('rejette une annee hors bornes', () => {
     expect(() =>
       normaliserSaisieGrimpeur({
         ...valide,
@@ -102,7 +144,7 @@ describe('Saisie d’un grimpeur (R18)', () => {
     ).toThrow(GrimpeurInvalideError)
   })
 
-  it('accepte les années aux bornes', () => {
+  it('accepte les annees aux bornes', () => {
     expect(
       normaliserSaisieGrimpeur({
         ...valide,

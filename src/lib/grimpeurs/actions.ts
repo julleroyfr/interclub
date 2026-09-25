@@ -12,11 +12,11 @@ import { createClient } from '@/lib/supabase/server'
 import { type EtatGrimpeur } from './grimpeurs'
 
 // CRUD du roster de grimpeurs (spec #1 R18 : coach de son club ; R11/R13 :
-// paramétrage admin). Cet écran est le volet **admin** (gère tout club) ; on
-// garde donc l'accès à l'admin. Server Actions : joignables par POST direct, on
-// ne se fie pas à l'UI. Défense en profondeur : garde admin explicite + la vraie
-// frontière reste la **RLS** (policies `grimpeur_*`, qui admettent aussi le
-// coach du club — hors périmètre de cet écran admin).
+// parametrage admin). Cet ecran est le volet **admin** (gere tout club) ; on
+// garde donc l'acces a l'admin. Server Actions : joignables par POST direct, on
+// ne se fie pas a l'UI. Defense en profondeur : garde admin explicite + la vraie
+// frontiere reste la **RLS** (policies `grimpeur_*`, qui admettent aussi le
+// coach du club -- hors perimetre de cet ecran admin).
 
 /** Refuse l'appelant non-admin, ou `null` si admin. */
 async function refuserSiNonAdmin(): Promise<EtatGrimpeur | null> {
@@ -27,16 +27,21 @@ async function refuserSiNonAdmin(): Promise<EtatGrimpeur | null> {
   return null
 }
 
+type Contexte = 'ecriture' | 'suppression'
+
 /** Traduit une erreur Postgres/PostgREST en message lisible. */
-function messageErreur(code: string | undefined, contexte: 'ecriture' | 'suppression'): string {
+function messageErreur(code: string | undefined, contexte: Contexte): string {
   if (code === '23503') {
     return contexte === 'suppression'
       ? 'Ce grimpeur est référencé : suppression impossible.'
       : 'Le club est introuvable.'
   }
+  if (code === '23505') {
+    return 'Ce numéro de licence est déjà utilisé par un autre grimpeur.'
+  }
   return contexte === 'suppression'
     ? 'La suppression a échoué. Réessayez.'
-    : 'L’enregistrement a échoué. Réessayez.'
+    : "L'enregistrement a échoué. Réessayez."
 }
 
 function lireSaisie(formData: FormData) {
@@ -45,6 +50,7 @@ function lireSaisie(formData: FormData) {
     prenom: String(formData.get('prenom') ?? ''),
     anneeNaissance: String(formData.get('anneeNaissance') ?? ''),
     sexe: String(formData.get('sexe') ?? ''),
+    licence: String(formData.get('licence') ?? ''),
   })
 }
 
@@ -73,6 +79,7 @@ export async function creerGrimpeur(
     prenom: saisie.prenom,
     annee_naissance: saisie.anneeNaissance,
     sexe: saisie.sexe,
+    licence: saisie.licence,
   })
   if (error) return { erreur: messageErreur(error.code, 'ecriture') }
 
@@ -110,6 +117,7 @@ export async function modifierGrimpeur(
       prenom: saisie.prenom,
       annee_naissance: saisie.anneeNaissance,
       sexe: saisie.sexe,
+      licence: saisie.licence,
     })
     .eq('id', id)
   if (error) return { erreur: messageErreur(error.code, 'ecriture') }

@@ -2,7 +2,8 @@
 // grimpeurs d'un club, géré par son coach ou l'admin). Ici, pas d'accès
 // Supabase : uniquement la validation/normalisation de la saisie, reflet des
 // contraintes SQL de `grimpeur` (`nom`/`prenom` `text not null`,
-// `annee_naissance int check between 1900 and 2100`).
+// `annee_naissance int check between 1900 and 2100`,
+// `licence int check > 0` nullable — spec #3 R21b).
 
 /** Longueur maximale d'un nom ou prénom (borne de saisie, côté domaine). */
 export const NOM_GRIMPEUR_MAX = 100
@@ -35,6 +36,7 @@ export type SaisieGrimpeur = {
   prenom: string
   anneeNaissance: string
   sexe: string
+  licence: string
 }
 
 /** Grimpeur normalisé, prêt à écrire. */
@@ -43,6 +45,7 @@ export type GrimpeurNormalise = {
   prenom: string
   anneeNaissance: number
   sexe: Sexe
+  licence: number
 }
 
 // Normalise un libellé : espaces de bord retirés, espaces internes réduits à un
@@ -88,5 +91,17 @@ export function normaliserSaisieGrimpeur(saisie: SaisieGrimpeur): GrimpeurNormal
     throw new GrimpeurInvalideError('Le sexe du grimpeur doit être « F » ou « G ».')
   }
 
-  return { nom, prenom, anneeNaissance, sexe: sexe as Sexe }
+  const brutLicence = (saisie.licence ?? '').trim()
+  if (!brutLicence) {
+    throw new GrimpeurInvalideError('Le numéro de licence est obligatoire.')
+  }
+  if (!/^\d+$/.test(brutLicence)) {
+    throw new GrimpeurInvalideError('Le numéro de licence doit être un entier positif.')
+  }
+  const licence = Number(brutLicence)
+  if (licence <= 0) {
+    throw new GrimpeurInvalideError('Le numéro de licence doit être un entier positif.')
+  }
+
+  return { nom, prenom, anneeNaissance, sexe: sexe as Sexe, licence }
 }

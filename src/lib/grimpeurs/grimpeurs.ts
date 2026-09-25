@@ -13,6 +13,7 @@ export type GrimpeurAvecDependances = {
   prenom: string
   anneeNaissance: number
   sexe: Sexe
+  licence: number
   clubId: string
   clubNom: string
   nbEngagements: number
@@ -40,7 +41,7 @@ export async function listerGrimpeurs(): Promise<GrimpeurAvecDependances[]> {
   const [grimpRes, clubsRes, compRes] = await Promise.all([
     supabase
       .from('grimpeur')
-      .select('id, nom, prenom, annee_naissance, sexe, club_id')
+      .select('id, nom, prenom, annee_naissance, sexe, licence, club_id')
       .order('nom')
       .order('prenom'),
     supabase.from('club').select('id, nom'),
@@ -71,6 +72,7 @@ export async function listerGrimpeurs(): Promise<GrimpeurAvecDependances[]> {
         prenom: g.prenom as string,
         anneeNaissance: g.annee_naissance as number,
         sexe: g.sexe as Sexe,
+        licence: g.licence as number,
         clubId,
         clubNom: nomParClub.get(clubId) ?? '(club inconnu)',
         nbEngagements: parGrimpeur.get(g.id as string) ?? 0,
