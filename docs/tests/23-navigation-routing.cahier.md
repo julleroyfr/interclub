@@ -12,6 +12,9 @@
   (`liensCoach`, R10/R11). Ce cahier vérifie les **redirections**, les **404**,
   la **déconnexion** et les **sorties de session** — non automatisables sans
   Supabase.
+- **Automatisé** : `e2e/navigation-routing.spec.ts` (Playwright) rejoue CT-01→CT-11
+  contre la stack locale. Lancer : `npx playwright test navigation-routing
+  --project=chromium`. Dernier run : **20/20 ✅** (voir registre).
 - **Pré-requis** :
   - Stack Supabase **locale** (`supabase db reset`) ; seed `01-jeu-de-test.sql`
     (comptes ci-dessous, mot de passe commun `interclub`).
@@ -145,14 +148,14 @@
 
 | Date | Testeur | Version/commit | Cas | Résultat | Remarque |
 |------|---------|----------------|-----|----------|----------|
-| | | | CT-01 | ✅ / ❌ | |
-| | | | CT-02 | ✅ / ❌ | |
-| | | | CT-03 | ✅ / ❌ | |
-| | | | CT-04 | ✅ / ❌ | |
-| | | | CT-05 | ✅ / ❌ | |
-| | | | CT-06 | ✅ / ❌ | |
-| | | | CT-07 | ✅ / ❌ | |
-| | | | CT-08 | ✅ / ❌ | |
-| | | | CT-09 | ✅ / ❌ | |
-| | | | CT-10 | ✅ / ❌ | |
-| | | | CT-11 | ✅ / ❌ | |
+| 2026-09-25 | Playwright e2e | `24ad806` | CT-01 | ✅ | Couvert par le helper de connexion (redirection post-login) + CT-02 |
+| 2026-09-25 | Playwright e2e | `24ad806` | CT-02 | ✅ | 4 cas (non-auth, coach, admin, sans rôle) |
+| 2026-09-25 | Playwright e2e | `24ad806` | CT-03 | ✅ | /connexion (admin) + /inscription (coach) |
+| 2026-09-25 | Playwright e2e | `24ad806` | CT-04 | ✅ | /admin, /admin/rencontres, /coach, /coach/jetons |
+| 2026-09-25 | Playwright e2e | `24ad806` | CT-05 | ✅ | coach→/admin 404, admin→/coach 404 |
+| 2026-09-25 | Playwright e2e | `24ad806` | CT-06 | ✅ | Déconnexion admin + coach → /connexion |
+| 2026-09-25 | Playwright e2e | `24ad806` | CT-07 | ✅ | Lien « Jetons » → /coach/jetons |
+| 2026-09-25 | Playwright e2e | `24ad806` | CT-08 | ✅ | Coach temporaire : nav bornée + Terminer (fenêtre QR ③ ouverte) |
+| 2026-09-25 | Playwright e2e | `24ad806` | CT-09 | ✅ | Juge « Terminer » → /connexion (fenêtre QR ③ ouverte) |
+| 2026-09-25 | Playwright e2e | `24ad806` | CT-10 | ✅ | Lien classement admin → /admin/.../classement (jamais /coach) |
+| 2026-09-25 | Playwright e2e | `24ad806` | CT-11 | ✅ | Bandeaux sans « Accueil » ; liens attendus présents |
