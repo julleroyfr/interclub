@@ -256,4 +256,4 @@ Routes utilisées :
 | 2026-09-25 | julleroyfr | a76fcdf | CT-10 | ✅ | |
 | 2026-09-25 | julleroyfr | a76fcdf | CT-11 | ✅ | |
 | 2026-09-25 | julleroyfr | a76fcdf | CT-12 | ✅ | payload = 6 Ko — relecture légère, choix confirmé |
-| | | | CT-13 | ✅ / ❌ | |
+| 2026-09-25 | julleroyfr | 45c55e0 | CT-13 | ✅ | |
