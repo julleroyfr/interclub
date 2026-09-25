@@ -26,7 +26,7 @@ on conflict (id) do nothing;
 
 -- 51 grimpeurs. club = pair→B / impair→A ; sexe = FFGG (i%4) pour mixer les deux
 -- sexes DANS chaque club ; année selon enfant (2014–2016) / ado (2008–2012).
-insert into interclub.grimpeur (id, club_id, nom, prenom, annee_naissance, sexe)
+insert into interclub.grimpeur (id, club_id, nom, prenom, annee_naissance, sexe, licence)
 select
   ('c0c0c0c0-0000-0000-0000-' || lpad(to_hex(i), 12, '0'))::uuid,
   (case when i % 2 = 0 then '22222222-2222-2222-2222-222222222222'
@@ -46,7 +46,8 @@ select
     'Liam','Maya','Rose','Jules','Leo','Alix','Kais','Yanis','Sara'
   ])[1 + (i % 30)],
   case when i <= 34 then 2014 + (i % 3) else 2008 + (i % 5) end,
-  case when (i % 4) < 2 then 'F' else 'H' end
+  case when (i % 4) < 2 then 'F' else 'H' end,
+  200000 + i  -- licence unique (spec #3 R21b), distincte du seed 01 (100001+)
 from generate_series(1, 51) as i
 on conflict (id) do nothing;
 

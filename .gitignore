@@ -39,6 +39,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# données réelles licenciés (FFME/FFCAM) — ne jamais versionner
+/docs/reglement/Licenci*.xlsx
+
 # supabase — stack locale (Docker). On versionne config.toml, migrations, seed ;
 # on ignore les fichiers temporaires/générés de la stack locale.
 supabase/.temp/
