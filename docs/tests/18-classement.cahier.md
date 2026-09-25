@@ -12,7 +12,8 @@
 
 - **Spec de référence** : `docs/specs/07-classement.md` (R1–R13) ;
   `docs/specs/06-saisie-des-resultats.md` (source des issues) ;
-  `docs/specs/01-roles-et-autorisations.md` (R8 visibilité, R10 phases).
+  `docs/specs/01-roles-et-autorisations.md` (R8 visibilité, R10 phases) ;
+  `docs/specs/12-navigation-et-routing.md` (R14/R15 vue classement admin, CT-13).
 - **Le calcul pur est couvert par Vitest** (`src/domaine/score.test.ts`, 28 tests,
   R1–R9 + agrégation vitesse). Ce cahier vérifie l'**assemblage cross-club** (loader
   `service_role`), la **RLS/visibilité** et l'**IHM** — non automatisables sans
@@ -240,6 +241,33 @@ T1 = 5 / pv 3, T2 = 6 / pv 3, T3 = 7 / pv 4 ; B1 : 1er = 4, 2e = 3 ; B2 : 1er = 
     temporaire est **borné à sa rencontre** (spec #1 R27, cohérent avec la garde
     de page).
 
+### CT-13 — Vue classement admin (couvre spec #12 R14/R15 ; corrige B1)
+
+- **Rôle** : **admin** (JD-ADMIN).
+- **Pré-condition** : rencontre enfant en **③ compétition** (ou ④/⑤) ; quelques
+  résultats saisis (CT-02/CT-04).
+- **Étapes** :
+  1. Ouvrir le **tableau de bord** de la rencontre
+     (`/admin/rencontres/33333333-…-3333`) → un lien **« 📊 Voir le classement
+     (tous clubs) → »** est présent (R15).
+  2. Le suivre → on arrive sur `/admin/rencontres/33333333-…-3333/classement`
+     (**pas** `/coach/...`), dans la **coquille admin** (nav Accueil / Rencontres).
+  3. Ouvrir la **saisie des résultats** (`…/resultats`) et suivre le lien
+     **« Voir le classement → »**.
+- **Résultat attendu** :
+  - Les deux liens mènent à la **vue admin** `/admin/rencontres/{id}/classement`
+    (R14/R15) : le classement s'affiche **tous clubs**, sans mise en évidence
+    « Mon club » et **sans** filtre « Mon club » actif (`monClubId` absent).
+  - Un lien **« ← Tableau de bord »** permet de remonter (R19).
+  - **Non-régression B1** : aucun des liens admin ne renvoie vers l'espace coach ;
+    aucun **404**.
+- **RLS / sécurité** :
+  - (négatif) Ouvrir `/admin/rencontres/{id}/classement` avec un compte **coach**
+    ou **sans session** → **404** (garde admin, comme les autres écrans `/admin`).
+  - (négatif) En phase **① / ②** (avant la ③), le lien classement n'apparaît pas
+    sur le tableau de bord ; l'URL directe renvoie un classement **vide/masqué**
+    (R11, cohérent avec la vue coach).
+
 ## Registre d'exécution
 
 | Date | Testeur | Version/commit | Cas | Résultat | Remarque |
@@ -256,3 +284,4 @@ T1 = 5 / pv 3, T2 = 6 / pv 3, T3 = 7 / pv 4 ; B1 : 1er = 4, 2e = 3 ; B2 : 1er = 
 | | | | CT-10 | ✅ / ❌ | |
 | | | | CT-11 | ✅ / ❌ | |
 | | | | CT-12 | ✅ / ❌ | |
+| | | | CT-13 | ✅ / ❌ | |

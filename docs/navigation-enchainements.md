@@ -330,8 +330,11 @@ garde extraite et testable.
 
 ### Phase 4 — Code
 
-Priorité au **correctif B1/C2** (lien admin cassé), puis C1, C5, C6, C3, C4, et
-le refactor de garde (B2/B4) selon B3.
+- ✅ **Correctif B1/C2** (fait) : route `/admin/rencontres/{id}/classement` (vue
+  admin, tous clubs), liens admin repointés (dashboard + résultats), remontée
+  « ← Tableau de bord » (C3 partiel). Cahier : CT-13 (18-classement).
+- Reste : C1, C5, C6, C4, C3 (généralisation), C7 (déconnexion), et le refactor
+  de garde (B2/B4/redirect B3).
 
 ### Phase 5 — Cahier de test (`rediger-cahier-de-test`)
 

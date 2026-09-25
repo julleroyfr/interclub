@@ -70,7 +70,7 @@ export default async function PageSaisieAdmin({
               ← Tableau de bord
             </Link>
             <Link
-              href={`/coach/rencontres/${id}/classement`}
+              href={`/admin/rencontres/${id}/classement`}
               className="text-sm font-semibold text-accent-doux underline-offset-2 hover:underline"
             >
               Voir le classement →

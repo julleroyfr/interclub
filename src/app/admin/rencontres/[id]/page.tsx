@@ -91,6 +91,16 @@ export default async function PageTableauDeBordRencontre({
                 🛡️ {structure.phase === 'cloture' ? 'Corriger' : 'Saisir'} les résultats (tous clubs) →
               </Link>
             )}
+            {/* Classement consultable dès la ③ (spec #12 R15, spec #7 R11) : vue
+                admin dédiée, tous clubs — jamais l'espace coach (corrige B1). */}
+            {['competition', 'cloture', 'resultats_publics'].includes(structure.phase) && (
+              <Link
+                href={`/admin/rencontres/${id}/classement`}
+                className="rounded-2xl border border-bordure bg-surface px-4 py-3 text-center text-sm font-bold text-texte transition hover:bg-surface-forte"
+              >
+                📊 Voir le classement (tous clubs) →
+              </Link>
+            )}
           </aside>
 
           <div className="mt-4 flex flex-col gap-6 lg:mt-0 xl:grid xl:grid-cols-2 xl:items-start xl:gap-6">
