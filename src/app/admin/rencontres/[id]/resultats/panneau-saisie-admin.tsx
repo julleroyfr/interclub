@@ -279,7 +279,7 @@ function DetailGrimpeur({
         <div className="flex items-center gap-3 rounded-xl border border-secondaire/25 bg-secondaire/5 px-4 py-2">
           <div>
             <p className="text-[11px] font-semibold text-texte-attenue">
-              Score (voie + bloc)
+              Score
             </p>
             <p className="text-[10px] text-texte-doux">au fil de l’eau · non officiel</p>
           </div>

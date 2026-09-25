@@ -14,7 +14,7 @@
 -- Constantes de test (rappel) :
 --   Rencontre 33333333-… (enfant) · adadadad-… (ado)
 --   Clubs     11111111-… (A) · 22222222-… (B)
---   Comptes   aaaaaaaa-… · cccccccc-… · 55555555-5555-…-555555555555
+--   Comptes   aaaaaaaa-… · cccccccc-… (coach A/A2) · dddddddd-… (coach B) · 55555555-5555-…-555555555555
 
 begin;
 
@@ -70,12 +70,16 @@ delete from interclub.compte
  where utilisateur_id in (
    'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
    'cccccccc-cccc-cccc-cccc-cccccccccccc',
+   'cccccccc-cccc-cccc-cccc-cccccccccc02',
+   'dddddddd-dddd-dddd-dddd-dddddddddddd',
    '55555555-5555-5555-5555-555555555555'
  );
 delete from auth.users
  where id in (
    'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
    'cccccccc-cccc-cccc-cccc-cccccccccccc',
+   'cccccccc-cccc-cccc-cccc-cccccccccc02',
+   'dddddddd-dddd-dddd-dddd-dddddddddddd',
    '55555555-5555-5555-5555-555555555555'
  );
 

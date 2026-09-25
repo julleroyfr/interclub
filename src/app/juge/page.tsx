@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
+import { TempsReel } from '@/composants'
 import { getContexteJuge } from '@/lib/auth/session'
 import { getSaisieVitesse } from '@/lib/juge/vitesse'
 
@@ -50,6 +51,9 @@ export default async function PageJuge() {
           <span className="inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent/12 px-3 py-1 text-xs font-semibold text-accent-doux">
             ● ③ Compétition
           </span>
+          {/* Live : synchronise les temps entre écrans juge (spec #11 R1/R3). L'écran
+              n'existe qu'en ③ (getContexteJuge) → actif par défaut. */}
+          <TempsReel tables={['temps_vitesse']} />
         </header>
 
         <PanneauVitesse grimpeurs={saisie.grimpeurs} />

@@ -196,3 +196,8 @@ export function phasePrecedenteEffective(
   }
   return phasePrecedente(phase)
 }
+
+/** Vrai si la phase génère des écritures de résultats → live utile (③ compétition / ④ clôture, spec #11 R7). */
+export function phaseEnDirect(phase: Phase): boolean {
+  return phase === 'competition' || phase === 'cloture'
+}

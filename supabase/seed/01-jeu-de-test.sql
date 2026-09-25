@@ -10,7 +10,7 @@
 -- une PLAGE D'UUID RÉSERVÉE, reconnaissable, ce qui rend la purge prouvablement
 -- bornée :
 --   Clubs        11111111… (A) · 22222222… (B)
---   Comptes      aaaaaaaa… (admin) · cccccccc… (coach A) · 55555555…5555 (sans mapping)
+--   Comptes      aaaaaaaa… (admin) · cccccccc… (coach A / A2) · dddddddd… (coach B) · 55555555…5555 (sans mapping)
 --   Rencontre    33333333…
 --   Voies        44444444…
 --   Jetons       55555555-5555-5555-5555-5555555555 5x
@@ -29,7 +29,7 @@ insert into interclub.club (id, nom) values
 on conflict (id) do nothing;
 
 -- ===========================================================================
--- 2. Comptes Supabase Auth (admin, coach A, sans mapping).
+-- 2. Comptes Supabase Auth (admin, coach A, coach A2, coach B, sans mapping).
 --    `encrypted_password` via pgcrypto (schéma extensions). Compte utilisable
 --    tout de suite (`email_confirmed_at`).
 -- ===========================================================================
@@ -47,6 +47,16 @@ values
   ('00000000-0000-0000-0000-000000000000',
    'cccccccc-cccc-cccc-cccc-cccccccccccc', 'authenticated', 'authenticated',
    'coach@test.local', extensions.crypt('interclub', extensions.gen_salt('bf')),
+   now(), now(), now(),
+   '{"provider":"email","providers":["email"]}', '{}'),
+  ('00000000-0000-0000-0000-000000000000',
+   'cccccccc-cccc-cccc-cccc-cccccccccc02', 'authenticated', 'authenticated',
+   'coach2@test.local', extensions.crypt('interclub', extensions.gen_salt('bf')),
+   now(), now(), now(),
+   '{"provider":"email","providers":["email"]}', '{}'),
+  ('00000000-0000-0000-0000-000000000000',
+   'dddddddd-dddd-dddd-dddd-dddddddddddd', 'authenticated', 'authenticated',
+   'coachb@test.local', extensions.crypt('interclub', extensions.gen_salt('bf')),
    now(), now(), now(),
    '{"provider":"email","providers":["email"]}', '{}'),
   ('00000000-0000-0000-0000-000000000000',
@@ -69,6 +79,8 @@ update auth.users set
 where id in (
   'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
   'cccccccc-cccc-cccc-cccc-cccccccccccc',
+  'cccccccc-cccc-cccc-cccc-cccccccccc02',
+  'dddddddd-dddd-dddd-dddd-dddddddddddd',
   '55555555-5555-5555-5555-555555555555'
 );
 
@@ -84,6 +96,12 @@ values
   ('cccccccc-cccc-cccc-cccc-cccccccccccc', 'cccccccc-cccc-cccc-cccc-cccccccccccc',
    '{"sub":"cccccccc-cccc-cccc-cccc-cccccccccccc","email":"coach@test.local","email_verified":true}',
    'email', now(), now(), now()),
+  ('cccccccc-cccc-cccc-cccc-cccccccccc02', 'cccccccc-cccc-cccc-cccc-cccccccccc02',
+   '{"sub":"cccccccc-cccc-cccc-cccc-cccccccccc02","email":"coach2@test.local","email_verified":true}',
+   'email', now(), now(), now()),
+  ('dddddddd-dddd-dddd-dddd-dddddddddddd', 'dddddddd-dddd-dddd-dddd-dddddddddddd',
+   '{"sub":"dddddddd-dddd-dddd-dddd-dddddddddddd","email":"coachb@test.local","email_verified":true}',
+   'email', now(), now(), now()),
   ('55555555-5555-5555-5555-555555555555', '55555555-5555-5555-5555-555555555555',
    '{"sub":"55555555-5555-5555-5555-555555555555","email":"sansmapping@test.local","email_verified":true}',
    'email', now(), now(), now())
@@ -92,7 +110,9 @@ on conflict do nothing;
 -- Mappings de rôle. `sansmapping@test.local` n'a PAS de ligne (cas R5).
 insert into interclub.compte (utilisateur_id, role, club_id) values
   ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'admin', null),
-  ('cccccccc-cccc-cccc-cccc-cccccccccccc', 'coach', '11111111-1111-1111-1111-111111111111')
+  ('cccccccc-cccc-cccc-cccc-cccccccccccc', 'coach', '11111111-1111-1111-1111-111111111111'),
+  ('cccccccc-cccc-cccc-cccc-cccccccccc02', 'coach', '11111111-1111-1111-1111-111111111111'),
+  ('dddddddd-dddd-dddd-dddd-dddddddddddd', 'coach', '22222222-2222-2222-2222-222222222222')
 on conflict (utilisateur_id) do nothing;
 
 -- ===========================================================================

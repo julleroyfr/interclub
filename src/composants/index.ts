@@ -19,6 +19,9 @@ export { variantePhase } from './variante-phase'
 export { Pastille } from './Pastille'
 export type { VariantePastille } from './Pastille'
 
+export { TempsReel } from './TempsReel'
+export type { TableTempsReel } from './TempsReel'
+
 export { EnTetePage, TitreSection } from './Typographie'
 
 export {

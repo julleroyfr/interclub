@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
-import { Coquille, EnTetePage, Etiquette, variantePhase } from '@/composants'
-import { CATEGORIES, PHASES, type Categorie, type Phase } from '@/domaine/rencontre'
+import { Coquille, EnTetePage, Etiquette, TempsReel, variantePhase } from '@/composants'
+import { CATEGORIES, PHASES, phaseEnDirect, type Categorie, type Phase } from '@/domaine/rencontre'
 import { getContexteCoach } from '@/lib/auth/session'
 import { getClassementRencontre } from '@/lib/classement/classement'
 import { liensCoach } from '@/lib/coach/navigation'
@@ -68,6 +68,11 @@ export default async function PageClassement({
             >
               {classement.officiel ? '✓ Officiel' : '● Non officiel'}
             </span>
+            {/* Live : le classement bouge quand un coach/juge saisit (spec #11 R1/R3). */}
+            <TempsReel
+              tables={['resultat_voie', 'resultat_bloc', 'points_vitesse']}
+              actif={phaseEnDirect(classement.phase)}
+            />
           </div>
         </div>
 

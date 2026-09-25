@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
-import { Coquille, EnTetePage, Etiquette, variantePhase } from '@/composants'
-import { CATEGORIES, PHASES, type Categorie, type Phase } from '@/domaine/rencontre'
+import { Coquille, EnTetePage, Etiquette, TempsReel, variantePhase } from '@/composants'
+import { CATEGORIES, PHASES, phaseEnDirect, type Categorie, type Phase } from '@/domaine/rencontre'
 import { getContexteCoach } from '@/lib/auth/session'
 import { liensCoach } from '@/lib/coach/navigation'
 import { getSaisieRencontre } from '@/lib/coach/resultats'
@@ -64,6 +64,11 @@ export default async function PageResultats({
                 Voir le classement →
               </Link>
             )}
+            {/* Live : temps de vitesse (juge) + résultats saisis par l'admin (spec #11 R1/R3). */}
+            <TempsReel
+              tables={['resultat_voie', 'resultat_bloc', 'temps_vitesse', 'points_vitesse']}
+              actif={phaseEnDirect(saisie.phase)}
+            />
           </div>
         </div>
 

@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
-import { Coquille, EnTetePage, Etiquette, type LienNav, variantePhase } from '@/composants'
-import { CATEGORIES, PHASES, type Categorie, type Phase } from '@/domaine/rencontre'
+import { Coquille, EnTetePage, Etiquette, type LienNav, TempsReel, variantePhase } from '@/composants'
+import { CATEGORIES, PHASES, phaseEnDirect, type Categorie, type Phase } from '@/domaine/rencontre'
 import { getUtilisateurCourant } from '@/lib/auth/session'
 import { getSaisieAdminRencontre } from '@/lib/admin/resultats'
 
@@ -75,6 +75,11 @@ export default async function PageSaisieAdmin({
             >
               Voir le classement →
             </Link>
+            {/* Live : coachs saisissant en parallèle + temps de vitesse (spec #11 R1/R3). */}
+            <TempsReel
+              tables={['resultat_voie', 'resultat_bloc', 'temps_vitesse', 'points_vitesse']}
+              actif={phaseEnDirect(saisie.phase)}
+            />
           </div>
         </div>
 

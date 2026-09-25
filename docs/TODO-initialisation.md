@@ -64,7 +64,7 @@ Tâches identifiées mais reportées, à traiter quand l'occasion se présente.
 
 | ID | Tâche | Origine | Notes |
 | ---- | ------- | --------- | ------- |
-| D1 | **Temps réel (Supabase Realtime)** : propager les MAJ (résultats, scores, classement) sur **tous les écrans ouverts** sans rechargement | demandé 2026-09-22 | Aujourd'hui seul l'écran de celui qui écrit se rafraîchit. S'abonner à `resultat_voie`/`resultat_bloc` et invalider les vues dérivées. Périmètre : specs #6, #7, #9 (noté « évolution future » dans #7 et #9). |
+| D1 | **Temps réel — live PUBLIC (itération 2)** : pousser le classement en direct au **spectateur anonyme** | demandé 2026-09-22 | **Itération 1 FAITE** (spec #11, migration `202609231000`, cahier #22, composant `TempsReel`) : écrans **authentifiés** (coach/admin/classement/juge) live via *Postgres Changes*. **Reste différé** : le live `anon` — interdit d'ouvrir la RLS `anon` (spec #8) → passer par **Broadcast serveur** (canal public assaini). Cf. spec #11 « Hors périmètre ». |
 | D2 | **Retirer les références `RXX` des IHM (avant prod)** : les écrans affichent « (R5) », « (R22) »… | demandé 2026-09-18 | Reformuler en langage clair pour l'utilisateur final ; garder la traçabilité `Rn` en commentaires/specs/cahiers. Balayage sur tout `src/app/**` (ex. `coach/rencontres/[id]/resultats/panneau-resultats.tsx`). |
 | D3 | **Cache/optimisation des bascules d'écran — saisie résultats (#6)** : navigation grimpeurs ‹/› (R25) et bascule par équipe / alphabétique (R24) | demandé 2026-09-08 | Éviter de recharger les données à chaque bascule (stratégie de cache). Point technique hors règles de spec. |
 
