@@ -4,14 +4,13 @@ import {
   Carte,
   Coquille,
   EnTetePage,
-  TitreSection,
+  TitreSection,
 } from '@/composants'
 import { liensAdmin } from '@/lib/admin/navigation'
 import { exigerAdmin } from '@/lib/auth/session'
 import { listerClubs } from '@/lib/clubs/clubs'
 import { listerInvitationsActives } from '@/lib/invitations/invitations'
 
-import { AfficheurInvitation } from './afficheur-invitation'
 import { FormulaireClub } from './formulaire-club'
 import { ListeClubs } from './liste-clubs'
 
@@ -37,37 +36,23 @@ export default async function PageClubs() {
           sousTitre="Créez et gérez les clubs de la compétition."
         />
 
-        <Carte className="max-w-xl p-6">
-          <TitreSection>Nouveau club</TitreSection>
-          <FormulaireClub />
+        <Carte className="max-w-xl p-4">
+          <details className="group">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-2">
+              <TitreSection>Nouveau club</TitreSection>
+              <span className="text-sm text-texte-attenue transition-transform group-open:rotate-45">
+                ＋
+              </span>
+            </summary>
+            <div className="mt-2">
+              <FormulaireClub />
+            </div>
+          </details>
         </Carte>
 
         <section className="flex flex-col gap-3">
           <TitreSection>Clubs ({clubs.length})</TitreSection>
-          <ListeClubs clubs={clubs} />
-        </section>
-
-        <section className="flex flex-col gap-3">
-          <TitreSection>Invitations coach permanent</TitreSection>
-          <p className="text-sm text-texte-attenue">
-            Affichez le QR (ou l’URL) d’un club pour qu’un nouveau coach permanent
-            crée son compte, automatiquement rattaché à ce club.
-          </p>
-          {clubs.length === 0 ? (
-            <p className="text-sm text-texte-attenue">Aucun club.</p>
-          ) : (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {clubs.map((c) => (
-                <AfficheurInvitation
-                  key={c.id}
-                  titre={c.nom}
-                  clubId={c.id}
-                  chemin="/admin/clubs"
-                  invitation={invitations.get(c.id) ?? null}
-                />
-              ))}
-            </div>
-          )}
+          <ListeClubs clubs={clubs} invitations={Object.fromEntries(invitations)} />
         </section>
       </div>
     </Coquille>

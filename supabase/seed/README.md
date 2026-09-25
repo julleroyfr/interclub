@@ -6,6 +6,11 @@ Règles : [docs/conventions/09-environnements-et-donnees.md](../../docs/conventi
 
 ## Fichiers
 
+- `00-reset-recette.sql` — **Reset complet** de la base de recette. Supprime
+  toutes les données opérationnelles (rencontres, grimpeurs, résultats, jetons
+  QR, sessions QR…) en conservant clubs, comptes et gabarits. **Idempotent.**
+  **Jamais en prod.** À maintenir à chaque migration ajoutant une table (cf.
+  commentaires en tête de fichier).
 - `01-jeu-de-test.sql` — INSERT des données de test (idempotent). **Source
   unique** : clubs A/B, 3 comptes (admin, coach A, sans mapping), rencontre de
   test en phase `competition`, voies, équipes, grimpeurs, épreuves,
@@ -32,7 +37,15 @@ Règles : [docs/conventions/09-environnements-et-donnees.md](../../docs/conventi
 
 ## Cycle « rejouer un cahier de test »
 
-1. Exécuter `99-purge-jeu-de-test.sql` (nettoie l'état précédent).
+**Depuis un état quelconque de la recette (reset global) :**
+
+1. Exécuter `00-reset-recette.sql` (nettoie toutes les données sauf clubs/comptes/gabarits).
+2. Exécuter `01-jeu-de-test.sql` (recharge un état initial connu).
+3. Dérouler les cas du cahier, tracer les résultats.
+
+**Depuis le jeu de données de test local (purge bornée) :**
+
+1. Exécuter `99-purge-jeu-de-test.sql` (supprime uniquement les UUID de test).
 2. Exécuter `01-jeu-de-test.sql` (recharge un état initial connu).
 3. Dérouler les cas du cahier, tracer les résultats.
 
