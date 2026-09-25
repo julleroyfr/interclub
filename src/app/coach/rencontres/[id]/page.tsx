@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation'
 
 import { Coquille, EnTetePage, Etiquette, variantePhase } from '@/composants'
 import { CATEGORIES, PHASES, type Categorie, type Phase } from '@/domaine/rencontre'
-import { getContexteCoach } from '@/lib/auth/session'
+import { exigerContexteCoach } from '@/lib/auth/session'
 import { getEngagementRencontre } from '@/lib/coach/engagement'
 import { liensCoach } from '@/lib/coach/navigation'
 
@@ -37,8 +37,7 @@ export default async function PageEngagement({
 }: {
   params: Promise<{ id: string }>
 }) {
-  const contexte = await getContexteCoach()
-  if (!contexte) notFound()
+  const contexte = await exigerContexteCoach()
 
   const { id } = await params
   // Le coach temporaire est borné à SA rencontre (spec #1 R27).
@@ -53,7 +52,7 @@ export default async function PageEngagement({
     (contexte.type === 'permanent' || engagement.phase === 'preparation')
 
   return (
-    <Coquille liens={liensCoach(contexte)}>
+    <Coquille liens={liensCoach(contexte)} deconnexion={contexte.type === 'permanent'}>
       <div className="flex flex-col gap-6">
         <div>
           <EnTetePage

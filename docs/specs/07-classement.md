@@ -4,6 +4,11 @@
   séparation par sexe R8b (conséquence de l'attribution des points de vitesse par
   sexe, cf. note ci-dessous), départage ex æquo R8 (classement standard), cadrage
   `grimpeur.sexe` (obligatoire).
+- **Révision du 2026-09-25 — vue classement admin** (règle de changement, spec
+  #12) : le classement (déjà « tout compte authentifié, tous clubs », R11) est
+  désormais exposé par une **vue admin dédiée** `/admin/rencontres/{id}/classement`
+  (sans « mon club »), en plus de l'espace coach. Aucune règle de calcul modifiée ;
+  cf. `12-navigation-et-routing.md` (R14/R15).
 - **Révision du 2026-09-22 — intégration de la vitesse au score** (règle de
   changement appliquée, validée le 2026-09-22). La **saisie vitesse** étant
   désormais livrée (spec #10), la composante **vitesse** **entre dans le score

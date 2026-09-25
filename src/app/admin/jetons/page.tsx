@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
 
 import {
   Carte,
@@ -10,7 +9,7 @@ import {
   TitreSection,
   type LienNav,
 } from '@/composants'
-import { getUtilisateurCourant } from '@/lib/auth/session'
+import { exigerAdmin } from '@/lib/auth/session'
 import {
   listerClubsEngages,
   listerJetonsActifs,
@@ -39,15 +38,14 @@ export default async function PageJetonsAdmin({
 }: {
   searchParams: Promise<{ rencontre?: string; erreur?: string }>
 }) {
-  const utilisateur = await getUtilisateurCourant()
-  if (utilisateur?.role !== 'admin') notFound()
+  await exigerAdmin()
 
   const { rencontre: rencontreId, erreur } = await searchParams
   const rencontres = await listerRencontres()
   const selection = rencontres.find((r) => r.id === rencontreId) ?? null
 
   return (
-    <Coquille liens={liens} largeur="large">
+    <Coquille liens={liens} largeur="large" deconnexion>
       <div className="flex flex-col gap-6">
         <EnTetePage
           titre="Jetons QR"

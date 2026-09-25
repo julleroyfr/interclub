@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react'
 
+import { seDeconnecter } from '@/lib/auth/actions'
+
 import { NavPrincipale, type LienNav } from './NavPrincipale'
 
 type Props = {
@@ -11,6 +13,12 @@ type Props = {
    * pour les tableaux de bord admin qui exploitent l'écran (rail + colonnes).
    */
   largeur?: 'normale' | 'large'
+  /**
+   * Affiche l'action « Se déconnecter » dans l'en-tête (spec #12 R20). Réservée
+   * aux **comptes permanents** (admin, coach permanent) : les sessions QR (coach
+   * temporaire, juge) relèvent de la fin de session, pas de la déconnexion (R22).
+   */
+  deconnexion?: boolean
 }
 
 const LARGEURS: Record<NonNullable<Props['largeur']>, string> = {
@@ -23,7 +31,7 @@ const LARGEURS: Record<NonNullable<Props['largeur']>, string> = {
  * en-tête collant avec logo + navigation. Server Component ; la nav
  * (surlignage actif) est isolée dans un Client Component.
  */
-export function Coquille({ liens, children, largeur = 'normale' }: Props) {
+export function Coquille({ liens, children, largeur = 'normale', deconnexion = false }: Props) {
   const largeurCls = LARGEURS[largeur]
   return (
     <div className="min-h-screen bg-fond bg-[radial-gradient(60rem_40rem_at_top,#0e2a3b,transparent)] text-texte">
@@ -35,7 +43,19 @@ export function Coquille({ liens, children, largeur = 'normale' }: Props) {
             </span>
             <span className="font-semibold text-texte-fort">Interclub</span>
           </div>
-          <NavPrincipale liens={liens} />
+          <div className="flex items-center gap-2">
+            <NavPrincipale liens={liens} />
+            {deconnexion && (
+              <form action={seDeconnecter}>
+                <button
+                  type="submit"
+                  className="rounded-lg border border-bordure px-3 py-1.5 text-sm font-medium text-texte-attenue transition hover:bg-surface hover:text-texte-fort"
+                >
+                  Se déconnecter
+                </button>
+              </form>
+            )}
+          </div>
         </div>
       </header>
 

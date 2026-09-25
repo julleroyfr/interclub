@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 import { Carte, EnTetePage } from '@/composants'
+import { redirigerSiConnecte } from '@/lib/auth/session'
 import { resoudreInvitation } from '@/lib/invitations/invitations'
 
 import { FormulaireInscription } from './formulaire-inscription'
@@ -15,6 +16,9 @@ export default async function PageInscription({
 }: {
   searchParams: Promise<{ invitation?: string }>
 }) {
+  // Déjà connecté avec un rôle → renvoi vers son espace (R8).
+  await redirigerSiConnecte()
+
   const { invitation: valeur } = await searchParams
   // R30 : une invitation active mène au formulaire ; révoquée / inexistante →
   // aucune inscription (message d'erreur, aucun compte créé — R33).

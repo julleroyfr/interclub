@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation'
 
 import { Coquille, EnTetePage, Etiquette, type LienNav, TempsReel, variantePhase } from '@/composants'
 import { CATEGORIES, PHASES, phaseEnDirect, type Categorie, type Phase } from '@/domaine/rencontre'
-import { getUtilisateurCourant } from '@/lib/auth/session'
+import { exigerAdmin } from '@/lib/auth/session'
 import { getClassementRencontre } from '@/lib/classement/classement'
 
 import { PanneauClassement } from '@/app/coach/rencontres/[id]/classement/panneau-classement'
@@ -43,15 +43,14 @@ export default async function PageClassementAdmin({
 }: {
   params: Promise<{ id: string }>
 }) {
-  const utilisateur = await getUtilisateurCourant()
-  if (utilisateur?.role !== 'admin') notFound()
+  await exigerAdmin()
 
   const { id } = await params
   const classement = await getClassementRencontre(id)
   if (!classement) notFound()
 
   return (
-    <Coquille liens={liens} largeur="large">
+    <Coquille liens={liens} largeur="large" deconnexion>
       <div className="flex flex-col gap-6">
         <div>
           <EnTetePage

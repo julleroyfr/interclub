@@ -39,8 +39,8 @@ export default async function Accueil() {
               </Link>
             )}
             {utilisateur.role === 'coach' && (
-              <Link href="/coach/jetons" className={lienSecondaire}>
-                Mes jetons QR
+              <Link href="/coach" className={lienSecondaire}>
+                Ouvrir mes rencontres →
               </Link>
             )}
             <form action={seDeconnecter} className="w-full">

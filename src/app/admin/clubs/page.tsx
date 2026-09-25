@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import { notFound } from 'next/navigation'
 
 import {
   Carte,
@@ -8,7 +7,7 @@ import {
   TitreSection,
   type LienNav,
 } from '@/composants'
-import { getUtilisateurCourant } from '@/lib/auth/session'
+import { exigerAdmin } from '@/lib/auth/session'
 import { listerClubs } from '@/lib/clubs/clubs'
 import { listerInvitationsActives } from '@/lib/invitations/invitations'
 
@@ -28,8 +27,7 @@ const liens: LienNav[] = [
 export default async function PageClubs() {
   // Paramétrage des clubs réservé à l'admin (spec #1 R11). On masque l'écran aux
   // non-admins (404 plutôt que 403). La RLS reste la vraie frontière.
-  const utilisateur = await getUtilisateurCourant()
-  if (utilisateur?.role !== 'admin') notFound()
+  await exigerAdmin()
 
   const [clubs, invitations] = await Promise.all([
     listerClubs(),
@@ -37,7 +35,7 @@ export default async function PageClubs() {
   ])
 
   return (
-    <Coquille liens={liens} largeur="large">
+    <Coquille liens={liens} largeur="large" deconnexion>
       <div className="flex flex-col gap-6">
         <EnTetePage
           titre="Clubs"

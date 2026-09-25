@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 
 import { Coquille, EnTetePage, Etiquette, TempsReel, variantePhase } from '@/composants'
 import { CATEGORIES, PHASES, phaseEnDirect, type Categorie, type Phase } from '@/domaine/rencontre'
-import { getContexteCoach } from '@/lib/auth/session'
+import { exigerContexteCoach } from '@/lib/auth/session'
 import { getClassementRencontre } from '@/lib/classement/classement'
 import { liensCoach } from '@/lib/coach/navigation'
 
@@ -38,8 +38,7 @@ export default async function PageClassement({
 }: {
   params: Promise<{ id: string }>
 }) {
-  const contexte = await getContexteCoach()
-  if (!contexte) notFound()
+  const contexte = await exigerContexteCoach()
 
   const { id } = await params
   if (contexte.type === 'temporaire' && contexte.rencontreId !== id) notFound()
@@ -48,7 +47,7 @@ export default async function PageClassement({
   if (!classement) notFound()
 
   return (
-    <Coquille liens={liensCoach(contexte)}>
+    <Coquille liens={liensCoach(contexte)} deconnexion={contexte.type === 'permanent'}>
       <div className="flex flex-col gap-6">
         <div>
           <EnTetePage

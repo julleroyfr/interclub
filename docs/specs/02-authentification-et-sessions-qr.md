@@ -1,6 +1,13 @@
 # Spec : Authentification & sessions QR
 
 - **Statut** : validée (le 2026-07-22)
+- **Révision** : 2026-09-25 — gardes & redirections (règle de changement, spec
+  #12) : politique de refus **hybride** — pas de session → `redirect('/connexion')`,
+  session au mauvais rôle → 404 (R2/R3) ; gardes unifiées `exigerUtilisateur` /
+  `exigerAdmin` / `exigerContexteCoach` / `exigerContexteJuge` (R1/R4/R5) ; pages
+  d'auth qui **redirigent un utilisateur déjà connecté** (R8) ; **déconnexion**
+  des comptes permanents depuis chaque écran (R20/R21) ; **fin de session** QR
+  juge/coach temporaire (R17/R22). Détails : `12-navigation-et-routing.md`.
 - **Sources** : décision produit du 2026-07-22 (mécanisme d'authentification,
   cycle de vie des sessions QR éphémères, affectation juge) ; règlement CT33 FFME
   2025-2026 **enfant/ado** (voies de vitesse filles / garçons, résultat de

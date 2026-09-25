@@ -8,7 +8,7 @@ import {
   TitreSection,
   type LienNav,
 } from '@/composants'
-import { getUtilisateurCourant } from '@/lib/auth/session'
+import { exigerUtilisateur } from '@/lib/auth/session'
 import { listerJetonsActifs, listerRencontresDuClub } from '@/lib/jetons/jetons'
 
 import { AfficheurJeton } from '../../admin/jetons/afficheur-jeton'
@@ -31,9 +31,9 @@ export default async function PageJetonsCoach({
 }: {
   searchParams: Promise<{ erreur?: string }>
 }) {
-  const utilisateur = await getUtilisateurCourant()
-  // Réservé au coach permanent rattaché à un club (spec #2 R16).
-  if (utilisateur?.role !== 'coach' || !utilisateur.clubId) notFound()
+  const utilisateur = await exigerUtilisateur()
+  // Réservé au coach permanent rattaché à un club (spec #2 R16 ; spec #12 R2/R3).
+  if (utilisateur.role !== 'coach' || !utilisateur.clubId) notFound()
   const clubId = utilisateur.clubId
 
   const { erreur } = await searchParams
@@ -43,7 +43,7 @@ export default async function PageJetonsCoach({
   )
 
   return (
-    <Coquille liens={liens}>
+    <Coquille liens={liens} deconnexion>
       <div className="flex flex-col gap-6">
         <EnTetePage
           titre="Mes jetons QR"

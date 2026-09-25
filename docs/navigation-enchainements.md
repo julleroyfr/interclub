@@ -328,15 +328,28 @@ arbitrages B2–B4. Cross-référence les specs impactées.
 `urlDeRedirection`, résolution des liens de nav (`liensCoach`), toute logique de
 garde extraite et testable.
 
-### Phase 4 — Code
+### Phase 4 — Code ✅
 
-- ✅ **Correctif B1/C2** (fait) : route `/admin/rencontres/{id}/classement` (vue
-  admin, tous clubs), liens admin repointés (dashboard + résultats), remontée
-  « ← Tableau de bord » (C3 partiel). Cahier : CT-13 (18-classement).
-- Reste : C1, C5, C6, C4, C3 (généralisation), C7 (déconnexion), et le refactor
-  de garde (B2/B4/redirect B3).
+Tout livré :
 
-### Phase 5 — Cahier de test (`rediger-cahier-de-test`)
+- **B1/C2** : route `/admin/rencontres/{id}/classement` (vue admin, tous clubs),
+  liens admin repointés + remontée « ← Tableau de bord ».
+- **B2/B3/B4** : helpers `exigerUtilisateur` (redirect), `exigerAdmin`,
+  `exigerContexteCoach`, `exigerContexteJuge` (politique hybride) ; pages admin,
+  coach et juge migrées.
+- **C1** : accueil coach → `/coach` ; **B6** : `/connexion` & `/inscription`
+  redirigent si déjà connecté (`redirigerSiConnecte`).
+- **C7** : déconnexion dans la `Coquille` (admin + coach permanent).
+- **C5** : bouton « Terminer » sur `/juge` (`terminerSession` → `/`).
+- **C6** : nav coach temporaire + classement ; nav coach permanent + « Jetons »
+  (garantit la joignabilité après C1).
+- **C4** : « Rencontres » dans les accès rapides `/admin`.
+- **C3** : remontées via barre de nav + liens parent explicites.
 
-Parcours IHM par rôle, comportement 404-vs-redirection, sorties de session QR,
-accès classement admin, RLS.
+### Phase 5 — Cahier de test ✅
+
+- **23-navigation-routing.cahier.md** (CT-01→CT-10) : redirections par rôle,
+  garde hybride (redirect/404), déconnexion, sortie juge, nav coach temporaire.
+- **18-classement.cahier.md** CT-13 : vue classement admin (B1/C2).
+
+> Reste à **dérouler** ces cahiers sur base réelle (validation finale manuelle).

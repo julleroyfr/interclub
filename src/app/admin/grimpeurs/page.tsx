@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import { notFound } from 'next/navigation'
 
 import {
   Carte,
@@ -8,7 +7,7 @@ import {
   TitreSection,
   type LienNav,
 } from '@/composants'
-import { getUtilisateurCourant } from '@/lib/auth/session'
+import { exigerAdmin } from '@/lib/auth/session'
 import { listerClubsOptions, listerGrimpeurs } from '@/lib/grimpeurs/grimpeurs'
 
 import { FormulaireGrimpeur } from './formulaire-grimpeur'
@@ -27,8 +26,7 @@ export default async function PageGrimpeurs() {
   // Volet admin du roster (spec #1 R11/R13). On masque l'écran aux non-admins
   // (404 plutôt que 403). La RLS reste la vraie frontière (elle admet aussi le
   // coach du club, R18 — via un futur écran coach).
-  const utilisateur = await getUtilisateurCourant()
-  if (utilisateur?.role !== 'admin') notFound()
+  await exigerAdmin()
 
   const [grimpeurs, clubs] = await Promise.all([
     listerGrimpeurs(),
@@ -36,7 +34,7 @@ export default async function PageGrimpeurs() {
   ])
 
   return (
-    <Coquille liens={liens} largeur="large">
+    <Coquille liens={liens} largeur="large" deconnexion>
       <div className="flex flex-col gap-6">
         <EnTetePage
           titre="Grimpeurs"

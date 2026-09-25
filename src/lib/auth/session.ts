@@ -1,7 +1,7 @@
 import 'server-only'
 
 import { cache } from 'react'
-import { redirect } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 
 import { createClient } from '@/lib/supabase/server'
 
@@ -59,11 +59,35 @@ export const getUtilisateurCourant = cache(
 
 /**
  * Garde de route/action : renvoie l'utilisateur connecté, ou redirige vers la
- * connexion s'il n'y en a pas. À utiliser au plus près de l'accès aux données.
+ * connexion s'il n'y en a pas (spec #12 R2). À utiliser au plus près de l'accès
+ * aux données.
  */
 export async function exigerUtilisateur(): Promise<UtilisateurCourant> {
   const utilisateur = await getUtilisateurCourant()
   if (!utilisateur) redirect('/connexion')
+  return utilisateur
+}
+
+/**
+ * Garde des pages publiques d'authentification (spec #12 R8) : un utilisateur
+ * **déjà authentifié avec un rôle** est renvoyé vers son espace (R6) au lieu de
+ * voir le formulaire. Sans rôle attribué (ou non connecté) : ne fait rien.
+ */
+export async function redirigerSiConnecte(): Promise<void> {
+  const utilisateur = await getUtilisateurCourant()
+  if (utilisateur?.role === 'admin') redirect('/admin')
+  if (utilisateur?.role === 'coach') redirect('/coach')
+}
+
+/**
+ * Garde unifiée de l'espace admin (spec #12 R4) : applique la politique hybride
+ * — **pas de session** → `redirect('/connexion')` (R2) ; **session sans rôle
+ * admin** → `notFound()` (R3, on ne révèle pas l'existence de l'espace). Renvoie
+ * l'utilisateur admin. À utiliser par toutes les pages `/admin/**`.
+ */
+export async function exigerAdmin(): Promise<UtilisateurCourant> {
+  const utilisateur = await exigerUtilisateur()
+  if (utilisateur.role !== 'admin') notFound()
   return utilisateur
 }
 
@@ -113,6 +137,19 @@ export const getContexteCoach = cache(async (): Promise<ContexteCoach | null> =>
 })
 
 /**
+ * Garde de l'espace coach (spec #12 R5) : renvoie le contexte coach, ou applique
+ * la politique hybride quand il est absent — **pas de session** →
+ * `redirect('/connexion')` (R2) ; **session sans périmètre coach** → `notFound()`
+ * (R3).
+ */
+export async function exigerContexteCoach(): Promise<ContexteCoach> {
+  const contexte = await getContexteCoach()
+  if (contexte) return contexte
+  await exigerUtilisateur() // pas de session → redirect ; sinon on masque en 404
+  notFound()
+}
+
+/**
  * Contexte d'accès à l'espace juge (spec #10 R1/R2). Session QR « juge »
  * (anonyme) active en ③ compétition : périmètre = l'**épreuve de vitesse** de sa
  * rencontre (le couloir n'est qu'une information d'organisation, spec #1 R30).
@@ -159,3 +196,16 @@ export const getContexteJuge = cache(async (): Promise<ContexteJuge | null> => {
     phase: typeof d['phase'] === 'string' ? d['phase'] : '',
   }
 })
+
+/**
+ * Garde de l'espace juge (spec #12 R5) : renvoie le contexte juge, ou applique la
+ * politique hybride quand il est absent — **pas de session** →
+ * `redirect('/connexion')` (R2) ; **session sans périmètre juge** → `notFound()`
+ * (R3). L'entrée reste QR-only (R18) ; cette garde ne fait que sécuriser l'accès.
+ */
+export async function exigerContexteJuge(): Promise<ContexteJuge> {
+  const contexte = await getContexteJuge()
+  if (contexte) return contexte
+  await exigerUtilisateur()
+  notFound()
+}

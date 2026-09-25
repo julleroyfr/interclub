@@ -1,10 +1,9 @@
 import type { Metadata } from 'next'
-import { notFound } from 'next/navigation'
 import Link from 'next/link'
 
 import { Coquille, EnTetePage, Etiquette, variantePhase } from '@/composants'
 import { CATEGORIES, PHASES, type Categorie, type Phase } from '@/domaine/rencontre'
-import { getContexteCoach } from '@/lib/auth/session'
+import { exigerContexteCoach } from '@/lib/auth/session'
 import { listerRencontresCoach, type RencontreCoach } from '@/lib/coach/engagement'
 import { liensCoach } from '@/lib/coach/navigation'
 
@@ -38,8 +37,7 @@ function aujourdhuiISO(): string {
  * permanent (toutes ses rencontres) et au coach temporaire (bornée à la sienne).
  */
 export default async function PageCoach() {
-  const contexte = await getContexteCoach()
-  if (!contexte) notFound()
+  const contexte = await exigerContexteCoach()
 
   const toutes = await listerRencontresCoach({
     clubId: contexte.clubId,
@@ -52,7 +50,7 @@ export default async function PageCoach() {
       : toutes
 
   return (
-    <Coquille liens={liensCoach(contexte)}>
+    <Coquille liens={liensCoach(contexte)} deconnexion={contexte.type === 'permanent'}>
       <div className="flex flex-col gap-6">
         <EnTetePage
           titre="Mes rencontres"

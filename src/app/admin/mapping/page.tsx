@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import { notFound } from 'next/navigation'
 
 import {
   Carte,
@@ -16,7 +15,7 @@ import {
   type LienNav,
 } from '@/composants'
 import { chargerContexteMapping } from '@/lib/auth/mapping'
-import { getUtilisateurCourant } from '@/lib/auth/session'
+import { exigerAdmin } from '@/lib/auth/session'
 
 import { FormulaireMapping } from './formulaire-mapping'
 
@@ -32,13 +31,12 @@ const liens: LienNav[] = [
 export default async function PageMappingRole() {
   // Administration du mapping réservée à l'admin (spec #2 R4). On masque
   // l'existence de l'écran aux non-admins (404 plutôt que 403).
-  const utilisateur = await getUtilisateurCourant()
-  if (utilisateur?.role !== 'admin') notFound()
+  await exigerAdmin()
 
   const { comptes, clubs, mappings } = await chargerContexteMapping()
 
   return (
-    <Coquille liens={liens} largeur="large">
+    <Coquille liens={liens} largeur="large" deconnexion>
       <div className="flex flex-col gap-6">
         <EnTetePage
           titre="Mapping de rôle"

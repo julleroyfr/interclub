@@ -57,3 +57,15 @@ export async function seDeconnecter(): Promise<void> {
   revalidatePath('/', 'layout')
   redirect('/connexion')
 }
+
+/**
+ * Fin d'une **session QR** anonyme (coach temporaire / juge, spec #12 R17) :
+ * ferme la session et renvoie à l'accueil `/` (et non à `/connexion` : ces
+ * acteurs n'ont pas de compte à reconnecter).
+ */
+export async function terminerSession(): Promise<void> {
+  const supabase = await createClient()
+  await supabase.auth.signOut()
+  revalidatePath('/', 'layout')
+  redirect('/')
+}

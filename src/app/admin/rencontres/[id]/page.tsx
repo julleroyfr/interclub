@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation'
 import { Carte, Coquille, EnTetePage, type LienNav } from '@/composants'
 import { anneeSaison, CATEGORIES, labelSaison, type Categorie } from '@/domaine/rencontre'
 import { chargerEngagementTousClubs } from '@/lib/admin/engagement'
-import { getUtilisateurCourant } from '@/lib/auth/session'
+import { exigerAdmin } from '@/lib/auth/session'
 import { chargerPretsRencontre } from '@/lib/prets/prets'
 import { getStructureRencontre } from '@/lib/rencontres/structure'
 
@@ -45,8 +45,7 @@ export default async function PageTableauDeBordRencontre({
 }) {
   // Écran réservé à l'admin (R40, spec #1 R12) : 404 pour les autres rôles.
   // La RLS reste la vraie frontière.
-  const utilisateur = await getUtilisateurCourant()
-  if (utilisateur?.role !== 'admin') notFound()
+  await exigerAdmin()
 
   const { id } = await params
   const structure = await getStructureRencontre(id)
@@ -64,7 +63,7 @@ export default async function PageTableauDeBordRencontre({
   const nbPrets = prets.length
 
   return (
-    <Coquille liens={liens} largeur="large">
+    <Coquille liens={liens} largeur="large" deconnexion>
       <div className="flex flex-col gap-6">
         <EnTetePage
           titre={`Rencontre ${structure.clubPorteurNom} du ${formaterDate(structure.dateRencontre)}`}

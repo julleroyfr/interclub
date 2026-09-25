@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
-import { notFound } from 'next/navigation'
 
 import { TempsReel } from '@/composants'
-import { getContexteJuge } from '@/lib/auth/session'
+import { terminerSession } from '@/lib/auth/actions'
+import { exigerContexteJuge } from '@/lib/auth/session'
 import { getSaisieVitesse } from '@/lib/juge/vitesse'
 
 import { PanneauVitesse } from './panneau-vitesse'
@@ -29,8 +29,7 @@ function formaterDate(iso: string): string {
  * la frontière ultime.
  */
 export default async function PageJuge() {
-  const contexte = await getContexteJuge()
-  if (!contexte) notFound()
+  const contexte = await exigerContexteJuge()
 
   const saisie = await getSaisieVitesse(contexte.epreuveVitesseId)
 
@@ -54,6 +53,15 @@ export default async function PageJuge() {
           {/* Live : synchronise les temps entre écrans juge (spec #11 R1/R3). L'écran
               n'existe qu'en ③ (getContexteJuge) → actif par défaut. */}
           <TempsReel tables={['temps_vitesse']} />
+          {/* Fin de session QR juge (spec #12 R17) : ferme la session → accueil. */}
+          <form action={terminerSession} className="ml-auto">
+            <button
+              type="submit"
+              className="rounded-lg border border-bordure px-3 py-1.5 text-sm font-medium text-texte-attenue transition hover:bg-surface-forte hover:text-texte-fort"
+            >
+              Terminer
+            </button>
+          </form>
         </header>
 
         <PanneauVitesse grimpeurs={saisie.grimpeurs} />

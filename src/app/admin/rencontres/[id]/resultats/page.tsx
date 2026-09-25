@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation'
 
 import { Coquille, EnTetePage, Etiquette, type LienNav, TempsReel, variantePhase } from '@/composants'
 import { CATEGORIES, PHASES, phaseEnDirect, type Categorie, type Phase } from '@/domaine/rencontre'
-import { getUtilisateurCourant } from '@/lib/auth/session'
+import { exigerAdmin } from '@/lib/auth/session'
 import { getSaisieAdminRencontre } from '@/lib/admin/resultats'
 
 import { PanneauSaisieAdmin } from './panneau-saisie-admin'
@@ -42,8 +42,7 @@ export default async function PageSaisieAdmin({
 }: {
   params: Promise<{ id: string }>
 }) {
-  const utilisateur = await getUtilisateurCourant()
-  if (utilisateur?.role !== 'admin') notFound()
+  await exigerAdmin()
 
   const { id } = await params
   const saisie = await getSaisieAdminRencontre(id)
@@ -52,7 +51,7 @@ export default async function PageSaisieAdmin({
   const enCorrection = saisie.phase === 'cloture'
 
   return (
-    <Coquille liens={liens} largeur="large">
+    <Coquille liens={liens} largeur="large" deconnexion>
       <div className="flex flex-col gap-6">
         <div>
           <EnTetePage

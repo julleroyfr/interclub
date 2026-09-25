@@ -5,6 +5,11 @@
   — engagement éditable par coach permanent en ① pré-compétition et par permanent
   **et** temporaire en ② préparation, gelé dès ③ compétition, R16 — validé le
   2026-09-01)
+- **Révision** : 2026-09-25 — navigation (règle de changement, spec #12) : entrée
+  unique **`/coach`** (l'accueil n'ouvre plus directement les jetons, C1) ;
+  « Jetons » devient un **lien interne** de l'espace coach (R10) ; le coach
+  **temporaire** gagne l'accès à son **classement en lecture**, borné à sa
+  rencontre (R11). Détails et diagramme : `12-navigation-et-routing.md`.
 - **Sources** :
   - **Spec #1 — Rôles & autorisations** (`01-roles-et-autorisations.md`), vérité
     pour « qui peut faire quoi » : coach rattaché à un club (R16), CRUD équipes

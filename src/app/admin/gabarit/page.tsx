@@ -1,9 +1,8 @@
 import type { Metadata } from 'next'
-import { notFound } from 'next/navigation'
 
 import { Coquille, EnTetePage, TitreSection, type LienNav } from '@/composants'
 import { CATEGORIES } from '@/domaine/rencontre'
-import { getUtilisateurCourant } from '@/lib/auth/session'
+import { exigerAdmin } from '@/lib/auth/session'
 import { listerGabarit } from '@/lib/gabarit/gabarit'
 
 import { PanneauGabarit } from './panneau-gabarit'
@@ -16,8 +15,7 @@ const liens: LienNav[] = [
 ]
 
 export default async function PageGabarit() {
-  const utilisateur = await getUtilisateurCourant()
-  if (utilisateur?.role !== 'admin') notFound()
+  await exigerAdmin()
 
   const [gabaritEnfant, gabaritAdo] = await Promise.all([
     listerGabarit('enfant'),
@@ -25,7 +23,7 @@ export default async function PageGabarit() {
   ])
 
   return (
-    <Coquille liens={liens} largeur="large">
+    <Coquille liens={liens} largeur="large" deconnexion>
       <div className="flex flex-col gap-6">
         <EnTetePage
           titre="Gabarit de rencontre"

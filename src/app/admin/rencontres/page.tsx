@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import { notFound } from 'next/navigation'
 
 import {
   Carte,
@@ -9,7 +8,7 @@ import {
   type LienNav,
 } from '@/composants'
 import { anneeSaison, labelSaison } from '@/domaine/rencontre'
-import { getUtilisateurCourant } from '@/lib/auth/session'
+import { exigerAdmin } from '@/lib/auth/session'
 import { listerClubsOptions, listerRencontres } from '@/lib/rencontres/rencontres'
 
 import { FormulaireRencontre } from './formulaire-rencontre'
@@ -32,8 +31,7 @@ export default async function PageRencontres({
 }) {
   // Paramétrage des rencontres réservé à l'admin (spec #1 R12). On masque
   // l'écran aux non-admins (404 plutôt que 403). La RLS reste la vraie frontière.
-  const utilisateur = await getUtilisateurCourant()
-  if (utilisateur?.role !== 'admin') notFound()
+  await exigerAdmin()
 
   const aujourd = new Date().toISOString().slice(0, 10)
   const saisonCourante = anneeSaison(aujourd)
@@ -46,7 +44,7 @@ export default async function PageRencontres({
   ])
 
   return (
-    <Coquille liens={liens} largeur="large">
+    <Coquille liens={liens} largeur="large" deconnexion>
       <div className="flex flex-col gap-6">
         <EnTetePage
           titre="Rencontres"

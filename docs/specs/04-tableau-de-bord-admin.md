@@ -1,6 +1,11 @@
 # Spec : Tableau de bord admin
 
 - **Statut** : validée (le 2026-07-25)
+- **Révision** : 2026-09-25 — navigation (règle de changement, spec #12) : le
+  tableau de bord expose la **liste des rencontres** dans les accès rapides (R16)
+  et un lien **« Voir le classement »** vers la **vue admin dédiée**
+  `/admin/rencontres/{id}/classement` (R14/R15) — jamais l'espace coach (corrige
+  le lien 404, B1). Détails et diagramme : `12-navigation-et-routing.md`.
 - **Sources** : décision produit du 2026-07-25 (refonte de l'accueil admin en
   tableau de bord à cartes, action sur l'état des rencontres depuis la carte).
   S'appuie sur la **spec #1 — Rôles & autorisations** (R5, R11–R13),

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 
 import { Carte, EnTetePage } from '@/composants'
+import { redirigerSiConnecte } from '@/lib/auth/session'
 
 import { FormulaireConnexion } from './formulaire-connexion'
 
@@ -13,6 +14,9 @@ export default async function PageConnexion({
 }: {
   searchParams: Promise<{ inscrit?: string }>
 }) {
+  // Déjà connecté avec un rôle → on ne montre pas le formulaire (R8).
+  await redirigerSiConnecte()
+
   const { inscrit } = await searchParams
 
   return (

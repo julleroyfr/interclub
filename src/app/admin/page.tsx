@@ -1,9 +1,8 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
-import { notFound } from 'next/navigation'
 
 import { Carte, Coquille, EnTetePage, type LienNav } from '@/composants'
-import { getUtilisateurCourant } from '@/lib/auth/session'
+import { exigerAdmin } from '@/lib/auth/session'
 import { chargerTableauDeBord } from '@/lib/tableau-de-bord/tableau-de-bord'
 
 import { CarteRencontres } from './carte-rencontres'
@@ -18,14 +17,13 @@ const liens: LienNav[] = [
 ]
 
 export default async function PageTableauDeBord() {
-  const utilisateur = await getUtilisateurCourant()
-  if (utilisateur?.role !== 'admin') notFound()
+  await exigerAdmin()
 
   const aujourdhui = new Date().toISOString().slice(0, 10)
   const { stats, rencontres, totalRencontres, saison } = await chargerTableauDeBord(aujourdhui)
 
   return (
-    <Coquille liens={liens} largeur="large">
+    <Coquille liens={liens} largeur="large" deconnexion>
       <div className="flex flex-col gap-6">
         <EnTetePage
           titre="Tableau de bord"
@@ -70,6 +68,7 @@ export default async function PageTableauDeBord() {
             <Carte className="flex flex-col gap-2 p-4">
               <p className="text-sm font-semibold text-texte-fort">Accès</p>
               <nav className="flex flex-col gap-1" aria-label="Accès rapides">
+                <LienAccesRapide href="/admin/rencontres">Rencontres</LienAccesRapide>
                 <LienAccesRapide href="/admin/gabarit">Gabarit</LienAccesRapide>
                 <LienAccesRapide href="/admin/jetons">Jetons QR</LienAccesRapide>
                 <LienAccesRapide href="/admin/mapping">Rôles</LienAccesRapide>
