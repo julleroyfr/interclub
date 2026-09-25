@@ -216,6 +216,30 @@ Routes utilisées :
   dizaines de Ko** → la relecture reste le bon choix ; au-delà (avec fan-out réel),
   ouvrir la piste **diff/Broadcast serveur** (décision « à l'usage »).
 
+### CT-13 — Grimpeur prêté : live reçu par le club prêteur, écriture refusée (couvre : R5, spec #6 R36)
+
+- **Rôles** : `coach@test.local` (`JD-COACH-A`, écrivain) + `coachb@test.local` (`JD-COACH-B`, observateur).
+- **Pré-condition** : rencontre en ③. **Devi** (`JD-PRETE-DEVI`, Club B, G) est seedé dans
+  l'**Équipe A2** (`JD-EQUIPE-A2`, Club A) — aucune insertion à faire.
+- **Étapes** :
+  1. Fenêtre **Coach B** : ouvrir le **classement**
+     `/coach/rencontres/33333333-…/classement` → repérer **Devi** dans la liste des
+     grimpeurs (il est composé en Équipe A2, Club A). L'indicateur est **connecté**.
+  2. Fenêtre **Coach A** : ouvrir la **saisie coach** → naviguer vers **l'Équipe A2** →
+     saisir une **issue de voie** pour **Devi** → valider. L'opération doit
+     **réussir** (le prêt est couvert par la composition, R36).
+  3. Fenêtre **Coach B** : le classement se **rafraîchit tout seul** ; le **score de
+     Devi** est mis à jour **sans rechargement** (la RLS lecture ③+ est ouverte à
+     tous les authentifiés — Coach B reçoit le live, R5).
+  4. Fenêtre **Coach B** : ouvrir la **saisie coach**
+     `/coach/rencontres/33333333-…/resultats` → seule l'**Équipe B1** et **Cléo**
+     apparaissent. **Devi est absent** du panneau de saisie Coach B (il est composé
+     dans une équipe Club A, pas Club B → Coach B ne peut pas le saisir).
+- **Résultat attendu** :
+  - (2) Saisie Devi par Coach A → **réussit** ✅
+  - (3) Classement Coach B → **Devi mis à jour en direct** ✅
+  - (4) Panneau saisie Coach B → **Devi absent**, écriture impossible via l'IHM ✅
+
 ## Registre d'exécution
 
 | Date | Testeur | Version/commit | Cas | Résultat | Remarque |
@@ -232,3 +256,4 @@ Routes utilisées :
 | 2026-09-25 | julleroyfr | a76fcdf | CT-10 | ✅ | |
 | 2026-09-25 | julleroyfr | a76fcdf | CT-11 | ✅ | |
 | 2026-09-25 | julleroyfr | a76fcdf | CT-12 | ✅ | payload = 6 Ko — relecture légère, choix confirmé |
+| | | | CT-13 | ✅ / ❌ | |

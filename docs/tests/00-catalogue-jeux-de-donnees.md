@@ -74,7 +74,7 @@ Mot de passe des cinq comptes permanents : `interclub`.
 | ID | Description | Données (seed) | Utilisé par |
 |----|-------------|----------------|-------------|
 | JD-EQUIPE-A1 | Équipe A1 (Club A) composée (Ana + Bob), support des deux vues et de la navigation ; équipe **mixte** (F+G) pour le classement | `66666666-…-6666` | 17:CT-02/CT-03 · 18:CT-06/CT-07 · 22:CT-02→CT-05 · 06 · 13 · 15 |
-| JD-EQUIPE-A2 | Équipe A2 (Club A) **vide** (cas limite, remplissage) | `66666666-…-6602` | 06 · 13 · 15 |
+| JD-EQUIPE-A2 | Équipe A2 (Club A) avec **Devi** (grimpeur prêté Club B) — support du scénario de prêt cross-club | `66666666-…-6602` | 06 · 13 · 15 · 22:CT-13 |
 | JD-EQUIPE-B1 | Équipe B1 (Club B) composée (Cléo), négatif de périmètre / lecture cross-club | `77777777-…-7777` | 06 · 13 · 14 · 15 · 18:CT-06/CT-09 · 22:CT-04/CT-05 |
 
 ## Grimpeurs
@@ -84,7 +84,7 @@ Mot de passe des cinq comptes permanents : `interclub`.
 | JD-ANA-M2 | Enfant **Filles**, **groupe M2** → enchaîne **M2·M3·M4** (moulinette) | `a0000000-…-a1` (2015, **F**) · compo A1, `groupe_depart='M2'` | 17:CT-04/CT-05/CT-06/CT-12/CT-13 · 18:CT-02/CT-03/CT-05 · 22:CT-03/CT-05 · 13 · 15 |
 | JD-BOB-T1 | Enfant **Garçons**, **groupe T1** → enchaîne **T1·T2·T3** | `a0000000-…-a2` (2016, **G**) · compo A1, `groupe_depart='T1'` | 17:CT-02/CT-03 · 18:CT-04/CT-06 · 22:CT-02/CT-04 · 13 · 15 |
 | JD-CLEO-T2 | Enfant **Filles** Club B, **groupe T2**, équipe B1 | `b0000000-…-b1` (2015, **F**) · compo B1, `groupe_depart='T2'` | 18:CT-05/CT-06/CT-09 · 19:CT-02/CT-03 · 22:CT-05 · 13 · 14 · 15 |
-| JD-PRETE-DEVI | Grimpeur **libre** **Garçons** Club B, matière à un **prêt** vers Club A (R35/R36 ; R7 classement) | `b0000000-…-b2` (2016, **G**) · **non** composé au seed | 18:CT-07 · 14 · 13 · 15 · 17 (jeu de données) |
+| JD-PRETE-DEVI | Grimpeur **Garçons** Club B, **prêté** à Club A — composé dans `JD-EQUIPE-A2` au seed (R35/R36 ; R7 classement) | `b0000000-…-b2` (2016, **G**) · composé dans `JD-EQUIPE-A2` | 18:CT-07 · 22:CT-13 · 14 · 13 · 15 · 17 (jeu de données) |
 | JD-POOL-LIBRES | **8 grimpeurs libres** Club A (Chloé…Jade) : remplir une équipe à 8/8, ou engager **sans groupe** (cas R9) | `a0000000-…-a3` … `a0000000-…-aa` (sexe **F/G** au seed) | 13:remplissage 8/8 · 17:cas R9 (groupe « à définir ») · 18:CT-10 |
 
 ## Jetons QR (sessions éphémères)

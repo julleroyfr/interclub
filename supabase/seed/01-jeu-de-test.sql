@@ -240,15 +240,14 @@ insert into interclub.grimpeur (id, club_id, nom, prenom, annee_naissance, sexe)
 on conflict (id) do nothing;
 
 -- ===========================================================================
--- 8. Compositions : gA1+gA2 dans l'équipe A1 ; gB1 dans l'équipe B1.
---    (A2 reste vide ; gB2 non engagé — matière à prêt dans le cahier.)
---    `groupe_depart` renseigné (R19/R20) : chaque grimpeur engagé a un NIVEAU
---    sélectionné → l'enfant enchaîne 3 voies croissantes à partir de son groupe
---    (M2 → M2·M3·M4, T1 → T1·T2·T3). `rencontre_id` est posé par trigger.
+-- 8. Compositions : Ana+Bob dans A1 ; Devi (prêté Club B) dans A2 ; Cléo dans B1.
+--    `groupe_depart` renseigné (R19/R20). Devi composé dans A2 couvre le scénario
+--    de prêt cross-club (spec #6 R36) sans avoir à l'insérer pendant le test.
 -- ===========================================================================
 insert into interclub.composition (equipe_id, grimpeur_id, groupe_depart) values
   ('66666666-6666-6666-6666-666666666666', 'a0000000-0000-0000-0000-0000000000a1', 'M2'),
   ('66666666-6666-6666-6666-666666666666', 'a0000000-0000-0000-0000-0000000000a2', 'T1'),
+  ('66666666-6666-6666-6666-666666666602', 'b0000000-0000-0000-0000-0000000000b2', 'T1'),
   ('77777777-7777-7777-7777-777777777777', 'b0000000-0000-0000-0000-0000000000b1', 'T2')
 on conflict (equipe_id, grimpeur_id) do nothing;
 
