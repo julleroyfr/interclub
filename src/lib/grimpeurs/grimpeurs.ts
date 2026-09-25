@@ -48,6 +48,7 @@ export type PageGrimpeurs = {
 export async function rechercherGrimpeurs(
   recherche: string,
   page: number,
+  clubId?: string,
 ): Promise<PageGrimpeurs> {
   const supabase = await createClient()
   const pageSure = Math.max(1, Math.floor(page) || 1)
@@ -56,6 +57,7 @@ export async function rechercherGrimpeurs(
     p_recherche: recherche ?? '',
     p_limit: GRIMPEURS_PAR_PAGE,
     p_offset: (pageSure - 1) * GRIMPEURS_PAR_PAGE,
+    ...(clubId ? { p_club_id: clubId } : {}),
   })
   if (error) throw error
 

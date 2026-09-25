@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   title: 'Grimpeurs — Interclub',
 }
 
-type Params = { recherche?: string; page?: string }
+type Params = { recherche?: string; page?: string; club?: string }
 
 export default async function PageGrimpeurs({
   searchParams,
@@ -37,9 +37,10 @@ export default async function PageGrimpeurs({
   const sp = await searchParams
   const recherche = (sp.recherche ?? '').trim()
   const page = Math.max(1, Number(sp.page) || 1)
+  const clubFiltre = sp.club ?? ''
 
   const [{ grimpeurs, total }, clubs] = await Promise.all([
-    rechercherGrimpeurs(recherche, page),
+    rechercherGrimpeurs(recherche, page, clubFiltre || undefined),
     listerClubsOptions(),
   ])
 
@@ -47,6 +48,7 @@ export default async function PageGrimpeurs({
   const hrefPage = (p: number) => {
     const params = new URLSearchParams()
     if (recherche) params.set('recherche', recherche)
+    if (clubFiltre) params.set('club', clubFiltre)
     if (p > 1) params.set('page', String(p))
     const qs = params.toString()
     return qs ? `/admin/grimpeurs?${qs}` : '/admin/grimpeurs'
@@ -104,13 +106,27 @@ export default async function PageGrimpeurs({
               autoComplete="off"
               className="h-12 min-w-0 flex-1 rounded-xl border border-bordure bg-black/30 px-4 text-base text-texte-fort placeholder:text-texte-doux focus:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent/20"
             />
+            <select
+              name="club"
+              defaultValue={clubFiltre}
+              className="h-12 rounded-xl border border-bordure bg-black/30 px-3 text-base text-texte-fort [color-scheme:dark] focus:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent/20"
+            >
+              <option value="" className="bg-fond text-texte">
+                Tous les clubs
+              </option>
+              {clubs.map((c) => (
+                <option key={c.id} value={c.id} className="bg-fond text-texte">
+                  {c.nom}
+                </option>
+              ))}
+            </select>
             <button
               type="submit"
               className="inline-flex min-h-12 items-center rounded-xl border border-accent/40 bg-accent/15 px-4 text-sm font-semibold text-accent hover:bg-accent/25"
             >
               Rechercher
             </button>
-            {recherche && (
+            {(recherche || clubFiltre) && (
               <Link
                 href="/admin/grimpeurs"
                 className="inline-flex min-h-12 items-center rounded-xl border border-bordure px-4 text-sm font-medium text-texte-attenue hover:bg-white/5"
@@ -120,9 +136,13 @@ export default async function PageGrimpeurs({
             )}
           </form>
 
-          {recherche && (
+          {(recherche || clubFiltre) && (
             <p className="text-xs text-texte-doux">
-              {total} résultat{total > 1 ? 's' : ''} pour « {recherche} »
+              {total} résultat{total > 1 ? 's' : ''}
+              {recherche ? ` pour « ${recherche} »` : ''}
+              {clubFiltre
+                ? ` — ${clubs.find((c) => c.id === clubFiltre)?.nom ?? ''}`
+                : ''}
             </p>
           )}
 
