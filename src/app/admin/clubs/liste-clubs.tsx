@@ -1,12 +1,12 @@
 'use client'
 
-import { useActionState, useId, useState } from 'react'
+import { useActionState, useEffect, useId, useState } from 'react'
 
 import { Bouton, ChampTexte } from '@/composants'
 import { renommerClub, supprimerClub } from '@/lib/clubs/actions'
 import type { ClubAvecDependances, EtatClub } from '@/lib/clubs/clubs'
 import {
-  genererInvitation,
+  genererInvitationInline,
   regenererInvitation,
   revoquerInvitation,
 } from '@/lib/invitations/actions'
@@ -60,8 +60,18 @@ function LigneClub({
     supprimerClub,
     etatInitial,
   )
+  const [invitationGeneree, actionGenerer, generationEnCours] = useActionState(
+    genererInvitationInline,
+    null,
+  )
   const idNom = useId()
   const supprimable = club.nbRencontres === 0 && club.nbGrimpeurs === 0
+
+  const invitationEffective: InvitationVue | null = invitation ?? invitationGeneree
+
+  useEffect(() => {
+    if (invitationGeneree) setOuvertQR(true)
+  }, [invitationGeneree])
 
   return (
     <div className="rounded-2xl border border-bordure bg-black/20 p-4">
@@ -100,15 +110,15 @@ function LigneClub({
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              {invitation ? (
+              {invitationEffective ? (
                 <button
                   type="button"
                   onClick={() => setOuvertQR((v) => !v)}
                   aria-expanded={ouvertQR}
                   aria-label={
                     ouvertQR
-                      ? 'Masquer le QR de l’invitation coach'
-                      : 'Afficher le QR de l’invitation coach'
+                      ? "Masquer le QR de l’invitation coach"
+                      : "Afficher le QR de l’invitation coach"
                   }
                   title="Invitation coach — QR"
                   className={`inline-flex h-11 w-11 items-center justify-center rounded-xl border transition-colors ${
@@ -120,12 +130,17 @@ function LigneClub({
                   <IconeQR />
                 </button>
               ) : (
-                <form action={genererInvitation}>
-                  <input type="hidden" name="chemin" value={CHEMIN} />
+                <form action={actionGenerer}>
                   <input type="hidden" name="clubId" value={club.id} />
-                  <Bouton type="submit" variante="secondaire">
-                    Générer l’invitation coach
-                  </Bouton>
+                  <button
+                    type="submit"
+                    disabled={generationEnCours}
+                    title="Générer l’invitation coach"
+                    aria-label="Générer l’invitation coach (QR)"
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-bordure text-texte-attenue transition-colors hover:bg-white/5 disabled:opacity-40"
+                  >
+                    <IconeQR />
+                  </button>
                 </form>
               )}
 
@@ -161,7 +176,9 @@ function LigneClub({
             </div>
           </div>
 
-          {invitation && ouvertQR && <ZoneInvitation invitation={invitation} />}
+          {invitationEffective && ouvertQR && (
+            <ZoneInvitation invitation={invitationEffective} />
+          )}
         </div>
       )}
 

@@ -1,9 +1,12 @@
 'use server'
 
+import { headers } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import QRCode from 'qrcode'
 
 import {
+  construireUrlInvitation,
   creerInvitationCoach,
   InvitationCoachInvalideError,
   peutGererInvitation,
@@ -14,11 +17,60 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 
 import { resoudreInvitation } from './invitations'
+import type { InvitationVue } from './invitations'
 
 /** Rafraîchit l'écran des clubs puis revient sur `chemin`. */
 function retour(chemin: string): never {
   revalidatePath('/admin/clubs')
   redirect(chemin || '/admin/clubs')
+}
+
+/**
+ * Génère l'invitation coach et la retourne directement (sans redirect) pour
+ * afficher le QR inline dans l'écran admin. Utilisé avec `useActionState`.
+ * Invalide le cache `/admin/clubs` pour que les prochains chargements soient frais.
+ */
+export async function genererInvitationInline(
+  _prev: InvitationVue | null,
+  formData: FormData,
+): Promise<InvitationVue | null> {
+  const utilisateur = await getUtilisateurCourant()
+  if (!peutGererInvitation({ role: utilisateur?.role ?? null })) return null
+
+  let domaine
+  try {
+    domaine = creerInvitationCoach({
+      clubId: String(formData.get('clubId') ?? ''),
+    })
+  } catch (e) {
+    if (e instanceof InvitationCoachInvalideError) return null
+    throw e
+  }
+
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('invitation_coach')
+    .insert({ club_id: domaine.clubId })
+    .select('id, club_id, valeur')
+    .single()
+
+  if (error || !data) return null
+
+  revalidatePath('/admin/clubs')
+
+  const hdrs = await headers()
+  const host = hdrs.get('host') ?? 'localhost:3000'
+  const proto = host.startsWith('localhost') ? 'http' : 'https'
+  const url = construireUrlInvitation(`${proto}://${host}`, data.valeur as string)
+  const qrDataUrl = await QRCode.toDataURL(url, { margin: 1, width: 240 })
+
+  return {
+    id: data.id as string,
+    clubId: data.club_id as string,
+    valeur: data.valeur as string,
+    url,
+    qrDataUrl,
+  }
 }
 
 /**
