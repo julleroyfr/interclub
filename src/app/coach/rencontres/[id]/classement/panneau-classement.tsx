@@ -46,7 +46,7 @@ function classeRang(rang: number): string {
 }
 
 type Vue = 'individuel' | 'equipe' | 'club'
-type SexeVue = 'F' | 'G'
+type SexeVue = 'F' | 'H'
 type FiltreClub = 'tous' | 'mien'
 
 /**
@@ -164,8 +164,8 @@ export function PanneauClassement({
           <div className="flex gap-1.5">
             {(
               [
-                ['F', 'Filles'],
-                ['G', 'Garçons'],
+                ['F', 'Femmes'],
+                ['H', 'Hommes'],
               ] as [SexeVue, string][]
             ).map(([s, label]) => (
               <button

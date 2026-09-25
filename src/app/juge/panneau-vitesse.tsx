@@ -42,16 +42,16 @@ function trierAlpha(a: GrimpeurVitesse, b: GrimpeurVitesse): number {
 export function PanneauVitesse({ grimpeurs }: { grimpeurs: GrimpeurVitesse[] }) {
   const [recherche, setRecherche] = useState('')
   const [filtreASaisir, setFiltreASaisir] = useState(false)
-  const [filtreSexe, setFiltreSexe] = useState<'tous' | 'F' | 'G'>('tous')
+  const [filtreSexe, setFiltreSexe] = useState<'tous' | 'F' | 'H'>('tous')
 
   // Compteurs par sexe, calculés sur TOUS les grimpeurs (indépendants des
   // filtres d'affichage) — progression séparée Filles / Garçons (R14).
-  const statSexe = (s: 'F' | 'G') => {
+  const statSexe = (s: 'F' | 'H') => {
     const total = grimpeurs.filter((g) => g.sexe === s)
     return { total: total.length, saisis: total.filter((g) => g.issue != null).length }
   }
   const statF = statSexe('F')
-  const statG = statSexe('G')
+  const statG = statSexe('H')
   const aSaisir = grimpeurs.filter((g) => g.issue == null).length
 
   const filtres = useMemo(() => {
@@ -64,7 +64,7 @@ export function PanneauVitesse({ grimpeurs }: { grimpeurs: GrimpeurVitesse[] }) 
   }, [grimpeurs, recherche, filtreASaisir])
 
   const filles = filtres.filter((g) => g.sexe === 'F').sort(trierAlpha)
-  const garcons = filtres.filter((g) => g.sexe === 'G').sort(trierAlpha)
+  const garcons = filtres.filter((g) => g.sexe === 'H').sort(trierAlpha)
 
   if (grimpeurs.length === 0) {
     return (
@@ -74,7 +74,7 @@ export function PanneauVitesse({ grimpeurs }: { grimpeurs: GrimpeurVitesse[] }) 
     )
   }
 
-  const montrerFilles = filtreSexe !== 'G'
+  const montrerFilles = filtreSexe !== 'H'
   const montrerGarcons = filtreSexe !== 'F'
   const uneColonne = filtreSexe !== 'tous'
 
@@ -82,8 +82,8 @@ export function PanneauVitesse({ grimpeurs }: { grimpeurs: GrimpeurVitesse[] }) 
     <div className="flex flex-col gap-5">
       {/* Progression séparée par sexe (R14) */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <CompteurSexe titre="Filles" couleur="#f0abfc" saisis={statF.saisis} total={statF.total} />
-        <CompteurSexe titre="Garçons" couleur="#7dd3fc" saisis={statG.saisis} total={statG.total} />
+        <CompteurSexe titre="Femmes" couleur="#f0abfc" saisis={statF.saisis} total={statF.total} />
+        <CompteurSexe titre="Hommes" couleur="#7dd3fc" saisis={statG.saisis} total={statG.total} />
       </div>
 
       {/* Outils : recherche + filtre « à saisir » + filtre sexe (R14b) */}
@@ -106,13 +106,13 @@ export function PanneauVitesse({ grimpeurs }: { grimpeurs: GrimpeurVitesse[] }) 
         >
           À saisir ({aSaisir})
         </button>
-        {/* Filtre par sexe : Tous / Filles / Garçons (R14b) */}
+        {/* Filtre par sexe : Tous / Femmes / Hommes (R14b) */}
         <div className="inline-flex h-10 overflow-hidden rounded-full border border-bordure">
           {(
             [
               ['tous', 'Tous'],
-              ['F', 'Filles'],
-              ['G', 'Garçons'],
+              ['F', 'Femmes'],
+              ['H', 'Hommes'],
             ] as const
           ).map(([val, label]) => (
             <button
@@ -134,10 +134,10 @@ export function PanneauVitesse({ grimpeurs }: { grimpeurs: GrimpeurVitesse[] }) 
       {/* Colonnes par sexe — les deux côte à côte, ou une seule selon le filtre (R12/R14c) */}
       <div className={`grid grid-cols-1 gap-5 ${uneColonne ? '' : 'lg:grid-cols-2'}`}>
         {montrerFilles && (
-          <GroupeSexe titre="Filles" couleur="text-[#f0abfc]" pastille="bg-[#f0abfc]" grimpeurs={filles} />
+          <GroupeSexe titre="Femmes" couleur="text-[#f0abfc]" pastille="bg-[#f0abfc]" grimpeurs={filles} />
         )}
         {montrerGarcons && (
-          <GroupeSexe titre="Garçons" couleur="text-[#7dd3fc]" pastille="bg-[#7dd3fc]" grimpeurs={garcons} />
+          <GroupeSexe titre="Hommes" couleur="text-[#7dd3fc]" pastille="bg-[#7dd3fc]" grimpeurs={garcons} />
         )}
       </div>
     </div>

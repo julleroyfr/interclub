@@ -46,7 +46,7 @@ select
     'Liam','Maya','Rose','Jules','Leo','Alix','Kais','Yanis','Sara'
   ])[1 + (i % 30)],
   case when i <= 34 then 2014 + (i % 3) else 2008 + (i % 5) end,
-  case when (i % 4) < 2 then 'F' else 'G' end
+  case when (i % 4) < 2 then 'F' else 'H' end
 from generate_series(1, 51) as i
 on conflict (id) do nothing;
 

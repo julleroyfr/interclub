@@ -66,11 +66,11 @@ describe("Saisie d'un grimpeur (R18)", () => {
     )
   })
 
-  // Sexe obligatoire 'F'/'G' — prerequis du classement individuel separe par
-  // sexe (spec #7 R8b) ; reflet du check SQL `grimpeur.sexe in ('F','G')`.
-  it('conserve le sexe Filles ou Garcons', () => {
+  // Sexe obligatoire 'F'/'H' — prerequis du classement individuel separe par
+  // sexe (spec #7 R8b) ; reflet du check SQL `grimpeur.sexe in ('F','H')`.
+  it('conserve le sexe Femme ou Homme', () => {
     expect(normaliserSaisieGrimpeur({ ...valide, sexe: 'F' }).sexe).toBe('F')
-    expect(normaliserSaisieGrimpeur({ ...valide, sexe: 'G' }).sexe).toBe('G')
+    expect(normaliserSaisieGrimpeur({ ...valide, sexe: 'H' }).sexe).toBe('H')
   })
 
   it('rejette un sexe absent', () => {
@@ -79,8 +79,8 @@ describe("Saisie d'un grimpeur (R18)", () => {
     )
   })
 
-  it('rejette un sexe hors F/G', () => {
-    expect(() => normaliserSaisieGrimpeur({ ...valide, sexe: 'X' })).toThrow(
+  it('rejette un sexe hors F/H', () => {
+    expect(() => normaliserSaisieGrimpeur({ ...valide, sexe: 'G' })).toThrow(
       GrimpeurInvalideError,
     )
   })

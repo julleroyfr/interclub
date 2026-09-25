@@ -26,8 +26,8 @@ export function FormulaireGrimpeur({ clubs }: { clubs: OptionClub[] }) {
 
   const optionsClub = clubs.map((c) => ({ value: c.id, label: c.nom }))
   const optionsSexe = [
-    { value: 'F', label: 'Filles' },
-    { value: 'G', label: 'Garçons' },
+    { value: 'F', label: 'Femme' },
+    { value: 'H', label: 'Homme' },
   ]
 
   return (

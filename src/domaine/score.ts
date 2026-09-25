@@ -211,5 +211,5 @@ export function classementIndividuelParSexe(
       (g) => g.score,
       parNomPuisPrenom,
     )
-  return { filles: parSexe('F'), garcons: parSexe('G') }
+  return { filles: parSexe('F'), garcons: parSexe('H') }
 }

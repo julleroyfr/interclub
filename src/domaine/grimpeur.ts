@@ -13,14 +13,14 @@ export const ANNEE_NAISSANCE_MIN = 1900
 export const ANNEE_NAISSANCE_MAX = 2100
 
 /**
- * Sexe d'un grimpeur — `'F'` (Filles) ou `'G'` (Garçons). Obligatoire : prérequis
+ * Sexe d'un grimpeur — `'F'` (Femme) ou `'H'` (Homme). Obligatoire : prérequis
  * du classement individuel séparé par sexe (spec #7 R8b) ; reflet du check SQL
- * `grimpeur.sexe in ('F','G')`.
+ * `grimpeur.sexe in ('F','H')`.
  */
-export type Sexe = 'F' | 'G'
+export type Sexe = 'F' | 'H'
 
 /** Valeurs de sexe admises (reflet de la contrainte SQL). */
-export const SEXES: readonly Sexe[] = ['F', 'G']
+export const SEXES: readonly Sexe[] = ['F', 'H']
 
 /** Saisie invalide d'un grimpeur (nom, prénom ou année de naissance). */
 export class GrimpeurInvalideError extends Error {
@@ -88,7 +88,7 @@ export function normaliserSaisieGrimpeur(saisie: SaisieGrimpeur): GrimpeurNormal
 
   const sexe = (saisie.sexe ?? '').trim()
   if (!SEXES.includes(sexe as Sexe)) {
-    throw new GrimpeurInvalideError('Le sexe du grimpeur doit être « F » ou « G ».')
+    throw new GrimpeurInvalideError('Le sexe du grimpeur doit être « F » ou « H ».')
   }
 
   const brutLicence = (saisie.licence ?? '').trim()

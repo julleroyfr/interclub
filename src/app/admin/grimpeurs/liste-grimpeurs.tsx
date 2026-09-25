@@ -65,8 +65,8 @@ function LigneGrimpeur({
 
   const optionsClub = clubs.map((c) => ({ value: c.id, label: c.nom }))
   const optionsSexe = [
-    { value: 'F', label: 'Filles' },
-    { value: 'G', label: 'Garçons' },
+    { value: 'F', label: 'Femme' },
+    { value: 'H', label: 'Homme' },
   ]
 
   return (
@@ -151,7 +151,7 @@ function LigneGrimpeur({
             </p>
             <p className="mt-1 text-xs text-texte-doux">
               {grimpeur.clubNom} · né(e) en {grimpeur.anneeNaissance} ·{' '}
-              {grimpeur.sexe === 'F' ? 'Filles' : 'Garçons'} · licence{' '}
+              {grimpeur.sexe === 'F' ? 'Femme' : 'Homme'} · licence{' '}
               {grimpeur.licence} · {grimpeur.nbEngagements} engagement(s)
             </p>
           </div>

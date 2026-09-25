@@ -53,7 +53,7 @@ export async function getSaisieVitesse(epreuveVitesseId: string): Promise<Saisie
     grimpeurId: l['grimpeur_id'] as string,
     nom: (l['nom'] as string) ?? '',
     prenom: (l['prenom'] as string) ?? '',
-    sexe: (l['sexe'] as Sexe) ?? 'G',
+    sexe: (l['sexe'] as Sexe) ?? 'H',
     clubNom: (l['club_nom'] as string) ?? '',
     issue: (l['issue'] as IssueVitesse | null) ?? null,
     temps: l['temps'] != null ? Number(l['temps']) : null,

@@ -292,7 +292,7 @@ describe('Classement individuel par sexe (R8b/R7)', () => {
     grimpeurId: string,
     nom: string,
     prenom: string,
-    sexe: 'F' | 'G',
+    sexe: 'F' | 'H',
     score: number,
     clubOrigineId = 'clubA',
   ): GrimpeurClassable => ({ grimpeurId, nom, prenom, sexe, score, clubOrigineId })
@@ -301,8 +301,8 @@ describe('Classement individuel par sexe (R8b/R7)', () => {
     const { filles, garcons } = classementIndividuelParSexe([
       g('f1', 'Alpha', 'Ana', 'F', 20),
       g('f2', 'Beta', 'Bea', 'F', 12),
-      g('g1', 'Gamma', 'Gil', 'G', 15),
-      g('g2', 'Delta', 'Dan', 'G', 8),
+      g('g1', 'Gamma', 'Gil', 'H', 15),
+      g('g2', 'Delta', 'Dan', 'H', 8),
     ])
     expect(filles.map((r) => [r.element.grimpeurId, r.rang])).toEqual([
       ['f1', 1],
@@ -318,7 +318,7 @@ describe('Classement individuel par sexe (R8b/R7)', () => {
     // La meilleure fille (20) et le meilleur garçon (15) sont chacun rang 1.
     const { filles, garcons } = classementIndividuelParSexe([
       g('f1', 'Alpha', 'Ana', 'F', 20),
-      g('g1', 'Gamma', 'Gil', 'G', 15),
+      g('g1', 'Gamma', 'Gil', 'H', 15),
     ])
     expect(filles[0].rang).toBe(1)
     expect(garcons[0].rang).toBe(1)
@@ -326,9 +326,9 @@ describe('Classement individuel par sexe (R8b/R7)', () => {
 
   it('applique les ex æquo et l’ordre nom/prénom par sexe (R8b/R8/R9)', () => {
     const { garcons } = classementIndividuelParSexe([
-      g('g1', 'Martin', 'Zoe', 'G', 10),
-      g('g2', 'Martin', 'Alex', 'G', 10),
-      g('g3', 'Zulu', 'Yann', 'G', 4),
+      g('g1', 'Martin', 'Zoe', 'H', 10),
+      g('g2', 'Martin', 'Alex', 'H', 10),
+      g('g3', 'Zulu', 'Yann', 'H', 4),
     ])
     // Ex æquo à 10 → rang 1 partagé, affichés Alex avant Zoe (nom égal, prénom) ;
     // g3 → rang 3.
