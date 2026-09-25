@@ -33,18 +33,6 @@ async function refuserSiNonAdmin(): Promise<EtatImport | null> {
   return null
 }
 
-// Année de référence : la valeur saisie (4 chiffres) si présente, sinon la
-// valeur par défaut (fin de saison courante, R6). Renvoie une erreur lisible si
-// la saisie est présente mais invalide.
-function lireAnneeReference(brut: string): number | { erreur: string } {
-  const v = brut.trim()
-  if (!v) return anneeReferenceParDefaut(aujourdhuiISO())
-  if (!/^\d{4}$/.test(v)) {
-    return { erreur: "L'année de référence doit être une année à 4 chiffres." }
-  }
-  return Number(v)
-}
-
 // Traduit une erreur RPC/Postgres de l'écriture en message lisible (R16).
 function messageErreurEcriture(code: string | undefined, message: string | undefined): string {
   if (message?.includes('acces_refuse')) {
@@ -75,9 +63,8 @@ export async function importerLicencies(
     return { erreur: 'Le fichier doit être au format .xlsx.' }
   }
 
-  // 2. Année de référence (R6).
-  const anneeReference = lireAnneeReference(String(formData.get('annee') ?? ''))
-  if (typeof anneeReference !== 'number') return anneeReference
+  // 2. Année de référence — toujours l'année de fin de la saison courante (R6).
+  const anneeReference = anneeReferenceParDefaut(aujourdhuiISO())
 
   // 3. Lecture du .xlsx en lignes (R4).
   let lignes

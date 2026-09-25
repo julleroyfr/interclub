@@ -13,7 +13,11 @@ import type {
 
 const etatInitial: EtatGrimpeur = undefined
 
-/** Liste des grimpeurs avec édition inline et suppression confirmée (admin). */
+/**
+ * Liste (page) des grimpeurs avec édition inline et suppression confirmée
+ * (admin). La recherche et la pagination sont pilotées par la page (server-side,
+ * via l'URL) : ce composant rend uniquement les grimpeurs qu'on lui donne.
+ */
 export function ListeGrimpeurs({
   grimpeurs,
   clubs,
@@ -23,7 +27,7 @@ export function ListeGrimpeurs({
 }) {
   if (grimpeurs.length === 0) {
     return (
-      <p className="text-sm text-texte-attenue">Aucun grimpeur pour l’instant.</p>
+      <p className="text-sm text-texte-attenue">Aucun grimpeur à afficher.</p>
     )
   }
   return (
@@ -147,7 +151,7 @@ function LigneGrimpeur({
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="truncate text-base font-medium text-texte-fort">
-              {grimpeur.prenom} {grimpeur.nom}
+              <span className="uppercase">{grimpeur.nom}</span> {grimpeur.prenom}
             </p>
             <p className="mt-1 text-xs text-texte-doux">
               {grimpeur.clubNom} · né(e) en {grimpeur.anneeNaissance} ·{' '}

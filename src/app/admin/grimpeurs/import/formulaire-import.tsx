@@ -2,20 +2,20 @@
 
 import { useActionState, useId } from 'react'
 
-import { Bouton, Carte, ChampTexte, TitreSection } from '@/composants'
+import { Bouton, Carte, TitreSection } from '@/composants'
 import { importerLicencies } from '@/lib/grimpeurs/import-actions'
 import type { CompteRenduImport, EtatImport } from '@/lib/grimpeurs/import'
 
 const etatInitial: EtatImport = undefined
 
 /**
- * Formulaire d'import des licenciés (spec #13) : dépôt d'un `.xlsx` + année de
- * référence (R6), puis affichage du compte-rendu (R18).
+ * Formulaire d'import des licenciés (spec #13) : dépôt d'un `.xlsx`, puis
+ * affichage du compte-rendu (R18). L'année de référence du filtre d'âge est
+ * calculée automatiquement côté serveur (R6), non saisie.
  */
-export function FormulaireImport({ anneeDefaut }: { anneeDefaut: number }) {
+export function FormulaireImport() {
   const [etat, action, enCours] = useActionState(importerLicencies, etatInitial)
   const idFichier = useId()
-  const idAnnee = useId()
 
   return (
     <div className="flex flex-col gap-6">
@@ -39,21 +39,10 @@ export function FormulaireImport({ anneeDefaut }: { anneeDefaut: number }) {
             />
             <p className="mt-1 text-xs text-texte-doux">
               Export FFME : 1<sup>re</sup> feuille, colonnes Nom, Prénom, Date de naissance,
-              Sexe, N° de licence, Nom de la structure.
+              Sexe, N° de licence, Nom de la structure. Seuls les licenciés de 18 ans au plus à
+              la fin de la saison en cours sont importés.
             </p>
           </div>
-
-          <ChampTexte
-            id={idAnnee}
-            name="annee"
-            type="number"
-            inputMode="numeric"
-            label="Année de référence (filtre d’âge)"
-            defaultValue={anneeDefaut}
-            min={1900}
-            max={2100}
-            indice={`On n’importe que les licenciés de 18 ans au plus à cette année (nés en ${anneeDefaut - 18} ou après).`}
-          />
 
           {etat?.erreur && (
             <p role="alert" className="text-sm text-danger">

@@ -166,7 +166,14 @@ saisie, les flux CRUD, et les règles de suppression (dépendances / cascade).
   cascade lorsque le grimpeur a des engagements.
 - **R26.** La liste affiche, pour chaque grimpeur, son identité, son club, son
   année de naissance, son **numéro de licence** (si renseigné) et son **nombre
-  d'engagements** (compositions).
+  d'engagements** (compositions). Elle est **triée par nom de famille** (puis
+  prénom), propose un **champ de recherche** filtrant par **nom et prénom**
+  (insensible à la casse et aux accents, multi-termes dans n'importe quel ordre),
+  et le **formulaire d'ajout** est **repliable, fermé par défaut** (l'écran
+  privilégie la consultation du roster). La liste est **paginée côté serveur**
+  (**50 grimpeurs par page**) ; la **recherche s'applique à l'ensemble du roster**
+  (tous les grimpeurs correspondants, pas seulement la page affichée), puis le
+  résultat est paginé. L'affichage montre « **NOM Prénom** » (nom en premier).
 
 ### Saison des rencontres
 

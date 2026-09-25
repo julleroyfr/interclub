@@ -74,12 +74,12 @@ que de saisir chaque grimpeur un par un (spec #3 R21–R24). L'import :
 
 ### Année de référence & filtre d'âge
 
-- **R6.** L'année de référence par défaut est l'**année de fin de la saison
+- **R6.** L'année de référence est **toujours** l'**année de fin de la saison
   courante** : `anneeSaison(date du jour) + 1` (spec #1 R37 — la saison courante
   est identifiée par son année de **début**, l'année de référence est l'année
   **suivante**). Exemple : le 2026-09-25, saison courante = 2026 (2026–2027) →
-  **année de référence = 2027**. L'admin peut **remplacer** cette valeur par une
-  autre année à 4 chiffres avant de lancer l'import.
+  **année de référence = 2027**. Elle est **calculée automatiquement**, ni saisie
+  ni modifiable par l'admin (aucun champ dans l'écran).
 - **R7.** Seuls sont importés les licenciés **âgés de 18 ans au plus** à l'année
   de référence, soit **`année de naissance ≥ année de référence − 18`**. Exemple
   (référence 2027) : seuil = **2009** ; un licencié né en 2009 (18 ans en 2027)
@@ -191,12 +191,6 @@ la liste des clubs créés (R18).
 certains licenciés ont changé de club ou d'orthographe, alors ces grimpeurs sont
 **mis à jour** (même licence, R13) sans doublon, et le compte-rendu distingue
 créés et mis à jour (R18).
-
-### Nominal — remplacement de l'année de référence
-
-Étant donné l'admin qui veut préparer la saison suivante, quand il saisit `2028`
-comme année de référence puis importe, alors le seuil devient **2010** (R7) et le
-filtre d'âge s'applique en conséquence.
 
 ### Cas limites / erreurs
 

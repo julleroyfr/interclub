@@ -160,15 +160,10 @@
         <button class="cta-sec" style="min-height:32px;padding:6px 12px">Retirer</button>
       </div>
 
-      <div class="params">
-        <div class="champ">
-          <label for="annee">Année de référence (filtre d'âge)</label>
-          <input id="annee" type="number" value="2027" />
-        </div>
-        <div class="aide">
-          Par défaut, l'année de <strong>fin</strong> de la saison courante (R6). On n'importe que les licenciés de
-          <strong>18 ans au plus</strong> à cette année, soit nés en <b>2009</b> ou après (seuil = 2027 − 18, R7).
-        </div>
+      <div class="aide" style="margin-top:20px">
+        <strong>Filtre d'âge automatique (R6/R7)</strong> — saison en cours 2026-2027 → année de référence
+        <b>2027</b> (calculée, non modifiable). On n'importe que les licenciés de <strong>18 ans au plus</strong>,
+        soit nés en <b>2009</b> ou après (2027 − 18).
       </div>
 
       <div class="barre-actions">
@@ -220,7 +215,7 @@
     <h3>Formulaire</h3>
     <ul>
       <li><strong>Dépôt .xlsx</strong> (R3) — un seul fichier ; lecture 1re feuille, colonnes par position A→F (R4).</li>
-      <li><strong>Année de référence</strong> (R6) — pré-remplie à l'année de fin de saison courante (<code>anneeSaison(aujourd'hui)+1</code>), modifiable ; seuil d'âge = année − 18 (R7).</li>
+      <li><strong>Année de référence</strong> (R6) — <strong>calculée automatiquement</strong> (année de fin de saison courante, <code>anneeSaison(aujourd'hui)+1</code>), non modifiable ; seuil d'âge = année − 18 (R7).</li>
       <li>Réservé à l'admin (R1) ; route <code>/admin/grimpeurs/import</code> (R2).</li>
     </ul>
     <h3>Compte-rendu (R18)</h3>

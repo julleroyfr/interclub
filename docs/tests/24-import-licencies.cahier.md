@@ -81,16 +81,16 @@
     de référence **2027** et le seuil **2009** (R18) ;
   - vérifier en base : un né en **2009** est présent, un né en **2008** absent.
 
-### CT-05 — Année de référence remplacée (couvre : R6, R7)
+### CT-05 — Année de référence automatique, non modifiable (couvre : R6, R7)
 
 - **Rôle** : admin.
-- **Étapes** : déposer **F-PETIT**, saisir **2028** comme année de référence,
-  lancer.
-- **Résultat attendu** : le seuil devient **2010** ; un né en 2009 (importé en
-  CT-04) est désormais **ignoré (hors âge)**. Le compte-rendu indique année 2028,
-  seuil 2010.
-- **Variante** : saisir « 20 » (pas 4 chiffres) → message « L'année de référence
-  doit être une année à 4 chiffres. », aucun traitement.
+- **Étapes** : ouvrir `/admin/grimpeurs/import`, déposer **F-PETIT**, lancer.
+- **Résultat attendu** :
+  - l'écran ne propose **aucun champ** « année de référence » (ni saisie, ni
+    affichage éditable) ;
+  - le filtre s'applique avec l'année **calculée** = année de fin de la saison
+    courante (aujourd'hui 2026-2027 → **2027**, seuil **2009**) ;
+  - le compte-rendu rappelle l'année de référence **2027** et le seuil **2009**.
 
 ### CT-06 — Rattachement club : existant réutilisé, absent créé (couvre : R11, R12)
 
