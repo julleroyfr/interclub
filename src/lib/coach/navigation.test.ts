@@ -7,13 +7,19 @@ import { liensCoach } from './navigation'
  * Fonction pure : testable sans Supabase.
  */
 describe('liensCoach', () => {
-  it('coach permanent : Accueil, Mes rencontres, Jetons (R10, C1)', () => {
+  it('coach permanent : Mes rencontres, Jetons — sans « Accueil » (R10, R7)', () => {
     const liens = liensCoach({ type: 'permanent', clubId: 'club-1' })
     expect(liens).toEqual([
-      { href: '/', label: 'Accueil' },
       { href: '/coach', label: 'Mes rencontres' },
       { href: '/coach/jetons', label: 'Jetons' },
     ])
+  })
+
+  it('aucun lien vers « / » : la racine n\'est plus un écran (R7)', () => {
+    const perm = liensCoach({ type: 'permanent', clubId: 'club-1' })
+    const temp = liensCoach({ type: 'temporaire', clubId: 'club-1', rencontreId: 'r1' })
+    expect(perm.some((l) => l.href === '/')).toBe(false)
+    expect(temp.some((l) => l.href === '/')).toBe(false)
   })
 
   it('coach permanent : expose « Jetons » (seul accès depuis que l\'accueil n\'y mène plus, C1)', () => {
@@ -21,14 +27,13 @@ describe('liensCoach', () => {
     expect(liens.some((l) => l.href === '/coach/jetons')).toBe(true)
   })
 
-  it('coach temporaire : Accueil, Ma rencontre, Classement bornés à sa rencontre (R11)', () => {
+  it('coach temporaire : Ma rencontre, Classement bornés à sa rencontre (R11)', () => {
     const liens = liensCoach({
       type: 'temporaire',
       clubId: 'club-1',
       rencontreId: 'rdv-42',
     })
     expect(liens).toEqual([
-      { href: '/', label: 'Accueil' },
       { href: '/coach/rencontres/rdv-42', label: 'Ma rencontre' },
       { href: '/coach/rencontres/rdv-42/classement', label: 'Classement' },
     ])

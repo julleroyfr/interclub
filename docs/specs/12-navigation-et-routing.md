@@ -63,9 +63,12 @@ menant à une impasse (404 non intentionnel).
 
 - **R6.** `/connexion` (succès) redirige selon le rôle : `admin` → `/admin`,
   `coach` → `/coach`, aucun rôle → `/`.
-- **R7.** L'accueil `/` d'un utilisateur authentifié propose l'accès à **son
-  espace** avec la **même destination que le login** (R6) : `admin` → `/admin`,
-  `coach` → `/coach`. *(C1 : supprime la divergence `/coach/jetons`.)*
+- **R7.** La racine `/` n'est **pas un écran** mais un **routeur** : non
+  authentifié → `redirect('/connexion')` ; authentifié avec rôle → son espace
+  (R6, `admin` → `/admin`, `coach` → `/coach`). Seul cas résiduel rendant un
+  écran : un compte **authentifié sans rôle** (spec #2 R5) — état minimal
+  « compte sans rôle » + déconnexion. Aucune page n'expose de lien « Accueil »
+  vers `/`.
 - **R8.** `/connexion` et `/inscription` ouverts par un utilisateur **déjà
   authentifié avec un rôle** redirigent vers son espace (R6) au lieu d'afficher le
   formulaire.
@@ -122,8 +125,8 @@ menant à une impasse (404 non intentionnel).
   redirige vers `/connexion`.
 - **R22.** Le coach **temporaire** et le **juge** sont des **sessions QR
   anonymes** : ils ne relèvent pas de la déconnexion de compte (R20) mais de la
-  **fin de session** (R17 pour le juge ; retour `Accueil` pour le coach
-  temporaire). Aucune action « Se déconnecter » ne leur est présentée.
+  **fin de session** — action **« Terminer »** qui ferme la session et revient à
+  `/` (R17). Aucune action « Se déconnecter » ne leur est présentée.
 
 ### Bandeau de navigation
 
@@ -132,14 +135,16 @@ menant à une impasse (404 non intentionnel).
   l'espace admin, `liensCoach` pour l'espace coach. Le bandeau est **identique
   sur toutes les pages d'un même espace** : aucune page ne définit sa propre
   liste de liens. Le bandeau admin donne accès à toutes les sections admin ;
-  celui du coach dépend du type (permanent / temporaire, cf. R10/R11).
+  celui du coach dépend du type (permanent / temporaire, cf. R10/R11). **Aucun
+  lien « Accueil »** (R7) : la sortie se fait par « Se déconnecter » (permanent)
+  ou « Terminer » (session QR).
 
 ## Scénarios
 
 ### Nominal — entrée par rôle
 
-- Étant donné un coach permanent authentifié, quand il ouvre `/`, alors le lien
-  d'accès à son espace mène à `/coach` (R7), identique au login (R6).
+- Étant donné un coach permanent authentifié, quand il ouvre `/`, alors il est
+  **redirigé** vers `/coach` (R7), identique au login (R6).
 - Étant donné un admin sur `/admin/rencontres/{id}/resultats`, quand il clique
   « voir le classement », alors il arrive sur `/admin/rencontres/{id}/classement`
   (R14/R15) et **non** sur un 404.
@@ -166,9 +171,10 @@ menant à une impasse (404 non intentionnel).
 ```mermaid
 flowchart TD
     subgraph AUTH["Entrée & authentification"]
-        ACCUEIL["/"]
+        ACCUEIL{{"/ (routeur)"}}
         CONNEXION["/connexion"]
         INSCRIPTION["/inscription"]
+        SANSROLE["Compte sans rôle<br/>(état minimal)"]
     end
 
     GARDE{{"Refus d'accès"}}
@@ -178,6 +184,7 @@ flowchart TD
     ACCUEIL -->|non authentifié| CONNEXION
     ACCUEIL -->|admin| ADMIN
     ACCUEIL -->|coach| COACH
+    ACCUEIL -->|sans rôle| SANSROLE
     INSCRIPTION -->|succès| CONNEXION
     INSCRIPTION -->|invitation acceptée| A_CLUBS
     CONNEXION -->|admin| ADMIN

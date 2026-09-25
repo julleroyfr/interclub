@@ -9,7 +9,6 @@ import { type LienNav } from '@/composants'
  */
 export function liensAdmin(): LienNav[] {
   return [
-    { href: '/', label: 'Accueil' },
     { href: '/admin', label: 'Tableau de bord' },
     { href: '/admin/rencontres', label: 'Rencontres' },
     { href: '/admin/clubs', label: 'Clubs' },

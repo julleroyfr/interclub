@@ -349,6 +349,9 @@ Tout livré :
   sur toutes les pages d'un espace (fin des `const liens` ad hoc par page) ;
   `NavPrincipale` surligne le lien le plus spécifique ; `/coach/jetons` retrouve
   « Mes rencontres ». Spec #12 R23.
+- **C9** : `/` devient un **routeur** (non connecté → `/connexion` ; rôle → son
+  espace ; connecté sans rôle → écran minimal). Lien « Accueil » supprimé des
+  bandeaux ; sortie coach temporaire par « Terminer ». Spec #12 R7 (révisée).
 
 ### Phase 5 — Cahier de test ✅
 

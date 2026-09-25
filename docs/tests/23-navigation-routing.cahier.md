@@ -39,12 +39,17 @@
 - **Résultat attendu** : `admin@` → `/admin` ; `coach@` → `/coach` ;
   `sansmapping@` → `/` (accueil, « aucun rôle attribué »).
 
-### CT-02 — Entrée par rôle depuis l'accueil (couvre R7, C1)
+### CT-02 — La racine `/` est un routeur (couvre R7)
 
-- **Rôle** : `coach@` puis `admin@`, déjà connectés, sur `/`.
-- **Résultat attendu** : le coach voit **« Ouvrir mes rencontres → »** menant à
-  **`/coach`** (et **non** `/coach/jetons`) ; l'admin voit l'accès à `/admin`. La
-  destination est **identique** à celle du login (R6).
+- **Étapes** :
+  1. **Non authentifié** : ouvrir `/` → redirection **`/connexion`**.
+  2. **`coach@`** authentifié : ouvrir `/` → redirection **`/coach`** (identique au
+     login, R6).
+  3. **`admin@`** authentifié : ouvrir `/` → redirection **`/admin`**.
+  4. **`sansmapping@`** (connecté, aucun rôle) : ouvrir `/` → **écran minimal**
+     « compte sans rôle » + « Se déconnecter » (seul cas où `/` rend un écran).
+- **Résultat attendu** : `/` ne rend **jamais** d'écran de navigation ; aucune
+  page n'affiche de lien « Accueil » vers `/`.
 
 ### CT-03 — Utilisateur déjà connecté sur une page d'auth (couvre R8)
 
@@ -95,19 +100,21 @@
 - **Rôle** : coach temporaire (scan JD-JETON-COACHTEMP).
 - **Étapes** : après scan, observer la barre de navigation ; ouvrir
   **« Classement »**.
-- **Résultat attendu** : la nav contient `Accueil`, `Ma rencontre`,
-  `Classement` — **pas** de « Mes rencontres » ni de « Jetons » ni de « Se
-  déconnecter » (session QR, R22). Le classement de **sa** rencontre s'affiche en
-  lecture (cf. cahier 18, CT-12).
+- **Résultat attendu** : la nav contient `Ma rencontre` et `Classement`, plus une
+  action **« Terminer »** — **pas** de « Mes rencontres », « Jetons », « Accueil »
+  ni « Se déconnecter » (session QR, R22). Le classement de **sa** rencontre
+  s'affiche en lecture (cf. cahier 18, CT-12).
 - **RLS / sécurité** : viser le classement d'une **autre** rencontre → **404**
   (borné, R12).
+- **Sortie** : cliquer **« Terminer »** → session fermée, retour à `/` qui
+  redirige aussitôt vers `/connexion` (plus de session) (R17/R22).
 
 ### CT-09 — Fin de session juge (couvre R17, R18, R22)
 
 - **Rôle** : juge (scan JD-JETON-JUGE), rencontre en ③.
 - **Étapes** : sur `/juge`, cliquer **« Terminer »**.
-- **Résultat attendu** : la session QR se ferme et redirige vers **`/`**
-  (accueil, « Session non authentifiée »). Aucune action « Se déconnecter » n'est
+- **Résultat attendu** : la session QR se ferme et revient à `/`, qui **redirige
+  vers `/connexion`** (plus de session). Aucune action « Se déconnecter » n'est
   proposée au juge (R22) ; l'entrée juge reste **QR-only** (R18).
 
 ### CT-10 — Vue classement admin (couvre R14, R15 ; voir cahier 18 CT-13)
@@ -125,12 +132,14 @@
      `/admin/grimpeurs`, `/admin/rencontres`, une rencontre et sa saisie.
   2. En coach permanent, ouvrir `/coach` puis `/coach/jetons`.
 - **Résultat attendu** :
-  - Le bandeau admin est **identique** sur **toutes** les pages : Accueil ·
-    Tableau de bord · Rencontres · Clubs · Grimpeurs · Gabarit · Jetons · Rôles,
-    ainsi que « Se déconnecter ». L'onglet **le plus spécifique** est surligné (sur
-    `/admin/rencontres`, « Rencontres » seul est actif, pas « Tableau de bord »).
-  - Le bandeau coach affiche **Accueil · Mes rencontres · Jetons** — y compris sur
-    **`/coach/jetons`** (non-régression : « Mes rencontres » y est bien présent).
+  - Le bandeau admin est **identique** sur **toutes** les pages : Tableau de bord ·
+    Rencontres · Clubs · Grimpeurs · Gabarit · Jetons · Rôles, ainsi que « Se
+    déconnecter ». **Aucun lien « Accueil »** (R7). L'onglet **le plus spécifique**
+    est surligné (sur `/admin/rencontres`, « Rencontres » seul est actif, pas
+    « Tableau de bord »).
+  - Le bandeau coach affiche **Mes rencontres · Jetons** (+ « Se déconnecter »),
+    y compris sur **`/coach/jetons`** (non-régression : « Mes rencontres » présent) ;
+    **pas** de lien « Accueil ».
 
 ## Registre d'exécution
 

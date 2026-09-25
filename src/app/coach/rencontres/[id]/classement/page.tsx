@@ -47,7 +47,7 @@ export default async function PageClassement({
   if (!classement) notFound()
 
   return (
-    <Coquille liens={liensCoach(contexte)} deconnexion={contexte.type === 'permanent'}>
+    <Coquille liens={liensCoach(contexte)} deconnexion={contexte.type === 'permanent'} finSession={contexte.type === 'temporaire'}>
       <div className="flex flex-col gap-6">
         <div>
           <EnTetePage

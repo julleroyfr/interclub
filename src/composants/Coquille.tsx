@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-import { seDeconnecter } from '@/lib/auth/actions'
+import { seDeconnecter, terminerSession } from '@/lib/auth/actions'
 
 import { NavPrincipale, type LienNav } from './NavPrincipale'
 
@@ -19,6 +19,11 @@ type Props = {
    * temporaire, juge) relèvent de la fin de session, pas de la déconnexion (R22).
    */
   deconnexion?: boolean
+  /**
+   * Affiche l'action « Terminer » (fin de session QR, spec #12 R17/R22) dans
+   * l'en-tête. Pour le **coach temporaire** : ferme la session et revient à `/`.
+   */
+  finSession?: boolean
 }
 
 const LARGEURS: Record<NonNullable<Props['largeur']>, string> = {
@@ -31,7 +36,13 @@ const LARGEURS: Record<NonNullable<Props['largeur']>, string> = {
  * en-tête collant avec logo + navigation. Server Component ; la nav
  * (surlignage actif) est isolée dans un Client Component.
  */
-export function Coquille({ liens, children, largeur = 'normale', deconnexion = false }: Props) {
+export function Coquille({
+  liens,
+  children,
+  largeur = 'normale',
+  deconnexion = false,
+  finSession = false,
+}: Props) {
   const largeurCls = LARGEURS[largeur]
   return (
     <div className="min-h-screen bg-fond bg-[radial-gradient(60rem_40rem_at_top,#0e2a3b,transparent)] text-texte">
@@ -52,6 +63,16 @@ export function Coquille({ liens, children, largeur = 'normale', deconnexion = f
                   className="rounded-lg border border-bordure px-3 py-1.5 text-sm font-medium text-texte-attenue transition hover:bg-surface hover:text-texte-fort"
                 >
                   Se déconnecter
+                </button>
+              </form>
+            )}
+            {finSession && (
+              <form action={terminerSession}>
+                <button
+                  type="submit"
+                  className="rounded-lg border border-bordure px-3 py-1.5 text-sm font-medium text-texte-attenue transition hover:bg-surface hover:text-texte-fort"
+                >
+                  Terminer
                 </button>
               </form>
             )}
