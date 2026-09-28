@@ -96,6 +96,16 @@ export default async function PageTableauDeBordRencontre({
                 📊 Voir le classement (tous clubs) →
               </Link>
             )}
+            {/* Écran de diffusion pour un second afficheur (spec #14), même
+                gate de phase que le classement (visible dès la ③). */}
+            {['competition', 'cloture', 'resultats_publics'].includes(structure.phase) && (
+              <Link
+                href={`/admin/rencontres/${id}/affichage`}
+                className="rounded-2xl border border-bordure bg-surface px-4 py-3 text-center text-sm font-bold text-texte transition hover:bg-surface-forte"
+              >
+                📺 Écran d&apos;affichage (second écran) →
+              </Link>
+            )}
           </aside>
 
           <div className="mt-4 flex flex-col gap-6 lg:mt-0 xl:grid xl:grid-cols-2 xl:items-start xl:gap-6">

@@ -44,3 +44,34 @@ body {
   color: var(--color-texte);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
+
+/*
+ * Écran d'affichage secondaire (spec #14) : défilement automatique en boucle du
+ * classement. Pause en tête/pied de course pour la lisibilité, translation sur
+ * la distance mesurée côté client (`--distance-defilement`). Désactivé en JS si
+ * `prefers-reduced-motion: reduce` (aucune règle CSS n'est donc nécessaire ici
+ * pour ce cas — cf. `ecran-defilant.tsx`).
+ */
+@keyframes defilement-classement {
+  0%,
+  4% {
+    transform: translateY(0);
+  }
+  96%,
+  100% {
+    transform: translateY(calc(-1 * var(--distance-defilement, 0px)));
+  }
+}
+
+/*
+ * Nom + timing posés ici (et non en JS) : un optimiseur CSS (Lightning CSS /
+ * Turbopack) qui ne voit `defilement-classement` référencé qu'en style inline
+ * JS le considère « inutilisé » et supprime le `@keyframes` du bundle — la
+ * classe ci-dessous le rend visible depuis la feuille de style elle-même. Seule
+ * la durée (variable selon le nombre de lignes) reste posée en inline JS.
+ */
+.defilement-auto {
+  animation-name: defilement-classement;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}

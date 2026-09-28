@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Maquette — Affichage écran secondaire (spec #14)</title>
+<style>
+  :root {
+    --fond: #020617;
+    --surface: rgba(255, 255, 255, 0.04);
+    --surface-forte: rgba(255, 255, 255, 0.08);
+    --bordure: rgba(255, 255, 255, 0.12);
+    --accent: #22d3ee;
+    --accent-doux: #67e8f9;
+    --secondaire: #bef264;
+    --danger: #fb7185;
+    --or: #fbbf24;
+    --texte-fort: #ffffff;
+    --texte: #e2e8f0;
+    --texte-attenue: #94a3b8;
+    --texte-doux: #64748b;
+    --fille: #f472b6;
+    --homme: #60a5fa;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--fond);
+    color: var(--texte);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.4;
+    padding: 24px 16px 80px;
+  }
+  h1 { color: var(--texte-fort); font-size: 20px; text-align: center; }
+  .intro { text-align: center; color: var(--texte-attenue); max-width: 760px; margin: 0 auto 32px; font-size: 14px; }
+  .grille { display: flex; flex-wrap: wrap; gap: 28px; justify-content: center; align-items: flex-start; }
+  .colonne { width: 100%; max-width: 920px; }
+  .colonne.petite { max-width: 420px; }
+  .colonne > .titre-option {
+    color: var(--accent); font-size: 13px; text-transform: uppercase; letter-spacing: .08em;
+    font-weight: 700; margin: 0 0 4px;
+  }
+  .colonne > .desc-option { color: var(--texte-doux); font-size: 12.5px; margin: 0 0 12px; }
+
+  /* --- cadre "écran de diffusion" (grand écran, pas mobile-first) --- */
+  .tv {
+    border: 1px solid var(--bordure); border-radius: 16px; overflow: hidden;
+    background: radial-gradient(circle at 50% -10%, rgba(34,211,238,0.10), rgba(2,6,23,0) 55%), var(--fond);
+    box-shadow: 0 20px 60px rgba(0,0,0,.6);
+  }
+  .tv-entete {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 18px 28px; border-bottom: 1px solid var(--bordure);
+  }
+  .tv-titre { color: var(--texte-fort); font-weight: 800; font-size: 22px; }
+  .tv-sous { color: var(--texte-attenue); font-size: 13px; margin-top: 3px; }
+  .tv-badges { display: flex; align-items: center; gap: 10px; }
+  .badge-phase {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(34,211,238,.12); color: var(--accent-doux);
+    border: 1px solid rgba(34,211,238,.3); border-radius: 999px;
+    padding: 5px 14px; font-size: 13px; font-weight: 700;
+  }
+  .officiel { display:inline-flex; align-items:center; gap:5px; font-size:13px; font-weight:700; border-radius:999px; padding:4px 14px; }
+  .officiel.non { color: var(--texte-attenue); background: rgba(148,163,184,.12); border:1px solid var(--bordure); }
+  .officiel.oui { color: var(--secondaire); background: rgba(190,242,100,.12); border:1px solid rgba(190,242,100,.3); }
+
+  /* fenêtre de défilement : hauteur fixe, contenu qui translate (R9) */
+  .tv-fenetre {
+    position: relative;
+    height: 480px;
+    overflow: hidden;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent 60px);
+  }
+  .tv-fenetre::before, .tv-fenetre::after {
+    content: ""; position: absolute; left: 0; right: 0; height: 36px; z-index: 2; pointer-events: none;
+  }
+  .tv-fenetre::before { top: 0; background: linear-gradient(180deg, var(--fond), transparent); }
+  .tv-fenetre::after { bottom: 0; background: linear-gradient(0deg, var(--fond), transparent); }
+
+  .tv-entete-colonnes {
+    display: grid; grid-template-columns: 64px 1fr 160px 110px;
+    padding: 10px 28px; color: var(--texte-doux); font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .05em; border-bottom: 1px solid var(--bordure);
+  }
+  .tv-entete-colonnes span:last-child { text-align: right; }
+
+  .tv-liste { position: relative; animation: defilement 14s linear infinite; }
+  @keyframes defilement {
+    0%   { transform: translateY(0); }
+    8%   { transform: translateY(0); }
+    92%  { transform: translateY(-620px); }
+    100% { transform: translateY(-620px); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .tv-liste { animation: none; }
+  }
+
+  .tv-ligne {
+    display: grid; grid-template-columns: 64px 1fr 160px 110px; align-items: center;
+    padding: 14px 28px; border-bottom: 1px solid rgba(255,255,255,.05);
+  }
+  .tv-ligne.mise-en-avant { background: rgba(190,242,100,.05); }
+  .tv-rang { color: var(--texte-doux); font-weight: 900; font-size: 22px; }
+  .tv-rang.podium1 { color: var(--or); }
+  .tv-rang.podium2 { color: #cbd5e1; }
+  .tv-rang.podium3 { color: #d8a06a; }
+  .tv-identite { display: flex; align-items: center; gap: 10px; }
+  .tv-nom { color: var(--texte-fort); font-weight: 700; font-size: 18px; }
+  .tv-club { color: var(--texte-doux); font-size: 13px; margin-top: 2px; }
+  .tv-sexe {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 24px; height: 24px; border-radius: 999px; font-size: 12px; font-weight: 800;
+    flex: none;
+  }
+  .tv-sexe.f { color: var(--fille); background: rgba(244,114,182,.14); border: 1px solid rgba(244,114,182,.4); }
+  .tv-sexe.h { color: var(--homme); background: rgba(96,165,250,.14); border: 1px solid rgba(96,165,250,.4); }
+  .tv-cat { color: var(--texte-doux); font-size: 13px; }
+  .tv-score { text-align: right; color: var(--secondaire); font-weight: 900; font-size: 20px; }
+  .tv-score .u { font-size: 11px; color: var(--texte-doux); font-weight: 700; margin-left: 3px; }
+
+  .tv-pied { padding: 10px 28px; color: var(--texte-doux); font-size: 12px; border-top: 1px solid var(--bordure); display:flex; justify-content:space-between; }
+
+  /* --- variante : état d'attente (R2) --- */
+  .attente { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 320px; gap: 10px; text-align: center; padding: 0 24px; }
+  .attente .icone { font-size: 34px; }
+  .attente .texte { color: var(--texte-attenue); font-size: 14px; max-width: 420px; }
+
+  .legende { max-width: 940px; margin: 44px auto 0; color: var(--texte-attenue); font-size: 13px; }
+  .legende h2 { color: var(--texte-fort); font-size: 15px; margin-bottom: 6px; }
+  .legende h3 { color: var(--accent-doux); font-size: 13px; margin: 16px 0 4px; }
+  .legende li { margin-bottom: 6px; }
+  .legende code { background: var(--surface-forte); padding: 1px 5px; border-radius: 5px; color: var(--texte-fort); font-size: 12px; }
+</style>
+</head>
+<body>
+  <h1>Affichage écran secondaire — maquette (spec #14)</h1>
+  <p class="intro">Écran <strong>réservé à l'admin authentifié</strong>, pensé pour un <strong>second afficheur</strong>
+  (TV/vidéoprojecteur) pendant la compétition — pas de conception mobile-first ici, c'est un écran de
+  <strong>diffusion</strong>. Classement <strong>individuel</strong> uniquement, Filles et Garçons
+  <strong>mélangés</strong> dans une seule liste, triée par <strong>rang</strong> puis <strong>nom</strong> puis
+  <strong>prénom</strong> (R4/R5). La liste <strong>défile seule</strong> (l'animation ci-dessous en donne un aperçu
+  ralenti) et <strong>recharge</strong> les données à chaque fin de boucle (R9/R10), sans pagination ni interaction
+  (R8/R12).</p>
+
+  <div class="grille">
+
+    <!-- ============ 1 · ÉCRAN EN DÉFILEMENT (③, non officiel) ============ -->
+    <section class="colonne">
+      <p class="titre-option">1 · Défilement en boucle — rencontre en ③ (R2–R6, R9)</p>
+      <p class="desc-option">Liste mixte Filles/Garçons, triée par rang puis nom puis prénom (R5). Chaque ligne porte une
+        étiquette <span class="tv-sexe f" style="display:inline-flex">F</span>/<span class="tv-sexe h" style="display:inline-flex">H</span>
+        pour lever l'ambiguïté des rangs partagés entre les deux classements (R6). L'animation illustre le
+        <strong>défilement automatique</strong> (R9) : en pratique la boucle recharge les données à la fin (R10).</p>
+      <div class="tv">
+        <div class="tv-entete">
+          <div>
+            <div class="tv-titre">11 oct. 2025 — CAF Bègles</div>
+            <div class="tv-sous">Catégorie enfant · Classement individuel · toutes catégories confondues</div>
+          </div>
+          <div class="tv-badges">
+            <span class="badge-phase">● Compétition — en direct</span>
+            <span class="officiel non">● Non officiel</span>
+          </div>
+        </div>
+        <div class="tv-entete-colonnes">
+          <span>#</span><span>Grimpeur</span><span>Club</span><span>Score</span>
+        </div>
+        <div class="tv-fenetre">
+          <div class="tv-liste">
+            <div class="tv-ligne">
+              <span class="tv-rang podium1">1</span>
+              <div class="tv-identite"><span class="tv-sexe f">F</span><div><div class="tv-nom">Léa Martin</div></div></div>
+              <span class="tv-cat">CAF Bègles</span>
+              <span class="tv-score">28<span class="u">pts</span></span>
+            </div>
+            <div class="tv-ligne">
+              <span class="tv-rang podium1">1</span>
+              <div class="tv-identite"><span class="tv-sexe h">H</span><div><div class="tv-nom">Noé Garnier</div></div></div>
+              <span class="tv-cat">ASPTT Talence</span>
+              <span class="tv-score">24<span class="u">pts</span></span>
+            </div>
+            <div class="tv-ligne">
+              <span class="tv-rang podium2">2</span>
+              <div class="tv-identite"><span class="tv-sexe h">H</span><div><div class="tv-nom">Hugo Blanc</div></div></div>
+              <span class="tv-cat">Stade Bordelais</span>
+              <span class="tv-score">19<span class="u">pts</span></span>
+            </div>
+            <div class="tv-ligne">
+              <span class="tv-rang podium2">2</span>
+              <div class="tv-identite"><span class="tv-sexe f">F</span><div><div class="tv-nom">Jade Lopez</div></div></div>
+              <span class="tv-cat">ASPTT Talence</span>
+              <span class="tv-score">22<span class="u">pts</span></span>
+            </div>
+            <div class="tv-ligne">
+              <span class="tv-rang podium3">3</span>
+              <div class="tv-identite"><span class="tv-sexe f">F</span><div><div class="tv-nom">Chloé Perez</div></div></div>
+              <span class="tv-cat">Stade Bordelais</span>
+              <span class="tv-score">20<span class="u">pts</span></span>
+            </div>
+            <div class="tv-ligne">
+              <span class="tv-rang">4</span>
+              <div class="tv-identite"><span class="tv-sexe f">F</span><div><div class="tv-nom">Anna Vidal</div></div></div>
+              <span class="tv-cat">ASPTT Talence</span>
+              <span class="tv-score">18<span class="u">pts</span></span>
+            </div>
+            <div class="tv-ligne">
+              <span class="tv-rang">4</span>
+              <div class="tv-identite"><span class="tv-sexe h">H</span><div><div class="tv-nom">Tom Dubois</div></div></div>
+              <span class="tv-cat">CAF Bègles</span>
+              <span class="tv-score">17<span class="u">pts</span></span>
+            </div>
+            <div class="tv-ligne">
+              <span class="tv-rang">5</span>
+              <div class="tv-identite"><span class="tv-sexe f">F</span><div><div class="tv-nom">Manon Faure</div></div></div>
+              <span class="tv-cat">US Cenon</span>
+              <span class="tv-score">16<span class="u">pts</span></span>
+            </div>
+            <div class="tv-ligne">
+              <span class="tv-rang">6</span>
+              <div class="tv-identite"><span class="tv-sexe f">F</span><div><div class="tv-nom">Sarah Nguyen</div></div></div>
+              <span class="tv-cat">CAF Bègles</span>
+              <span class="tv-score">15<span class="u">pts</span></span>
+            </div>
+            <div class="tv-ligne">
+              <span class="tv-rang">7</span>
+              <div class="tv-identite"><span class="tv-sexe h">H</span><div><div class="tv-nom">Louis Petit</div></div></div>
+              <span class="tv-cat">US Cenon</span>
+              <span class="tv-score">14<span class="u">pts</span></span>
+            </div>
+            <!-- Répétition pour donner de la matière au défilement (illustratif) -->
+            <div class="tv-ligne">
+              <span class="tv-rang">8</span>
+              <div class="tv-identite"><span class="tv-sexe f">F</span><div><div class="tv-nom">Louna Robert</div></div></div>
+              <span class="tv-cat">Stade Bordelais</span>
+              <span class="tv-score">13<span class="u">pts</span></span>
+            </div>
+            <div class="tv-ligne">
+              <span class="tv-rang">9</span>
+              <div class="tv-identite"><span class="tv-sexe h">H</span><div><div class="tv-nom">Enzo Roche</div></div></div>
+              <span class="tv-cat">ASPTT Talence</span>
+              <span class="tv-score">12<span class="u">pts</span></span>
+            </div>
+            <div class="tv-ligne">
+              <span class="tv-rang">10</span>
+              <div class="tv-identite"><span class="tv-sexe f">F</span><div><div class="tv-nom">Inès Moreau</div></div></div>
+              <span class="tv-cat">US Cenon</span>
+              <span class="tv-score">11<span class="u">pts</span></span>
+            </div>
+          </div>
+        </div>
+        <div class="tv-pied">
+          <span>Classement individuel · Filles + Garçons mélangés (R4)</span>
+          <span>Défilement automatique · rechargement en fin de liste (R9/R10)</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 2 · ÉTAT D'ATTENTE (avant ③, R2) ============ -->
+    <section class="colonne petite">
+      <p class="titre-option">2 · État d'attente — avant la ③ (R2)</p>
+      <p class="desc-option">Aucun résultat à classer : pas de liste, pas de défilement.</p>
+      <div class="tv">
+        <div class="tv-entete">
+          <div>
+            <div class="tv-titre">18 oct. 2025 — Stade Bordelais</div>
+            <div class="tv-sous">Catégorie ado · Classement individuel</div>
+          </div>
+          <div class="tv-badges">
+            <span class="officiel non">● Pré-compétition</span>
+          </div>
+        </div>
+        <div class="attente">
+          <div class="icone">⏳</div>
+          <div class="texte">Le classement s'affichera dès le début de la compétition (③). Rien à dérouler pour
+            l'instant.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 3 · OFFICIEL (⑤) ============ -->
+    <section class="colonne petite">
+      <p class="titre-option">3 · Résultats officiels — ⑤ (R7)</p>
+      <p class="desc-option">Même écran, même défilement en boucle ; l'étiquette passe à « Officiel ».</p>
+      <div class="tv">
+        <div class="tv-entete">
+          <div>
+            <div class="tv-titre">11 oct. 2025 — CAF Bègles</div>
+            <div class="tv-sous">Catégorie enfant · Classement individuel</div>
+          </div>
+          <div class="tv-badges">
+            <span class="officiel oui">✓ Officiel</span>
+          </div>
+        </div>
+        <div class="tv-entete-colonnes" style="grid-template-columns: 56px 1fr 90px;">
+          <span>#</span><span>Grimpeur</span><span style="text-align:right">Score</span>
+        </div>
+        <div style="padding: 6px 0 4px;">
+          <div class="tv-ligne" style="grid-template-columns: 56px 1fr 90px;">
+            <span class="tv-rang podium1">1</span>
+            <div class="tv-identite"><span class="tv-sexe f">F</span><div class="tv-nom">Léa Martin</div></div>
+            <span class="tv-score">28<span class="u">pts</span></span>
+          </div>
+          <div class="tv-ligne" style="grid-template-columns: 56px 1fr 90px;">
+            <span class="tv-rang podium1">1</span>
+            <div class="tv-identite"><span class="tv-sexe h">H</span><div class="tv-nom">Noé Garnier</div></div>
+            <span class="tv-score">24<span class="u">pts</span></span>
+          </div>
+          <div class="tv-ligne" style="grid-template-columns: 56px 1fr 90px;">
+            <span class="tv-rang podium2">2</span>
+            <div class="tv-identite"><span class="tv-sexe h">H</span><div class="tv-nom">Hugo Blanc</div></div>
+            <span class="tv-score">19<span class="u">pts</span></span>
+          </div>
+        </div>
+        <div class="tv-pied"><span>Résultats figés (spec #1)</span><span>Boucle inchangée (R10)</span></div>
+      </div>
+    </section>
+
+  </div>
+
+  <div class="legende">
+    <h2>Correspondance maquette → règles (spec #14)</h2>
+    <ul>
+      <li><strong>R1</strong> — écran réservé à l'admin authentifié (pas de version publique dans cette maquette).</li>
+      <li><strong>R2</strong> — écran 2 : avant la ③, état d'attente, aucun défilement.</li>
+      <li><strong>R3/R4</strong> — une seule liste, classement <strong>individuel</strong> uniquement, Filles et
+        Garçons mélangés (pas d'onglet ni de bascule, à la différence de la maquette classement.html).</li>
+      <li><strong>R5</strong> — tri par rang (celui du classement de son sexe) puis nom puis prénom : le rang 1
+        Fille précède ou suit le rang 1 Garçon selon l'ordre alphabétique des noms.</li>
+      <li><strong>R6</strong> — étiquette <span class="tv-sexe f" style="display:inline-flex">F</span>/<span class="tv-sexe h" style="display:inline-flex">H</span>
+        sur chaque ligne pour lever l'ambiguïté d'un rang partagé entre les deux classements fusionnés.</li>
+      <li><strong>R7</strong> — écran 3 : bandeau <span class="officiel oui">Officiel</span> à partir de la ⑤, même
+        présentation.</li>
+      <li><strong>R8/R12</strong> — pas de pagination, pas de recherche ni de filtre : liste complète, défilement
+        seul (à la différence de l'écran de consultation, spec #7 R12b).</li>
+      <li><strong>R9/R10</strong> — l'animation de l'écran 1 illustre le défilement continu ; dans l'implémentation
+        réelle, l'atteinte du bas de liste déclenche un rechargement puis une reprise en haut.</li>
+      <li><strong>R11</strong> — aucun canal temps réel : entre deux rechargements, la liste défile sur des données
+        figées (pas de mise à jour immédiate sur écriture externe).</li>
+    </ul>
+    <p style="margin-top:16px;color:var(--texte-doux)">L'animation CSS de l'écran 1 n'est qu'un <strong>aperçu
+      visuel</strong> du principe de défilement — l'implémentation réelle pilotera la vitesse et le cycle en JS côté
+      client, sans logique de calcul dupliquée (le classement reste calculé par le domaine, spec #7).</p>
+  </div>
+</body>
+</html>
