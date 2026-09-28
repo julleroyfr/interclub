@@ -1,0 +1,25 @@
+#!/bin/sh
+# Filet de sécurité avant push (= déploiement Netlify, cf. AGENTS.md).
+# Bloque le push si lint, typecheck ou les tests échouent.
+#
+# Contournement volontaire (déconseillé) : git push --no-verify
+
+echo "→ Lint (npm run lint)…"
+npm run --silent lint || {
+  echo "✗ Lint invalide."
+  exit 1
+}
+
+echo "→ Typecheck (npm run typecheck)…"
+npm run --silent typecheck || {
+  echo "✗ Typecheck invalide."
+  exit 1
+}
+
+echo "→ Tests (npm run test)…"
+npm run --silent test || {
+  echo "✗ Tests en échec."
+  exit 1
+}
+
+echo "✓ Lint, typecheck et tests OK."

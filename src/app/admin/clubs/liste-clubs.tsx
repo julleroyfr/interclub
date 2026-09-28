@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useEffect, useId, useState } from 'react'
+import { useActionState, useId, useState } from 'react'
 
 import { Bouton, ChampTexte } from '@/composants'
 import { renommerClub, supprimerClub } from '@/lib/clubs/actions'
@@ -69,9 +69,14 @@ function LigneClub({
 
   const invitationEffective: InvitationVue | null = invitation ?? invitationGeneree
 
-  useEffect(() => {
-    if (invitationGeneree) setOuvertQR(true)
-  }, [invitationGeneree])
+  // Ouvre le panneau QR à la génération, sans effet (ajustement pendant le
+  // rendu, cf. https://react.dev/learn/you-might-not-need-an-effect).
+  const [derniereInvitationGeneree, setDerniereInvitationGeneree] =
+    useState<InvitationVue | null>(null)
+  if (invitationGeneree && invitationGeneree !== derniereInvitationGeneree) {
+    setDerniereInvitationGeneree(invitationGeneree)
+    setOuvertQR(true)
+  }
 
   return (
     <div className="rounded-2xl border border-bordure bg-black/20 p-4">

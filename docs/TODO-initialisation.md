@@ -37,25 +37,17 @@ Domaine pur couvert par Vitest (`src/domaine/` : gabarit, engagement, résultat,
 score, vitesse, pret, invitation-coach…) ; parcours couverts par cahiers
 `docs/tests/10→21` et E2E Playwright (`e2e/`).
 
-> 🧪 **À faire côté utilisateur — appliquer les migrations en recette** (puis
-> prod à la bascule sur `main`). D'après `supabase/migrations/JOURNAL.md`, tout
-> le **lot fonctionnel reste `à appliquer`** en recette :
-> `202607291000` (gabarit) → `202609221600` (points de vitesse), soit les
-> gabarits/voies, phases (clôture, préparation), engagement, prêts, invitation
-> coach, saisie résultats, `grimpeur.sexe`, saisie vitesse juge et barème.
-> Appliquer dans l'ordre chronologique (SQL Editor), mettre à jour le JOURNAL,
-> puis dérouler les cahiers `docs/tests/11→21` en colonne **Recette**.
->
-> ⚠️ Le JOURNAL n'a pas d'entrée pour `202609181000_grimpeur_sexe`,
-> `202609181100_grant_epreuve_service_role` et `202609221000_resultat_auteur` :
-> les ajouter à la table de suivi lors de l'application.
+> ✅ **Migrations appliquées en recette** (2026-09-28, confirmé sur
+> `interclub.version`) : tout le lot, du socle `202607221000` jusqu'à
+> `202609251300_rpc_rechercher_grimpeurs_filtre_club` inclus.
+> `supabase/migrations/JOURNAL.md` à jour. **Reste à faire côté utilisateur** :
+> dérouler les cahiers `docs/tests/11→24` en colonne **Recette**, puis
+> application **prod** à la bascule sur `main` (reportée volontairement).
 
 ## ⏳ En attente (à faire)
 
 | ID | Tâche | Dépend de | Notes |
 | ---- | ------- | ----------- | ------- |
-| T10 | Export `viewport` (Next 16) dans le layout racine | — | cf. `07-standards-nextjs-16.md` §3 / `08` §3. Toujours absent de `src/app/layout.tsx`. |
-| T11 | (Option) Hook local pre-push : `lint` + `typecheck` + `test` | — | Filet de sécurité car `push` = déploiement. Pas de `.husky`. |
 | T13 | Étendre l'E2E Playwright sur parcours stabilisés | T7 | En cours : `admin-equipes`, `admin-prets`, `coach-engagement` couverts. Poursuivre au fil des specs stabilisées. |
 
 ## 🧊 Différés fonctionnels (reportés volontairement)
@@ -70,12 +62,25 @@ Tâches identifiées mais reportées, à traiter quand l'occasion se présente.
 
 ## ✅ Fait (archive — non rappelé)
 
-- **Specs #3→#10 codées & validées en local** (juil.→sept. 2026) : gabarit &
+- **T11 — Hook local pre-push** (2026-09-28) : `.githooks/pre-push` (`lint` +
+  `typecheck` + `test`), sur le même mécanisme `core.hooksPath` que le
+  `pre-commit` existant (pas de Husky). Filet de sécurité car `push` =
+  déploiement Netlify. A révélé et corrigé au passage une erreur de lint
+  pré-existante (`setState` synchrone dans un effect,
+  `src/app/admin/clubs/liste-clubs.tsx`) — corrigée en ajustant l'état pendant
+  le rendu plutôt que dans un `useEffect`.
+- **T10 — Export `viewport`** (2026-09-28) dans `src/app/layout.tsx` (Next 16,
+  cf. `08-ihm-responsive.md` §3).
+- **Migrations appliquées en recette** (2026-09-28) : tout le lot du socle à
+  `202609251300` inclus, confirmé sur `interclub.version` ; `JOURNAL.md` à
+  jour. Reste : dérouler les cahiers `docs/tests/11→24` en colonne Recette,
+  puis prod à la bascule sur `main`.
+- **Specs #3→#13 codées & validées en local** (juil.→sept. 2026) : gabarit &
   configuration de rencontre, tableau de bord admin, espace coach (engagement,
   prêts, invitation), saisie des résultats voie/bloc, classement + points de
   vitesse, saisie admin des résultats, saisie vitesse juge, barème de vitesse
-  par rang. Domaine Vitest + cahiers `docs/tests/10→21` + E2E. **Reste
-  utilisateur** : appliquer le lot de migrations en recette (cf. « En cours »).
+  par rang, import des licenciés. Domaine Vitest + cahiers `docs/tests/10→24`
+  et E2E.
 - **T12 — Suppression de `src/domaine/smoke.test.ts`** : fait (le domaine a de
   vrais tests).
 - **T9 — `<html lang="fr">`** dans `src/app/layout.tsx` (+ `suppressHydrationWarning`
