@@ -1,6 +1,9 @@
 # Spec : Navigation & routing
 
 - **Statut** : validée (2026-09-25)
+- **Révision du 2026-09-29 — export PDF** (spec #15, validée le 2026-09-29) :
+  ajout, sur la carte des routes, du point d'export PDF des classements admin et
+  coach (spec #15 R7). Aucune règle `Rn` modifiée.
 - **Sources** :
   - **Décision produit du 2026-09-25** (arbitrages navigation) : entrée coach
     unique, vue classement admin dédiée, sortie de session juge, classement en
@@ -203,6 +206,7 @@ flowchart TD
         COACH_RDV["/coach/rencontres/{id}"]
         COACH_RES["/coach/rencontres/{id}/resultats"]
         COACH_CLST["/coach/rencontres/{id}/classement"]
+        COACH_PDF["/coach/rencontres/{id}/classement/pdf"]
     end
     COACH --> COACH_JETONS
     COACH -->|déconnexion| CONNEXION
@@ -213,6 +217,7 @@ flowchart TD
     COACH_RES <--> COACH_CLST
     COACH_RDV -->|retour| COACH
     COACH_RDV -.temporaire : lecture.-> COACH_CLST
+    COACH_CLST -.⑤ + club engagé : export.-> COACH_PDF
 
     subgraph ESPACE_JUGE["Espace Juge"]
         JUGE["/juge"]
@@ -228,6 +233,7 @@ flowchart TD
         A_RDV["/admin/rencontres/{id}"]
         A_RES["/admin/rencontres/{id}/resultats"]
         A_CLST["/admin/rencontres/{id}/classement"]
+        A_PDF["/admin/rencontres/{id}/classement/pdf"]
     end
     ADMIN --> A_CLUBS & A_JETONS & A_RDVS
     A_RDVS <--> A_RDV
@@ -235,6 +241,7 @@ flowchart TD
     A_RDV -->|jetons| A_JETONS
     A_RES <--> A_CLST
     A_RDV --> A_CLST
+    A_CLST -.⑤ : export.-> A_PDF
 ```
 
 ## Contraintes de données

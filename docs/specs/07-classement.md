@@ -498,8 +498,9 @@ individuel est séparé par sexe.)*
   dédiée. Cette spec ne traite que le classement **d'une rencontre**. *(Volume
   saison ≈ 8 000 lignes/an → calcul à la volée encore adapté ; un cache/vue ne se
   justifierait que pour un écran saison très sollicité, à réévaluer alors.)*
-- **Stockage / historisation** des classements et **export** (PDF, communication
-  CT33) → hors périmètre.
+- **Export PDF** des classements officiels (communication CT33) → **spec #15**
+  (`15-export-pdf-classements.md`, ajout du 2026-09-29). **Stockage /
+  historisation** des classements → hors périmètre.
 - **Temps réel (rafraîchissement en direct)** — *évolution future, différée (notée
   le 2026-09-22).* Le classement est **recalculé à la lecture** (R10) : il reflète
   l'état courant à chaque chargement/revalidation, mais n'est **pas poussé en

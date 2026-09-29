@@ -2,11 +2,12 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
-import { Coquille, EnTetePage, Etiquette, TempsReel, variantePhase } from '@/composants'
+import { Coquille, EnTetePage, Etiquette, LienExportPdf, TempsReel, variantePhase } from '@/composants'
 import { CATEGORIES, PHASES, phaseEnDirect, type Categorie, type Phase } from '@/domaine/rencontre'
 import { liensAdmin } from '@/lib/admin/navigation'
 import { exigerAdmin } from '@/lib/auth/session'
 import { getClassementRencontre } from '@/lib/classement/classement'
+import { exportDisponible } from '@/lib/export/export-classement'
 
 import { PanneauClassement } from '@/app/coach/rencontres/[id]/classement/panneau-classement'
 
@@ -44,6 +45,8 @@ export default async function PageClassementAdmin({
   const { id } = await params
   const classement = await getClassementRencontre(id)
   if (!classement) notFound()
+  // Export PDF : rencontre officielle (⑤) uniquement (spec #15 R1/R3/R7).
+  const exportPdf = await exportDisponible(id, { role: 'admin' })
 
   return (
     <Coquille liens={liensAdmin()} largeur="large" deconnexion>
@@ -78,6 +81,11 @@ export default async function PageClassementAdmin({
               actif={phaseEnDirect(classement.phase)}
             />
           </div>
+          {exportPdf && (
+            <div className="mt-3">
+              <LienExportPdf href={`/admin/rencontres/${id}/classement/pdf`} />
+            </div>
+          )}
         </div>
 
         <PanneauClassement classement={classement} monClubId={null} />

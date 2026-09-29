@@ -1,11 +1,12 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
-import { Coquille, EnTetePage, Etiquette, TempsReel, variantePhase } from '@/composants'
+import { Coquille, EnTetePage, Etiquette, LienExportPdf, TempsReel, variantePhase } from '@/composants'
 import { CATEGORIES, PHASES, phaseEnDirect, type Categorie, type Phase } from '@/domaine/rencontre'
 import { exigerContexteCoach } from '@/lib/auth/session'
 import { getClassementRencontre } from '@/lib/classement/classement'
 import { liensCoach } from '@/lib/coach/navigation'
+import { exportDisponible } from '@/lib/export/export-classement'
 
 import { PanneauClassement } from './panneau-classement'
 
@@ -45,6 +46,13 @@ export default async function PageClassement({
 
   const classement = await getClassementRencontre(id)
   if (!classement) notFound()
+  // Export PDF : ⑤ et club du coach permanent engagé (spec #15 R1/R4/R5/R7).
+  const exportPdf = await exportDisponible(
+    id,
+    contexte.type === 'permanent'
+      ? { role: 'coach_permanent', clubId: contexte.clubId }
+      : { role: 'coach_temporaire' },
+  )
 
   return (
     <Coquille liens={liensCoach(contexte)} deconnexion={contexte.type === 'permanent'} finSession={contexte.type === 'temporaire'}>
@@ -73,6 +81,11 @@ export default async function PageClassement({
               actif={phaseEnDirect(classement.phase)}
             />
           </div>
+          {exportPdf && (
+            <div className="mt-3">
+              <LienExportPdf href={`/coach/rencontres/${id}/classement/pdf`} />
+            </div>
+          )}
         </div>
 
         <PanneauClassement classement={classement} monClubId={contexte.clubId} />
