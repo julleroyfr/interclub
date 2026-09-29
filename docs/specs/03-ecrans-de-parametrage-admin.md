@@ -8,6 +8,9 @@
   2026-09-23** — le modèle R46 (dernier échelon ouvert) est inchangé.
   **Champ `licence` (R21b) ajouté le 2026-09-25** : numéro de licence FFME,
   optionnel, entier positif.
+  **Nom d'équipe par défaut (R41c) ajouté le 2026-09-29** (renvoi spec #5
+  R10bis) ; **recherche à l'ajout d'un grimpeur (R41c) le 2026-09-29** (renvoi
+  spec #5 R12bis).
 - **Sources** : décision produit du 2026-07-25 (tranche T8 — premiers écrans
   d'administration). S'appuie sur la **spec #1 — Rôles & autorisations**
   (`01-roles-et-autorisations.md`), qui reste la vérité pour « qui peut faire
@@ -373,6 +376,10 @@ saisie, les flux CRUD, et les règles de suppression (dépendances / cascade).
   engagé** (au moins une équipe), auquel cas son bloc est **ouvert d'office**.
   Chaque en-tête de bloc affiche les **compteurs** du club (nombre d'équipes, de
   grimpeurs).
+  Le formulaire de création d'équipe de chaque bloc pré-remplit le nom avec
+  « &lt;nom du club&gt; N » selon la **même règle** que la spec #5 R10bis
+  (ajout 2026-09-29). Le formulaire d'ajout d'un grimpeur à une équipe offre la
+  **recherche nom/prénom** de la spec #5 R12bis (ajout 2026-09-29).
 - **R42.** La **structure** est organisée en **trois onglets** — **Voies de
   difficulté**, **Blocs**, **Vitesse** — chacun indiquant son **nombre
   d'éléments** et n'affichant qu'un seul type à la fois. Chaque onglet **liste les

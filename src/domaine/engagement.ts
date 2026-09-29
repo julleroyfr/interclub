@@ -59,6 +59,47 @@ export function normaliserNomEquipe(nom: string): string {
 }
 
 /**
+ * Nom proposé par défaut pour une nouvelle équipe (R10bis) : « <club> N », N =
+ * plus grand numéro `k ≥ 1` parmi les équipes nommées exactement « <club> k »
+ * (après normalisation R4, sensible à la casse), + 1 ; 1 si aucune.
+ */
+export function nomEquipeParDefaut(clubNom: string, nomsExistants: readonly string[]): string {
+  const club = (clubNom ?? '').trim().replace(/\s+/g, ' ')
+  const prefixe = `${club} `
+  let max = 0
+  for (const nom of nomsExistants) {
+    const n = (nom ?? '').trim().replace(/\s+/g, ' ')
+    if (!n.startsWith(prefixe)) continue
+    const suffixe = n.slice(prefixe.length)
+    if (!/^[1-9]\d*$/.test(suffixe)) continue
+    max = Math.max(max, Number(suffixe))
+  }
+  return `${prefixe}${max + 1}`
+}
+
+/** Minuscules sans accents, pour une comparaison tolérante (R12bis). */
+function pourRecherche(texte: string): string {
+  return (texte ?? '').normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
+}
+
+/**
+ * Filtre les grimpeurs proposés à l'ajout (R12bis) : chaque terme de la
+ * recherche doit figurer dans le nom ou le prénom (casse et accents ignorés,
+ * ordre libre). Recherche vide → tout le roster, ordre préservé.
+ */
+export function filtrerGrimpeursRecherche<G extends { nom: string; prenom: string }>(
+  grimpeurs: readonly G[],
+  recherche: string,
+): G[] {
+  const termes = pourRecherche(recherche).split(/\s+/).filter(Boolean)
+  if (termes.length === 0) return [...grimpeurs]
+  return grimpeurs.filter((g) => {
+    const cible = pourRecherche(`${g.prenom} ${g.nom}`)
+    return termes.every((t) => cible.includes(t))
+  })
+}
+
+/**
  * Dérive les 3 voies de niveau croissant qu'un enfant enchaîne à partir de son
  * groupe de départ (R20), en suivant l'échelle `M1→M4 puis T1→T10`. Lance
  * `GroupeDepartInvalideError` si le groupe n'est pas un départ valide (hors

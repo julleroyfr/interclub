@@ -10,6 +10,12 @@
   « Jetons » devient un **lien interne** de l'espace coach (R10) ; le coach
   **temporaire** gagne l'accès à son **classement en lecture**, borné à sa
   rencontre (R11). Détails et diagramme : `12-navigation-et-routing.md`.
+- **Révision** : 2026-09-29 — **nom d'équipe par défaut** (R10bis, règle de
+  changement validée le 2026-09-29) : le champ « Nouvelle équipe » est
+  pré-rempli avec « &lt;nom du club&gt; N » (N = plus grand numéro existant + 1),
+  modifiable. S'applique aussi à la création admin (spec #3 R41c).
+  **Recherche dans le roster à l'ajout** (R12bis, demande du 2026-09-29) : champ
+  de recherche nom/prénom filtrant la liste des grimpeurs proposés.
 - **Sources** :
   - **Spec #1 — Rôles & autorisations** (`01-roles-et-autorisations.md`), vérité
     pour « qui peut faire quoi » : coach rattaché à un club (R16), CRUD équipes
@@ -151,6 +157,15 @@ cette spec. (Spec #1 R6/R27, rév. 2026-09-01.)
   son club pour cette rencontre (spec #1 R17). Le **nom** d'équipe est
   **obligatoire** et **unique** au sein du couple `(rencontre, club)`
   (contrainte SQL `equipe unique (rencontre_id, club_id, nom)`).
+- **R10bis.** À la création, le nom d'équipe est **pré-rempli** (modifiable)
+  avec « **&lt;nom du club&gt; N** », où **N** vaut le **plus grand numéro** `k`
+  parmi les équipes du club dans la rencontre nommées exactement « &lt;nom du
+  club&gt; k » (`k` entier ≥ 1, comparaison après normalisation R4, sensible à la
+  casse), **plus 1** ; **N = 1** si aucune équipe ne suit ce motif. Les équipes
+  nommées autrement sont **ignorées** ; un numéro libéré (suppression, renommage)
+  n'est **pas réutilisé** tant qu'un numéro supérieur existe. Le nom proposé reste
+  soumis à R4/R10 (normalisation, unicité). *Ex.* club « Grimp'Ouest » avec
+  « Grimp'Ouest 1 », « Grimp'Ouest 3 » et « Juniors » → « Grimp'Ouest 4 ».
 - **R11.** Un club peut engager **plusieurs équipes** dans une même rencontre (à
   noms distincts, R10).
 - **R12.** Le coach **compose** une équipe en y **ajoutant** ou **retirant** des
@@ -162,6 +177,16 @@ cette spec. (Spec #1 R6/R27, rév. 2026-09-01.)
   d'un grimpeur **hors tranche d'âge** est **refusé**. La catégorie **enfant**
   admet « moins de 13 ans » **et** l'année-pivot (13 ans) ; **ado**, « 13 à 19 ans »
   (le pivot est éligible aux deux, R34).
+- **R12bis.** Le formulaire d'ajout propose, au-dessus de la liste des grimpeurs
+  (R12), un **champ de recherche** qui **filtre** les grimpeurs proposés sur leur
+  **nom et prénom** : insensible à la **casse** et aux **accents**, **multi-termes**
+  (chaque terme doit figurer dans le nom ou le prénom, dans n'importe quel ordre).
+  Une recherche vide propose tout le roster disponible. La liste affiche le
+  **nombre de grimpeurs correspondants** ; une **correspondance unique** est
+  **présélectionnée** ; sans correspondance, la liste l'indique et l'ajout est
+  impossible. La recherche est **purement d'affichage** : elle ne
+  change pas quels grimpeurs sont éligibles (R12–R14). *Ex.* « ana alp » ou
+  « alpha ANA » trouvent « Ana Alpha » ; « eleonore » trouve « Éléonore ».
 - **R13.** Le coach **ne peut pas créer de prêt** : mettre à disposition un
   grimpeur d'un **autre club** (ou de l'équipe CT33) est **réservé à l'admin**
   (spec #1 R35) ; l'ajout d'un grimpeur ni du club ni prêté est **refusé**. En
@@ -242,6 +267,15 @@ A1 apparaît avec un effectif 6/8 (R9) et la composition est persistée.
 Étant donné 11 grimpeurs inscrits au club A pour une rencontre, quand le coach
 crée « A1 » (8 grimpeurs) puis « A2 » (3 grimpeurs) (R10/R11/R12), alors les deux
 équipes coexistent ; A2 est **incomplète** (3/8), ce qui est autorisé (R15).
+
+### Nominal — nom d'équipe par défaut
+
+Étant donné le club « Vertical » sans équipe dans la rencontre, quand le coach
+ouvre l'écran d'engagement, alors le champ « Nouvelle équipe » propose
+« Vertical 1 » (R10bis) ; après création, il propose « Vertical 2 ». S'il crée
+« Vertical 2 » puis supprime « Vertical 1 », le champ propose « Vertical 3 »
+(numéro libéré non réutilisé). S'il renomme ensuite « Vertical 2 » en « Minimes »,
+plus aucune équipe ne suit le motif : le champ propose « Vertical 1 ».
 
 ### Nominal — préparation jour J (coach temporaire)
 

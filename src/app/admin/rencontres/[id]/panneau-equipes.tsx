@@ -1,9 +1,14 @@
 'use client'
 
-import { useActionState, useId, useRef } from 'react'
+import { useActionState, useId, useRef, useState } from 'react'
 
 import { Bouton, Carte, ChampSelect, ChampTexte, TitreSection } from '@/composants'
-import { EFFECTIF_EQUIPE_MAX, GROUPES_DEPART } from '@/domaine/engagement'
+import {
+  EFFECTIF_EQUIPE_MAX,
+  GROUPES_DEPART,
+  filtrerGrimpeursRecherche,
+  nomEquipeParDefaut,
+} from '@/domaine/engagement'
 import {
   ajouterGrimpeurAdmin,
   creerEquipeAdmin,
@@ -79,7 +84,14 @@ export function PanneauEquipes({
                   </ul>
                 )}
 
-                <FormNouvelleEquipe rencontreId={rencontreId} clubId={c.clubId} />
+                <FormNouvelleEquipe
+                  rencontreId={rencontreId}
+                  clubId={c.clubId}
+                  nomParDefaut={nomEquipeParDefaut(
+                    c.clubNom,
+                    c.engagement.equipes.map((eq) => eq.nom),
+                  )}
+                />
               </div>
             </details>
           </Carte>
@@ -238,8 +250,12 @@ function FormAjout({
   estEnfant: boolean
 }) {
   const [etat, action, enCours] = useActionState(ajouterGrimpeurAdmin, etatInitial)
+  const idRecherche = useId()
   const idGrimpeur = useId()
   const idGroupe = useId()
+  // Recherche nom/prénom (spec #5 R12bis), purement d'affichage.
+  const [recherche, setRecherche] = useState('')
+  const filtres = filtrerGrimpeursRecherche(disponibles, recherche)
 
   if (disponibles.length === 0) {
     return (
@@ -256,17 +272,30 @@ function FormAjout({
     >
       <input type="hidden" name="rencontreId" value={rencontreId} />
       <input type="hidden" name="equipeId" value={equipeId} />
+      <ChampTexte
+        id={idRecherche}
+        label="Ajouter un grimpeur"
+        type="search"
+        placeholder="Rechercher un nom ou prénom…"
+        autoComplete="off"
+        value={recherche}
+        onChange={(e) => setRecherche(e.target.value)}
+      />
       <ChampSelect
+        // Remonté à chaque recherche : repart du placeholder, ou présélectionne
+        // l'unique correspondance (R12bis).
+        key={recherche}
         id={idGrimpeur}
         name="grimpeurId"
-        label="Ajouter un grimpeur"
-        options={disponibles.map((g) => ({
+        label={`Grimpeur (${filtres.length})`}
+        defaultValue={filtres.length === 1 ? filtres[0].id : undefined}
+        options={filtres.map((g) => ({
           value: g.id,
           label: g.prete
             ? `${g.prenom} ${g.nom} (prêté · ${g.clubOrigineNom})`
             : `${g.prenom} ${g.nom}`,
         }))}
-        placeholder="— Choisir —"
+        placeholder={filtres.length ? '— Choisir —' : 'Aucun grimpeur pour cette recherche'}
         required
       />
       {estEnfant && (
@@ -322,12 +351,15 @@ function FormSupprimer({
   )
 }
 
+/** Création d'équipe pour un club, pré-remplie « <club> N » (spec #5 R10bis). */
 function FormNouvelleEquipe({
   rencontreId,
   clubId,
+  nomParDefaut,
 }: {
   rencontreId: string
   clubId: string
+  nomParDefaut: string
 }) {
   const [etat, action, enCours] = useActionState(creerEquipeAdmin, etatInitial)
   const idNom = useId()
@@ -345,10 +377,12 @@ function FormNouvelleEquipe({
       <input type="hidden" name="rencontreId" value={rencontreId} />
       <input type="hidden" name="clubId" value={clubId} />
       <ChampTexte
+        // Remonté quand le défaut change (après création) pour l'afficher (R10bis).
+        key={nomParDefaut}
         id={idNom}
         name="nom"
         label="Nouvelle équipe"
-        placeholder="Ex. A3"
+        defaultValue={nomParDefaut}
         required
         maxLength={100}
         autoComplete="off"

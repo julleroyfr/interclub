@@ -3,7 +3,13 @@
 import { useActionState, useEffect, useId, useRef, useState } from 'react'
 
 import { Bouton, ChampSelect, ChampTexte } from '@/composants'
-import { EFFECTIF_EQUIPE_MAX, GROUPES_DEPART, voiesDuGroupeDepart } from '@/domaine/engagement'
+import {
+  EFFECTIF_EQUIPE_MAX,
+  GROUPES_DEPART,
+  filtrerGrimpeursRecherche,
+  nomEquipeParDefaut,
+  voiesDuGroupeDepart,
+} from '@/domaine/engagement'
 import {
   ajouterGrimpeurEquipe,
   creerEquipe,
@@ -69,7 +75,15 @@ export function PanneauEngagement({
         </ul>
       )}
 
-      {peutEditer && <FormNouvelleEquipe rencontreId={rencontreId} />}
+      {peutEditer && (
+        <FormNouvelleEquipe
+          rencontreId={rencontreId}
+          nomParDefaut={nomEquipeParDefaut(
+            engagement.clubNom,
+            engagement.equipes.map((eq) => eq.nom),
+          )}
+        />
+      )}
     </div>
   )
 }
@@ -306,8 +320,11 @@ function FormAjoutGrimpeur({
   estEnfant: boolean
 }) {
   const [etat, action, enCours] = useActionState(ajouterGrimpeurEquipe, etatInitial)
+  const idRecherche = useId()
   const idGrimpeur = useId()
   const idGroupe = useId()
+  // Recherche nom/prénom dans le roster (R12bis), purement d'affichage.
+  const [recherche, setRecherche] = useState('')
   // Après un ajout réussi, la revalidation change la composition : le parent
   // remonte ce formulaire (via `key`), ce qui le vide sans setState dans un effet.
   const [groupe, setGroupe] = useState('')
@@ -321,6 +338,7 @@ function FormAjoutGrimpeur({
   }
 
   const voies = groupe ? voiesDuGroupeDepart(groupe).join(' · ') : null
+  const filtres = filtrerGrimpeursRecherche(disponibles, recherche)
 
   return (
     <form
@@ -330,18 +348,31 @@ function FormAjoutGrimpeur({
       <input type="hidden" name="rencontreId" value={rencontreId} />
       <input type="hidden" name="equipeId" value={equipe.id} />
 
-      <ChampSelect
-        id={idGrimpeur}
-        name="grimpeurId"
+      <ChampTexte
+        id={idRecherche}
         label="Ajouter depuis le roster"
         tonLabel="accent"
-        options={disponibles.map((g) => ({
+        type="search"
+        placeholder="Rechercher un nom ou prénom…"
+        autoComplete="off"
+        value={recherche}
+        onChange={(e) => setRecherche(e.target.value)}
+      />
+      <ChampSelect
+        // Remonté à chaque recherche : repart du placeholder, ou présélectionne
+        // l'unique correspondance (R12bis).
+        key={recherche}
+        id={idGrimpeur}
+        name="grimpeurId"
+        label={`Grimpeur (${filtres.length})`}
+        defaultValue={filtres.length === 1 ? filtres[0].id : undefined}
+        options={filtres.map((g) => ({
           value: g.id,
           label: g.prete
             ? `${g.prenom} ${g.nom} (prêté · ${g.clubOrigineNom})`
             : `${g.prenom} ${g.nom}`,
         }))}
-        placeholder="— Choisir un grimpeur —"
+        placeholder={filtres.length ? '— Choisir un grimpeur —' : 'Aucun grimpeur pour cette recherche'}
         required
       />
 
@@ -417,8 +448,17 @@ function FormSupprimerEquipe({
   )
 }
 
-/** Formulaire de création d'une nouvelle équipe (R10/R11). Se vide après succès. */
-function FormNouvelleEquipe({ rencontreId }: { rencontreId: string }) {
+/**
+ * Formulaire de création d'une nouvelle équipe (R10/R11), pré-rempli avec le nom
+ * par défaut « <club> N » (R10bis). Revient au nouveau défaut après succès.
+ */
+function FormNouvelleEquipe({
+  rencontreId,
+  nomParDefaut,
+}: {
+  rencontreId: string
+  nomParDefaut: string
+}) {
   const [etat, action, enCours] = useActionState(creerEquipe, etatInitial)
   const idNom = useId()
   const formRef = useRef<HTMLFormElement>(null)
@@ -435,11 +475,13 @@ function FormNouvelleEquipe({ rencontreId }: { rencontreId: string }) {
     >
       <input type="hidden" name="rencontreId" value={rencontreId} />
       <ChampTexte
+        // Remonté quand le défaut change (après création) pour l'afficher (R10bis).
+        key={nomParDefaut}
         id={idNom}
         name="nom"
         label="Nouvelle équipe"
         tonLabel="accent"
-        placeholder="Ex. A3"
+        defaultValue={nomParDefaut}
         required
         maxLength={100}
         autoComplete="off"

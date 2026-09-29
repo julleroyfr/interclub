@@ -9,7 +9,7 @@
 > Règles dans [docs/conventions/06-cahier-de-test.md](../conventions/06-cahier-de-test.md).
 
 - **Spec de référence** :
-  `docs/specs/05-espace-coach.md` (R1–R21) ;
+  `docs/specs/05-espace-coach.md` (R1–R21, dont R10bis, R12bis) ;
   `docs/specs/01-roles-et-autorisations.md` (R6, R16, R17, R27, R35, R36) ;
   `docs/specs/02-authentification-et-sessions-qr.md` (R12, validité QR
   nature-dépendante) ;
@@ -290,6 +290,44 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
     lien **« Ma rencontre »** pointant directement vers **sa** rencontre
     (`…/rencontres/33333333-…`), qui **s'ouvre sans 404** (R8bis).
   - Le coach **permanent**, lui, conserve « Mes rencontres » (CT-01).
+
+### CT-16 `[auto]` — Nom d'équipe par défaut « <club> N »   (couvre : R10bis ; nominal)
+
+- **Rôle / compte** : `coach@test.local` (permanent Club A).
+- **Pré-condition** : phase **`pre_competition`** ; équipes Club A du seed : **A1**,
+  **A2** (hors motif « Club A k »).
+- **Étapes** :
+  1. Ouvrir `/coach/rencontres/33333333-…` : lire le champ « Nouvelle équipe ».
+  2. Cliquer « Créer l'équipe » sans modifier le champ.
+  3. Relire le champ ; remplacer sa valeur par « Club A 5 » et créer.
+  4. Relire le champ ; supprimer « Club A 5 » puis relire le champ.
+- **Résultat attendu** :
+  1. Le champ est **pré-rempli** « **Club A 1** » (A1/A2 ignorées) et modifiable.
+  2. L'équipe « Club A 1 » est créée.
+  3. Le champ propose « **Club A 2** » ; « Club A 5 » est créée.
+  4. Le champ propose « **Club A 6** », puis « **Club A 2** » après suppression
+     de « Club A 5 » (max restant = 1).
+- **Nettoyage** : supprimer « Club A 1 ».
+
+### CT-17 `[auto]` — Recherche nom/prénom à l'ajout d'un grimpeur   (couvre : R12bis ; nominal + cas limite)
+
+- **Rôle / compte** : `coach@test.local` (permanent Club A).
+- **Pré-condition** : phase **`pre_competition`** ; équipe **A2** (vide) ; pool
+  de libres Club A (Chloé … Jade, nom **Alpha**).
+- **Étapes** (formulaire d'ajout de l'équipe A2) :
+  1. Lire le compteur « Grimpeur (n) » sans rien saisir.
+  2. Saisir « ALPHA » ; puis « felix » ; puis « alpha chl ».
+  3. Saisir « zzz ».
+  4. Saisir « felix » puis cliquer « Ajouter » sans toucher à la liste.
+- **Résultat attendu** :
+  1. Tout le roster disponible est proposé (n = nombre de libres éligibles).
+  2. « ALPHA » → tous les Alpha (casse ignorée) ; « felix » → **Félix Alpha**
+     seul (accents ignorés) ; « alpha chl » → **Chloé Alpha** seule (multi-termes,
+     ordre libre). Une correspondance unique est **présélectionnée**.
+  3. Compteur **0**, liste « Aucun grimpeur pour cette recherche » ; l'ajout est
+     bloqué (champ requis).
+  4. Félix Alpha est ajouté à A2 ; le champ de recherche est **vidé**.
+- **Nettoyage** : retirer Félix Alpha de A2.
 
 ## Registre d'exécution
 

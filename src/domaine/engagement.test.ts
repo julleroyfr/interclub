@@ -5,6 +5,8 @@ import {
   GROUPES_DEPART,
   EngagementInvalideError,
   GroupeDepartInvalideError,
+  filtrerGrimpeursRecherche,
+  nomEquipeParDefaut,
   normaliserNomEquipe,
   verifierAjoutComposition,
   voiesDuGroupeDepart,
@@ -21,6 +23,68 @@ describe('Nom d’équipe — normalisation (R4/R10)', () => {
 
   it('rejette un nom vide (R10)', () => {
     expect(() => normaliserNomEquipe('   ')).toThrow(EngagementInvalideError)
+  })
+})
+
+describe('Nom d’équipe par défaut (R10bis)', () => {
+  it('propose « <club> 1 » quand le club n’a aucune équipe', () => {
+    expect(nomEquipeParDefaut('Vertical', [])).toBe('Vertical 1')
+  })
+
+  it('incrémente le plus grand numéro existant', () => {
+    expect(nomEquipeParDefaut('Vertical', ['Vertical 1', 'Vertical 2'])).toBe('Vertical 3')
+  })
+
+  it('ne réutilise pas un numéro libéré (max + 1)', () => {
+    expect(nomEquipeParDefaut('Vertical', ['Vertical 1', 'Vertical 3'])).toBe('Vertical 4')
+  })
+
+  it('ignore les équipes nommées hors motif', () => {
+    expect(
+      nomEquipeParDefaut('Vertical', ['Minimes', 'Vertical', 'Vertical 2b', 'Vertical 0', 'vertical 5']),
+    ).toBe('Vertical 1')
+  })
+
+  it('compare après normalisation (R4) du nom de club et des équipes', () => {
+    expect(nomEquipeParDefaut('  Grimp  Ouest ', ['Grimp Ouest  2 '])).toBe('Grimp Ouest 3')
+  })
+
+  it('traite les caractères spéciaux du nom de club littéralement', () => {
+    expect(nomEquipeParDefaut('C.A.F (33)', ['CxAxF (33) 4', 'C.A.F (33) 2'])).toBe('C.A.F (33) 3')
+  })
+})
+
+describe('Recherche dans le roster à l’ajout (R12bis)', () => {
+  const roster = [
+    { id: '1', prenom: 'Ana', nom: 'Alpha' },
+    { id: '2', prenom: 'Éléonore', nom: 'Dupré' },
+    { id: '3', prenom: 'Bob', nom: 'Alpha' },
+  ]
+  const ids = (q: string) => filtrerGrimpeursRecherche(roster, q).map((g) => g.id)
+
+  it('une recherche vide (ou blanche) propose tout le roster', () => {
+    expect(ids('')).toEqual(['1', '2', '3'])
+    expect(ids('   ')).toEqual(['1', '2', '3'])
+  })
+
+  it('filtre sur le nom ou le prénom, insensible à la casse', () => {
+    expect(ids('ALPHA')).toEqual(['1', '3'])
+    expect(ids('bob')).toEqual(['3'])
+  })
+
+  it('est insensible aux accents, dans les deux sens', () => {
+    expect(ids('eleonore')).toEqual(['2'])
+    expect(ids('dupré')).toEqual(['2'])
+  })
+
+  it('exige chaque terme, dans n’importe quel ordre', () => {
+    expect(ids('ana alp')).toEqual(['1'])
+    expect(ids('alpha ANA')).toEqual(['1'])
+    expect(ids('ana dupre')).toEqual([])
+  })
+
+  it('préserve l’ordre et renvoie les objets d’origine', () => {
+    expect(filtrerGrimpeursRecherche(roster, 'a')[0]).toBe(roster[0])
   })
 })
 

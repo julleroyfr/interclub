@@ -150,6 +150,8 @@ export type EngagementRencontre = {
   categorie: Categorie
   phase: Phase
   clubPorteurNom: string
+  /** Nom du club engagé (celui du coach), pour le nom d'équipe par défaut (R10bis). */
+  clubNom: string
   editable: boolean
   equipes: EquipeEngagee[]
   /** Roster du club, avec l'état « déjà engagé dans cette rencontre » (R14). */
@@ -176,7 +178,8 @@ export async function getEngagementRencontre(
   if (!rencontre) return null
 
   const [clubRes, equipesRes, rosterRes, pretsRes] = await Promise.all([
-    supabase.from('club').select('nom').eq('id', rencontre.club_porteur_id as string).maybeSingle(),
+    // Club porteur (en-tête) + club engagé (nom d'équipe par défaut, R10bis).
+    supabase.from('club').select('id, nom').in('id', [rencontre.club_porteur_id as string, clubId]),
     supabase
       .from('equipe')
       .select('id, nom, composition(grimpeur_id, groupe_depart)')
@@ -303,12 +306,16 @@ export async function getEngagementRencontre(
     })),
   ]
 
+  const nomDuClub = (id: string) =>
+    ((clubRes.data ?? []).find((c) => c.id === id)?.nom as string | undefined) ?? '(club inconnu)'
+
   return {
     id: rencontre.id as string,
     dateRencontre: rencontre.date_rencontre as string,
     categorie: rencontre.categorie as Categorie,
     phase: rencontre.phase as Phase,
-    clubPorteurNom: (clubRes.data?.nom as string) ?? '(club inconnu)',
+    clubPorteurNom: nomDuClub(rencontre.club_porteur_id as string),
+    clubNom: nomDuClub(clubId),
     editable: estEditable(rencontre.phase as Phase),
     equipes,
     roster,

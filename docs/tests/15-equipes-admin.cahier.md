@@ -53,6 +53,24 @@ A2 (vide) — Club A ; B1 (Cléo) — Club B ; Devi Bravo (Club B) libre.
   L'admin lève seulement la restriction **inter-club** (R35/R10) — il peut engager
   un grimpeur d'un autre club — mais pas ces invariants.
 
+### CT-04 `[auto]` — Nom d'équipe par défaut par club   (couvre : spec #3 R41c ; spec #5 R10bis)
+
+- **Rôle / compte** : `admin@test.local`.
+- **Étapes** : déplier les blocs **Club A** et **Club B** ; lire chaque champ
+  « Nouvelle équipe » ; dans le bloc Club B, créer sans modifier, puis relire.
+- **Résultat attendu** : le bloc Club A propose « **Club A 1** », le bloc Club B
+  « **Club B 1** » (équipes A1/A2/B1 hors motif) ; après création, le bloc Club B
+  propose « **Club B 2** ». Nettoyage : supprimer « Club B 1 ».
+
+### CT-05 `[auto]` — Recherche nom/prénom à l'ajout d'un grimpeur   (couvre : spec #3 R41c ; spec #5 R12bis)
+
+- **Rôle / compte** : `admin@test.local`.
+- **Étapes** : bloc **Club A**, formulaire d'ajout de l'équipe **A2** ; saisir
+  « felix », puis « alpha chl », puis « zzz ».
+- **Résultat attendu** : mêmes filtrages que le cahier 13 CT-17 (Félix Alpha
+  seul et présélectionné ; Chloé Alpha seule ; « zzz » → compteur 0, ajout
+  bloqué).
+
 ## Registre d'exécution
 
 | Date | Testeur | Version/commit | Cas | Marque | Résultat | Remarque |
@@ -60,3 +78,5 @@ A2 (vide) — Club A ; B1 (Cléo) — Club B ; Devi Bravo (Club B) libre.
 | | | | CT-01 | auto | ✅ / ❌ | accès + panneau |
 | | | | CT-02 | auto | ✅ / ❌ | CRUD autre club en compétition |
 | | | | CT-03 | manuel | ✅ / ❌ | invariants R14/R15/R34 |
+| | | | CT-04 | auto | ✅ / ❌ | nom d'équipe par défaut (R10bis) |
+| | | | CT-05 | auto | ✅ / ❌ | recherche à l'ajout (R12bis) |
