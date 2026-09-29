@@ -15,6 +15,7 @@ import {
   TeteTableau,
   TitreSection,
 } from '@/composants'
+import { filtrerGrimpeursRecherche } from '@/domaine/engagement'
 import { creerPretAction, revoquerPretAction } from '@/lib/prets/prets-actions'
 import type {
   ClubOption,
@@ -112,9 +113,10 @@ function FormulairePret({
   const idGrimpeur = useId()
   const idClub = useId()
 
-  const q = recherche.trim().toLowerCase()
-  const grimpeursFiltres = grimpeurs.filter(
-    (g) => g.clubId === clubOrigine && (q === '' || g.nom.toLowerCase().includes(q)),
+  // Recherche nom/prénom alignée sur l'ajout en équipe (spec #5 R12bis).
+  const grimpeursFiltres = filtrerGrimpeursRecherche(
+    grimpeurs.filter((g) => g.clubId === clubOrigine),
+    recherche,
   )
   const clubsAccueil = clubs.filter((c) => c.id !== clubOrigine)
 
@@ -147,6 +149,9 @@ function FormulairePret({
             onChange={(e) => setRecherche(e.target.value)}
           />
           <ChampSelect
+            // Remonté à chaque recherche : repart du placeholder, ou présélectionne
+            // l'unique correspondance (R12bis).
+            key={recherche}
             id={idGrimpeur}
             name="grimpeurId"
             label={`Grimpeur à prêter (${grimpeursFiltres.length})`}
@@ -156,7 +161,8 @@ function FormulairePret({
                 ? 'Sélectionnez un grimpeur…'
                 : 'Aucun grimpeur pour ce filtre'
             }
-            options={grimpeursFiltres.map((g) => ({ value: g.id, label: g.nom }))}
+            defaultValue={grimpeursFiltres.length === 1 ? grimpeursFiltres[0].id : undefined}
+            options={grimpeursFiltres.map((g) => ({ value: g.id, label: `${g.prenom} ${g.nom}` }))}
           />
         </>
       )}

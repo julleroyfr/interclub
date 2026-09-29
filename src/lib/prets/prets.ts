@@ -12,7 +12,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 // ouverts en RLS `authenticated` (cf. ADR 0002/0003). À n'appeler que derrière
 // une garde admin ; l'écriture, elle, passe par la RLS (client authenticated).
 
-export type GrimpeurOption = { id: string; nom: string; clubId: string }
+export type GrimpeurOption = { id: string; prenom: string; nom: string; clubId: string }
 export type ClubOption = { id: string; nom: string }
 
 export type PretExistant = {
@@ -94,7 +94,12 @@ export async function chargerPretsRencontre(
       saison === null ||
       estEligibleCategorie(g.annee_naissance as number, categorie, saison)
     if (eligible && !indisponibles.has(g.id as string)) {
-      grimpeurs.push({ id: g.id as string, nom: nomComplet, clubId: g.club_id as string })
+      grimpeurs.push({
+        id: g.id as string,
+        prenom: g.prenom as string,
+        nom: g.nom as string,
+        clubId: g.club_id as string,
+      })
     }
   }
 

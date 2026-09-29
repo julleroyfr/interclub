@@ -75,6 +75,17 @@ Seed `01` : rencontre pilote `3333…` (Club A, enfant) ; **Devi Bravo** (Club B
   roster (sauf s'il est encore composé dans une équipe — le prêt et l'appartenance
   sont indépendants).
 
+### CT-06 `[auto]` — Recherche nom/prénom du grimpeur à prêter   (couvre : spec #3 R41c ; spec #5 R12bis)
+
+- **Rôle / compte** : `admin@test.local`.
+- **Étapes** : panneau « Prêts » → **Club du grimpeur = Club A** ; saisir
+  successivement « ALPHA », « felix », « alpha chl », « zzz ».
+- **Résultat attendu** : « ALPHA » → les grimpeurs Alpha disponibles (casse
+  ignorée) ; « felix » → **Félix Alpha** seul et **présélectionné** (accents
+  ignorés) ; « alpha chl » → **Chloé Alpha** seule (multi-termes, ordre libre) ;
+  « zzz » → « Aucun grimpeur pour ce filtre », création bloquée. Les libellés
+  affichent « Prénom Nom ».
+
 ## Registre d'exécution
 
 | Date | Testeur | Version/commit | Cas | Marque | Résultat | Remarque |
@@ -84,3 +95,4 @@ Seed `01` : rencontre pilote `3333…` (Club A, enfant) ; **Devi Bravo** (Club B
 | | | | CT-03 | auto | ✅ / ❌ | refus même club |
 | | | | CT-04 | auto | ✅ / ❌ | doublon |
 | | | | CT-05 | auto | ✅ / ❌ | révocation |
+| | | | CT-06 | auto | ✅ / ❌ | recherche nom/prénom (R12bis) |

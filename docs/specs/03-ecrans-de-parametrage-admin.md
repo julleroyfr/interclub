@@ -10,7 +10,7 @@
   optionnel, entier positif.
   **Nom d'équipe par défaut (R41c) ajouté le 2026-09-29** (renvoi spec #5
   R10bis) ; **recherche à l'ajout d'un grimpeur (R41c) le 2026-09-29** (renvoi
-  spec #5 R12bis).
+  spec #5 R12bis), étendue au **formulaire de prêt** le même jour.
 - **Sources** : décision produit du 2026-07-25 (tranche T8 — premiers écrans
   d'administration). S'appuie sur la **spec #1 — Rôles & autorisations**
   (`01-roles-et-autorisations.md`), qui reste la vérité pour « qui peut faire
@@ -379,7 +379,9 @@ saisie, les flux CRUD, et les règles de suppression (dépendances / cascade).
   Le formulaire de création d'équipe de chaque bloc pré-remplit le nom avec
   « &lt;nom du club&gt; N » selon la **même règle** que la spec #5 R10bis
   (ajout 2026-09-29). Le formulaire d'ajout d'un grimpeur à une équipe offre la
-  **recherche nom/prénom** de la spec #5 R12bis (ajout 2026-09-29).
+  **recherche nom/prénom** de la spec #5 R12bis (ajout 2026-09-29). Le
+  formulaire de **prêt** (spec #1 R35 : club d'origine puis grimpeur) applique la
+  **même recherche** aux grimpeurs du club d'origine (ajout 2026-09-29).
 - **R42.** La **structure** est organisée en **trois onglets** — **Voies de
   difficulté**, **Blocs**, **Vitesse** — chacun indiquant son **nombre
   d'éléments** et n'affichant qu'un seul type à la fois. Chaque onglet **liste les
