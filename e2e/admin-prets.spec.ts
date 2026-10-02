@@ -67,7 +67,7 @@ test.describe('Écran admin — prêts de grimpeurs (R35)', () => {
     // rencontre ENFANT (R34). Inséré puis nettoyé.
     const ADO = 'b0000000-0000-0000-0000-0000000000b9'
     execSql(
-      `insert into interclub.grimpeur (id, club_id, nom, prenom, annee_naissance) values ('${ADO}','22222222-2222-2222-2222-222222222222','Bravo','Grand',2000) on conflict (id) do nothing;`,
+      `insert into interclub.grimpeur (id, club_id, nom, prenom, annee_naissance, sexe, licence) values ('${ADO}','22222222-2222-2222-2222-222222222222','Bravo','Grand',2000,'H',9999009) on conflict (id) do nothing;`,
     )
     try {
       await commeAdmin(page)

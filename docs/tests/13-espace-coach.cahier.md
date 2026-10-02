@@ -80,7 +80,8 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
     (2 équipes · 2 grimpeurs).
   - La carte est un lien vers `/coach/rencontres/33333333-…`.
 - **RLS / sécurité** : `sansmapping@test.local` sur `/coach` → **404** ; un
-  visiteur non connecté sur `/coach` → **404**.
+  visiteur non connecté sur `/coach` → **redirection vers `/connexion`**
+  (spec #12 R2 ; cf. cahier 23 CT-04).
 
 ### CT-02 `[auto]` — Créer une équipe et composer (permanent, pré-compétition)   (couvre : R9, R10, R11, R12, R15 ; nominal)
 
@@ -352,3 +353,5 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
 | 2026-09-04 | agent/playwright | 0a9f8bf | CT-13 | auto | ✅ | RLS inter-club |
 | 2026-09-18 | agent/playwright | develop | CT-14 | auto | ✅ | carte → saisie en ③ (R7) |
 | 2026-09-18 | agent/playwright | develop | CT-15 | auto | ✅ | nav coach temp → « Ma rencontre » (R8bis) |
+| 2026-10-02 | agent/playwright | develop | CT-01 | auto | ✅ | négatif réaligné : anonyme → `/connexion` (spec #12 R2), sans rôle → 404 |
+| 2026-10-02 | agent/playwright | develop | CT-01→CT-15 | auto | ✅ | suite complète verte après correctifs E1 (insert grimpeur `sexe`/`licence`) |

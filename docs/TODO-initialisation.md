@@ -57,8 +57,7 @@ score, vitesse, pret, invitation-coach…) ; parcours couverts par cahiers
 
 | ID | Tâche | Dépend de | Notes |
 | ---- | ------- | ----------- | ------- |
-| E1 | **Réparer les 5 tests E2E obsolètes / dépendants de l'ordre** : `admin-prets` (insert grimpeur sans `sexe`/`licence`), `coach-engagement` CT-01 (attend 404 pour anonyme sur `/coach`, or spec #12 → redirection `/connexion`), `navigation-routing` CT-10 (dépend de la phase laissée par un test précédent), CT-08/CT-09 (scan QR coach temp/juge, dépend de la phase/date) | — | Repéré 2026-10-02 (échouent aussi sans la spec #16). Préalable à T13. |
-| T13 | Étendre l'E2E Playwright sur parcours stabilisés | T7, E1 | En cours : `admin-equipes`, `admin-prets`, `coach-engagement`, `navigation-routing`, `admin-controle` couverts. Poursuivre au fil des specs stabilisées. |
+| T13 | Étendre l'E2E Playwright sur parcours stabilisés | T7 | En cours : `admin-equipes`, `admin-prets`, `coach-engagement`, `navigation-routing`, `admin-controle` couverts. Poursuivre au fil des specs stabilisées. |
 
 ## 🧊 Différés fonctionnels (reportés volontairement)
 
@@ -73,6 +72,14 @@ Tâches identifiées mais reportées, à traiter quand l'occasion se présente.
 
 ## ✅ Fait (archive — non rappelé)
 
+- **E1 — Tests E2E obsolètes réparés** (2026-10-02) : insertions de grimpeur
+  complétées (`sexe`/`licence`) dans `admin-prets` et `coach-engagement` ;
+  CT-01 négatif réaligné sur la spec #12 R2 (anonyme → `/connexion`, cahier 13
+  corrigé) ; `navigation-routing` CT-08/09/10 regroupés avec pré-conditions
+  explicites (③ + jour J) et état seed restauré. Au passage, `scripts/test-t6.sh`
+  réparé (`sexe`/`licence`, `temps_vitesse.issue`) → 23/23. Suite E2E chromium
+  verte sur base au seed (`admin-controle` exige une base sans données
+  `seed-volume-affichage`).
 - **T11 — Hook local pre-push** (2026-09-28) : `.githooks/pre-push` (`lint` +
   `typecheck` + `test`), sur le même mécanisme `core.hooksPath` que le
   `pre-commit` existant (pas de Husky). Filet de sécurité car `push` =

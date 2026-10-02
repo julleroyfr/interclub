@@ -1,7 +1,8 @@
 import { expect, test } from '@playwright/test'
 
 import { commeAdmin, commeCoach, commeCoachTemporaire, commeSansMapping } from './helpers/auth'
-import { JETON, RENCONTRE_PILOTE } from './helpers/donnees'
+import { JETON, RENCONTRE_PILOTE, RENCONTRE_PILOTE_DATE } from './helpers/donnees'
+import { nettoyerSessionsQr, poserDate, poserPhase } from './helpers/sql'
 
 /**
  * Cahier 23 — Navigation & routing (spec #12). Valide les redirections, la garde
@@ -95,17 +96,6 @@ test.describe('Cahier 23 — Navigation & routing (spec #12)', () => {
     await expect(page).toHaveURL(/\/coach\/jetons/)
   })
 
-  // ---- CT-10 : vue classement admin (R14/R15) ----
-  test('CT-10 · lien classement admin → vue admin (pas /coach)', async ({ page }) => {
-    await commeAdmin(page)
-    await page.goto(`/admin/rencontres/${RENCONTRE_PILOTE}`)
-    await page.getByRole('link', { name: /voir le classement/i }).click()
-    await expect(page).toHaveURL(new RegExp(`/admin/rencontres/${RENCONTRE_PILOTE}/classement`))
-    await expect(page).not.toHaveURL(/\/coach\//)
-    // Remontée explicite (R19) : le lien retour « ← Tableau de bord ».
-    await expect(page.getByRole('link', { name: '← Tableau de bord' })).toBeVisible()
-  })
-
   // ---- CT-11 : bandeau cohérent, sans « Accueil » (R23, R7) ----
   test('CT-11 · bandeau admin : liens présents, aucun « Accueil »', async ({ page }) => {
     await commeAdmin(page)
@@ -123,27 +113,55 @@ test.describe('Cahier 23 — Navigation & routing (spec #12)', () => {
     await expect(nav(page).getByRole('link', { name: 'Accueil' })).toHaveCount(0)
   })
 
-  // ---- CT-08 : coach temporaire — nav bornée + « Terminer » (R11/R22) ----
-  // Dépend de la fenêtre QR « jour J » : peut échouer si la rencontre seed n'est
-  // pas dans la fenêtre au moment du run.
-  test('CT-08 · coach temporaire : nav bornée + Terminer', async ({ page }) => {
-    await commeCoachTemporaire(page)
-    await expect(nav(page).getByRole('link', { name: 'Ma rencontre' })).toBeVisible()
-    await expect(nav(page).getByRole('link', { name: 'Classement' })).toBeVisible()
-    await expect(nav(page).getByRole('link', { name: 'Mes rencontres' })).toHaveCount(0)
-    await expect(nav(page).getByRole('link', { name: 'Accueil' })).toHaveCount(0)
-    await expect(page.getByRole('button', { name: /terminer/i })).toBeVisible()
-    await expect(page.getByRole('button', { name: /se déconnecter/i })).toHaveCount(0)
-  })
+  // ---- Cas dépendant de la phase : rencontre pilote en ③, jour J ----
+  // CT-08/09 ouvrent une session QR (fenêtre ③ + garde-fou date), CT-10 a besoin
+  // du lien « Voir le classement » (visible dès la ③). Pré-conditions posées ici
+  // (indépendance vis-à-vis des autres tests), état seed restauré à la fin.
+  test.describe('rencontre pilote en compétition', () => {
+    test.describe.configure({ mode: 'serial' })
 
-  // ---- CT-09 : fin de session juge (R17/R18/R22) ----
-  // Dépend de la fenêtre QR « jour J » (rencontre en ③).
-  test('CT-09 · juge : « Terminer » ferme la session', async ({ page }) => {
-    await page.goto(`/scan?jeton=${JETON.juge}`)
-    await page.waitForURL('**/juge')
-    await expect(page.getByRole('button', { name: /se déconnecter/i })).toHaveCount(0)
-    await page.getByRole('button', { name: /terminer/i }).click()
-    // terminerSession → / → redirige vers /connexion (plus de session).
-    await expect(page).toHaveURL(/\/connexion/)
+    test.beforeAll(() => {
+      nettoyerSessionsQr()
+      poserPhase('competition')
+      poserDate('today')
+    })
+
+    test.afterAll(() => {
+      nettoyerSessionsQr()
+      poserPhase('pre_competition')
+      poserDate(RENCONTRE_PILOTE_DATE)
+    })
+
+    // ---- CT-10 : vue classement admin (R14/R15) ----
+    test('CT-10 · lien classement admin → vue admin (pas /coach)', async ({ page }) => {
+      await commeAdmin(page)
+      await page.goto(`/admin/rencontres/${RENCONTRE_PILOTE}`)
+      await page.getByRole('link', { name: /voir le classement/i }).click()
+      await expect(page).toHaveURL(new RegExp(`/admin/rencontres/${RENCONTRE_PILOTE}/classement`))
+      await expect(page).not.toHaveURL(/\/coach\//)
+      // Remontée explicite (R19) : le lien retour « ← Tableau de bord ».
+      await expect(page.getByRole('link', { name: '← Tableau de bord' })).toBeVisible()
+    })
+
+    // ---- CT-08 : coach temporaire — nav bornée + « Terminer » (R11/R22) ----
+    test('CT-08 · coach temporaire : nav bornée + Terminer', async ({ page }) => {
+      await commeCoachTemporaire(page)
+      await expect(nav(page).getByRole('link', { name: 'Ma rencontre' })).toBeVisible()
+      await expect(nav(page).getByRole('link', { name: 'Classement' })).toBeVisible()
+      await expect(nav(page).getByRole('link', { name: 'Mes rencontres' })).toHaveCount(0)
+      await expect(nav(page).getByRole('link', { name: 'Accueil' })).toHaveCount(0)
+      await expect(page.getByRole('button', { name: /terminer/i })).toBeVisible()
+      await expect(page.getByRole('button', { name: /se déconnecter/i })).toHaveCount(0)
+    })
+
+    // ---- CT-09 : fin de session juge (R17/R18/R22) ----
+    test('CT-09 · juge : « Terminer » ferme la session', async ({ page }) => {
+      await page.goto(`/scan?jeton=${JETON.juge}`)
+      await page.waitForURL('**/juge')
+      await expect(page.getByRole('button', { name: /se déconnecter/i })).toHaveCount(0)
+      await page.getByRole('button', { name: /terminer/i }).click()
+      // terminerSession → / → redirige vers /connexion (plus de session).
+      await expect(page).toHaveURL(/\/connexion/)
+    })
   })
 })

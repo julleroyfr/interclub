@@ -111,7 +111,7 @@ test.describe('Cahier 13 — Espace coach : engagement', () => {
     )
   })
 
-  test('CT-01 (négatif) — /coach interdit hors coach : 404 (RLS/garde)', async ({
+  test('CT-01 (négatif) — /coach interdit hors coach : 404 / connexion (garde)', async ({
     page,
     browser,
   }) => {
@@ -120,11 +120,12 @@ test.describe('Cahier 13 — Espace coach : engagement', () => {
     const reponseSansRole = await page.goto('/coach')
     expect(reponseSansRole?.status()).toBe(404)
 
-    // Visiteur non connecté (contexte vierge) → 404.
+    // Visiteur non connecté (contexte vierge) → redirection /connexion
+    // (spec #12 R2 : refus par absence de session).
     const contexteAnonyme = await browser.newContext()
     const pageAnonyme = await contexteAnonyme.newPage()
-    const reponseAnonyme = await pageAnonyme.goto('/coach')
-    expect(reponseAnonyme?.status()).toBe(404)
+    await pageAnonyme.goto('/coach')
+    await expect(pageAnonyme).toHaveURL(/\/connexion/)
     await contexteAnonyme.close()
   })
 
@@ -302,7 +303,7 @@ test.describe('Cahier 13 — Espace coach : engagement', () => {
     // Grimpeur Club A ADO (né en 2000) : hors tranche d'âge d'une rencontre enfant.
     const ADO = 'a0000000-0000-0000-0000-0000000000af'
     execSql(
-      `insert into interclub.grimpeur (id, club_id, nom, prenom, annee_naissance) values ('${ADO}','${CLUB_A}','Alpha','Vieux',2000) on conflict (id) do nothing;`,
+      `insert into interclub.grimpeur (id, club_id, nom, prenom, annee_naissance, sexe, licence) values ('${ADO}','${CLUB_A}','Alpha','Vieux',2000,'H',9999008) on conflict (id) do nothing;`,
     )
     try {
       await commeCoach(page)

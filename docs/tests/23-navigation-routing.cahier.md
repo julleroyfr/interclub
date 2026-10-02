@@ -159,3 +159,4 @@
 | 2026-09-25 | Playwright e2e | `24ad806` | CT-09 | ✅ | Juge « Terminer » → /connexion (fenêtre QR ③ ouverte) |
 | 2026-09-25 | Playwright e2e | `24ad806` | CT-10 | ✅ | Lien classement admin → /admin/.../classement (jamais /coach) |
 | 2026-09-25 | Playwright e2e | `24ad806` | CT-11 | ✅ | Bandeaux sans « Accueil » ; liens attendus présents |
+| 2026-10-02 | Playwright e2e | develop | CT-08/09/10 | ✅ | Pré-conditions explicites (③ + jour J), état seed restauré — plus de dépendance à l'ordre |
