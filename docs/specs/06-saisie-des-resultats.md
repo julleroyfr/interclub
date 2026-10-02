@@ -4,7 +4,8 @@
   ligne (compteur `n/6`, R18) ; visibilité des résultats **au fil de l'eau pour
   tous** dès la ③, ⑤ = officialisation (spec #1 R8, rév. 2026-09-08) ;
   **rév. 2026-10-02** : ajout de **R21bis** (affichage avant la ③ — message
-  explicite au lieu de « groupe de départ à définir » et de compteurs vides)
+  explicite au lieu de « groupe de départ à définir » et de compteurs vides) ;
+  **R1** alignée sur la spec #12 (non connecté → `/connexion`)
 - **Sources** :
   - **Spec #1 — Rôles & autorisations** (`01-roles-et-autorisations.md`), vérité
     pour « qui peut faire quoi » : un coach **saisit et modifie les résultats des
@@ -120,9 +121,10 @@ au public (spec #1 R6/R8).
 ### Accès et périmètre
 
 - **R1.** La saisie des résultats se fait dans l'**espace coach** (sous `/coach`),
-  **réservé au rôle `coach`** (permanent ou temporaire). Un utilisateur non-coach
-  (admin, juge, anonyme sans session coach, non connecté) reçoit **404** — l'espace
-  est **masqué** (aligné spec #5 R1, spec #1 R1/R22).
+  **réservé au rôle `coach`** (permanent ou temporaire). Un utilisateur **connecté**
+  non-coach (admin, juge, sans rôle) reçoit **404** — l'espace est **masqué** (aligné
+  spec #5 R1, spec #1 R1/R22, spec #12 R3). Un visiteur **non connecté** est
+  **redirigé vers `/connexion`** (spec #12 R2 ; rév. 2026-10-02).
 - **R2.** Le coach ne saisit et ne consulte que les résultats des **grimpeurs de
   son club** engagés dans la rencontre (composition d'une de ses équipes), grimpeurs
   **prêtés** à son club inclus (spec #1 R36). Il ne voit ni ne modifie les résultats
@@ -315,8 +317,8 @@ authentifié (spec #1 R8, spec #8).
 
 ### Cas limites / erreurs
 
-- Ouverture de la saisie par un **admin**, un **juge** ou un **non connecté** →
-  **404** (R1).
+- Ouverture de la saisie par un **admin** ou un **juge** → **404** ; par un **non
+  connecté** → redirection vers **`/connexion`** (R1, spec #12 R2/R3).
 - Coach du club A tentant de saisir un résultat pour un grimpeur du **club B** →
   **refusé** (R2).
 - Saisie d'un résultat **hors phase ③** (en ①/②, ou après ④/⑤) par un coach →
