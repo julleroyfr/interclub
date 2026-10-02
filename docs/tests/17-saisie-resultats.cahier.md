@@ -217,6 +217,23 @@ Cas particuliers à préparer à la main :
   « en attente ». Le **score** affiche « à venir (classement) » (R23, calcul hors
   périmètre).
 
+### CT-15 — Avant la ③ : voies et blocs annoncés `[mixte]`   (couvre : R21bis, R9)
+
+- **Rôle / compte** : coach permanent Club A.
+- **Pré-condition** : rencontre **enfant** en **préparation** (SQL) ; **Bob** a un
+  groupe de départ (T1).
+- **Étapes** :
+  1. Ouvrir l'écran de saisie : observer la liste des grimpeurs.
+  2. Ouvrir **Bob**.
+- **Résultat attendu** :
+  - Dans la liste, **aucun compteur** 🧗/🧱 (pas de `0/0`) ; l'état ⚡ et le score
+    restent affichés.
+  - Sur Bob, à la place des sections Voie/Bloc, un **message unique** : « Les voies
+    et blocs seront visibles à l'ouverture de la compétition. » — **jamais** « Groupe
+    de départ à définir » (réservé à un enfant **sans** groupe, dès la ③ — R9).
+  - Vitesse et score affichés (R22/R23).
+  - *(Vérifier à l'œil : lisibilité du message sur téléphone.)*
+
 ## Registre d'exécution
 
 > **Couverture automatique** (2026-09-18, stack locale, branche `develop` WIP) :
@@ -244,3 +261,4 @@ Cas particuliers à préparer à la main :
 | 2026-09-18 | auto | develop (WIP) | CT-13 | ✅ | R6/R8 lecture ③+ tous clubs + écriture refusée (RLS) ✅ `test:resultats` |
 | | | | CT-14 | ✅ / ❌ | manuel (vitesse lecture seule) |
 | 2026-10-02 | agent/playwright | develop | CT-01 → CT-12, CT-14 | ✅ | `e2e/coach-saisie-resultats.spec.ts` (14 tests). Résidus manuels : couleurs des pastilles (CT-04), geste de balayage (CT-03), rendu des deux vues (CT-02) |
+| 2026-10-02 | agent/playwright | develop | CT-15 | ✅ | R21bis (rév. spec #6 2026-10-02) — message avant la ③, sans compteurs ni « groupe à définir » |

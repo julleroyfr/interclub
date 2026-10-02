@@ -2,7 +2,7 @@
 
 import { useActionState, useMemo, useState } from 'react'
 
-import { issuesVoieSaisissables, type IssueVoie } from '@/domaine/resultat'
+import { affichageVoiesBlocs, issuesVoieSaisissables, type IssueVoie } from '@/domaine/resultat'
 import { formaterTempsVitesse } from '@/domaine/vitesse'
 import {
   retirerResultatVoie,
@@ -121,7 +121,7 @@ export function PanneauResultats({ saisie }: { saisie: SaisieRencontre }) {
       ) : (
         <>
           <Onglets vue={vue} setVue={setVue} />
-          <ListeGrimpeurs vue={vue} ordreVue={ordreVue} onChoisir={setSelId} />
+          <ListeGrimpeurs saisie={saisie} vue={vue} ordreVue={ordreVue} onChoisir={setSelId} />
         </>
       )}
     </div>
@@ -159,17 +159,23 @@ function Onglets({
   )
 }
 
-/** Compteurs de progression + état vitesse (R20/R22). */
-function Chips({ grimpeur }: { grimpeur: GrimpeurSaisie }) {
+/** Compteurs de progression + état vitesse (R20/R22) ; sans compteurs avant la ③ (R21bis). */
+function Chips({ saisie, grimpeur }: { saisie: SaisieRencontre; grimpeur: GrimpeurSaisie }) {
   const { progression: p, vitesse } = grimpeur
+  const avantCompetition =
+    affichageVoiesBlocs(saisie.phase, saisie.categorie, grimpeur.groupeDepart) === 'avant_competition'
   const chip = 'inline-flex items-center gap-1 rounded-full border border-bordure bg-black/20 px-2 py-0.5 text-[11px] font-bold text-texte-attenue'
   const ok = 'border-secondaire/30 text-secondaire'
   const voiesOk = p.voiesFaites >= p.voiesTotal
   const blocsOk = p.blocsFaites >= p.blocsTotal
   return (
     <span className="flex flex-wrap gap-1.5">
-      <span className={`${chip} ${voiesOk ? ok : ''}`}>🧗 {p.voiesFaites}/{p.voiesTotal}</span>
-      <span className={`${chip} ${blocsOk ? ok : ''}`}>🧱 {p.blocsFaites}/{p.blocsTotal}</span>
+      {!avantCompetition && (
+        <>
+          <span className={`${chip} ${voiesOk ? ok : ''}`}>🧗 {p.voiesFaites}/{p.voiesTotal}</span>
+          <span className={`${chip} ${blocsOk ? ok : ''}`}>🧱 {p.blocsFaites}/{p.blocsTotal}</span>
+        </>
+      )}
       <span
         className={`${chip} ${vitesse.statut === 'en_attente' ? 'border-dashed text-texte-doux' : 'border-accent/30 text-accent-doux'}`}
       >
@@ -184,10 +190,12 @@ function Chips({ grimpeur }: { grimpeur: GrimpeurSaisie }) {
 
 /** Liste des grimpeurs, groupée par équipe ou à plat (A→Z) selon la vue (R24). */
 function ListeGrimpeurs({
+  saisie,
   vue,
   ordreVue,
   onChoisir,
 }: {
+  saisie: SaisieRencontre
   vue: 'equipe' | 'alpha'
   ordreVue: GrimpeurSaisie[]
   onChoisir: (id: string) => void
@@ -196,7 +204,7 @@ function ListeGrimpeurs({
     return (
       <ul className="flex flex-col divide-y divide-white/5 rounded-2xl border border-bordure bg-surface">
         {ordreVue.map((g) => (
-          <LigneGrimpeur key={g.grimpeurId} grimpeur={g} onChoisir={onChoisir} alpha />
+          <LigneGrimpeur key={g.grimpeurId} saisie={saisie} grimpeur={g} onChoisir={onChoisir} alpha />
         ))}
       </ul>
     )
@@ -216,7 +224,7 @@ function ListeGrimpeurs({
           </p>
           <ul className="flex flex-col divide-y divide-white/5 rounded-2xl border border-bordure bg-surface">
             {membres.map((g) => (
-              <LigneGrimpeur key={g.grimpeurId} grimpeur={g} onChoisir={onChoisir} />
+              <LigneGrimpeur key={g.grimpeurId} saisie={saisie} grimpeur={g} onChoisir={onChoisir} />
             ))}
           </ul>
         </div>
@@ -226,10 +234,12 @@ function ListeGrimpeurs({
 }
 
 function LigneGrimpeur({
+  saisie,
   grimpeur,
   onChoisir,
   alpha,
 }: {
+  saisie: SaisieRencontre
   grimpeur: GrimpeurSaisie
   onChoisir: (id: string) => void
   alpha?: boolean
@@ -257,7 +267,7 @@ function LigneGrimpeur({
           )}
           <span className="ml-auto text-texte-doux">›</span>
         </span>
-        <Chips grimpeur={grimpeur} />
+        <Chips saisie={saisie} grimpeur={grimpeur} />
       </button>
     </li>
   )
@@ -281,6 +291,8 @@ function DetailGrimpeur({
   const prev = index > 0 ? ordreVue[index - 1] : null
   const next = index < ordreVue.length - 1 ? ordreVue[index + 1] : null
   const [depart, setDepart] = useState<number | null>(null)
+  // Avant la ③ : structure non lisible → message unique (R21bis).
+  const affichage = affichageVoiesBlocs(saisie.phase, saisie.categorie, grimpeur.groupeDepart)
 
   function onTouchEnd(x: number) {
     if (depart == null) return
@@ -341,8 +353,16 @@ function DetailGrimpeur({
         </span>
       </div>
 
-      <SectionVoies saisie={saisie} grimpeur={grimpeur} />
-      <SectionBlocs saisie={saisie} grimpeur={grimpeur} />
+      {affichage === 'avant_competition' ? (
+        <p className="rounded-2xl border border-dashed border-bordure bg-surface px-4 py-3 text-sm text-texte-attenue">
+          Les voies et blocs seront visibles à l’ouverture de la compétition.
+        </p>
+      ) : (
+        <>
+          <SectionVoies saisie={saisie} grimpeur={grimpeur} />
+          <SectionBlocs saisie={saisie} grimpeur={grimpeur} />
+        </>
+      )}
       <SectionVitesse grimpeur={grimpeur} />
     </div>
   )
@@ -365,7 +385,8 @@ function SectionVoies({ saisie, grimpeur }: { saisie: SaisieRencontre; grimpeur:
         </span>
       </div>
 
-      {!estAdo && grimpeur.voies.length === 0 && (
+      {affichageVoiesBlocs(saisie.phase, saisie.categorie, grimpeur.groupeDepart) ===
+        'groupe_a_definir' && (
         <p className="text-xs italic text-texte-doux">
           Groupe de départ à définir dans l’engagement (les 3 voies en découlent).
         </p>

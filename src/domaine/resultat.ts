@@ -6,7 +6,7 @@
 // et de BLOC ; la vitesse (juge) et le calcul du score/classement sont hors
 // périmètre (specs dédiées, cf. spec #6).
 
-import type { Categorie } from './rencontre'
+import type { Categorie, Phase } from './rencontre'
 import { champsPointsVoie, type TypeVoie } from './gabarit'
 
 /**
@@ -157,4 +157,23 @@ export function manquantsCloture(
 ): string[] {
   const saisis = new Set(saisisIds)
   return attendusIds.filter((id) => !saisis.has(id))
+}
+
+/**
+ * Ce que l'écran de saisie montre à la place des voies/blocs d'un grimpeur :
+ * - `avant_competition` : ①/② — la structure n'est pas encore lisible (lecture dès
+ *   la ③, R6) → message unique, ni « groupe à définir » ni compteurs (R21bis) ;
+ * - `groupe_a_definir` : enfant sans groupe de départ, dès la ③ (R9) ;
+ * - `voies` : les voies et blocs du grimpeur.
+ */
+export type AffichageVoiesBlocs = 'avant_competition' | 'groupe_a_definir' | 'voies'
+
+export function affichageVoiesBlocs(
+  phase: Phase,
+  categorie: Categorie,
+  groupeDepart: string | null,
+): AffichageVoiesBlocs {
+  if (phase === 'pre_competition' || phase === 'preparation') return 'avant_competition'
+  if (categorie === 'enfant' && !groupeDepart) return 'groupe_a_definir'
+  return 'voies'
 }

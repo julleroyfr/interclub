@@ -51,7 +51,7 @@ npm run test:e2e              # tous les cahiers E2E
 ## Cartographie (cahier 17 — saisie des résultats)
 
 - `coach-saisie-resultats.spec.ts` (`npm run test:cahier:resultats`) : **CT-01 →
-  CT-12 et CT-14** (14 tests) — accès, deux vues, navigation ‹/›, voies enfant/ado,
+  CT-12, CT-14 et CT-15** (15 tests) — accès, deux vues, navigation ‹/›, voies enfant/ado,
   issues par type, correction, plafond/retrait ado, blocs, coach temporaire, saisie
   fermée hors ③, NP à la clôture (via le pilotage admin), vitesse en lecture seule.
   CT-13 (RLS) reste dans `npm run test:resultats`.

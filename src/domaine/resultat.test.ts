@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
+  affichageVoiesBlocs,
   issuesVoieSaisissables,
   validerIssueVoie,
   validerResultatBloc,
@@ -115,5 +116,31 @@ describe('NP automatique à la clôture (R9/R18)', () => {
   })
   it('blocs : passe en NP B1/B2 non saisis (R18)', () => {
     expect(manquantsCloture(['B1', 'B2'], ['B1'])).toEqual(['B2'])
+  })
+})
+
+// R21bis (rév. 2026-10-02) : avant la ③, la structure (voies/blocs) n'est pas
+// lisible — message unique, ni « groupe à définir » ni compteurs ; R9 : « groupe
+// de départ à définir » réservé à un enfant réellement sans groupe, dès la ③.
+describe('Affichage des voies et blocs selon la phase (R21bis, R9)', () => {
+  it('avant la ③, annonce la structure à venir — même pour un enfant avec groupe (R21bis)', () => {
+    for (const phase of ['pre_competition', 'preparation'] as const) {
+      expect(affichageVoiesBlocs(phase, 'enfant', 'T1')).toBe('avant_competition')
+      expect(affichageVoiesBlocs(phase, 'enfant', null)).toBe('avant_competition')
+      expect(affichageVoiesBlocs(phase, 'ado', null)).toBe('avant_competition')
+    }
+  })
+
+  it('dès la ③, un enfant sans groupe de départ est « à définir » (R9)', () => {
+    for (const phase of ['competition', 'cloture', 'resultats_publics'] as const) {
+      expect(affichageVoiesBlocs(phase, 'enfant', null)).toBe('groupe_a_definir')
+    }
+  })
+
+  it('dès la ③, un enfant avec groupe et un ado affichent leurs voies (R9, R11)', () => {
+    for (const phase of ['competition', 'cloture', 'resultats_publics'] as const) {
+      expect(affichageVoiesBlocs(phase, 'enfant', 'M2')).toBe('voies')
+      expect(affichageVoiesBlocs(phase, 'ado', null)).toBe('voies')
+    }
   })
 })

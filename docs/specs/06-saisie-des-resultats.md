@@ -2,7 +2,9 @@
 
 - **Statut** : validée (le 2026-09-08) — décisions produit tranchées : NP ado sans
   ligne (compteur `n/6`, R18) ; visibilité des résultats **au fil de l'eau pour
-  tous** dès la ③, ⑤ = officialisation (spec #1 R8, rév. 2026-09-08)
+  tous** dès la ③, ⑤ = officialisation (spec #1 R8, rév. 2026-09-08) ;
+  **rév. 2026-10-02** : ajout de **R21bis** (affichage avant la ③ — message
+  explicite au lieu de « groupe de départ à définir » et de compteurs vides)
 - **Sources** :
   - **Spec #1 — Rôles & autorisations** (`01-roles-et-autorisations.md`), vérité
     pour « qui peut faire quoi » : un coach **saisit et modifie les résultats des
@@ -233,6 +235,17 @@ au public (spec #1 R6/R8).
 - **R21.** L'écran présente la saisie **par grimpeur** puis **par épreuve** (voies,
   blocs) ; pour chaque voie/bloc attendu, il affiche l'issue courante ou l'état
   « à saisir ».
+- **R21bis.** *(Rév. 2026-10-02.)* Avant la **③ compétition** (① pré-compétition,
+  ② préparation), la **structure** des épreuves (voies, blocs, paliers) n'est **pas
+  encore lisible** par le coach (lecture authentifiée dès la ③, R6 — garanti par la
+  RLS). L'écran reste **consultable** (R5) mais, pour chaque grimpeur, il affiche à
+  la place des voies et des blocs un **message unique** : *« Les voies et blocs
+  seront visibles à l'ouverture de la compétition. »* Il **n'affiche pas** :
+  - le message *« Groupe de départ à définir »*, réservé à un grimpeur **enfant
+    réellement sans groupe de départ** (spec #5 R19) dès la ③ ;
+  - de **compteurs de progression** voies/blocs (ex. `0/0`), ni dans la liste
+    (R24) ni sur l'écran du grimpeur.
+  L'état de vitesse (R22) et le score (R23) restent affichés.
 - **R22.** L'écran affiche, **en lecture seule**, l'**état de la vitesse** de chaque
   grimpeur — **temps chronométré**, **chute**, **non-présentation**, ou **en
   attente** (pas encore saisi) — tel qu'il remonte de la **saisie du juge** (spec #1
@@ -308,6 +321,9 @@ authentifié (spec #1 R8, spec #8).
   **refusé** (R2).
 - Saisie d'un résultat **hors phase ③** (en ①/②, ou après ④/⑤) par un coach →
   **refusée**, formulaires **non affichés** (R5/R7).
+- Coach ouvrant l'écran en **② préparation** (jour J) → message « Les voies et
+  blocs seront visibles à l'ouverture de la compétition », **sans** « groupe de
+  départ à définir » ni compteur `0/0` (R21bis).
 - *(Enfant)* Tentative de saisir une **prise valorisée** sur une voie **moulinette**
   → **refusée** (R10).
 - *(Enfant)* Tentative de saisir une voie **hors** des 3 du groupe de départ →

@@ -323,9 +323,35 @@ test.describe('Cahier 17 — saisie des résultats voie & bloc (spec #6)', () =>
       await ouvrirGrimpeur(page, URL_ENFANT, 'Bob Alpha')
       await expect(page.getByText(/n’est ouverte qu’en phase compétition/)).toBeVisible()
       await expect(page.getByRole('button', { name: 'Top' })).toHaveCount(0)
-      // L'écran reste consultable (la structure n'est lisible qu'à partir de la ③,
-      // R6/R8 — pas d'assertion sur les voies ici).
-      await expect(page.getByRole('heading', { name: 'Voie de difficulté' })).toBeVisible()
+      // L'écran reste consultable (contenu avant la ③ : cf. CT-15, R21bis).
+      await expect(page.getByText('Bob Alpha')).toBeVisible()
+    } finally {
+      poserPhase('competition')
+    }
+  })
+
+  test('CT-15 · avant la ③ : voies et blocs annoncés, pas de « groupe à définir » (R21bis)', async ({
+    page,
+  }) => {
+    poserPhase('preparation')
+    try {
+      await commeCoach(page)
+      await page.goto(URL_ENFANT)
+      // Liste : aucun compteur de progression voies/blocs.
+      await expect(page.locator('li > button').first()).toBeVisible()
+      await expect(page.getByText(/🧗|🧱/)).toHaveCount(0)
+
+      // Bob a un groupe (T1) : message unique, ni « à définir » ni « 0/0 ».
+      await ouvrirGrimpeur(page, URL_ENFANT, 'Bob Alpha')
+      await expect(
+        page.getByText('Les voies et blocs seront visibles à l’ouverture de la compétition.'),
+      ).toBeVisible()
+      await expect(page.getByText(/Groupe de départ à définir/)).toHaveCount(0)
+      await expect(page.getByRole('heading', { name: 'Voie de difficulté' })).toHaveCount(0)
+      await expect(page.getByRole('heading', { name: 'Bloc', exact: true })).toHaveCount(0)
+      // Vitesse et score restent affichés.
+      await expect(page.getByRole('heading', { name: '⚡ Vitesse' })).toBeVisible()
+      await expect(page.getByText('Score (voie + bloc + vitesse)')).toBeVisible()
     } finally {
       poserPhase('competition')
     }
