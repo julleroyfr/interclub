@@ -104,7 +104,7 @@ export function PanneauSaisieAdmin({ saisie }: { saisie: SaisieAdminRencontre })
         </p>
       )}
       <p className="rounded-xl border border-admin/25 bg-admin/[0.06] px-4 py-3 text-xs text-admin">
-        Saisie <strong>administrateur</strong> : tout grimpeur, tous clubs (R2).
+        Saisie <strong>administrateur</strong> : tout grimpeur, tous clubs.
         Écritures tracées ; résultats visibles de tous au fil de l’eau (non
         officiels jusqu’à la ⑤).
       </p>

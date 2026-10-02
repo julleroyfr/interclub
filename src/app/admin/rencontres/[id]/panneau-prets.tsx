@@ -49,7 +49,7 @@ export function PanneauPrets({
         <TitreSection>Prêts de grimpeurs</TitreSection>
         <p className="text-xs text-texte-attenue">
           Mettez un grimpeur d’un autre club à disposition d’un club d’accueil pour
-          cette rencontre (R35).
+          cette rencontre.
         </p>
       </div>
 

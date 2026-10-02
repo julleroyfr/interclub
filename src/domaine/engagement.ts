@@ -109,7 +109,7 @@ export function voiesDuGroupeDepart(groupe: string): Niveau[] {
   const i = (GROUPES_DEPART as readonly string[]).indexOf(groupe)
   if (i === -1) {
     throw new GroupeDepartInvalideError(
-      `Groupe de départ invalide : « ${groupe} ». Valeurs acceptées : ${GROUPES_DEPART.join(', ')} (R19).`,
+      `Groupe de départ invalide : « ${groupe} ». Valeurs acceptées : ${GROUPES_DEPART.join(', ')}.`,
     )
   }
   return ECHELLE_NIVEAUX.slice(i, i + NB_VOIES_GROUPE) as Niveau[]
@@ -143,17 +143,17 @@ export type AjoutComposition = {
 export function verifierAjoutComposition(ajout: AjoutComposition): void {
   if (ajout.grimpeurClubId !== ajout.equipeClubId && !ajout.estPrete) {
     throw new EngagementInvalideError(
-      "Un grimpeur d'un autre club ne peut être ajouté que s'il est prêté au club (prêt réservé à l'admin, R13).",
+      "Un grimpeur d'un autre club ne peut être ajouté que s'il est prêté au club (prêt réservé à l'admin).",
     )
   }
   if (ajout.dejaEngagesRencontre.includes(ajout.grimpeurId)) {
     throw new EngagementInvalideError(
-      'Ce grimpeur est déjà engagé dans une autre équipe pour cette rencontre (R14).',
+      'Ce grimpeur est déjà engagé dans une autre équipe pour cette rencontre.',
     )
   }
   if (ajout.membresActuels.length >= EFFECTIF_EQUIPE_MAX) {
     throw new EngagementInvalideError(
-      `L'effectif d'une équipe est plafonné à ${EFFECTIF_EQUIPE_MAX} grimpeurs (R15).`,
+      `L'effectif d'une équipe est plafonné à ${EFFECTIF_EQUIPE_MAX} grimpeurs.`,
     )
   }
 }

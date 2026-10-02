@@ -49,7 +49,7 @@ export async function saisirTempsVitesse(
     return { erreur: 'Action réservée à un juge (session QR active en compétition).' }
   }
   if (contexte.phase !== 'competition') {
-    return { erreur: "La saisie de la vitesse n'est ouverte qu'en phase compétition (R6)." }
+    return { erreur: "La saisie de la vitesse n'est ouverte qu'en phase compétition." }
   }
 
   const grimpeurId = String(formData.get('grimpeurId') ?? '')

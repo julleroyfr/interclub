@@ -168,7 +168,7 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
   5. Basculer en `competition` (SQL), toujours hors jour J, recharger, observer le
      bouton de **retour arrière**.
 - **Résultat attendu** :
-  - Étape 2 : bouton **désactivé**, indice « … le jour de la rencontre (R5) ».
+  - Étape 2 : bouton **désactivé**, indice « … le jour de la rencontre. » (R5).
   - Étape 3 : passage en **préparation accepté**.
   - Étape 4 : **« Compétition → » désactivé** hors jour J (la compétition est aussi
     jour J).

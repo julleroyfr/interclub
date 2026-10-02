@@ -38,12 +38,12 @@ export function validerNiveauVoie(
   if (typeVoie === 'moulinette') {
     if (categorie === 'ado') {
       throw new NiveauVoieInvalideError(
-        `Les voies moulinette ne sont pas autorisées pour la catégorie ado (R37).`,
+        `Les voies moulinette ne sont pas autorisées pour la catégorie ado.`,
       )
     }
     if (!(NIVEAUX_MOULINETTE as readonly string[]).includes(niveau)) {
       throw new NiveauVoieInvalideError(
-        `Niveau moulinette invalide : « ${niveau} ». Valeurs acceptées : M1–M4 (R37).`,
+        `Niveau moulinette invalide : « ${niveau} ». Valeurs acceptées : M1–M4.`,
       )
     }
     return
@@ -52,7 +52,7 @@ export function validerNiveauVoie(
   // tête
   if (!(NIVEAUX_TETE as readonly string[]).includes(niveau)) {
     throw new NiveauVoieInvalideError(
-      `Niveau tête invalide : « ${niveau} ». Valeurs acceptées : T1–T10 (R37).`,
+      `Niveau tête invalide : « ${niveau} ». Valeurs acceptées : T1–T10.`,
     )
   }
 }
@@ -72,7 +72,7 @@ export class PointsInvalideError extends Error {
 export function validerPoints(points: number, libelle = 'Les points'): void {
   if (!Number.isInteger(points) || points < 0) {
     throw new PointsInvalideError(
-      `${libelle} doivent être un entier positif ou nul (R38).`,
+      `${libelle} doivent être un entier positif ou nul.`,
     )
   }
 }

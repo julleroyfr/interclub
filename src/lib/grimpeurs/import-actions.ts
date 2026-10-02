@@ -28,7 +28,7 @@ function aujourdhuiISO(): string {
 async function refuserSiNonAdmin(): Promise<EtatImport | null> {
   const utilisateur = await getUtilisateurCourant()
   if (utilisateur?.role !== 'admin') {
-    return { erreur: 'Seul un administrateur peut importer des licenciés (R1).' }
+    return { erreur: 'Seul un administrateur peut importer des licenciés.' }
   }
   return null
 }
@@ -36,15 +36,15 @@ async function refuserSiNonAdmin(): Promise<EtatImport | null> {
 // Traduit une erreur RPC/Postgres de l'écriture en message lisible (R16).
 function messageErreurEcriture(code: string | undefined, message: string | undefined): string {
   if (message?.includes('acces_refuse')) {
-    return 'Import refusé : accès réservé à un administrateur (R1).'
+    return 'Import refusé : accès réservé à un administrateur.'
   }
   if (code === '23505') {
-    return "Conflit d'unicité pendant l'écriture (licence ou nom de club). Aucun grimpeur importé (R16)."
+    return "Conflit d'unicité pendant l'écriture (licence ou nom de club). Aucun grimpeur importé."
   }
   if (code === '23514') {
-    return 'Une valeur viole une contrainte (sexe, licence ou année). Aucun grimpeur importé (R16).'
+    return 'Une valeur viole une contrainte (sexe, licence ou année). Aucun grimpeur importé.'
   }
-  return "L'import a échoué pendant l'écriture. Aucun grimpeur importé (R16). Réessayez."
+  return "L'import a échoué pendant l'écriture. Aucun grimpeur importé. Réessayez."
 }
 
 export async function importerLicencies(

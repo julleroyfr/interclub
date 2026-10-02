@@ -53,7 +53,7 @@ export function creerInvitationCoach(demande: { clubId: string }): InvitationCoa
   const clubId = demande.clubId?.trim() ?? ''
   if (!clubId) {
     throw new InvitationCoachInvalideError(
-      'Une invitation coach permanent doit être liée à un club (R28).',
+      'Une invitation coach permanent doit être liée à un club.',
     )
   }
   return { clubId }
@@ -80,18 +80,18 @@ export function validerInscriptionCoach(demande: {
 }): IdentifiantsInscription {
   const email = (demande.email ?? '').trim().toLowerCase()
   if (!email) {
-    throw new InvitationCoachInvalideError('Renseignez votre e-mail (R30).')
+    throw new InvitationCoachInvalideError('Renseignez votre e-mail.')
   }
   // Contrôle volontairement permissif : un « … @ … . … » sans espace. La
   // validation stricte reste du ressort de Supabase Auth.
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    throw new InvitationCoachInvalideError("L'e-mail n'est pas valide (R30).")
+    throw new InvitationCoachInvalideError("L'e-mail n'est pas valide.")
   }
 
   const motDePasse = demande.motDePasse ?? ''
   if (motDePasse.length < LONGUEUR_MIN_MOT_DE_PASSE) {
     throw new InvitationCoachInvalideError(
-      `Le mot de passe doit contenir au moins ${LONGUEUR_MIN_MOT_DE_PASSE} caractères (R30).`,
+      `Le mot de passe doit contenir au moins ${LONGUEUR_MIN_MOT_DE_PASSE} caractères.`,
     )
   }
 

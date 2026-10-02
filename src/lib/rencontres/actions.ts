@@ -32,7 +32,7 @@ function aujourdhuiISO(): string {
 async function refuserSiNonAdmin(): Promise<EtatRencontre | null> {
   const utilisateur = await getUtilisateurCourant()
   if (utilisateur?.role !== 'admin') {
-    return { erreur: 'Seul un administrateur peut gérer les rencontres (R12).' }
+    return { erreur: 'Seul un administrateur peut gérer les rencontres.' }
   }
   return null
 }
@@ -149,7 +149,7 @@ export async function changerPhaseRencontre(
     if (!peutEntrerEnPhase(phase as Phase, renc.date_rencontre as string, aujourdhuiISO())) {
       const quoi = phase === 'preparation' ? 'La préparation' : 'La compétition'
       return {
-        erreur: `${quoi} ne peut être activée que le jour de la rencontre (R5).`,
+        erreur: `${quoi} ne peut être activée que le jour de la rencontre.`,
       }
     }
   }

@@ -44,7 +44,7 @@ export function PanneauEquipes({
         <TitreSection>Équipes & engagement (tous clubs)</TitreSection>
         <p className="text-xs text-texte-attenue">
           Créez, composez ou corrigez les équipes de n’importe quel club, en toute
-          phase (R10).
+          phase.
         </p>
       </div>
 
@@ -140,7 +140,7 @@ function CarteEquipe({
 
       {complete ? (
         <p className="mt-2 text-xs text-secondaire">
-          Équipe complète — plafond de {EFFECTIF_EQUIPE_MAX} (R15).
+          Équipe complète — plafond de {EFFECTIF_EQUIPE_MAX}.
         </p>
       ) : (
         <FormAjout

@@ -44,7 +44,7 @@ function refuserSiHorsFenetre(phase: Phase): EtatSaisie | null {
   if (!PHASES_ECRITURE_ADMIN.includes(phase)) {
     return {
       erreur:
-        "La saisie admin n'est possible qu'en compétition (③) ou clôture (④) (R5).",
+        "La saisie admin n'est possible qu'en compétition (③) ou clôture (④).",
     }
   }
   return null

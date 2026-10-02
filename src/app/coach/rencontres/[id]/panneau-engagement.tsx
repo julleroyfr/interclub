@@ -51,7 +51,7 @@ export function PanneauEngagement({
       {!peutEditer && (
         <p className="rounded-xl border border-bordure bg-surface px-4 py-3 text-sm text-texte-attenue">
           Cette rencontre n’est pas dans une phase d’édition : la composition est
-          consultable mais ne peut plus être modifiée (R17).
+          consultable mais ne peut plus être modifiée.
         </p>
       )}
 
@@ -163,7 +163,7 @@ function CarteEquipe({
         <>
           {complete ? (
             <p className="mt-3 text-xs text-secondaire">
-              Équipe complète — plafond de {EFFECTIF_EQUIPE_MAX} atteint (R15).
+              Équipe complète — plafond de {EFFECTIF_EQUIPE_MAX} atteint.
             </p>
           ) : (
             <FormAjoutGrimpeur

@@ -66,13 +66,13 @@ export function validerIssueVoie(
 ): void {
   if (issue === 'np') {
     throw new ResultatInvalideError(
-      "« NP » est posé automatiquement à la clôture (R18) : il n'est pas saisissable.",
+      "« NP » est posé automatiquement à la clôture : il n'est pas saisissable.",
     )
   }
   const admises = issuesVoieSaisissables(categorie, typeVoie)
   if (!admises.includes(issue)) {
     throw new ResultatInvalideError(
-      `Issue « ${issue} » non admise pour cette voie (${categorie}). Admises : ${admises.join(', ')} (R10/R12).`,
+      `Issue « ${issue} » non admise pour cette voie (${categorie}). Admises : ${admises.join(', ')}.`,
     )
   }
 }
@@ -98,17 +98,17 @@ export function validerResultatBloc({
 }: ResultatBlocSaisi): void {
   if (issue === 'np') {
     throw new ResultatInvalideError(
-      "« NP » est posé automatiquement à la clôture (R18) : il n'est pas saisissable.",
+      "« NP » est posé automatiquement à la clôture : il n'est pas saisissable.",
     )
   }
   if (issue === 'echec') return
   if (issue === 'palier') {
     if (!palierId || !paliersDuBloc.includes(palierId)) {
-      throw new ResultatInvalideError('Le palier choisi doit appartenir au bloc (R16).')
+      throw new ResultatInvalideError('Le palier choisi doit appartenir au bloc.')
     }
     return
   }
-  throw new ResultatInvalideError(`Issue de bloc inconnue : « ${issue} » (R16).`)
+  throw new ResultatInvalideError(`Issue de bloc inconnue : « ${issue} ».`)
 }
 
 /** Contexte d'ajout d'une voie réalisée à un grimpeur ado, à valider (R13/R14). */
@@ -133,12 +133,12 @@ export function verifierAjoutVoieAdo({
 }: AjoutVoieAdo): void {
   if (voiesSaisiesIds.includes(voieCandidateId)) {
     throw new ResultatInvalideError(
-      "Cette voie a déjà un résultat pour ce grimpeur : une voie n'est réalisée qu'une fois (R13).",
+      "Cette voie a déjà un résultat pour ce grimpeur : une voie n'est réalisée qu'une fois.",
     )
   }
   if (voiesSaisiesIds.length >= PLAFOND_VOIES_ADO) {
     throw new ResultatInvalideError(
-      `Un grimpeur ado réalise au plus ${PLAFOND_VOIES_ADO} voies (R14).`,
+      `Un grimpeur ado réalise au plus ${PLAFOND_VOIES_ADO} voies.`,
     )
   }
 }

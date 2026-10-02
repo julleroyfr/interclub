@@ -184,7 +184,7 @@ function LigneRencontre({
                   disabled={phaseEnCours || precedenteBloquee}
                   title={
                     precedenteBloquee
-                      ? 'Activable seulement le jour de la rencontre (R5).'
+                      ? 'Activable seulement le jour de la rencontre.'
                       : undefined
                   }
                 >
@@ -202,7 +202,7 @@ function LigneRencontre({
                     disabled={phaseEnCours || suivanteBloquee}
                     title={
                       suivanteBloquee
-                        ? 'Activable seulement le jour de la rencontre (R5).'
+                        ? 'Activable seulement le jour de la rencontre.'
                         : undefined
                     }
                   >
@@ -211,7 +211,7 @@ function LigneRencontre({
                 </form>
                 {suivanteBloquee && (
                   <span className="basis-full text-xs text-texte-doux">
-                    {labelPhase(suivante)} ne s’active que le jour de la rencontre (R5).
+                    {labelPhase(suivante)} ne s’active que le jour de la rencontre.
                   </span>
                 )}
               </>

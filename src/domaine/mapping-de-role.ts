@@ -45,14 +45,14 @@ export function creerMappingDeRole(demande: DemandeMapping): MappingDeRole {
   const utilisateurId = demande.utilisateurId?.trim() ?? ''
   if (!utilisateurId) {
     throw new MappingDeRoleInvalideError(
-      'Aucun compte cible : sélectionnez le compte à qui attribuer le rôle (R4).',
+      'Aucun compte cible : sélectionnez le compte à qui attribuer le rôle.',
     )
   }
 
   if (demande.role !== 'admin' && demande.role !== 'coach') {
     throw new MappingDeRoleInvalideError(
       `Rôle applicatif invalide : ${JSON.stringify(demande.role)}. ` +
-        'Un compte permanent est admin ou coach (R1, R2).',
+        'Un compte permanent est admin ou coach.',
     )
   }
 
@@ -64,7 +64,7 @@ export function creerMappingDeRole(demande: DemandeMapping): MappingDeRole {
   const clubId = demande.clubId?.trim() ?? ''
   if (!clubId) {
     throw new MappingDeRoleInvalideError(
-      'Un coach doit être rattaché à un club (R3).',
+      'Un coach doit être rattaché à un club.',
     )
   }
   return { utilisateurId, role: 'coach', clubId }

@@ -18,7 +18,7 @@ export async function creerPretAction(
 ): Promise<EtatPret> {
   const utilisateur = await getUtilisateurCourant()
   if (utilisateur?.role !== 'admin') {
-    return { erreur: 'Seul un administrateur peut créer un prêt (R35).' }
+    return { erreur: 'Seul un administrateur peut créer un prêt.' }
   }
 
   const rencontreId = String(formData.get('rencontreId') ?? '')
@@ -53,7 +53,7 @@ export async function creerPretAction(
   if (engage) {
     return {
       erreur:
-        'Ce grimpeur est déjà engagé dans une équipe pour cette rencontre (R14) : indisponible au prêt.',
+        'Ce grimpeur est déjà engagé dans une équipe pour cette rencontre : indisponible au prêt.',
     }
   }
 
@@ -80,7 +80,7 @@ export async function revoquerPretAction(
 ): Promise<EtatPret> {
   const utilisateur = await getUtilisateurCourant()
   if (utilisateur?.role !== 'admin') {
-    return { erreur: 'Seul un administrateur peut révoquer un prêt (R35).' }
+    return { erreur: 'Seul un administrateur peut révoquer un prêt.' }
   }
 
   const rencontreId = String(formData.get('rencontreId') ?? '')

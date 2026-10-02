@@ -65,7 +65,7 @@ async function refuserSiPasPreCompetition(
 
   if (!rencontre) return { erreur: 'Rencontre introuvable.' }
   if (rencontre.phase !== 'pre_competition') {
-    return { erreur: "La structure ne peut être modifiée qu'en phase pré-compétition (R36)." }
+    return { erreur: "La structure ne peut être modifiée qu'en phase pré-compétition." }
   }
   return null
 }

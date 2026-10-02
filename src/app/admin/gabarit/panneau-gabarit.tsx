@@ -439,8 +439,7 @@ function EditeurBaremeVitesseGabarit({ bareme }: { bareme: BaremeVitesseGabaritV
       <p className="text-[11px] text-texte-attenue">
         Points d’un rang = points − (rang − rang min) × décrément. Laisser le rang max
         vide pour le dernier échelon (« et + »), qui couvre tous les rangs au-delà. Les
-        échelons doivent être contigus, sans trou ni chevauchement, à partir du rang 1
-        (spec #3 R46/R48).
+        échelons doivent être contigus, sans trou ni chevauchement, à partir du rang 1.
       </p>
 
       <div className="overflow-x-auto">

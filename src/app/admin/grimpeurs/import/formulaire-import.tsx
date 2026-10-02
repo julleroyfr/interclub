@@ -99,7 +99,7 @@ function CompteRendu({ cr }: { cr: CompteRenduImport }) {
       {cr.doublons.length > 0 && (
         <p className="mt-4 text-xs text-texte-attenue">
           {cr.doublons.length} doublon{cr.doublons.length > 1 ? 's' : ''} de licence dans le
-          fichier — dernière occurrence retenue (R14).
+          fichier — dernière occurrence retenue.
         </p>
       )}
 

@@ -59,12 +59,12 @@ export function creerJetonQr(demande: DemandeJeton): PerimetreJeton {
     const clubId = demande.clubId?.trim() ?? ''
     if (!clubId) {
       throw new JetonQrInvalideError(
-        'Un jeton coach temporaire doit porter un club (R9a).',
+        'Un jeton coach temporaire doit porter un club.',
       )
     }
     if (demande.voieVitesseId) {
       throw new JetonQrInvalideError(
-        'Un jeton coach temporaire ne porte pas de voie de vitesse (R9a).',
+        'Un jeton coach temporaire ne porte pas de voie de vitesse.',
       )
     }
     return { rencontreId, nature: 'coach_temporaire', clubId, voieVitesseId: null }
@@ -74,19 +74,19 @@ export function creerJetonQr(demande: DemandeJeton): PerimetreJeton {
     const voieVitesseId = demande.voieVitesseId?.trim() ?? ''
     if (!voieVitesseId) {
       throw new JetonQrInvalideError(
-        'Un jeton juge doit porter une voie de vitesse (R9b, R17).',
+        'Un jeton juge doit porter une voie de vitesse.',
       )
     }
     if (demande.clubId) {
       throw new JetonQrInvalideError(
-        'Un jeton juge ne porte pas de club (R9b).',
+        'Un jeton juge ne porte pas de club.',
       )
     }
     return { rencontreId, nature: 'juge', clubId: null, voieVitesseId }
   }
 
   throw new JetonQrInvalideError(
-    `Nature de jeton inconnue : ${JSON.stringify(demande.nature)} (R9).`,
+    `Nature de jeton inconnue : ${JSON.stringify(demande.nature)}.`,
   )
 }
 
@@ -126,7 +126,7 @@ export function regenererJeton(
 ): { ancien: JetonQr; nouveau: JetonQr } {
   if (!nouvelleValeur || nouvelleValeur === ancien.valeur) {
     throw new JetonQrInvalideError(
-      'La régénération doit produire un jeton de valeur distincte (R23).',
+      'La régénération doit produire un jeton de valeur distincte.',
     )
   }
   return {

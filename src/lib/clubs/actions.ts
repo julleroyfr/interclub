@@ -17,7 +17,7 @@ import { type EtatClub } from './clubs'
 async function refuserSiNonAdmin(): Promise<EtatClub | null> {
   const utilisateur = await getUtilisateurCourant()
   if (utilisateur?.role !== 'admin') {
-    return { erreur: 'Seul un administrateur peut gérer les clubs (R11).' }
+    return { erreur: 'Seul un administrateur peut gérer les clubs.' }
   }
   return null
 }

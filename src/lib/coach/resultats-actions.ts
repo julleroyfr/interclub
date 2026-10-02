@@ -60,7 +60,7 @@ function refuserSiHorsSaisie(
   phase: Phase,
 ): EtatSaisie | null {
   if (phase !== 'competition') {
-    return { erreur: "La saisie des résultats n'est ouverte qu'en phase compétition (R5)." }
+    return { erreur: "La saisie des résultats n'est ouverte qu'en phase compétition." }
   }
   if (contexte.type === 'temporaire' && contexte.rencontreId !== rencontreId) {
     return { erreur: 'Votre session QR ne couvre pas cette rencontre.' }

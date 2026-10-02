@@ -30,7 +30,7 @@ export function creerResultatVitesse(resultat: ResultatVitesse): ResultatVitesse
     case 'temps':
       if (!Number.isFinite(resultat.secondes) || resultat.secondes <= 0) {
         throw new ResultatVitesseInvalideError(
-          'Un temps chronométré doit être une durée strictement positive, en secondes (R8).',
+          'Un temps chronométré doit être une durée strictement positive, en secondes.',
         )
       }
       return { type: 'temps', secondes: resultat.secondes }
@@ -40,7 +40,7 @@ export function creerResultatVitesse(resultat: ResultatVitesse): ResultatVitesse
       return { type: 'non_presentation' }
     default:
       throw new ResultatVitesseInvalideError(
-        `Forme de résultat de vitesse inconnue : ${JSON.stringify(resultat)} (R7).`,
+        `Forme de résultat de vitesse inconnue : ${JSON.stringify(resultat)}.`,
       )
   }
 }
@@ -58,7 +58,7 @@ export function enregistrerResultat(
 ): Map<string, ResultatVitesse> {
   if (!grimpeurId) {
     throw new ResultatVitesseInvalideError(
-      'Un grimpeur doit être sélectionné avant la saisie (R7).',
+      'Un grimpeur doit être sélectionné avant la saisie.',
     )
   }
   const valide = creerResultatVitesse(resultat)
@@ -105,30 +105,30 @@ export function validerEchelonsBareme(
 ): EchelonBareme[] {
   // a. au moins un échelon.
   if (echelons.length === 0) {
-    throw new BaremeVitesseInvalideError('Le barème doit comporter au moins un échelon (R48).')
+    throw new BaremeVitesseInvalideError('Le barème doit comporter au moins un échelon.')
   }
 
   // b/c. champs de chaque échelon (rangs, points, décrément) — entiers, bornes.
   for (const e of echelons) {
     if (!Number.isInteger(e.rangMin) || e.rangMin < 1) {
       throw new BaremeVitesseInvalideError(
-        `Le rang minimum doit être un entier ≥ 1 (reçu : ${e.rangMin}) (R48).`,
+        `Le rang minimum doit être un entier ≥ 1 (reçu : ${e.rangMin}).`,
       )
     }
     if (e.rangMax !== null && (!Number.isInteger(e.rangMax) || e.rangMax < e.rangMin)) {
       throw new BaremeVitesseInvalideError(
         `Le rang maximum doit être vide (« au-delà ») ou un entier ≥ rang minimum ` +
-          `(échelon ${e.rangMin}…${e.rangMax}) (R48).`,
+          `(échelon ${e.rangMin}…${e.rangMax}).`,
       )
     }
     if (!Number.isInteger(e.points) || e.points < 0) {
       throw new BaremeVitesseInvalideError(
-        `Les points doivent être un entier ≥ 0 (reçu : ${e.points}) (R48).`,
+        `Les points doivent être un entier ≥ 0 (reçu : ${e.points}).`,
       )
     }
     if (!Number.isInteger(e.decrement) || e.decrement < 0) {
       throw new BaremeVitesseInvalideError(
-        `Le décrément doit être un entier ≥ 0 (reçu : ${e.decrement}) (R48).`,
+        `Le décrément doit être un entier ≥ 0 (reçu : ${e.decrement}).`,
       )
     }
   }
@@ -139,7 +139,7 @@ export function validerEchelonsBareme(
   // d. la couverture commence au rang 1.
   if (tries[0].rangMin !== 1) {
     throw new BaremeVitesseInvalideError(
-      `La couverture doit commencer au rang 1 (premier échelon : rang ${tries[0].rangMin}) (R48).`,
+      `La couverture doit commencer au rang 1 (premier échelon : rang ${tries[0].rangMin}).`,
     )
   }
 
@@ -150,17 +150,17 @@ export function validerEchelonsBareme(
     if (cur.rangMax === null) {
       throw new BaremeVitesseInvalideError(
         `Seul le dernier échelon peut être « au-delà » (échelon ouvert au rang ${cur.rangMin} ` +
-          `suivi d'un autre) (R48).`,
+          `suivi d'un autre).`,
       )
     }
     if (suivant.rangMin > cur.rangMax + 1) {
       throw new BaremeVitesseInvalideError(
-        `Trou de couverture entre les rangs ${cur.rangMax} et ${suivant.rangMin} (R48).`,
+        `Trou de couverture entre les rangs ${cur.rangMax} et ${suivant.rangMin}.`,
       )
     }
     if (suivant.rangMin < cur.rangMax + 1) {
       throw new BaremeVitesseInvalideError(
-        `Chevauchement des échelons autour du rang ${suivant.rangMin} (R48).`,
+        `Chevauchement des échelons autour du rang ${suivant.rangMin}.`,
       )
     }
   }
@@ -170,7 +170,7 @@ export function validerEchelonsBareme(
   if (dernier.rangMax !== null) {
     throw new BaremeVitesseInvalideError(
       `Le dernier échelon doit être « au-delà » (rang max vide) pour couvrir tous les ` +
-        `rangs supérieurs (R48).`,
+        `rangs supérieurs.`,
     )
   }
 

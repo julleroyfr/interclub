@@ -101,7 +101,7 @@ function LigneRencontreTdb({ rencontre }: { rencontre: RencontreTdb }) {
               disabled={phaseEnCours || precedenteBloquee}
               title={
                 precedenteBloquee
-                  ? 'Activable seulement le jour de la rencontre (R5).'
+                  ? 'Activable seulement le jour de la rencontre.'
                   : undefined
               }
             >
@@ -119,7 +119,7 @@ function LigneRencontreTdb({ rencontre }: { rencontre: RencontreTdb }) {
               disabled={phaseEnCours || suivanteBloquee}
               title={
                 suivanteBloquee
-                  ? 'Activable seulement le jour de la rencontre (R5).'
+                  ? 'Activable seulement le jour de la rencontre.'
                   : undefined
               }
             >

@@ -101,13 +101,13 @@ export function PanneauResultats({ saisie }: { saisie: SaisieRencontre }) {
     <div className="flex flex-col gap-4">
       {!saisie.ouverteSaisie && (
         <p className="rounded-xl border border-bordure bg-surface px-4 py-3 text-sm text-texte-attenue">
-          La saisie des résultats n’est ouverte qu’en phase compétition (R5). Les
+          La saisie des résultats n’est ouverte qu’en phase compétition. Les
           résultats restent consultables.
         </p>
       )}
       <p className="rounded-xl border border-accent/25 bg-accent/[0.06] px-4 py-3 text-xs text-accent-doux">
         Résultats visibles de tous au fil de l’eau — non officiels jusqu’à la
-        publication (R6). ⚡ Vitesse : saisie par le juge, lecture seule (R22).
+        publication. ⚡ Vitesse : saisie par le juge, lecture seule.
       </p>
 
       {selected ? (

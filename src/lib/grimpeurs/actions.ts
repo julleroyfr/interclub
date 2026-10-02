@@ -22,7 +22,7 @@ import { type EtatGrimpeur } from './grimpeurs'
 async function refuserSiNonAdmin(): Promise<EtatGrimpeur | null> {
   const utilisateur = await getUtilisateurCourant()
   if (utilisateur?.role !== 'admin') {
-    return { erreur: 'Seul un administrateur peut gérer le roster ici (R11/R13).' }
+    return { erreur: 'Seul un administrateur peut gérer le roster ici.' }
   }
   return null
 }

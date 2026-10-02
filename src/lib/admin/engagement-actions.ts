@@ -20,7 +20,7 @@ export type EtatAdminEngagement = { erreur?: string; succes?: string } | undefin
 
 async function exigerAdmin(): Promise<EtatAdminEngagement | null> {
   const u = await getUtilisateurCourant()
-  if (u?.role !== 'admin') return { erreur: 'Action réservée à un administrateur (R10).' }
+  if (u?.role !== 'admin') return { erreur: 'Action réservée à un administrateur.' }
   return null
 }
 
@@ -115,7 +115,7 @@ export async function ajouterGrimpeurAdmin(
       anneeSaison(rencontre.date_rencontre as string),
     )
   ) {
-    return { erreur: "Ce grimpeur n'est pas dans la tranche d'âge de la rencontre (R34)." }
+    return { erreur: "Ce grimpeur n'est pas dans la tranche d'âge de la rencontre." }
   }
 
   try {
@@ -139,7 +139,7 @@ export async function ajouterGrimpeurAdmin(
     .insert({ equipe_id: equipeId, grimpeur_id: grimpeurId, groupe_depart: groupeBrut || null })
   if (error) {
     if (error.code === '23505') {
-      return { erreur: 'Ce grimpeur est déjà engagé dans cette rencontre (R14).' }
+      return { erreur: 'Ce grimpeur est déjà engagé dans cette rencontre.' }
     }
     return { erreur: "L'ajout a échoué. Réessayez." }
   }

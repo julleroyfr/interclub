@@ -83,7 +83,7 @@ export function PanneauPilotage({
               disabled={!suivante || enCours || suivanteBloquee}
               title={
                 suivanteBloquee
-                  ? 'Activable seulement le jour de la rencontre (R5).'
+                  ? 'Activable seulement le jour de la rencontre.'
                   : undefined
               }
               aria-label="Avancer à la phase suivante"
@@ -118,7 +118,7 @@ export function PanneauPilotage({
 
         {suivante && suivanteBloquee && (
           <p className="text-xs text-texte-doux">
-            {labelPhase(suivante)} ne s’active que le jour de la rencontre (R5).
+            {labelPhase(suivante)} ne s’active que le jour de la rencontre.
           </p>
         )}
         {etat?.erreur && (

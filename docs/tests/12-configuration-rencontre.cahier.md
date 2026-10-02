@@ -133,7 +133,7 @@ d'ouverture du **tableau de bord** → `/admin/rencontres/<id>`.
   - **Aucun formulaire** d'ajout dans les onglets ; les listes restent
     **consultables**.
   - Contournement : invoquer directement `ajouterVoieDifficulteRencontre` →
-    refus « La structure ne peut être modifiée qu'en phase pré-compétition (R36). »
+    refus « La structure ne peut être modifiée qu'en phase pré-compétition. » (R36)
 
 ### CT-09 — Rencontre sans format : ajout d'épreuve d'abord (couvre R45, R35)
 

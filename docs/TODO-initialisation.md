@@ -66,11 +66,14 @@ Tâches identifiées mais reportées, à traiter quand l'occasion se présente.
 | ID | Tâche | Origine | Notes |
 | ---- | ------- | --------- | ------- |
 | D1 | **Temps réel — live PUBLIC (itération 2)** : pousser le classement en direct au **spectateur anonyme** | demandé 2026-09-22 | **Itération 1 FAITE** (spec #11, migration `202609231000`, cahier #22, composant `TempsReel`) : écrans **authentifiés** (coach/admin/classement/juge) live via *Postgres Changes*. **Reste différé** : le live `anon` — interdit d'ouvrir la RLS `anon` (spec #8) → passer par **Broadcast serveur** (canal public assaini). Cf. spec #11 « Hors périmètre ». |
-| D2 | **Retirer les références `RXX` des IHM (avant prod)** : les écrans affichent « (R5) », « (R22) »… | demandé 2026-09-18 | Reformuler en langage clair pour l'utilisateur final ; garder la traçabilité `Rn` en commentaires/specs/cahiers. Balayage sur tout `src/app/**` (ex. `coach/rencontres/[id]/resultats/panneau-resultats.tsx`). |
 | D3 | **Cache/optimisation des bascules d'écran — saisie résultats (#6)** : navigation grimpeurs ‹/› (R25) et bascule par équipe / alphabétique (R24) | demandé 2026-09-08 | Éviter de recharger les données à chaque bascule (stratégie de cache). Point technique hors règles de spec. |
 
 ## ✅ Fait (archive — non rappelé)
 
+- **D2 — Références `RXX` retirées des IHM** (2026-10-02) : 92 textes visibles
+  nettoyés (bandeaux et indices d'écran, messages d'erreur des Server Actions et
+  du domaine pur) ; la traçabilité `Rn` reste dans les commentaires, specs,
+  cahiers et titres de tests. Cahiers 12 et 13 alignés sur les nouveaux libellés.
 - **D4 — Barre de navigation sur mobile** (2026-10-02) : `NavPrincipale`
   repliée derrière un bouton « Menu » sous `md` (panneau déroulant, cibles
   ≥ 44 px, fermeture à la navigation / Échap), rangée en ligne au-delà ;

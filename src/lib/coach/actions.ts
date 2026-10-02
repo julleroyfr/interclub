@@ -58,7 +58,7 @@ function refuserSiHorsPerimetreTemp(
   if (phase !== 'preparation') {
     return {
       erreur:
-        "Un coach temporaire ne peut éditer l'engagement que le jour J, en préparation (R16).",
+        "Un coach temporaire ne peut éditer l'engagement que le jour J, en préparation.",
     }
   }
   return null
@@ -96,7 +96,7 @@ function refuserSiPasEditable(phase: Phase): EtatEngagement | null {
   if (!estEditable(phase)) {
     return {
       erreur:
-        "L'engagement n'est modifiable qu'avant le lancement de la compétition (pré-compétition ou préparation) ; il est ensuite figé (seul l'admin peut corriger, R16).",
+        "L'engagement n'est modifiable qu'avant le lancement de la compétition (pré-compétition ou préparation) ; il est ensuite figé (seul l'admin peut corriger).",
     }
   }
   return null
@@ -237,12 +237,12 @@ function lireGroupeDepart(
   if (brut === '') return null
   if (categorie !== 'enfant') {
     throw new EngagementInvalideError(
-      'Le groupe de départ ne concerne que les rencontres enfant (R19).',
+      'Le groupe de départ ne concerne que les rencontres enfant.',
     )
   }
   if (!(GROUPES_DEPART as readonly string[]).includes(brut)) {
     throw new EngagementInvalideError(
-      `Groupe de départ invalide : « ${brut} ». Valeurs : ${GROUPES_DEPART.join(', ')} (R19).`,
+      `Groupe de départ invalide : « ${brut} ». Valeurs : ${GROUPES_DEPART.join(', ')}.`,
     )
   }
   return brut
@@ -298,7 +298,7 @@ export async function ajouterGrimpeurEquipe(
         .maybeSingle(),
     ])
   if (!grimpeur) {
-    return { erreur: "Ce grimpeur n'appartient ni à votre club ni à vos prêts (R13)." }
+    return { erreur: "Ce grimpeur n'appartient ni à votre club ni à vos prêts." }
   }
 
   // Éligibilité à la catégorie de la rencontre (tranche d'âge, spec #1 R34).
@@ -311,7 +311,7 @@ export async function ajouterGrimpeurEquipe(
   ) {
     return {
       erreur:
-        "Ce grimpeur n'est pas dans la tranche d'âge de la rencontre (catégorie, R34).",
+        "Ce grimpeur n'est pas dans la tranche d'âge de la rencontre (catégorie).",
     }
   }
 
@@ -334,7 +334,7 @@ export async function ajouterGrimpeurEquipe(
     .insert({ equipe_id: equipeId, grimpeur_id: grimpeurId, groupe_depart: groupeDepart })
   if (error) {
     if (error.code === '23505') {
-      return { erreur: 'Ce grimpeur est déjà engagé dans cette rencontre (R14).' }
+      return { erreur: 'Ce grimpeur est déjà engagé dans cette rencontre.' }
     }
     return { erreur: "L'ajout a échoué. Réessayez." }
   }

@@ -42,13 +42,13 @@ export function construireUrlScan(baseUrl: string, valeur: string): string {
 export function interpreterResultatScan(data: unknown): ResultatScan {
   if (!data || typeof data !== 'object') {
     throw new SessionQrInvalideError(
-      'Résultat de scan invalide ou session non ouverte (R12, R22).',
+      'Résultat de scan invalide ou session non ouverte.',
     )
   }
   const d = data as Record<string, unknown>
   const nature = d['nature']
   if (nature !== 'coach_temporaire' && nature !== 'juge') {
-    throw new SessionQrInvalideError(`Nature de session inconnue : ${JSON.stringify(nature)} (R9).`)
+    throw new SessionQrInvalideError(`Nature de session inconnue : ${JSON.stringify(nature)}.`)
   }
   const rencontreId = d['rencontre_id']
   if (typeof rencontreId !== 'string' || !rencontreId) {

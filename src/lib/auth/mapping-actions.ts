@@ -28,7 +28,7 @@ export async function attribuerMapping(
 ): Promise<EtatMapping> {
   const utilisateur = await getUtilisateurCourant()
   if (utilisateur?.role !== 'admin') {
-    return { erreur: 'Seul un administrateur peut attribuer un rôle (R4).' }
+    return { erreur: 'Seul un administrateur peut attribuer un rôle.' }
   }
 
   let mapping

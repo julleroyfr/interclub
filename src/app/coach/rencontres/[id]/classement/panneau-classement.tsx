@@ -154,8 +154,8 @@ export function PanneauClassement({
 
       <p className="rounded-xl border border-bordure bg-white/5 px-3 py-2 text-xs text-texte-attenue">
         {classement.officiel
-          ? 'Rencontre publiée (⑤) : classement officiel et figé (R10).'
-          : 'Recalculé à chaque saisie — non officiel jusqu’à la publication (⑤). La vitesse n’entre pas encore dans le score (R14).'}
+          ? 'Rencontre publiée (⑤) : classement officiel et figé.'
+          : 'Recalculé à chaque saisie — non officiel jusqu’à la publication (⑤). La vitesse n’entre pas encore dans le score.'}
       </p>
 
       {vue === 'individuel' && (
@@ -517,7 +517,7 @@ function DecompositionScore({
         <div>
           <p className="text-xs font-semibold text-texte-attenue">Score individuel</p>
           <p className="text-xs text-texte-doux">
-            rang {ligne.rang} · {officiel ? 'officiel' : 'non officiel (R10)'}
+            rang {ligne.rang} · {officiel ? 'officiel' : 'non officiel'}
           </p>
         </div>
         <p className="text-2xl font-extrabold text-secondaire">
