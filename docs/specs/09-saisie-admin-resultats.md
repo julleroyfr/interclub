@@ -64,7 +64,8 @@ de plein droit, décision 2026-09-22) et en **④ clôture** (correction, spec #
 
 - **R1.** La saisie/correction admin se fait sur un **écran admin dédié**, sous
   `/admin/rencontres/[id]/resultats`, **réservé au rôle `admin`**. Tout autre rôle
-  (coach, juge, non connecté) reçoit **404**. Cet écran est **distinct** de
+  **connecté** (coach, juge) reçoit **404** ; un visiteur **non connecté** est
+  **redirigé vers `/connexion`** (spec #12 R2 ; rév. 2026-10-02). Cet écran est **distinct** de
   l'espace coach (spec #6 R1 inchangée : l'écran `/coach/...` reste réservé au
   coach) ; les deux coexistent.
 - **R2.** L'admin saisit et modifie les résultats de **tout grimpeur engagé** dans
@@ -170,8 +171,9 @@ l'emporte, sans doublon.
 
 ### Cas limites / erreurs
 
-- Ouverture de `/admin/rencontres/[id]/resultats` par un **coach**, un **juge** ou
-  un **non connecté** → **404** (R1).
+- Ouverture de `/admin/rencontres/[id]/resultats` par un **coach** ou un **juge**
+  → **404** ; par un **non connecté** → redirection vers **`/connexion`** (R1, spec
+  #12 R2/R3).
 - Saisie admin **hors phase ③/④** (en ①/② ou après ⑤) → **refusée** sans écriture
   (R3/R5).
 - Issue **incohérente** avec la catégorie/type (ex. « Zone 1 » en enfant, « Prise

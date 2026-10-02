@@ -33,7 +33,7 @@ Depuis l'accueil (connecté **admin**) : bouton **« Rencontres »** →
 
 - **admin** : `/admin/rencontres` s'affiche (formulaire + liste). ✅
 - **coach** (`coach@test.local`) : `/admin/rencontres` → **404** (écran masqué). ✅
-- **non connecté** : `/admin/rencontres` → **404**. ✅
+- **non connecté** : `/admin/rencontres` → **redirection vers `/connexion`** (spec #12 R2).
 
 ### CT-02 — Créer une rencontre (nominal, R12)
 

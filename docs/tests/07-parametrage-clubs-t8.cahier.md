@@ -29,7 +29,7 @@ Depuis l'accueil (connecté **admin**) : bouton **« Clubs »** → `/admin/club
 
 - **admin** : `/admin/clubs` s'affiche (formulaire + liste). ✅
 - **coach** (`coach@test.local`) : `/admin/clubs` → **404** (écran masqué). ✅
-- **non connecté** : `/admin/clubs` → **404**. ✅
+- **non connecté** : `/admin/clubs` → **redirection vers `/connexion`** (spec #12 R2).
 
 ### CT-02 — Créer un club (nominal, R11)
 

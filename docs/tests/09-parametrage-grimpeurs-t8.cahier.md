@@ -38,7 +38,7 @@ Depuis l'accueil (connecté **admin**) : bouton **« Grimpeurs »** →
 
 - **admin** : `/admin/grimpeurs` s'affiche (formulaire + liste). ✅
 - **coach** (`coach@test.local`) : `/admin/grimpeurs` → **404** (écran masqué). ✅
-- **non connecté** : `/admin/grimpeurs` → **404**. ✅
+- **non connecté** : `/admin/grimpeurs` → **redirection vers `/connexion`** (spec #12 R2).
 
 ### CT-02 — Ajouter un grimpeur (nominal, R18)
 

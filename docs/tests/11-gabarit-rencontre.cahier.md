@@ -42,7 +42,7 @@ Liste des rencontres : bouton **« Rencontres »** → `/admin/rencontres`.
 
 - **admin** : `/admin/gabarit` s'affiche (les deux gabarits enfant / ado). ✅
 - **coach** (`coach@test.local`) : `/admin/gabarit` → **404** (écran masqué). ✅
-- **non connecté** : `/admin/gabarit` → **404**. ✅
+- **non connecté** : `/admin/gabarit` → **redirection vers `/connexion`** (spec #12 R2).
 
 ### CT-02 — Contenu initial des gabarits (seed, R33/R34)
 

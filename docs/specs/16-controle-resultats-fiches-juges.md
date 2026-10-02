@@ -81,7 +81,9 @@ pour pouvoir reprendre le contrôle plus tard ou le partager entre plusieurs adm
 
 - **R1.** Le contrôle se fait sur un **écran admin dédié**,
   `/admin/rencontres/[id]/controle`, **réservé au rôle `admin`**. Tout autre rôle
-  (coach permanent ou temporaire, juge, non connecté) reçoit **404**.
+  **connecté** (coach permanent ou temporaire, juge) reçoit **404** ; un visiteur
+  **non connecté** est **redirigé vers `/connexion`** (spec #12 R2 ; rév.
+  2026-10-02).
 - **R2.** L'écran est disponible en **④ clôture** (contrôle : coches
   modifiables) et en **⑤ résultats publics** (**lecture seule** : coches,
   auteurs, horodatages et progressions affichés, aucune case modifiable). En ①,
@@ -221,8 +223,8 @@ cochée avec l'auteur **A** (R11).
 
 ### Cas limites / erreurs
 
-- Ouverture de l'écran par un **coach**, un **juge** ou un **non connecté** →
-  **404** (R1).
+- Ouverture de l'écran par un **coach** ou un **juge** → **404** ; par un **non
+  connecté** → redirection vers **`/connexion`** (R1, spec #12 R2/R3).
 - Ouverture de l'écran en **①**, **②** ou **③** → **404** ; l'action n'est pas
   affichée sur le tableau de bord (R2/R3).
 - Ouverture de l'écran en **⑤** → **lecture seule**, cases non modifiables

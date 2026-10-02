@@ -29,7 +29,7 @@ Depuis l'accueil (connecté **admin**) : bouton **« Ouvrir le tableau de bord �
 
 - **admin** : `/admin` s'affiche (tableau de bord visible). ✅
 - **coach** (`coach@test.local`) : `/admin` → **404** (écran masqué). ✅
-- **non connecté** : `/admin` → **404**. ✅
+- **non connecté** : `/admin` → **redirection vers `/connexion`** (spec #12 R2).
 - **Accueil** : connecté **admin**, le lien **« Ouvrir le tableau de bord »**
   pointe vers `/admin` et est le seul lien d'administration visible. ✅
 

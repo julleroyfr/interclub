@@ -58,7 +58,7 @@ d'ouverture du **tableau de bord** → `/admin/rencontres/<id>`.
   rencontre → l'écran `/admin/rencontres/<id>` s'affiche. ✅
 - **coach** (`coach@test.local`) : ouvrir directement l'URL
   `/admin/rencontres/<id>` → **404** (écran masqué). ✅
-- **non connecté** : `/admin/rencontres/<id>` → **404**. ✅
+- **non connecté** : `/admin/rencontres/<id>` → **redirection vers `/connexion`** (spec #12 R2).
 - **id inexistant** : admin ouvre `/admin/rencontres/<uuid-bidon>` → **404**.
 
 ### CT-02 — En-tête, onglets et compteurs (couvre R41, R42)

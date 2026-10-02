@@ -95,9 +95,10 @@ cette spec. (Spec #1 R6/R27, rév. 2026-09-01.)
 ### Accès et périmètre
 
 - **R1.** L'espace coach (`/coach`) est **réservé au rôle `coach`** (permanent ou
-  temporaire). Un utilisateur non-coach (admin, juge, anonyme sans session coach,
-  non connecté) reçoit une réponse **404** — l'espace est **masqué**, pas
-  seulement interdit. (Source : spec #1 R1, R22 ; aligné sur la convention des
+  temporaire). Un utilisateur **connecté** non-coach (admin, juge, sans rôle)
+  reçoit une réponse **404** — l'espace est **masqué**, pas seulement interdit ;
+  un visiteur **non connecté** est **redirigé vers `/connexion`** (spec #12 R2 ;
+  rév. 2026-10-02). (Source : spec #1 R1, R22 ; aligné sur la convention des
   écrans admin, spec #3 R1.)
 - **R2.** Le coach n'agit que sur **son club de rattachement** (spec #1 R16). Il
   ne voit ni ne modifie les équipes, compositions ou grimpeurs d'un **autre club**
@@ -313,8 +314,8 @@ peut être ajouté **sans** groupe (« à définir ») et complété plus tard (
 
 ### Cas limites / erreurs
 
-- Ouverture de `/coach` par un **admin**, un **juge** ou un **non connecté** →
-  **404** (R1).
+- Ouverture de `/coach` par un **admin** ou un **juge** → **404** ; par un **non
+  connecté** → redirection vers **`/connexion`** (R1, spec #12 R2/R3).
 - Rencontre **ado** : aucun champ ni affichage de groupe de départ (R19).
 - Enfant ajouté **sans** groupe de départ → autorisé, affiché « à définir » (R19).
 - Un coach du club A tente de voir/éditer une équipe du club B → **refusé** (R2).

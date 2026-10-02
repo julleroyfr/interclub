@@ -46,7 +46,9 @@ nouvelle : il **réagence** et **met en avant** des actions déjà spécifiées
   vers `/admin` (et n'a plus besoin d'empiler les liens vers chaque écran, repris
   par les cartes du tableau de bord).
 - **R2.** Le tableau de bord (`/admin`) est **réservé à l'admin** : un non-admin
-  (coach, session éphémère, non connecté) reçoit **404** (écran masqué). Les
+  **connecté** (coach, session éphémère) reçoit **404** (écran masqué) ; un
+  visiteur **non connecté** est **redirigé vers `/connexion`** (spec #12 R2 ; rév.
+  2026-10-02). Les
   autres rôles conservent leur accueil actuel, sans carte d'administration.
   (Source : spec #1 R11–R13, R22 ; même garde que spec #3 R1.)
 - **R3.** Le tableau de bord est composé de **cartes**. La carte **Rencontres**

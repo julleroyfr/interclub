@@ -82,8 +82,10 @@ saisie, les flux CRUD, et les règles de suppression (dépendances / cascade).
 ### Généralités (tous les écrans)
 
 - **R1.** Les écrans de paramétrage sont **réservés à l'admin**. Un utilisateur
-  non-admin (coach, anonyme, non connecté) reçoit une réponse **404** (l'écran
-  est masqué, pas seulement interdit). (Source : spec #1 R11–R13, R22.)
+  **connecté** non-admin (coach, session anonyme) reçoit une réponse **404**
+  (l'écran est masqué, pas seulement interdit). (Source : spec #1 R11–R13, R22.)
+  Un visiteur **non connecté** est **redirigé vers `/connexion`** (spec #12 R2 ;
+  rév. 2026-10-02).
 - **R2.** Chaque écriture passe par une **Server Action** qui **revérifie** le
   rôle admin côté serveur, indépendamment de l'UI (défense en profondeur). Un
   appel direct par un non-admin est **refusé** avec un message explicite, sans
