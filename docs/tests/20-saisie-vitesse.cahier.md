@@ -30,8 +30,8 @@ vitesse** (`JD-VITESSE`) et un **jeton juge** actif sur la voie n°1
 (`JD-JETON-JUGE`). Les compétiteurs engagés de cette rencontre couvrent **deux
 clubs** et **les deux sexes** (R2/R12) :
 
-- **Ana** (Club A, **Filles**) et **Bob** (Club A, **Garçons**) — équipe A1 ;
-- **Cléo** (Club B, **Filles**) — équipe B1 (cross-club, R2).
+- **Ana** (Club A, **Femmes**) et **Bob** (Club A, **Hommes**) — équipe A1 ;
+- **Cléo** (Club B, **Femmes**) — équipe B1 (cross-club, R2).
 
 Aucun **temps de vitesse** n'est seedé : l'état de départ est « à saisir » pour
 tous (cf. `00-catalogue-jeux-de-donnees.md` § Notes).
@@ -51,6 +51,11 @@ tous (cf. `00-catalogue-jeux-de-donnees.md` § Notes).
 
 ## Cas de test
 
+> **Exécution automatique** : `e2e/juge-vitesse.spec.ts` (`npm run
+> test:cahier:juge`) rejoue CT-01 → CT-11 (CT-09 par impersonation SQL du juge,
+> transaction annulée). **Résidus manuels** : couleurs, confort de saisie au
+> clavier sur un vrai poste juge.
+
 ### CT-01 — Ouverture de la session juge et roster (couvre : R1, R2, R12)
 
 - **Rôle / session** : juge (scan `JD-JETON-JUGE`).
@@ -61,9 +66,9 @@ tous (cf. `00-catalogue-jeux-de-donnees.md` § Notes).
 - **Résultat attendu** : redirection vers **`/juge`** ; l'en-tête indique
   « ⚡ Vitesse — Club A · 19 septembre 2026 », le couloir et le badge **③
   Compétition**. La liste montre **tous les compétiteurs engagés, tous clubs** :
-  colonne **Filles** (Ana, Cléo) et colonne **Garçons** (Bob), triés
+  colonne **Femmes** (Ana, Cléo) et colonne **Hommes** (Bob), triés
   alphabétiquement, tous « à saisir ». Compteurs **séparés par sexe** :
-  **Filles 0 / 2**, **Garçons 0 / 1** (R14).
+  **Femmes 0 / 2**, **Hommes 0 / 1** (R14).
 - **RLS / sécurité** : le juge voit **Cléo (Club B)** bien qu'il n'ait aucun accès
   coach — la lecture passe par la RPC `liste_grimpeurs_vitesse` (R2).
 
@@ -74,7 +79,7 @@ tous (cf. `00-catalogue-jeux-de-donnees.md` § Notes).
   1. Sur la ligne **Bob**, saisir `8.123` dans le champ temps puis **OK** (ou
      `Entrée`).
 - **Résultat attendu** : la pastille de Bob affiche **« 8,123 s »** ; le compteur
-  **Garçons** passe à **1 / 1** (le compteur Filles est inchangé) et sa barre
+  **Hommes** passe à **1 / 1** (le compteur Femmes est inchangé) et sa barre
   avance. La valeur reste visible après rafraîchissement (persistée).
 
 ### CT-03 — Chute puis correction en temps (couvre : R10, R11)
@@ -93,8 +98,8 @@ tous (cf. `00-catalogue-jeux-de-donnees.md` § Notes).
 - **Étapes** :
   1. Sur **Cléo**, cliquer **Abs.**.
 - **Résultat attendu** : la pastille de Cléo affiche **« Non prés. »** ; aucun
-  temps n'est associé. Compteurs par sexe : **Filles 2 / 2** (Ana temps, Cléo
-  non-prés.) et **Garçons 1 / 1** (Bob temps).
+  temps n'est associé. Compteurs par sexe : **Femmes 2 / 2** (Ana temps, Cléo
+  non-prés.) et **Hommes 1 / 1** (Bob temps).
 
 ### CT-05 — Recherche, filtre « à saisir » et filtre sexe (couvre : R14b)
 
@@ -102,11 +107,11 @@ tous (cf. `00-catalogue-jeux-de-donnees.md` § Notes).
 - **Étapes** :
   1. Taper `bo` dans la recherche.
   2. Effacer, puis activer le filtre **À saisir**.
-  3. Basculer le filtre sexe sur **Filles**, puis **Garçons**, puis **Tous**.
+  3. Basculer le filtre sexe sur **Femmes**, puis **Hommes**, puis **Tous**.
 - **Résultat attendu** : (1) seule la ligne **Bob** reste visible ; (2) seuls les
   grimpeurs **sans résultat** restent affichés, le badge du filtre indique leur
-  nombre ; (3) **Filles** n'affiche que la colonne Filles (pleine largeur),
-  **Garçons** que la colonne Garçons, **Tous** rétablit les deux côte à côte. Ces
+  nombre ; (3) **Femmes** n'affiche que la colonne Femmes (pleine largeur),
+  **Hommes** que la colonne Hommes, **Tous** rétablit les deux côte à côte. Ces
   filtres **ne modifient aucune donnée** ; les compteurs par sexe restent calculés
   sur l'ensemble.
 
@@ -137,8 +142,9 @@ tous (cf. `00-catalogue-jeux-de-donnees.md` § Notes).
   1. Sans aucune session, ouvrir directement **`/juge`**.
   2. Connecté **`admin@test.local`**, ouvrir `/juge`.
   3. Connecté **`coach@test.local`**, ouvrir `/juge`.
-- **Résultat attendu** : dans les trois cas, **404** (aucun contexte juge) — la
-  saisie de vitesse n'est **pas** accessible.
+- **Résultat attendu** : (1) **redirection vers `/connexion`** (spec #12 R2) ;
+  (2) et (3) **404** (aucun contexte juge) — la saisie de vitesse n'est **pas**
+  accessible.
 
 ### CT-09 — Périmètre d'écriture RLS (couvre : R3, spec #1 R30)
 
@@ -168,7 +174,7 @@ tous (cf. `00-catalogue-jeux-de-donnees.md` § Notes).
   1. Afficher `/juge` sur un écran **large** (≥ 1024 px), puis réduire la fenêtre
      en **mobile** (≤ 640 px).
   2. Défiler la liste.
-- **Résultat attendu** : sur grand écran, **Filles** et **Garçons** sont **côte à
+- **Résultat attendu** : sur grand écran, **Femmes** et **Hommes** sont **côte à
   côte** (deux colonnes) ; en mobile, les colonnes s'**empilent**. Les en-têtes de
   sexe restent **collés** (sticky) au défilement. La saisie d'un temps se fait
   **au clavier** (champ numérique, `Entrée` = OK). Les lignes sont **compactes**
@@ -189,3 +195,4 @@ tous (cf. `00-catalogue-jeux-de-donnees.md` § Notes).
 | 2026-09-22 | julleroyfr | local (stack Docker) | CT-09 | ✅ | |
 | 2026-09-22 | julleroyfr | local (stack Docker) | CT-10 | ✅ | |
 | 2026-09-22 | julleroyfr | local (stack Docker) | CT-11 | ✅ | |
+| 2026-10-02 | agent/playwright | develop | CT-01 → CT-11 | ✅ | `e2e/juge-vitesse.spec.ts` (11 tests) ; CT-08 non connecté → `/connexion` (spec #12 R2) |

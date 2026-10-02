@@ -74,6 +74,18 @@ npm run test:e2e              # tous les cahiers E2E
   Top en ④, coexistence admin/coach + auteur, refus hors ③/④ (y compris
   re-soumission après passage en ⑤), entrée tableau de bord, responsive (≥ 44 px).
 
+## Cartographie (cahiers 20 et 21 — vitesse)
+
+- `juge-vitesse.spec.ts` (`npm run test:cahier:juge`) : **CT-01 → CT-11** (11
+  tests) — session juge et roster par sexe, temps / chute / non-présentation,
+  correction, filtres, temps invalide, fenêtre ③, espace masqué, périmètre RLS
+  (impersonation SQL du juge, transaction annulée), lecture seule coach,
+  responsive.
+- `vitesse-classement.spec.ts` (`npm run test:cahier:vitesse`) : **CT-01 →
+  CT-09** (9 tests) — barème (édition ①, lecture seule ③), points matérialisés,
+  ex æquo + saut de rang, chute/NP/à saisir, recalcul du sexe, propagation
+  équipe/club, barème ado, `points_vitesse` réservée au trigger.
+
 > **Suite complète** : les fichiers mutent les mêmes rencontres seed → lancer en
 > série, `npx playwright test --project=chromium --workers=1`, sur une base au
 > seed (`npm run db:reset`).

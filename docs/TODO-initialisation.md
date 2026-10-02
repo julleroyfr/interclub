@@ -48,7 +48,9 @@ score, vitesse, pret, invitation-coach…) ; parcours couverts par cahiers
 > ✅ **Migrations appliquées en recette** (2026-09-28, confirmé sur
 > `interclub.version`) : tout le lot, du socle `202607221000` jusqu'à
 > `202609251300_rpc_rechercher_grimpeurs_filtre_club` inclus, puis
-> `202610021000_controle_resultats` (2026-10-02).
+> `202610021000_controle_resultats` (2026-10-02). ⚠️ **À appliquer** :
+> `202610021100_grant_temps_vitesse_service_role` (libellé de vitesse du
+> classement, repéré par l'E2E du cahier 21).
 > `supabase/migrations/JOURNAL.md` à jour. **Reste à faire côté utilisateur** :
 > dérouler les cahiers `docs/tests/11→27` en colonne **Recette**, puis
 > application **prod** à la bascule sur `main` (reportée volontairement).
@@ -57,7 +59,7 @@ score, vitesse, pret, invitation-coach…) ; parcours couverts par cahiers
 
 | ID | Tâche | Dépend de | Notes |
 | ---- | ------- | ----------- | ------- |
-| T13 | Étendre l'E2E Playwright sur parcours stabilisés | T7 | En cours : `admin-equipes`, `admin-prets`, `coach-engagement`, `navigation-routing`, `admin-controle`, `coach-saisie-resultats` (cahier 17), `classement` (cahier 18), `admin-saisie-resultats` (cahier 19) couverts. Suite : 20/21 vitesse. Poursuivre au fil des specs stabilisées. |
+| T13 | Étendre l'E2E Playwright sur parcours stabilisés | T7 | En cours : `admin-equipes`, `admin-prets`, `coach-engagement`, `navigation-routing`, `admin-controle`, `coach-saisie-resultats` (cahier 17), `classement` (cahier 18), `admin-saisie-resultats` (cahier 19), `juge-vitesse` (20), `vitesse-classement` (21) couverts — **chemin critique du jour J automatisé** (13–15, 17–21, 23, 27). Reste possible : 02–12, 16, 22, 24–26. Poursuivre au fil des specs stabilisées. |
 
 ## 🧊 Différés fonctionnels (reportés volontairement)
 

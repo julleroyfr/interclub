@@ -35,7 +35,7 @@ Réutilise le seed `01-jeu-de-test.sql` (catalogue
 - **JD-RENCONTRE-ENFANT** (`33333333-…-3333`, phase `competition`), son **épreuve
   de vitesse** `…8803` et le **jeton juge** actif **JD-JETON-JUGE**.
 - Compétiteurs engagés, deux clubs, deux sexes : **Ana** (Club A, **F**), **Cléo**
-  (Club B, **F**), **Bob** (Club A, **G**).
+  (Club B, **F**), **Bob** (Club A, **H**).
 - **Barème de vitesse enfant** seedé sur `…8803` (spec #3 R46, § Matin) :
   **1er = 15, 2e = 14, 3e = 13, 4e = 12, 5e = 11**, 6–10 = 10, … 46+ = 2 ;
   **chute = 1** ; **non-présentation = 0**.
@@ -57,6 +57,11 @@ tous, donc **aucune ligne `points_vitesse`**.
 | `admin@test.local` (JD-ADMIN) | admin | Édite le barème (R46), change la phase |
 
 ## Cas de test
+
+> **Exécution automatique** : `e2e/vitesse-classement.spec.ts` (`npm run
+> test:cahier:vitesse`) rejoue CT-01 → CT-09 (temps saisi par le juge à l'IHM en
+> CT-03, variantes posées en SQL). **Résidus manuels** : rendu de la
+> décomposition.
 
 ### CT-01 — Barème seedé & visible (couvre R46, migration 202609221500)
 
@@ -98,7 +103,7 @@ tous, donc **aucune ligne `points_vitesse`**.
   1. **Juge** : `/scan?jeton=bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb` → `/juge`.
   2. Saisir pour **Ana** (F) un **temps = 8.100 s**.
   3. **Coach A** : ouvrir le **classement** de la rencontre
-     (`/coach/rencontres/33333333-…-3333/classement`) → Individuel → **Filles**,
+     (`/coach/rencontres/33333333-…-3333/classement`) → Individuel → **Femmes**,
      toucher **Ana**.
 - **Résultat attendu** :
   - Ana est **1re** au classement de vitesse (seul temps) : décomposition R13 →
@@ -113,7 +118,7 @@ tous, donc **aucune ligne `points_vitesse`**.
   1. **Juge** : saisir pour **Cléo** (F, Club B) le **même temps 8.100 s**.
   2. *(optionnel, pour observer le saut de rang)* engager une **3e fille**
      (JD-POOL-LIBRES) dans une équipe et lui saisir **8.500 s**.
-  3. **Coach A** : classement → Individuel → **Filles**.
+  3. **Coach A** : classement → Individuel → **Femmes**.
 - **Résultat attendu** :
   - Ana **et** Cléo sont **rang 1 ex æquo**, **15 pts chacune** (décomposition
     **#1**). L'ordre d'affichage est déterministe (Alpha/Ana avant Bravo/Cléo).
@@ -141,9 +146,9 @@ tous, donc **aucune ligne `points_vitesse`**.
 - **Pré-condition** : Ana = 8.100 (rang 1, 15). Remettre **Cléo** sur un **temps
   8.300 s** (rang 2, 14) pour avoir deux temps féminins classés.
 - **Étapes** :
-  1. **Coach A** : classement Filles → noter Ana **#1/15**, Cléo **#2/14**.
+  1. **Coach A** : classement Femmes → noter Ana **#1/15**, Cléo **#2/14**.
   2. **Juge** : saisir pour **Cléo** un **meilleur temps 8.000 s**.
-  3. **Coach A** : **recharger** le classement Filles.
+  3. **Coach A** : **recharger** le classement Femmes.
 - **Résultat attendu** : les rangs **se sont inversés sans nouvelle action sur
   Ana** — **Cléo #1 = 15**, **Ana #2 = 14**. La saisie d'un seul temps a **modifié
   le score de plusieurs grimpeuses** du même sexe (R19), les points étant relus
@@ -198,3 +203,4 @@ tous, donc **aucune ligne `points_vitesse`**.
 | 2026-09-23 | julleroyfr | 8a38bc8 (local) | CT-07 | ✅ | Propagation équipe / club |
 | 2026-09-23 | julleroyfr | 8a38bc8 (local) | CT-08 | ✅ | Barème ado (1er = 60) |
 | 2026-09-23 | julleroyfr | 8a38bc8 (local) | CT-09 | ✅ | Écriture `points_vitesse` réservée au trigger |
+| 2026-10-02 | agent/playwright | develop | CT-01 → CT-09 | ✅ | `e2e/vitesse-classement.spec.ts` (9 tests). **Défaut trouvé (CT-03)** : libellé de vitesse « À saisir » au lieu du temps dans la décomposition — grant `service_role` manquant sur `temps_vitesse` → migration `202610021100` (à appliquer en recette) |
