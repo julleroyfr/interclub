@@ -72,8 +72,9 @@ manuelle ni capture d'écran.
   officielle **si et seulement si son club y est engagé** (au moins une équipe du
   club dans la rencontre). Sinon : aucune action d'export affichée, demande
   directe refusée (404).
-- **R5.** Le **coach temporaire**, le **juge** et le **visiteur non
-  authentifié** n'ont **pas** accès à l'export (404). *(Pour le coach temporaire
+- **R5.** Le **coach temporaire** et le **juge** n'ont **pas** accès à l'export
+  (404) ; le **visiteur non authentifié** est redirigé vers `/connexion` (spec #12
+  R2, rév. 2026-10-02). *(Pour le coach temporaire
   et le juge, c'est aussi la conséquence de spec #1 R9 : leur session est
   invalide dès la ④, donc a fortiori en ⑤.)*
 - **R6.** Le document d'export est **identique** quel que soit l'utilisateur
@@ -191,7 +192,7 @@ est répété sur chacune (R18) et le pied de page affiche « Page *n* / *N* » 
 - Rencontre repassée de ⑤ à ④ → export de nouveau indisponible (R2).
 - Coach permanent d'un club **non engagé** → pas d'action, 404 en accès direct
   (R4).
-- Coach temporaire / juge / visiteur anonyme → 404 (R5).
+- Coach temporaire / juge → 404 ; visiteur non connecté → `/connexion` (R5).
 - Aucune fille engagée → section « Individuel Filles » présente avec « Aucun
   classement » (R16).
 - Ex æquo → rang partagé et saut de rang, identiques à l'écran (R13, spec #7 R8).
@@ -238,7 +239,8 @@ est répété sur chacune (R18) et le pied de page affiche « Page *n* / *N* » 
 - **Choix des sections** à exporter, ou export d'un seul classement.
 - **Export avant officialisation** (③/④, classement provisoire).
 - **Autres formats** (CSV, Excel) et **envoi automatique** (e-mail au comité).
-- **Accès public/anonyme** à l'export (le classement public reste la spec #8).
+- **Accès public/anonyme** à l'export : sans objet (pas d'espace public, spec #1
+  R8).
 - **Classement cumulé de la saison** (fonctionnalité distincte, cf. spec #7).
 - **Historisation** des documents produits (aucun stockage).
 - **Personnalisation** du document (logo, couleurs du comité, mentions libres).

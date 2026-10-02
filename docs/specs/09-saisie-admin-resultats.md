@@ -257,7 +257,8 @@ flowchart TD
   ne fait que **restituer** le score au fil de l'eau.
 - **Saisie coach** (espace `/coach`, borné au club) → **spec #6** (inchangée).
 - **Officialisation / figement en ⑤** → **spec #1** (R8).
-- **Surface publique** (visiteur non authentifié) → **spec #8**.
+- **Surface publique** (visiteur non authentifié) : **abandonnée** le 2026-10-02
+  (pas d'espace public, spec #1 R8 ; spec #8 abandonnée).
 - **NP automatique à la clôture** (mécanique de transition ③→④) → **spec #6 R18**
   (réutilisée, non modifiée).
 - **Temps réel (pousser les MAJ sur les autres écrans)** — *évolution future,

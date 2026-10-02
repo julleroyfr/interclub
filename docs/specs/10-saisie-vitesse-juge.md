@@ -188,8 +188,9 @@ voie/bloc (authentifiés dès la ③, public à la ⑤ ; spec #1 R8).
 - **R15.** Les résultats de vitesse sont **consultables au fil de l'eau** selon
   le **même régime** que les résultats voie/bloc (spec #1 R8) : par **tout compte
   authentifié dès la ③** (l'écran coach les montre en **lecture seule**, spec #6
-  R22), par le **public** seulement **à la ⑤** (surface publique, spec #8). La
-  **⑤ résultats publics** **officialise** (fige) les résultats.
+  R22) ; **jamais** par un visiteur non authentifié (pas d'espace public, spec #1
+  R8 rév. 2026-10-02). La **⑤ résultats publics** **officialise** (fige) les
+  résultats.
 - **R16.** Le **calcul des points de vitesse** (par **rang** dans le classement
   **par sexe**) et leur **agrégation au score / classement** sont **hors
   périmètre** (spec #7). Cette spec s'arrête à la **saisie du résultat brut**
@@ -306,8 +307,8 @@ erDiagram
 - **RLS** : réutilise `peut_ecrire_temps_vitesse(epreuve)` (juge affecté à la
   rencontre **et** épreuve de type vitesse, R3/R30) pour `insert`/`update` ; la
   **lecture** suit `temps_vitesse_select` (déjà : admin, périmètre juge, ou
-  visibilité au fil de l'eau via les helpers de résultats). L'ouverture `anon`
-  (⑤) relève de la surface publique (spec #8). *(Aligner la lecture authentifiée
+  visibilité au fil de l'eau via les helpers de résultats). **Aucune** lecture
+  `anon` (pas d'espace public, spec #1 R8). *(Aligner la lecture authentifiée
   dès la ③ sur le même helper que les résultats voie/bloc, `resultats_visibles`,
   si ce n'est pas déjà le cas.)*
 - **NP automatique** (R17) : **aucun** — pas d'insertion de lignes à la clôture
@@ -335,7 +336,9 @@ erDiagram
   (« Classement »). Cette spec s'arrête au **résultat brut**.
 - **Affectation d'un juge** à un couloir (génération/affichage du jeton QR par
   l'admin) et **cycle de vie de la session juge** → **spec #2** (R17/R18).
-- **Surface publique** de consultation (visiteur non authentifié, ⑤) → **spec #8**.
+- **Surface publique** de consultation (visiteur non authentifié) :
+  **abandonnée** le 2026-10-02 (pas d'espace public, spec #1 R8 ; spec #8
+  abandonnée).
 - **Correction admin** en ④ et **officialisation ⑤** → **spec #1** (R6/R8) et
   espace admin (IHM non détaillée ici).
 - **Paramétrage du nombre de couloirs** de vitesse d'une rencontre → **spec #2 /

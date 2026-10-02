@@ -188,9 +188,8 @@ T1 = 5 / pv 3, T2 = 6 / pv 3, T3 = 7 / pv 4 ; B1 : 1er = 4, 2e = 3 ; B2 : 1er = 
 - **RLS / sécurité** :
   - (négatif) Un **coach temporaire** ouvrant le classement d'**une autre**
     rencontre que la sienne → **404** (borné à sa rencontre).
-  - (hors périmètre) Le **visiteur non authentifié** (`anon`) n'accède pas à cet
-    écran : la surface publique (⑤, vues individuel + équipe) relève de la
-    **spec #8**.
+  - Le **visiteur non authentifié** n'accède pas à cet écran (redirigé vers
+    `/connexion`) : il n'y a **pas d'espace public** (spec #1 R8 rév. 2026-10-02).
 
 ### CT-10 — Longue liste : recherche, filtres, pagination (couvre R12b)
 

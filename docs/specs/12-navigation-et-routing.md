@@ -263,7 +263,9 @@ flowchart TD
 
 ## Hors périmètre
 
-- **Espace public** (spec #08) et son routing : non couvert ici.
+- **Espace public** : **abandonné** le 2026-10-02 (spec #1 R8 ; spec #8
+  abandonnée) ; tout visiteur non authentifié est redirigé vers `/connexion`
+  (R2).
 - **Contenu** des écrans (colonnes du classement, champs de saisie, realtime) :
   spec de chaque domaine (#06, #07, #10, #11).
 - **Cycle de vie des jetons QR** et fenêtres d'ouverture : spec #02.

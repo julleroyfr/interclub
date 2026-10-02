@@ -3,7 +3,8 @@
 - **Statut** : **validée** (le 2026-09-18) — points à valider tranchés :
   séparation par sexe R8b (conséquence de l'attribution des points de vitesse par
   sexe, cf. note ci-dessous), départage ex æquo R8 (classement standard), cadrage
-  `grimpeur.sexe` (obligatoire).
+  `grimpeur.sexe` (obligatoire). **Rév. 2026-10-02** : R11 — plus d'accès public
+  à la ⑤ (pas d'espace public, spec #1 R8).
 - **Révision du 2026-09-25 — vue classement admin** (règle de changement, spec
   #12) : le classement (déjà « tout compte authentifié, tous clubs », R11) est
   désormais exposé par une **vue admin dédiée** `/admin/rencontres/{id}/classement`
@@ -171,10 +172,8 @@ classement, les résultats ne sont qu'une liste d'issues.
   publics, **officiels/figés** ensuite (spec #6 R6, spec #1 R8).
 - **R11.** Les classements sont **visibles dès la ③ compétition** (rien avant :
   aucun résultat n'existe), pour **tout compte authentifié**, **tous clubs
-  confondus** (spec #1 R8). Le **visiteur non authentifié** n'y accède qu'**une
-  fois la rencontre publiée (⑤)**, et alors **individuel + équipe** seulement (pas
-  le classement par club) — surface publique détaillée en **spec #8**
-  (`08-espace-public.md`).
+  confondus** (spec #1 R8). Le **visiteur non authentifié** n'y accède **jamais**
+  (pas d'espace public, spec #1 R8 rév. 2026-10-02).
 
 ### Score de vitesse (points par rang, par sexe)
 
@@ -441,7 +440,7 @@ individuel est séparé par sexe.)*
   composante par rang, field-dependent.)* **Évolution possible** côté voie/bloc si
   le besoin apparaît : une **vue SQL non matérialisée** (agrégation + `RANK()` côté
   Postgres)
-  centralisant le calcul pour la saisie, le classement et la surface publique —
+  centralisant le calcul pour la saisie et le classement —
   changement local, non bloquant.
 - **Insensible au nombre de rencontres de la saison.** Le calcul d'un classement
   est **borné à une rencontre** (`rencontre_id`) et s'appuie sur des **index**
@@ -455,8 +454,7 @@ individuel est séparé par sexe.)*
   authentifié dès la ③ (spec #6). L'assemblage du classement (noms des grimpeurs /
   équipes / clubs de **tous** les clubs) se fait via le **client `service_role`**
   côté serveur (lecture de catalogues, ADR 0002/0003) — comme les autres écrans
-  transverses. L'ouverture à `anon` (visiteur non authentifié), **restreinte à la ⑤
-  et aux vues individuel + équipe**, relève de la **surface publique (spec #8)**.
+  transverses. **Aucune** ouverture à `anon` (pas d'espace public, spec #1 R8).
 
 ## Décisions tranchées
 
@@ -490,8 +488,8 @@ individuel est séparé par sexe.)*
 - **Champ `sexe`** sur `grimpeur` : **plus hors périmètre** — c'est désormais un
   **prérequis** de cette spec (R8b), livré par la migration mutualisée
   vitesse/sexe (cf. Contraintes de données).
-- **Surface publique** (consultation par visiteur **non authentifié** : accès à la
-  ⑤, vues individuel + équipe) → **spec #8** (`08-espace-public.md`).
+- **Surface publique** (consultation par visiteur non authentifié) :
+  **abandonnée** le 2026-10-02 (spec #1 R8, spec #8 abandonnée).
 - **Officialisation/figement** des classements en ⑤ (mécanique de phase) → spec #1.
 - **Classement cumulé de la saison** (somme des scores d'un grimpeur / club **sur
   toutes ses rencontres** de la saison) → **fonctionnalité distincte**, spec

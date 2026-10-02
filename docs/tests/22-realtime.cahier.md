@@ -4,14 +4,13 @@
 > (`resultat_voie` / `resultat_bloc` / `temps_vitesse` / `points_vitesse`), les
 > **autres écrans ouverts** (saisie coach #6, saisie admin #9, classement #7,
 > écran juge #10) se **rafraîchissent d'eux-mêmes**, sans rechargement. Vérifie
-> aussi la **migration** de publication, la **RLS** (aucune fuite `anon` /
-> public), l'**anti-rebond**, l'**indicateur d'état** et le **rattrapage à la
+> aussi la **migration** de publication, la **RLS** (aucune fuite `anon`), l'**anti-rebond**, l'**indicateur d'état** et le **rattrapage à la
 > reconnexion**. Règles dans
 > [docs/conventions/06-cahier-de-test.md](../conventions/06-cahier-de-test.md).
 
 - **Spec de référence** : `docs/specs/11-realtime.md` (R1–R12 + « Contraintes de
   données » + « Points à surveiller ») ; s'appuie sur `06` (R22/R23),
-  `07` (R10/R15/R20), `08` (aucune RLS `anon`), `09`, `10`.
+  `07` (R10/R15/R20), `01` R8 (pas d'espace public, aucune RLS `anon`), `09`, `10`.
 - **Pré-requis** :
   - Migrations appliquées jusqu'à **`202609231000_realtime_publication`** incluse —
     en local : `supabase db reset` (migrations + seed).
@@ -59,7 +58,7 @@ Routes utilisées :
 | `coachb@test.local` (`JD-COACH-B`) | coach permanent Club B | Observateur Club B — bornage cross-club (CT-03/10/11) |
 | Scan `JD-JETON-JUGE` | juge (session QR) | Écrit les temps de vitesse |
 | `sansmapping@test.local` (`JD-SANSMAP`) | authentifié sans rôle | Négatif : ne reçoit rien sur ces tables |
-| *(aucune session)* | visiteur `anon` / public | Négatif : page publique sans live |
+| *(aucune session)* | visiteur non authentifié (`anon`) | Négatif : redirigé, aucun évènement reçu |
 
 ## Cas de test
 
@@ -177,18 +176,19 @@ Routes utilisées :
 - **Résultat attendu** : le canal se **ferme** au démontage de l'écran — pas de
   connexion temps réel **résiduelle** après avoir quitté l'écran.
 
-### CT-10 — Négatif public / `anon` : pas de live, aucune fuite (couvre : R1, R5 ; spec #8)
+### CT-10 — Négatif `anon` : aucun accès, aucune fuite (couvre : R1, R5 ; spec #1 R8)
 
-- **Rôles** : visiteur **anon** (page publique) + un écrivain authentifié.
+- **Rôles** : visiteur **non authentifié** + un écrivain authentifié.
 - **Étapes** :
-  1. Sans session, ouvrir la **page publique** de la rencontre.
+  1. Sans session, ouvrir le **classement** de la rencontre
+     (`/coach/rencontres/<id>/classement`).
   2. Depuis un écran authentifié, saisir un résultat.
   3. *(Technique)* Dans la console du visiteur, tenter un abonnement Realtime
      `anon` sur `interclub.resultat_voie` (client browser).
-- **Résultat attendu** : (1–2) la page publique **ne se met pas à jour toute
-  seule** — il faut **recharger** (public **hors périmètre**, R1) ; aucune donnée
-  poussée. (3) l'abonnement `anon` **ne reçoit aucun évènement** (ni policy ni grant
-  pour `anon` → spec #8 préservée, R5).
+- **Résultat attendu** : (1) redirection vers **`/connexion`** — il n'existe **pas
+  d'espace public** (spec #1 R8 rév. 2026-10-02, spec #12 R2). (3) l'abonnement
+  `anon` **ne reçoit aucun évènement**, y compris après (2) (ni policy ni grant pour
+  `anon`, R5).
 
 ### CT-11 — Bornage & absence d'évènement hors ③/④ (couvre : R7, R8)
 

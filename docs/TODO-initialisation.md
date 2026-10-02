@@ -39,7 +39,8 @@ Implémenté depuis fin juillet 2026 (cf. `git log`) :
 - **Spec #15 — Export PDF** des classements officiels.
 - **Spec #16 — Contrôle des résultats** contre les fiches de juges.
 
-> ⚠️ **Spec #8 — Espace public** : toujours au statut *brouillon (à valider)*.
+> **Spec #8 — Espace public** : **abandonnée** le 2026-10-02 (pas d'espace
+> public ; spec #1 R8 révisée).
 
 Domaine pur couvert par Vitest (`src/domaine/` : gabarit, engagement, résultat,
 score, vitesse, pret, invitation-coach…) ; parcours couverts par cahiers
@@ -67,11 +68,16 @@ Tâches identifiées mais reportées, à traiter quand l'occasion se présente.
 
 | ID | Tâche | Origine | Notes |
 | ---- | ------- | --------- | ------- |
-| D1 | **Temps réel — live PUBLIC (itération 2)** : pousser le classement en direct au **spectateur anonyme** | demandé 2026-09-22 | **Itération 1 FAITE** (spec #11, migration `202609231000`, cahier #22, composant `TempsReel`) : écrans **authentifiés** (coach/admin/classement/juge) live via *Postgres Changes*. **Reste différé** : le live `anon` — interdit d'ouvrir la RLS `anon` (spec #8) → passer par **Broadcast serveur** (canal public assaini). Cf. spec #11 « Hors périmètre ». |
 | D3 | **Cache/optimisation des bascules d'écran — saisie résultats (#6)** : navigation grimpeurs ‹/› (R25) et bascule par équipe / alphabétique (R24) | demandé 2026-09-08 | Éviter de recharger les données à chaque bascule (stratégie de cache). Point technique hors règles de spec. |
 
 ## ✅ Fait (archive — non rappelé)
 
+- **D1 — Live public : clos, sans objet** (2026-10-02) : décision produit « pas
+  d'espace public ». Spec #8 abandonnée, spec #1 R8 révisée (visiteur non
+  authentifié → aucun accès, redirigé vers `/connexion`), specs #2, #6, #7, #9,
+  #10, #11, #12, #14, #15 et cahiers 17, 18, 22 alignés ; maquette
+  `espace-public.html` supprimée. Aucun code ni policy `anon` à retirer (jamais
+  implémenté).
 - **D2 — Références `RXX` retirées des IHM** (2026-10-02) : 92 textes visibles
   nettoyés (bandeaux et indices d'écran, messages d'erreur des Server Actions et
   du domaine pur) ; la traçabilité `Rn` reste dans les commentaires, specs,

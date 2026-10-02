@@ -5,7 +5,8 @@
   tous** dès la ③, ⑤ = officialisation (spec #1 R8, rév. 2026-09-08) ;
   **rév. 2026-10-02** : ajout de **R21bis** (affichage avant la ③ — message
   explicite au lieu de « groupe de départ à définir » et de compteurs vides) ;
-  **R1** alignée sur la spec #12 (non connecté → `/connexion`)
+  **R1** alignée sur la spec #12 (non connecté → `/connexion`) ; **R6** : plus de
+  lecture publique à la ⑤ (pas d'espace public, spec #1 R8)
 - **Sources** :
   - **Spec #1 — Rôles & autorisations** (`01-roles-et-autorisations.md`), vérité
     pour « qui peut faire quoi » : un coach **saisit et modifie les résultats des
@@ -67,11 +68,10 @@ ultérieurement, hors de cette spec) : sans résultats saisis, une rencontre n'a
 La saisie est **bornée au club** du coach (spec #1 R19/R20) et **à la phase ③
 compétition** (spec #1 R7/R27). Les résultats et classements sont **consultables
 au fil de l'eau par tout compte authentifié** — tous clubs confondus — dès leur
-saisie en ③ (spec #1 R8, rév. 2026-09-09) ; le **visiteur non authentifié** ne les
-voit qu'**une fois la rencontre publiée (⑤)** (surface publique, spec #8). À la
-**④ clôture**, la saisie coach se ferme et l'**admin** vérifie/corrige ; la **⑤
-résultats publics** **officialise** (fige) les résultats **et** ouvre la lecture
-au public (spec #1 R6/R8).
+saisie en ③ (spec #1 R8) ; le **visiteur non authentifié** n'y a **jamais** accès
+(pas d'espace public, spec #1 R8 rév. 2026-10-02). À la **④ clôture**, la saisie
+coach se ferme et l'**admin** vérifie/corrige ; la **⑤ résultats publics**
+**officialise** (fige) les résultats (spec #1 R6/R8).
 
 ## Vocabulaire
 
@@ -148,13 +148,12 @@ au public (spec #1 R6/R8).
   le **reflète** en n'affichant les formulaires de saisie qu'en ③.
 - **R6.** Les résultats (et classements dérivés) sont **consultables au fil de
   l'eau par tout compte authentifié** dès leur saisie en **③ compétition** (tous
-  clubs confondus). Le **visiteur non authentifié** ne les voit qu'**une fois la
-  rencontre publiée (⑤)** (surface publique, spec #8). Rien n'est visible **avant**
-  la ③ (aucun résultat n'existe). La **⑤ résultats publics** **officialise** (fige)
-  les résultats **et** ouvre la lecture au **public** ; en **④ clôture** ils
-  restent visibles **des authentifiés** mais **non officiels ni publics**
-  (correction admin, R19). (Spec #1 R8, rév. 2026-09-09 ; garanti par la **RLS** :
-  lecture **authentifiée dès la ③**, `anon` **à la ⑤**.)
+  clubs confondus). Le **visiteur non authentifié** n'y a **jamais** accès (pas
+  d'espace public). Rien n'est visible **avant** la ③ (aucun résultat n'existe).
+  La **⑤ résultats publics** **officialise** (fige) les résultats ; en **④
+  clôture** ils restent visibles des authentifiés mais **non officiels**
+  (correction admin, R19). (Spec #1 R8, rév. 2026-10-02 ; garanti par la **RLS** :
+  lecture **authentifiée dès la ③**, **aucune** lecture `anon`.)
 - **R7.** Le **coach temporaire** (session QR) saisit les résultats **en compétition**
   uniquement : sa session est valable en préparation **et** compétition, mais les
   **résultats ne s'ouvrent qu'en ③** (spec #1 R27/R28, spec #5 « Contraintes de
@@ -309,11 +308,9 @@ résultats déjà saisis.
 
 Étant donné des résultats saisis en ③ pour le club A, quand un coach du **club B**
 (compte **authentifié**) consulte la rencontre, alors il **voit** les résultats et
-le classement à jour, marqués **non officiels** (R6). Un **visiteur non
-authentifié**, lui, ne voit à ce stade que les **informations de tête** (pas de
-résultats). Quand la rencontre passe en **⑤ résultats publics**, alors les mêmes
-résultats deviennent **officiels / figés** **et** accessibles au **public** non
-authentifié (spec #1 R8, spec #8).
+le classement à jour, marqués **non officiels** (R6). Quand la rencontre passe en
+**⑤ résultats publics**, alors les mêmes résultats deviennent **officiels /
+figés** (spec #1 R8). Un **visiteur non authentifié** n'y accède à aucun moment.
 
 ### Cas limites / erreurs
 
@@ -420,13 +417,11 @@ erDiagram
   de **phase**. Un **helper dédié** `peut_ecrire_resultat` = coach **permanent** OU
   **temporaire** en **③ compétition**, pour le **club du grimpeur** ; **admin** en
   ④ (correction, R19). **Lecture** : ouverte à **tout compte authentifié dès la ③**
-  (tous clubs) ; pour `anon` (visiteur non authentifié), la lecture n'est ouverte
-  qu'**à la ⑤ résultats publics** (spec #1 R8, rév. 2026-09-09) ; la ⑤ **fige** les
-  résultats **et** ouvre la lecture publique. Écriture coach **interdite** hors ③.
+  (tous clubs) ; **aucune** lecture pour `anon` (spec #1 R8, rév. 2026-10-02) ; la
+  ⑤ **fige** les résultats. Écriture coach **interdite** hors ③.
   *(Les policies `select` des tables `voie_difficulte`/`bloc`/`bloc_palier` —
   aujourd'hui restreintes à `resultats_publics`/admin — sont **élargies** à une
-  lecture **authentifiée dès la ③** ; l'ouverture `anon` (⑤) relève de la surface
-  publique, spec #8.)*
+  lecture **authentifiée dès la ③**.)*
 
 ## Points à valider
 
@@ -450,9 +445,8 @@ erDiagram
   l'issue** et à l'**affichage en lecture seule** du score déjà calculé (R23) ;
   résultats et classements sont **consultables au fil de l'eau par les
   authentifiés** dès la ③ (R6, spec #1 R8).
-- **Surface publique de consultation** (écrans/routes lisibles par un **visiteur
-  non authentifié**) : **spécifiée en spec #8** (`08-espace-public.md`). Le
-  **droit** est fixé par spec #1 R8 (public seulement à la ⑤).
+- **Surface publique de consultation** (visiteur non authentifié) : **abandonnée**
+  (spec #1 R8 rév. 2026-10-02, spec #8 abandonnée).
 - **Officialisation en ⑤** (figement des résultats) et **correction admin** en ④ :
   relèvent de la spec #1 (R6/R8) et de l'espace **admin** — l'IHM de correction
   admin n'est pas détaillée ici.

@@ -205,8 +205,8 @@ Cas particuliers à préparer à la main :
   2. Repasser la rencontre en **pré-compétition** puis relire.
 - **Résultat attendu** : en **③+**, l'utilisateur hors club **voit** les résultats
   (lecture ouverte à tout authentifié, R6/R8) ; il ne peut **pas** écrire
-  (`insert` refusé, RLS). *(La surface publique `anon` — visiteur non connecté —
-  est une itération dédiée, hors de ce cahier.)*
+  (`insert` refusé, RLS). *(Le visiteur non connecté n'a accès à rien : pas
+  d'espace public, spec #1 R8 rév. 2026-10-02.)*
 
 ### CT-14 — Vitesse en lecture seule `[mixte]`   (couvre : R22, R23)
 

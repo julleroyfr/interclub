@@ -4,6 +4,10 @@
 - **Révision** : 2026-10-02 — ajout de l'**écran de contrôle des résultats**
   (spec #16 R12bis) aux écrans rafraîchis en direct (R1) et à ses tables
   observées (R3). Aucune autre règle modifiée.
+- **Révision** : 2026-10-02 — **pas d'espace public** (spec #1 R8 rév.
+  2026-10-02, spec #8 abandonnée) : le **live public** n'est plus « différé » mais
+  **sans objet** ; la contrainte « aucune ouverture `anon` » est conservée (il n'y
+  a aucun visiteur anonyme à servir).
 - **Sources** :
   - **Spec #6 — Saisie des résultats** (`06-saisie-des-resultats.md`) : « Temps réel
     (pousser les MAJ sur les autres écrans) » noté **évolution future différée**
@@ -22,15 +26,14 @@
     saisit les **temps** (`temps_vitesse`) ; le trigger en dérive `points_vitesse`
     (spec #7 R20). L'**écran juge** est inclus au live (décision 2026-09-23) pour
     synchroniser **plusieurs juges / appareils** sur une même épreuve.
-  - **Spec #8 — Espace public** (`08-espace-public.md`), **contrainte structurante** :
-    l'espace public est **rendu côté serveur via `service_role`**, **aucune policy
-    RLS ouverte à `anon`** (pour ne pas fuiter les résultats avant la ⑤). Le
-    navigateur du visiteur **n'interroge jamais** Supabase directement.
+  - **Spec #1 R8** (rév. 2026-10-02), **contrainte structurante** : **pas
+    d'espace public**, **aucune policy RLS ouverte à `anon`** — le visiteur non
+    authentifié n'a accès à rien.
   - **Décision produit du 2026-09-23** : première itération **bornée aux écrans
     authentifiés** (coach + admin) via **Supabase Realtime *Postgres Changes***, qui
     s'appuie sur la **RLS existante** (« authentifié dès ③ ») **sans rien ouvrir à
-    `anon`**. Le **live public** (spectateur du classement) est **différé** à une
-    itération ultérieure (approche **Broadcast serveur**, cf. « Hors périmètre »).
+    `anon`**. *(Le live public, initialement différé, est sans objet depuis le
+    2026-10-02 : pas d'espace public.)*
 
 ## Objectif
 
@@ -73,8 +76,8 @@ se **rafraîchissent d'eux-mêmes**, sans action ni rechargement de l'utilisateu
   - le **contrôle des résultats** contre les fiches de juges, admin (spec #16,
     rév. 2026-10-02).
 
-  L'**espace public / anonyme** (spec #8) est **hors périmètre** : il reste en rendu
-  serveur + revalidation (aucune ouverture `anon`, cf. R5 et « Hors périmètre »).
+  Il n'y a **pas d'espace public / anonyme** (spec #1 R8) : aucune ouverture
+  `anon` (cf. R5).
 
 - **R2.** Un écran concerné se **met à jour tout seul** lorsqu'une écriture
   (`INSERT`, `UPDATE` ou `DELETE`) survient sur l'une des **tables sources qu'il
@@ -220,8 +223,8 @@ sequenceDiagram
   chargement + revalidation, indicateur **interrompu** (R10/R12).
 - **Rencontre hors ③/④** (aucune écriture attendue) → **aucun** évènement, aucun
   live requis ; comportement normal.
-- **Visiteur public / anonyme** → **aucun** abonnement temps réel (hors périmètre,
-  R1) ; l'espace public reste en SSR + revalidation.
+- **Visiteur non authentifié** → **aucun** abonnement temps réel (redirigé vers
+  `/connexion`, pas d'espace public).
 
 ## Contraintes de données
 
@@ -236,8 +239,8 @@ sequenceDiagram
   diffusée, ce qui peut empêcher la diffusion d'un DELETE légitime). À valider en
   recette (cahier de test).
 - **Aucune nouvelle policy RLS.** Le realtime **réutilise** les policies `SELECT`
-  existantes (« authentifié dès ③ », spec #6). **Aucune ouverture `anon`** (spec #8
-  préservée).
+  existantes (« authentifié dès ③ », spec #6). **Aucune ouverture `anon`** (spec #1
+  R8).
 - **Pas de `rencontre_id` sur les tables sources.** `resultat_voie` /
   `resultat_bloc` référencent `voie_difficulte_id` / `bloc_id`, `points_vitesse`
   référence `epreuve_id`, `temps_vitesse` référence `epreuve_id` ; **aucune** ne
@@ -264,11 +267,8 @@ sequenceDiagram
 
 ## Hors périmètre
 
-- **Live public / anonyme** (spectateur du classement, spec #8) — **différé** à une
-  itération ultérieure. Un abonnement direct exigerait d'**ouvrir `anon`**, ce qui
-  **contredit spec #8** ; l'approche retenue le moment venu sera le **Broadcast
-  serveur** (le serveur, qui lit déjà en `service_role` et applique le gating,
-  pousse des évènements **assainis** sur un canal public) — non traité ici.
+- **Live public / anonyme** (spectateur du classement) — **sans objet** depuis le
+  2026-10-02 : pas d'espace public (spec #1 R8, spec #8 abandonnée).
 - **UI optimiste / fusion fine** (n'appliquer que la ligne modifiée sans relire) —
   non retenue : R4 relit via le loader (simplicité, cohérence du calcul).
 - **Présence / « qui est en train de saisir »**, curseurs, notifications, sons.
@@ -286,5 +286,5 @@ sequenceDiagram
   saisie admin.
 - Spec #16 (`16-controle-resultats-fiches-juges.md`) — R12bis : écran de
   contrôle ajouté au périmètre (rév. 2026-10-02).
-- Spec #8 (`08-espace-public.md`) — contrainte « aucune RLS `anon` » : **respectée**
-  (public hors périmètre, live public → Broadcast serveur ultérieur).
+- Spec #1 R8 (rév. 2026-10-02) — pas d'espace public, « aucune RLS `anon` » :
+  **respectée**. (Spec #8 abandonnée.)

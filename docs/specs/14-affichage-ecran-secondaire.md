@@ -55,7 +55,7 @@ cliquer, faire défiler ou recharger la page manuellement.
 - **R1.** L'écran d'affichage est accessible à la route
   `/admin/rencontres/[id]/affichage`, **réservée à l'admin authentifié** (même
   garde que les autres écrans admin : 404 sinon, spec #1 R11–R13). Aucun accès
-  anonyme n'est créé par cette spec (spec #8/#11 préservées).
+  anonyme n'est créé (pas d'espace public, spec #1 R8).
 - **R2.** L'écran est accessible dès que le classement l'est pour un compte
   authentifié, c'est-à-dire dès la **③ compétition** (spec #1 R8, spec #7 R11).
   Avant la ③, l'écran affiche un **état d'attente** (aucune liste à dérouler,

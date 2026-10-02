@@ -367,6 +367,7 @@ Cette spec ne couvre pas (à traiter ailleurs) :
 - La **gestion des comptes permanents** au-delà du mapping de rôle et de
   l'**onboarding par invitation** (R26–R33) : réinitialisation de mot de passe,
   e-mails transactionnels, modification/suppression d'un compte existant.
-- L'accès **visiteur non authentifié** aux infos publiques.
+- L'accès **visiteur non authentifié** aux infos publiques : sans objet (pas
+  d'espace public, spec #1 R8 rév. 2026-10-02).
 - Le **cumul de rôles** par une même personne (spec #1 R4 : une session = un
   rôle).

@@ -64,6 +64,15 @@
   écrans, accès `anon`) est spécifiée en **spec #8** (`08-espace-public.md`).
   Impact : **R8 précisée** ; matrice, contraintes RLS et « hors périmètre » alignés
   (lecture `anon` = ⑤ ; authentifié = ③).
+- **Révision** : 2026-10-02 — **pas d'espace public** (décision produit du
+  2026-10-02). L'application n'a **aucune surface publique** : le **visiteur non
+  authentifié** ne voit **rien** (ni informations de tête, ni résultats, ni
+  classements, à aucune phase) — il est redirigé vers `/connexion` (spec #12 R2).
+  La **spec #8** est **abandonnée**. **Annule** la révision 2026-09-09 sur le
+  volet `anon` (lecture publique à la ⑤). La ⑤ **résultats publics** conserve son
+  nom et son rôle d'**officialisation** (résultats définitifs / figés) pour les
+  comptes authentifiés. Impact : **R8 réécrite** ; matrice, contraintes RLS et
+  « hors périmètre » alignés ; le live public (TODO D1) est **sans objet**.
 - **Révision** : 2026-09-22 — **saisie admin des résultats en ③** (validée le
   2026-09-22, décision produit). L'**administrateur** peut **saisir et corriger**
   les résultats de voie/bloc de **tout grimpeur, tous clubs**, **dès la ③
@@ -189,16 +198,13 @@ conditionne les accès temporels.
 - **R8.** Les résultats **et les classements** d'une rencontre sont **calculés et
   consultables au fil de l'eau** dès leur saisie en **③ compétition**, pour **tout
   compte authentifié**, **tous clubs confondus**. Le **visiteur non authentifié**
-  (`anon`) ne voit résultats et classements **qu'une fois la rencontre publiée
-  (⑤)** ; avant, il n'accède qu'aux **informations de tête** (date, club d'accueil,
-  et — dès les engagements — nombre de clubs/équipes/grimpeurs), sans résultats
-  (surface publique détaillée en **spec #8**). Rien n'est visible **avant** la ③
-  (aucun résultat n'existe encore). La phase **⑤ résultats publics** n'ouvre
-  **pas** la visibilité pour les authentifiés (ils voyaient déjà dès la ③) : elle
-  **officialise** les résultats (rendu **définitif / figé**) **et** ouvre la
-  lecture au **public** non authentifié. En **④ clôture**, les résultats restent
-  consultables **par les authentifiés** mais **non encore officiels ni publics**
-  (correction admin possible, R6). *(Précisé le 2026-09-09.)*
+  (`anon`) n'y a **jamais** accès, à aucune phase : il n'existe **pas d'espace
+  public** (rév. 2026-10-02). Rien n'est visible **avant** la ③ (aucun résultat
+  n'existe encore). La phase **⑤ résultats publics** **officialise** les résultats
+  (rendu **définitif / figé**) ; elle n'ouvre aucun accès supplémentaire. En **④
+  clôture**, les résultats restent consultables par les authentifiés mais **non
+  encore officiels** (correction admin possible, R6). *(Précisé le 2026-09-09 ;
+  volet public supprimé le 2026-10-02.)*
 - **R9.** Les sessions QR éphémères ne sont valides que pendant la **fenêtre du
   jour de la rencontre** : pour le **coach temporaire**, phases **② préparation**
   et **③ compétition** ; pour le **juge**, phase **③ compétition**. Hors de cette
@@ -358,8 +364,8 @@ périmètre (R36) — d'où l'absence de ligne dédiée « saisie » pour le pr�
 La ligne « Consulter les infos publiques » couvre l'accès **par rôle** ; par
 ailleurs, les **résultats et classements** d'une rencontre sont **consultables par
 tout compte authentifié** (tous clubs confondus) dès la **③ compétition** (R8). Le
-**visiteur non authentifié** ne les voit qu'**une fois la rencontre publiée (⑤)** ;
-avant, il n'a que les **informations de tête** (surface publique, spec #8).
+**visiteur non authentifié** n'a accès à **rien** (pas d'espace public, rév.
+2026-10-02).
 
 ## Diagrammes
 
@@ -510,9 +516,9 @@ le prêt** lui-même (R35).
     la ③** (R8, voir ci-dessous) ;
   - lecture des infos publiques ouverte aux coachs, tous clubs (R21) ;
   - **lecture des résultats et classements ouverte à tout compte authentifié dès
-    la phase ③ compétition** ; pour `anon` (visiteur non authentifié) la lecture
-    n'est ouverte **qu'à la ⑤ résultats publics** (R8, rév. 2026-09-09) ; la ⑤
-    **fige** les résultats **et** ouvre la lecture publique ;
+    la phase ③ compétition** ; **aucune** lecture pour `anon` (visiteur non
+    authentifié), à aucune phase — ni policy ni grant (R8, rév. 2026-10-02) ; la ⑤
+    **fige** les résultats ;
   - écriture des **résultats de vitesse** d'un juge **restreinte à la voie de
     l'épreuve de vitesse qui lui est affectée** (R30) ;
   - rattachement d'un grimpeur **prêté** à une équipe d'accueil / équipe CT33
@@ -531,11 +537,8 @@ Cette spec ne couvre pas (à traiter dans des specs dédiées) :
 
 - Le **mécanisme d'authentification** détaillé (génération/scan du QR, durée de
   validité, révocation) et le mapping utilisateur ↔ rôle ↔ joueur.
-- La **surface publique** concrète (routes/pages de consultation, mécanique
-  d'accès `anon`, enchaînements d'écran) : **désormais spécifiée** dans la **spec
-  #8** (`08-espace-public.md`). La présente spec fixe le **droit** (R8 :
-  authentifié dès ③ ; `anon` seulement à ⑤) ; la spec #8 décrit **ce que voit** le
-  visiteur non authentifié et **comment il navigue**.
+- Une **surface publique** (consultation par un visiteur non authentifié) :
+  **abandonnée** le 2026-10-02 (spec #8 abandonnée, R8) — il n'y en a pas.
 - Le modèle détaillé de **scoring et de classement** (barèmes voie / bloc /
   vitesse, classements filles / garçons, cotations par catégorie).
 - Le **calcul d'éligibilité par âge** d'un grimpeur à une catégorie (matin /

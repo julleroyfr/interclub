@@ -16,7 +16,7 @@ import { Pastille, type VariantePastille } from './Pastille'
  * reste côté serveur/domaine (R4). Anti-rebond (R9), indicateur d'état (R10),
  * rattrapage à la reconnexion (R11), désabonnement au démontage (R7). La **RLS**
  * (« authentifié dès ③ ») est la frontière : un rôle ne reçoit que ce qu'il peut
- * lire (R5) — `anon` ne reçoit rien (spec #8 préservée).
+ * lire (R5) — `anon` ne reçoit rien (pas d'espace public, spec #1 R8).
  */
 
 /** Tables sources du live (spec #11 R3). */

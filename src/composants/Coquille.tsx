@@ -9,7 +9,7 @@ type Props = {
   children: ReactNode
   /**
    * Largeur du contenu. `normale` (défaut) = colonne de lecture (max-w-5xl) pour
-   * l'espace public et coach ; `large` = presque pleine largeur (max-w-[1680px])
+   * l'espace coach ; `large` = presque pleine largeur (max-w-[1680px])
    * pour les tableaux de bord admin qui exploitent l'écran (rail + colonnes).
    */
   largeur?: 'normale' | 'large'

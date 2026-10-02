@@ -1,6 +1,10 @@
 # Spec : Espace public — liste des rencontres & consultation (visiteur non authentifié)
 
-- **Statut** : brouillon (à valider)
+- **Statut** : **abandonnée** (décision produit du 2026-10-02) — l'application
+  n'a **pas d'espace public** : le visiteur non authentifié ne voit rien et est
+  redirigé vers `/connexion` (spec #1 R8 rév. 2026-10-02, spec #12 R2). Jamais
+  implémentée (aucune route publique, aucune policy `anon`) ; conservée pour
+  mémoire de la décision. Maquette `docs/maquettes/espace-public.html` supprimée.
 - **Sources** :
   - **Décision produit du 2026-09-09** : contenu et navigation de l'espace public
     (visiteur **non authentifié**) ; visibilité selon l'**état** de la rencontre ;
@@ -15,7 +19,8 @@
   - **Spec #7 — Classement** (`07-classement.md`) : R8b (individuel **Filles /
     Garçons**), R12/R12b (vues, longue liste). Le public réutilise le **même
     calcul** ; il n'a **pas** la vue par club (R11, rév. 2026-09-09).
-- **Maquette** : [`docs/maquettes/espace-public.html`](../maquettes/espace-public.html).
+- **Maquette** : `docs/maquettes/espace-public.html` — supprimée le 2026-10-02
+  (spec abandonnée).
 - **Note de rédaction** : l'espace public est **en lecture seule** et **sans
   authentification**. Les pages sont **rendues côté serveur** via le client
   `service_role` (ADR 0002/0003) ; le **gating par état** est appliqué **dans le
