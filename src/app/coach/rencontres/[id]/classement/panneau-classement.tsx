@@ -155,7 +155,7 @@ export function PanneauClassement({
       <p className="rounded-xl border border-bordure bg-white/5 px-3 py-2 text-xs text-texte-attenue">
         {classement.officiel
           ? 'Rencontre publiée (⑤) : classement officiel et figé.'
-          : 'Recalculé à chaque saisie — non officiel jusqu’à la publication (⑤). La vitesse n’entre pas encore dans le score.'}
+          : 'Recalculé à chaque saisie (voie + bloc + vitesse) — non officiel jusqu’à la publication (⑤).'}
       </p>
 
       {vue === 'individuel' && (

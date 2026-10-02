@@ -282,6 +282,16 @@ test.describe('Cahier 13 — Espace coach : engagement', () => {
     await ligneDevi.locator('select[name="groupeDepart"]').selectOption({ label: 'Groupe M2' })
     await ligneDevi.getByRole('button', { name: 'OK' }).click()
     await expect(ligneDevi.locator('select[name="groupeDepart"]')).toHaveValue('M2')
+    // La valeur du select est vraie côté client avant la réponse serveur : on
+    // attend la persistance réelle avant l'action suivante (sinon course).
+    await expect
+      .poll(() =>
+        execSql(
+          `select groupe_depart from interclub.composition
+            where equipe_id = '${EQUIPES.A2}' and grimpeur_id = '${GRIMPEURS.devi}';`,
+        ),
+      )
+      .toBe('M2')
 
     // R36 (persistance) : le retrait le renvoie au roster ; il reste ré-affectable.
     await ligneDevi.getByRole('button', { name: 'Retirer Devi Bravo' }).click()

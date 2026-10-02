@@ -58,6 +58,15 @@ npm run test:e2e              # tous les cahiers E2E
 - Pose la rencontre enfant en ③ « aujourd'hui », la remet à l'état seed à la fin.
 - **Résidus manuels** : couleurs des pastilles, geste de balayage, rendu des vues.
 
+## Cartographie (cahier 18 — classement)
+
+- `classement.spec.ts` (`npm run test:cahier:classement`) : **CT-01 → CT-13**
+  (13 tests) — visibilité dès la ③, score + décomposition, au fil de l'eau,
+  Femmes/Hommes, ex æquo, équipe/club, prêté, officiel, cross-club + « mon
+  club », recherche/filtres/pagination (20 grimpeuses de volume insérées puis
+  retirées), coach temporaire, vue admin. Résultats posés en SQL.
+- **Résidus manuels** : couleurs (pastilles, rangs), liseré « mon club ».
+
 > **Suite complète** : les fichiers mutent les mêmes rencontres seed → lancer en
 > série, `npx playwright test --project=chromium --workers=1`, sur une base au
 > seed (`npm run db:reset`).

@@ -38,12 +38,12 @@ Réutilise le seed `01-jeu-de-test.sql` (catalogue
 - **JD-RENCONTRE-ENFANT** (`33333333-…-3333`, phase `competition`), structure
   **JD-STRUCTURE-ENFANT** + **JD-BLOCS-ENFANT** (barème « Matin »).
 - **JD-EQUIPE-A1** (Club A) = **JD-ANA-M2** (Ana, **F**, M2·M3·M4 moulinette) +
-  **JD-BOB-T1** (Bob, **G**, T1·T2·T3 tête).
+  **JD-BOB-T1** (Bob, **H**, T1·T2·T3 tête).
 - **JD-EQUIPE-B1** (Club B) = **JD-CLEO-T2** (Cléo, **F**, T2·T3·T4 tête).
-- **JD-PRETE-DEVI** (Devi, **G**, Club B, libre) pour le **prêt** (CT-07).
+- **JD-PRETE-DEVI** (Devi, **H**, Club B, libre) pour le **prêt** (CT-07).
 
-> Les grimpeurs portent désormais un **sexe** (seed) : Ana **F**, Bob **G**, Cléo
-> **F**, Devi **G**. Les **résultats ne sont pas seedés** : chaque CT saisit ce
+> Les grimpeurs portent désormais un **sexe** (seed) : Ana **F**, Bob **H**, Cléo
+> **F**, Devi **H**. Les **résultats ne sont pas seedés** : chaque CT saisit ce
 > dont il a besoin via l'écran de saisie (spec #6, cahier 17).
 
 **Barème utile (Matin)** : M2 = 2, M3 = 3 (moulinette, pas de prise valorisée) ;
@@ -65,6 +65,11 @@ T1 = 5 / pv 3, T2 = 6 / pv 3, T3 = 7 / pv 4 ; B1 : 1er = 4, 2e = 3 ; B2 : 1er = 
 
 ## Cas de test
 
+> **Exécution automatique** : `e2e/classement.spec.ts` (`npm run
+> test:cahier:classement`) rejoue CT-01 → CT-13 (résultats posés en SQL ; la
+> saisie IHM relève du cahier 17). **Résidus manuels** : couleurs des pastilles
+> et des rangs, liseré « mon club », défilement de la pagination sur téléphone.
+
 ### CT-01 — Accès & visibilité dès la ③ (couvre R11, R12)
 
 - **Rôle** : coach A.
@@ -75,7 +80,7 @@ T1 = 5 / pv 3, T2 = 6 / pv 3, T3 = 7 / pv 4 ; B1 : 1er = 4, 2e = 3 ; B2 : 1er = 
   2. Observer l'écran.
 - **Résultat attendu** : l'écran affiche les **trois onglets** (Individuel /
   Par équipe / Par club), le badge de phase **Compétition** et le badge
-  **● Non officiel**. L'individuel propose les sous-onglets **Filles / Garçons**.
+  **● Non officiel**. L'individuel propose les sous-onglets **Femmes / Hommes**.
 - **RLS / sécurité** : (négatif R11) connecté **admin**, faire repasser la
   rencontre en **① pré-compétition** (`/admin/rencontres/[id]`), puis rouvrir le
   classement (coach) → message *« Le classement sera disponible dès l'ouverture de
@@ -86,7 +91,7 @@ T1 = 5 / pv 3, T2 = 6 / pv 3, T3 = 7 / pv 4 ; B1 : 1er = 4, 2e = 3 ; B2 : 1er = 
 - **Pré-condition** : saisir pour **Ana** (résultats, spec #6) : **M2 = Top**,
   **M3 = Top**, **M4 = Échec**, **B1 = 1er essai**, **B2 = Échec**.
 - **Étapes** :
-  1. Onglet **Individuel → Filles**, repérer Ana.
+  1. Onglet **Individuel → Femmes**, repérer Ana.
   2. **Toucher** la ligne d'Ana.
 - **Résultat attendu** :
   - Ligne Ana : **9 pts** (sous-texte **voie 5 · bloc 4 · vit 0**).
@@ -101,7 +106,7 @@ T1 = 5 / pv 3, T2 = 6 / pv 3, T3 = 7 / pv 4 ; B1 : 1er = 4, 2e = 3 ; B2 : 1er = 
 - **Pré-condition** : CT-02 joué (Ana = 9).
 - **Étapes** :
   1. Saisir pour Ana **M4 = Top** (au lieu d'Échec).
-  2. Revenir au classement individuel Filles (recharger).
+  2. Revenir au classement individuel Femmes (recharger).
 - **Résultat attendu** : Ana passe à **13 pts** (voie 5 → 9), le classement est
   **recalculé** ; le badge reste **Non officiel**.
 
@@ -110,10 +115,10 @@ T1 = 5 / pv 3, T2 = 6 / pv 3, T3 = 7 / pv 4 ; B1 : 1er = 4, 2e = 3 ; B2 : 1er = 
 - **Pré-condition** : saisir pour **Bob** : **T1 = Top**, **T2 = Prise
   valorisée**, **T3 = Échec**, **B1 = 1er essai**.
 - **Étapes** :
-  1. Onglet **Individuel**, basculer **Filles** puis **Garçons**.
+  1. Onglet **Individuel**, basculer **Femmes** puis **Hommes**.
   2. Comparer les deux listes.
 - **Résultat attendu** :
-  - **Filles** : Ana (et Cléo si saisie) ; **Garçons** : **Bob = 12 pts**
+  - **Femmes** : Ana (et Cléo si saisie) ; **Hommes** : **Bob = 12 pts**
     (voie 8 = T1 5 + T2 prise 3 ; bloc 4). Les **rangs repartent de 1** dans
     chaque liste ; un score de fille et un score de garçon **ne se comparent
     pas** (deux classements distincts).
@@ -125,7 +130,7 @@ T1 = 5 / pv 3, T2 = 6 / pv 3, T3 = 7 / pv 4 ; B1 : 1er = 4, 2e = 3 ; B2 : 1er = 
   **T3 = Prise valorisée** (4) et **B2 = 2e essai** (5) → **9 pts**. (Ajuster si
   Ana a été modifiée en CT-03 : viser le **même total** qu'Ana.)
 - **Étapes** :
-  1. Onglet **Individuel → Filles**.
+  1. Onglet **Individuel → Femmes**.
 - **Résultat attendu** : Ana et Cléo à **score égal** partagent le **même rang**
   (ex. rang 1 ex æquo) ; l'affichage est **déterministe** — **Alpha** (Ana) avant
   **Bravo** (Cléo) par ordre de nom (R9) ; le rang suivant est **décalé** (saut de
@@ -151,7 +156,7 @@ T1 = 5 / pv 3, T2 = 6 / pv 3, T3 = 7 / pv 4 ; B1 : 1er = 4, 2e = 3 ; B2 : 1er = 
 - **Étapes** :
   1. Onglet **Par équipe** : équipe **A1**.
   2. Onglet **Par club** : **Club A** et **Club B**.
-  3. Onglet **Individuel → Garçons** : repérer **Devi**.
+  3. Onglet **Individuel → Hommes** : repérer **Devi**.
 - **Résultat attendu** :
   - **A1** (accueil) **inclut** le score de Devi ; **Club A** aussi (R7 côté
     équipe/club).
@@ -173,7 +178,7 @@ T1 = 5 / pv 3, T2 = 6 / pv 3, T3 = 7 / pv 4 ; B1 : 1er = 4, 2e = 3 ; B2 : 1er = 
 
 - **Rôle** : coach A.
 - **Étapes** :
-  1. Onglet **Individuel → Filles** et onglet **Par club**.
+  1. Onglet **Individuel → Femmes** et onglet **Par club**.
 - **Résultat attendu** :
   - Le coach du **Club A** voit **Cléo (Club B)** dans l'individuel et **Club B**
     dans la vue par club → l'assemblage porte sur **tous les clubs** (R11, via
@@ -194,7 +199,7 @@ T1 = 5 / pv 3, T2 = 6 / pv 3, T3 = 7 / pv 4 ; B1 : 1er = 4, 2e = 3 ; B2 : 1er = 
   afin de dépasser **20** lignes dans un sexe (sinon vérifier les contrôles à
   petite échelle).
 - **Étapes** :
-  1. Onglet **Individuel → Filles**.
+  1. Onglet **Individuel → Femmes**.
   2. Taper un **nom** dans la recherche.
   3. Activer **Mon club**, puis choisir une **équipe** dans le sélecteur.
   4. Naviguer avec **‹ Préc · numéros · Suiv ›**.
@@ -208,13 +213,13 @@ T1 = 5 / pv 3, T2 = 6 / pv 3, T3 = 7 / pv 4 ; B1 : 1er = 4, 2e = 3 ; B2 : 1er = 
 
 ### CT-11 — Prérequis `grimpeur.sexe` (couvre R8b, migration)
 
-- **Objet** : la séparation Filles / Garçons repose sur `grimpeur.sexe`.
+- **Objet** : la séparation Femmes / Hommes repose sur `grimpeur.sexe`.
 - **Étapes** :
-  1. Vérifier que **Ana** et **Cléo** apparaissent bien en **Filles**, **Bob** et
-     **Devi** en **Garçons** (conformes au seed).
+  1. Vérifier que **Ana** et **Cléo** apparaissent bien en **Femmes**, **Bob** et
+     **Devi** en **Hommes** (conformes au seed).
   2. (Admin) via l'écran Grimpeurs, changer le sexe d'un grimpeur et recharger le
      classement.
-- **Résultat attendu** : le grimpeur **bascule** dans l'autre classement (F↔G).
+- **Résultat attendu** : le grimpeur **bascule** dans l'autre classement (F↔H).
   L'application de la migration et son garde-fou de backfill sont vérifiés par le
   cahier **09** (CT-10) ; ici on valide seulement l'**effet** du champ sur les
   deux classements.
@@ -263,7 +268,8 @@ T1 = 5 / pv 3, T2 = 6 / pv 3, T3 = 7 / pv 4 ; B1 : 1er = 4, 2e = 3 ; B2 : 1er = 
     aucun **404**.
 - **RLS / sécurité** :
   - (négatif) Ouvrir `/admin/rencontres/{id}/classement` avec un compte **coach**
-    ou **sans session** → **404** (garde admin, comme les autres écrans `/admin`).
+    → **404** ; **sans session** → redirection vers **`/connexion`** (spec #12
+    R2/R3).
   - (négatif) En phase **① / ②** (avant la ③), le lien classement n'apparaît pas
     sur le tableau de bord ; l'URL directe renvoie un classement **vide/masqué**
     (R11, cohérent avec la vue coach).
@@ -285,3 +291,4 @@ T1 = 5 / pv 3, T2 = 6 / pv 3, T3 = 7 / pv 4 ; B1 : 1er = 4, 2e = 3 ; B2 : 1er = 
 | | | | CT-11 | ✅ / ❌ | |
 | | | | CT-12 | ✅ / ❌ | |
 | | | | CT-13 | ✅ / ❌ | |
+| 2026-10-02 | agent/playwright | develop | CT-01 → CT-13 | ✅ | `e2e/classement.spec.ts` (13 tests). Corrigé au passage : le bandeau disait « la vitesse n'entre pas encore dans le score » (contraire à spec #7 R20) |
