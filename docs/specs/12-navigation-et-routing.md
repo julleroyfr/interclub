@@ -4,6 +4,10 @@
 - **Révision du 2026-09-29 — export PDF** (spec #15, validée le 2026-09-29) :
   ajout, sur la carte des routes, du point d'export PDF des classements admin et
   coach (spec #15 R7). Aucune règle `Rn` modifiée.
+- **Révision du 2026-10-02 — contrôle des résultats** (spec #16, validée le
+  2026-10-02) : ajout, sur la carte des routes, de l'écran admin
+  `/admin/rencontres/{id}/controle` (④ contrôle, ⑤ lecture seule, spec #16
+  R1–R3). Aucune règle `Rn` modifiée.
 - **Sources** :
   - **Décision produit du 2026-09-25** (arbitrages navigation) : entrée coach
     unique, vue classement admin dédiée, sortie de session juge, classement en
@@ -234,6 +238,7 @@ flowchart TD
         A_RES["/admin/rencontres/{id}/resultats"]
         A_CLST["/admin/rencontres/{id}/classement"]
         A_PDF["/admin/rencontres/{id}/classement/pdf"]
+        A_CTRL["/admin/rencontres/{id}/controle"]
     end
     ADMIN --> A_CLUBS & A_JETONS & A_RDVS
     A_RDVS <--> A_RDV
@@ -242,6 +247,7 @@ flowchart TD
     A_RES <--> A_CLST
     A_RDV --> A_CLST
     A_CLST -.⑤ : export.-> A_PDF
+    A_RDV <-.④/⑤.-> A_CTRL
 ```
 
 ## Contraintes de données

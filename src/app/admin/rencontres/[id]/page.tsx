@@ -3,7 +3,9 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 import { Carte, Coquille, EnTetePage } from '@/composants'
+import { progressionGlobale } from '@/domaine/controle'
 import { anneeSaison, CATEGORIES, labelSaison, type Categorie } from '@/domaine/rencontre'
+import { getControleRencontre } from '@/lib/admin/controle'
 import { chargerEngagementTousClubs } from '@/lib/admin/engagement'
 import { liensAdmin } from '@/lib/admin/navigation'
 import { exigerAdmin } from '@/lib/auth/session'
@@ -58,6 +60,12 @@ export default async function PageTableauDeBordRencontre({
     structure.voiesVitesse.length
   const nbPrets = prets.length
 
+  // Contrôle des résultats (spec #16) : ④ contrôle, ⑤ lecture seule (R2/R3).
+  const controle = await getControleRencontre(id, { avecAuteurs: false })
+  const progressionControle = controle
+    ? progressionGlobale(controle.supports.map((s) => s.lignes))
+    : null
+
   return (
     <Coquille liens={liensAdmin()} largeur="large" deconnexion>
       <div className="flex flex-col gap-6">
@@ -84,6 +92,21 @@ export default async function PageTableauDeBordRencontre({
                 className="rounded-2xl border border-admin/40 bg-admin/10 px-4 py-3 text-center text-sm font-bold text-admin transition hover:bg-admin/20"
               >
                 🛡️ {structure.phase === 'cloture' ? 'Corriger' : 'Saisir'} les résultats (tous clubs) →
+              </Link>
+            )}
+            {controle && progressionControle && (
+              <Link
+                href={`/admin/rencontres/${id}/controle`}
+                className="rounded-2xl border border-admin/40 bg-admin/10 px-4 py-3 text-center text-sm font-bold text-admin transition hover:bg-admin/20"
+              >
+                ✅{' '}
+                {controle.mode === 'controle'
+                  ? 'Contrôler les résultats (fiches juges)'
+                  : 'Voir le contrôle des résultats'}{' '}
+                →
+                <span className="mt-1 block text-xs font-semibold text-texte-attenue">
+                  {progressionControle.controlees}/{progressionControle.total} lignes contrôlées
+                </span>
               </Link>
             )}
             {/* Classement consultable dès la ③ (spec #12 R15, spec #7 R11) : vue

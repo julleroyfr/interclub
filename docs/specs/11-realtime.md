@@ -1,6 +1,9 @@
 # Spec : Realtime — mises à jour en direct (écrans authentifiés)
 
 - **Statut** : validée (le 2026-09-23)
+- **Révision** : 2026-10-02 — ajout de l'**écran de contrôle des résultats**
+  (spec #16 R12bis) aux écrans rafraîchis en direct (R1) et à ses tables
+  observées (R3). Aucune autre règle modifiée.
 - **Sources** :
   - **Spec #6 — Saisie des résultats** (`06-saisie-des-resultats.md`) : « Temps réel
     (pousser les MAJ sur les autres écrans) » noté **évolution future différée**
@@ -66,7 +69,9 @@ se **rafraîchissent d'eux-mêmes**, sans action ni rechargement de l'utilisateu
   - la **saisie des résultats coach** (spec #6),
   - la **saisie admin des résultats** (spec #9),
   - l'**écran de classement** consulté par un compte **authentifié** (spec #7),
-  - la **saisie vitesse du juge** (spec #10).
+  - la **saisie vitesse du juge** (spec #10),
+  - le **contrôle des résultats** contre les fiches de juges, admin (spec #16,
+    rév. 2026-10-02).
 
   L'**espace public / anonyme** (spec #8) est **hors périmètre** : il reste en rendu
   serveur + revalidation (aucune ouverture `anon`, cf. R5 et « Hors périmètre »).
@@ -87,7 +92,10 @@ se **rafraîchissent d'eux-mêmes**, sans action ni rechargement de l'utilisateu
     s'abonner à `points_vitesse` **suffit** pour que le classement bouge en direct
     (pas besoin de `temps_vitesse` ici) ;
   - **saisie vitesse** (juge #10) : **`temps_vitesse`** — pour synchroniser
-    **plusieurs juges / appareils** sur une même épreuve (temps et progression).
+    **plusieurs juges / appareils** sur une même épreuve (temps et progression) ;
+  - **contrôle des résultats** (admin #16) : `resultat_voie`, `resultat_bloc` —
+    les coches de contrôle sont des colonnes de ces tables : un admin voit en
+    direct ce qu'un autre valide (rév. 2026-10-02).
 
 ### Mécanique de rafraîchissement
 
@@ -276,5 +284,7 @@ sequenceDiagram
   matérialisée « prête realtime »), § « Temps réel » : cette spec l'active.
 - Spec #9 (`09-saisie-admin-resultats.md`) — § « Temps réel » (différé) : idem
   saisie admin.
+- Spec #16 (`16-controle-resultats-fiches-juges.md`) — R12bis : écran de
+  contrôle ajouté au périmètre (rév. 2026-10-02).
 - Spec #8 (`08-espace-public.md`) — contrainte « aucune RLS `anon` » : **respectée**
   (public hors périmètre, live public → Broadcast serveur ultérieur).

@@ -40,6 +40,14 @@ npm run test:e2e              # tous les cahiers E2E
 > l'engagement à l'état seed (idempotence) ; les tests de scan nettoient les
 > sessions QR.
 
+## Cartographie (cahier 27 — contrôle des résultats)
+
+- `admin-controle.spec.ts` : **CT-02 → CT-12 implémentés et verts** (CT-01 =
+  migration, vérifié en SQL). Crée au besoin un 2ᵉ admin local
+  `admin2@test.local` (API Auth admin + `compte`) pour le temps réel (CT-08/09).
+  Remet la rencontre pilote sans résultats et en ③ à la fin.
+- **Résidu manuel** : CT-12 sur un vrai téléphone.
+
 ## Après un passage
 
 Reporter les cas verts dans le **registre d'exécution** du cahier
