@@ -6,17 +6,17 @@ attente** (les tâches ✅ faites sont archivées en bas, pas rappelées).
 
 Statuts : ✅ fait · 🔄 en cours · ⏳ en attente (à faire) · 🚫 bloqué (dépendance non levée)
 
-Dernière mise à jour : 2026-09-23.
+Dernière mise à jour : 2026-10-02.
 
 ---
 
 > ℹ️ **La phase d'initialisation (T1→T8) est terminée.** Le projet est en
-> développement fonctionnel (specs #3→#10). Cette section suit désormais l'état
+> développement fonctionnel (specs #3→#16). Cette section suit désormais l'état
 > des specs métier et les tâches d'init résiduelles.
 
 ## 🔄 En cours
 
-**Développement fonctionnel (specs #3→#10) — codé & validé en local.**
+**Développement fonctionnel (specs #3→#16) — codé & validé en local.**
 Implémenté depuis fin juillet 2026 (cf. `git log`) :
 
 - **Spec #3 — Écrans de paramétrage admin** : gabarit de rencontre par catégorie
@@ -32,23 +32,33 @@ Implémenté depuis fin juillet 2026 (cf. `git log`) :
   (trigger, classement par sexe).
 - **Spec #9 — Saisie admin des résultats** (tous clubs).
 - **Spec #10 — Saisie de la vitesse par le juge** (temps/chute/NP).
+- **Spec #11 — Temps réel** (itération 1 : écrans authentifiés, *Postgres Changes*).
+- **Spec #12 — Navigation & routing** (gardes, bandeau par rôle, `/` routeur).
+- **Spec #13 — Import des licenciés** FFME (xlsx) + roster paginé.
+- **Spec #14 — Affichage écran secondaire** (classement mixte en boucle).
+- **Spec #15 — Export PDF** des classements officiels.
+- **Spec #16 — Contrôle des résultats** contre les fiches de juges.
+
+> ⚠️ **Spec #8 — Espace public** : toujours au statut *brouillon (à valider)*.
 
 Domaine pur couvert par Vitest (`src/domaine/` : gabarit, engagement, résultat,
 score, vitesse, pret, invitation-coach…) ; parcours couverts par cahiers
-`docs/tests/10→21` et E2E Playwright (`e2e/`).
+`docs/tests/10→27` et E2E Playwright (`e2e/`).
 
 > ✅ **Migrations appliquées en recette** (2026-09-28, confirmé sur
 > `interclub.version`) : tout le lot, du socle `202607221000` jusqu'à
-> `202609251300_rpc_rechercher_grimpeurs_filtre_club` inclus.
+> `202609251300_rpc_rechercher_grimpeurs_filtre_club` inclus, puis
+> `202610021000_controle_resultats` (2026-10-02).
 > `supabase/migrations/JOURNAL.md` à jour. **Reste à faire côté utilisateur** :
-> dérouler les cahiers `docs/tests/11→24` en colonne **Recette**, puis
+> dérouler les cahiers `docs/tests/11→27` en colonne **Recette**, puis
 > application **prod** à la bascule sur `main` (reportée volontairement).
 
 ## ⏳ En attente (à faire)
 
 | ID | Tâche | Dépend de | Notes |
 | ---- | ------- | ----------- | ------- |
-| T13 | Étendre l'E2E Playwright sur parcours stabilisés | T7 | En cours : `admin-equipes`, `admin-prets`, `coach-engagement` couverts. Poursuivre au fil des specs stabilisées. |
+| E1 | **Réparer les 5 tests E2E obsolètes / dépendants de l'ordre** : `admin-prets` (insert grimpeur sans `sexe`/`licence`), `coach-engagement` CT-01 (attend 404 pour anonyme sur `/coach`, or spec #12 → redirection `/connexion`), `navigation-routing` CT-10 (dépend de la phase laissée par un test précédent), CT-08/CT-09 (scan QR coach temp/juge, dépend de la phase/date) | — | Repéré 2026-10-02 (échouent aussi sans la spec #16). Préalable à T13. |
+| T13 | Étendre l'E2E Playwright sur parcours stabilisés | T7, E1 | En cours : `admin-equipes`, `admin-prets`, `coach-engagement`, `navigation-routing`, `admin-controle` couverts. Poursuivre au fil des specs stabilisées. |
 
 ## 🧊 Différés fonctionnels (reportés volontairement)
 
