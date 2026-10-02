@@ -51,7 +51,7 @@ npm run test:e2e              # tous les cahiers E2E
 ## Cartographie (cahier 17 — saisie des résultats)
 
 - `coach-saisie-resultats.spec.ts` (`npm run test:cahier:resultats`) : **CT-01 →
-  CT-12, CT-14 et CT-15** (15 tests) — accès, deux vues, navigation ‹/›, voies enfant/ado,
+  CT-12, CT-14 et CT-15** (16 tests, dont boutons ≥ 44 px sur téléphone) — accès, deux vues, navigation ‹/›, voies enfant/ado,
   issues par type, correction, plafond/retrait ado, blocs, coach temporaire, saisie
   fermée hors ③, NP à la clôture (via le pilotage admin), vitesse en lecture seule.
   CT-13 (RLS) reste dans `npm run test:resultats`.
@@ -66,6 +66,13 @@ npm run test:e2e              # tous les cahiers E2E
   club », recherche/filtres/pagination (20 grimpeuses de volume insérées puis
   retirées), coach temporaire, vue admin. Résultats posés en SQL.
 - **Résidus manuels** : couleurs (pastilles, rangs), liseré « mon club ».
+
+## Cartographie (cahier 19 — saisie admin des résultats)
+
+- `admin-saisie-resultats.spec.ts` (`npm run test:cahier:saisie-admin`) : **CT-01 →
+  CT-10** (11 tests) — accès, liste tous clubs, saisie cross-club, correction NP →
+  Top en ④, coexistence admin/coach + auteur, refus hors ③/④ (y compris
+  re-soumission après passage en ⑤), entrée tableau de bord, responsive (≥ 44 px).
 
 > **Suite complète** : les fichiers mutent les mêmes rencontres seed → lancer en
 > série, `npx playwright test --project=chromium --workers=1`, sur une base au

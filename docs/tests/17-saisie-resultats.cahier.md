@@ -112,6 +112,8 @@ Cas particuliers à préparer à la main :
 - **Résultat attendu** : chaque issue s'affiche en pastille (Top vert, Prise
   valorisée cyan, Échec rouge) ; le compteur passe à **3/3** (R20). Sur un grimpeur
   **sans groupe** : « Groupe de départ à définir » et aucune voie (R9).
+  Sur **téléphone** (~375 px), chaque bouton d'issue fait **≥ 44 px** de haut
+  (cible tactile, conv. 08).
 
 ### CT-05 — Voie moulinette : pas de prise valorisée `[mixte]`   (couvre : R10)
 

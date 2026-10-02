@@ -57,7 +57,7 @@ score, vitesse, pret, invitation-coach…) ; parcours couverts par cahiers
 
 | ID | Tâche | Dépend de | Notes |
 | ---- | ------- | ----------- | ------- |
-| T13 | Étendre l'E2E Playwright sur parcours stabilisés | T7 | En cours : `admin-equipes`, `admin-prets`, `coach-engagement`, `navigation-routing`, `admin-controle`, `coach-saisie-resultats` (cahier 17), `classement` (cahier 18) couverts. Suite : 19 saisie admin, 20/21 vitesse. Poursuivre au fil des specs stabilisées. |
+| T13 | Étendre l'E2E Playwright sur parcours stabilisés | T7 | En cours : `admin-equipes`, `admin-prets`, `coach-engagement`, `navigation-routing`, `admin-controle`, `coach-saisie-resultats` (cahier 17), `classement` (cahier 18), `admin-saisie-resultats` (cahier 19) couverts. Suite : 20/21 vitesse. Poursuivre au fil des specs stabilisées. |
 
 ## 🧊 Différés fonctionnels (reportés volontairement)
 

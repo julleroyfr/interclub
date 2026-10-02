@@ -52,6 +52,11 @@ Réutilise le seed `01-jeu-de-test.sql` (catalogue
 
 ## Cas de test
 
+> **Exécution automatique** : `e2e/admin-saisie-resultats.spec.ts` (`npm run
+> test:cahier:saisie-admin`) rejoue CT-01 → CT-10. CT-09 (contournement API) reste
+> couvert par `npm run test:resultats` (triggers BDD). **Résidus manuels** :
+> couleurs des pastilles, confort sur un vrai téléphone.
+
 ### CT-01 — Accès réservé à l'admin (couvre R1)
 
 - **Étapes** :
@@ -60,7 +65,8 @@ Réutilise le seed `01-jeu-de-test.sql` (catalogue
   3. **Non connecté** : ouvrir la même URL.
   4. **Coach temporaire** (scan QR) : ouvrir la même URL.
 - **Résultat attendu** : (1) l'écran s'affiche (liste tous clubs + zone de saisie).
-  (2)(3)(4) → **404** (écran masqué). L'écran **coach** `/coach/.../resultats`
+  (2)(4) → **404** (écran masqué) ; (3) → redirection vers **`/connexion`** (spec
+  #12 R2). L'écran **coach** `/coach/.../resultats`
   reste, lui, accessible au coach (spec #6 R1 inchangée).
 
 ### CT-02 — Liste tous clubs, recherche & filtre (couvre R2, R10)
@@ -178,3 +184,4 @@ Réutilise le seed `01-jeu-de-test.sql` (catalogue
 | | | | CT-08 | ✅ / ❌ | |
 | | | | CT-09 | ✅ / ❌ | |
 | | | | CT-10 | ✅ / ❌ | |
+| 2026-10-02 | agent/playwright | develop | CT-01 → CT-10 | ✅ | `e2e/admin-saisie-resultats.spec.ts` (11 tests). Corrigé au passage : boutons d'issue < 44 px sur mobile (admin 36, coach 27) → ≥ 44 px |

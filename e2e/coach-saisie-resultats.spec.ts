@@ -194,6 +194,19 @@ test.describe('Cahier 17 — saisie des résultats voie & bloc (spec #6)', () =>
     await expect(voies).toHaveCount(0)
   })
 
+  test('CT-04 · téléphone : boutons d’issue ≥ 44 px (conv. 08)', async ({ browser }) => {
+    const ctx = await browser.newContext({ viewport: { width: 375, height: 740 }, hasTouch: true })
+    const page = await ctx.newPage()
+    await commeCoach(page)
+    await ouvrirGrimpeur(page, URL_ENFANT, 'Bob Alpha')
+    const hauteurs = await page
+      .locator('main form button')
+      .evaluateAll((bs) => bs.map((b) => b.getBoundingClientRect().height))
+    expect(hauteurs.length).toBeGreaterThan(0)
+    expect(Math.min(...hauteurs)).toBeGreaterThanOrEqual(44)
+    await ctx.close()
+  })
+
   test('CT-05 · moulinette sans prise valorisée, tête avec (R10)', async ({ page }) => {
     await commeCoach(page)
     await ouvrirGrimpeur(page, URL_ENFANT, 'Ana Alpha')

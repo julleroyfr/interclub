@@ -18,6 +18,7 @@
     "test:cahier:coach": "playwright test coach-engagement --project=chromium --workers=1",
     "test:cahier:resultats": "playwright test coach-saisie-resultats --project=chromium --workers=1",
     "test:cahier:classement": "playwright test classement --project=chromium --workers=1",
+    "test:cahier:saisie-admin": "playwright test admin-saisie-resultats --project=chromium --workers=1",
     "test:t5a": "bash scripts/test-t5a.sh",
     "test:t5b": "bash scripts/test-t5b.sh",
     "test:t5c": "bash scripts/test-t5c.sh",

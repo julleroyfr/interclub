@@ -454,7 +454,7 @@ function LigneVoie({
                 name="issue"
                 value={iss}
                 disabled={enCours}
-                className={`rounded-lg border px-2.5 py-1 text-[11.5px] font-semibold disabled:opacity-50 ${
+                className={`min-h-11 rounded-lg border px-2.5 py-1 text-[11.5px] font-semibold disabled:opacity-50 ${
                   voie.issue === iss
                     ? classeIssue(iss)
                     : 'border-bordure bg-black/20 text-texte-attenue hover:bg-surface-forte'
@@ -472,7 +472,7 @@ function LigneVoie({
               <button
                 type="submit"
                 aria-label={`Retirer la voie ${voie.niveau}`}
-                className="rounded-lg border border-danger/40 px-2 py-1 text-sm text-danger hover:bg-danger/10"
+                className="min-h-11 min-w-11 rounded-lg border border-danger/40 px-2 py-1 text-sm text-danger hover:bg-danger/10"
               >
                 ×
               </button>
@@ -536,7 +536,7 @@ function FormAjoutVoieAdo({
             name="issue"
             value={iss}
             disabled={enCours}
-            className="rounded-lg border border-bordure bg-black/20 px-2.5 py-1 text-[11.5px] font-semibold text-texte-attenue hover:bg-surface-forte disabled:opacity-50"
+            className="min-h-11 rounded-lg border border-bordure bg-black/20 px-2.5 py-1 text-[11.5px] font-semibold text-texte-attenue hover:bg-surface-forte disabled:opacity-50"
           >
             {LIBELLE_ISSUE[iss]}
           </button>
@@ -602,7 +602,7 @@ function LigneBloc({
           : null
 
   const classeBouton = (actif: boolean, actifClasse: string) =>
-    `rounded-lg border px-2.5 py-1 text-[11.5px] font-semibold disabled:opacity-50 ${
+    `min-h-11 rounded-lg border px-2.5 py-1 text-[11.5px] font-semibold disabled:opacity-50 ${
       actif ? actifClasse : 'border-bordure bg-black/20 text-texte-attenue hover:bg-surface-forte'
     }`
 
