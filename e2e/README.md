@@ -48,6 +48,20 @@ npm run test:e2e              # tous les cahiers E2E
   Remet la rencontre pilote sans résultats et en ③ à la fin.
 - **Résidu manuel** : CT-12 sur un vrai téléphone.
 
+## Cartographie (cahier 17 — saisie des résultats)
+
+- `coach-saisie-resultats.spec.ts` (`npm run test:cahier:resultats`) : **CT-01 →
+  CT-12 et CT-14** (14 tests) — accès, deux vues, navigation ‹/›, voies enfant/ado,
+  issues par type, correction, plafond/retrait ado, blocs, coach temporaire, saisie
+  fermée hors ③, NP à la clôture (via le pilotage admin), vitesse en lecture seule.
+  CT-13 (RLS) reste dans `npm run test:resultats`.
+- Pose la rencontre enfant en ③ « aujourd'hui », la remet à l'état seed à la fin.
+- **Résidus manuels** : couleurs des pastilles, geste de balayage, rendu des vues.
+
+> **Suite complète** : les fichiers mutent les mêmes rencontres seed → lancer en
+> série, `npx playwright test --project=chromium --workers=1`, sur une base au
+> seed (`npm run db:reset`).
+
 ## Après un passage
 
 Reporter les cas verts dans le **registre d'exécution** du cahier

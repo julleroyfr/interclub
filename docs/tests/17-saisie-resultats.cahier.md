@@ -75,10 +75,11 @@ Cas particuliers à préparer à la main :
   1. Coach A : ouvrir `/coach/rencontres/<enfant>/resultats`.
   2. Se déconnecter, tenter la même URL **non connecté**.
   3. Connecté **admin**, puis **`sansmapping@test.local`**, tenter la même URL.
-- **Résultat attendu** : l'écran s'affiche (1) pour le coach ; **404** en (2) et (3)
-  — l'espace est masqué (R1).
+- **Résultat attendu** : l'écran s'affiche (1) pour le coach ; en (2), **redirection
+  vers `/connexion`** (spec #12 R2) ; **404** en (3) — l'espace est masqué (R1,
+  spec #12 R3).
 
-### CT-02 — Deux vues : par équipe / alphabétique `[manuel]`   (couvre : R24, R21)
+### CT-02 — Deux vues : par équipe / alphabétique `[mixte]`   (couvre : R24, R21)
 
 - **Rôle / compte** : coach permanent Club A.
 - **Pré-condition** : rencontre enfant en compétition, ≥ 2 équipes ou ≥ 3 grimpeurs.
@@ -89,7 +90,7 @@ Cas particuliers à préparer à la main :
   triés par **nom de famille** (A→Z), chacun avec son **tag d'équipe** ; les
   compteurs 🧗/🧱 et l'état ⚡ sont identiques dans les deux vues (même donnée, R24).
 
-### CT-03 — Navigation grimpeur ‹ / › + balayage `[manuel]`   (couvre : R25)
+### CT-03 — Navigation grimpeur ‹ / › + balayage `[mixte]`   (couvre : R25)
 
 - **Rôle / compte** : coach permanent Club A.
 - **Étapes** :
@@ -97,15 +98,17 @@ Cas particuliers à préparer à la main :
   2. Cliquer **›** puis **‹** ; sur mobile, **glisser** vers la gauche/droite.
 - **Résultat attendu** : on passe au grimpeur suivant/précédent **dans l'ordre de la
   vue courante**, sans repasser par la liste ; le compteur se met à jour ; ‹ est
-  désactivé sur le 1ᵉʳ, › sur le dernier (R25).
+  désactivé sur le 1ᵉʳ, › sur le dernier (R25). *(Vérifier à l'œil : le geste de
+  balayage sur un vrai téléphone.)*
 
 ### CT-04 — Saisie voie enfant : Top / Prise valorisée / Échec `[mixte]`   (couvre : R8, R9, R10, R20)
 
 - **Rôle / compte** : coach permanent Club A.
-- **Pré-condition** : rencontre **enfant** en compétition ; **Ana** (groupe M2).
+- **Pré-condition** : rencontre **enfant** en compétition ; **Bob** (groupe T1,
+  voies en tête — la prise valorisée n'existe pas en moulinette, cf. CT-05).
 - **Étapes** :
-  1. Ouvrir Ana : la section **Voie** liste **exactement 3 voies** (M2, M3, M4).
-  2. M2 → **Top** ; M3 → **Prise valorisée** ; M4 → **Échec**.
+  1. Ouvrir Bob : la section **Voie** liste **exactement 3 voies** (T1, T2, T3).
+  2. T1 → **Top** ; T2 → **Prise valorisée** ; T3 → **Échec**.
 - **Résultat attendu** : chaque issue s'affiche en pastille (Top vert, Prise
   valorisée cyan, Échec rouge) ; le compteur passe à **3/3** (R20). Sur un grimpeur
   **sans groupe** : « Groupe de départ à définir » et aucune voie (R9).
@@ -122,9 +125,9 @@ Cas particuliers à préparer à la main :
 ### CT-06 — Correction d'une issue (remplacement) `[mixte]`   (couvre : R13)
 
 - **Rôle / compte** : coach permanent Club A.
-- **Étapes** : sur Ana / M3 déjà « Prise valorisée », cliquer **Top**.
-- **Résultat attendu** : l'issue de M3 devient **Top** (remplacement) ; il n'y a
-  **pas** deux résultats pour M3 (R13). Le compteur reste 3/3.
+- **Étapes** : sur Bob / T2 déjà « Prise valorisée », cliquer **Top**.
+- **Résultat attendu** : l'issue de T2 devient **Top** (remplacement) ; il n'y a
+  **pas** deux résultats pour T2 (R13). Le compteur reste 3/3.
 
 ### CT-07 — Saisie ado : choix libre, 2 voies de même niveau, plafond 6 `[mixte]`   (couvre : R11, R12, R14)
 
@@ -135,8 +138,9 @@ Cas particuliers à préparer à la main :
      T7 → **Échec** ; T8 → **Top** ; T4 → **Zone 2** (⇒ 6 voies).
   2. Tenter d'ajouter une **7ᵉ** voie.
 - **Résultat attendu** : les 6 issues s'enregistrent (deux T5 **distinctes**
-  autorisées, R11) ; le compteur affiche **6/6** ; l'ajout d'une 7ᵉ voie est
-  **refusé** avec message « au plus 6 voies » (R14). Les issues ado proposées sont
+  autorisées, R11) ; le compteur affiche **6/6** ; le formulaire « Ajouter une
+  voie » **disparaît** — aucune 7ᵉ voie possible (R14 ; le refus serveur « au plus
+  6 voies » est couvert par le domaine). Les issues ado proposées sont
   Top / Zone 2 / Zone 1 / Échec (R12).
 
 ### CT-08 — Retrait d'une voie ado `[mixte]`   (couvre : R11, R14)
@@ -239,3 +243,4 @@ Cas particuliers à préparer à la main :
 | 2026-09-18 | auto | develop (WIP) | CT-12 | ✅ (domaine) | R18/R19 NP à la clôture couverts par `resultat.test.ts` ; bout-en-bout via IHM = manuel |
 | 2026-09-18 | auto | develop (WIP) | CT-13 | ✅ | R6/R8 lecture ③+ tous clubs + écriture refusée (RLS) ✅ `test:resultats` |
 | | | | CT-14 | ✅ / ❌ | manuel (vitesse lecture seule) |
+| 2026-10-02 | agent/playwright | develop | CT-01 → CT-12, CT-14 | ✅ | `e2e/coach-saisie-resultats.spec.ts` (14 tests). Résidus manuels : couleurs des pastilles (CT-04), geste de balayage (CT-03), rendu des deux vues (CT-02) |
