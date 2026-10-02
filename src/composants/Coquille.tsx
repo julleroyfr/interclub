@@ -34,7 +34,8 @@ const LARGEURS: Record<NonNullable<Props['largeur']>, string> = {
 /**
  * Coquille applicative du thème Nuit : fond profond, voiles d'aurore,
  * en-tête collant avec logo + navigation. Server Component ; la nav
- * (surlignage actif) est isolée dans un Client Component.
+ * (surlignage actif, menu repliable sous `md`) est isolée dans un Client
+ * Component — aucun défilement horizontal de page sur mobile.
  */
 export function Coquille({
   liens,
@@ -47,12 +48,12 @@ export function Coquille({
   return (
     <div className="min-h-screen bg-fond bg-[radial-gradient(60rem_40rem_at_top,#0e2a3b,transparent)] text-texte">
       <header className="sticky top-0 z-10 border-b border-bordure bg-fond/70 backdrop-blur">
-        <div className={`mx-auto flex ${largeurCls} items-center justify-between px-4 py-3`}>
+        <div className={`mx-auto flex ${largeurCls} items-center justify-between gap-2 px-4 py-3`}>
           <div className="flex items-center gap-2">
             <span className="grid size-8 place-items-center rounded-lg bg-accent/20 font-bold text-accent-doux ring-1 ring-accent/40">
               I
             </span>
-            <span className="font-semibold text-texte-fort">Interclub</span>
+            <span className="hidden font-semibold text-texte-fort sm:inline">Interclub</span>
           </div>
           <div className="flex items-center gap-2">
             <NavPrincipale liens={liens} />
@@ -60,7 +61,7 @@ export function Coquille({
               <form action={seDeconnecter}>
                 <button
                   type="submit"
-                  className="rounded-lg border border-bordure px-3 py-1.5 text-sm font-medium text-texte-attenue transition hover:bg-surface hover:text-texte-fort"
+                  className="min-h-11 rounded-lg border border-bordure px-3 text-sm font-medium whitespace-nowrap text-texte-attenue transition hover:bg-surface hover:text-texte-fort md:min-h-0 md:py-1.5"
                 >
                   Se déconnecter
                 </button>
@@ -70,7 +71,7 @@ export function Coquille({
               <form action={terminerSession}>
                 <button
                   type="submit"
-                  className="rounded-lg border border-bordure px-3 py-1.5 text-sm font-medium text-texte-attenue transition hover:bg-surface hover:text-texte-fort"
+                  className="min-h-11 rounded-lg border border-bordure px-3 text-sm font-medium whitespace-nowrap text-texte-attenue transition hover:bg-surface hover:text-texte-fort md:min-h-0 md:py-1.5"
                 >
                   Terminer
                 </button>

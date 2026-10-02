@@ -395,15 +395,12 @@ test.describe('Cahier 27 — contrôle des résultats (spec #16)', () => {
     expect(box!.height).toBeGreaterThanOrEqual(44)
     await caseDe(page, 'Alpha', 'Ana').tap()
     await expect(caseDe(page, 'Alpha', 'Ana')).toHaveAttribute('aria-checked', 'true')
-    // Contenu de l'écran (hors barre de navigation commune, cf. Coquille) :
-    // aucun élément ne dépasse la largeur de l'écran.
-    const debordants = await page.evaluate(() => {
-      const w = document.documentElement.clientWidth
-      return [...document.querySelectorAll('main *')].filter(
-        (e) => e.getBoundingClientRect().right > w + 1,
-      ).length
-    })
-    expect(debordants).toBe(0)
+    // Page entière (barre de navigation comprise, repliée en menu — D4) :
+    // aucun défilement horizontal.
+    const debordement = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    )
+    expect(debordement).toBe(0)
     await page.getByRole('button', { name: '← Voies et blocs' }).click()
     await expect(page.getByRole('navigation', { name: 'Voies et blocs' })).toBeVisible()
     await ctx.close()

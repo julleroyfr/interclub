@@ -144,6 +144,27 @@
     y compris sur **`/coach/jetons`** (non-régression : « Mes rencontres » présent) ;
     **pas** de lien « Accueil ».
 
+### CT-12 — Bandeau sur téléphone : menu repliable, pas de défilement horizontal (couvre R23 ; conv. 08)
+
+- **Rôle** : `admin@`, `coach@`, coach temporaire (scan), juge (scan).
+- **Appareil** : téléphone **~375 px** de large (vrai téléphone pour le résidu
+  manuel).
+- **Étapes** :
+  1. En admin, ouvrir `/admin`, `/admin/rencontres/{id}`, `…/resultats`,
+     `…/controle`, `…/classement`, `/admin/grimpeurs`.
+  2. Toucher **« Menu »**, puis un lien du panneau.
+  3. Rejouer l'étape 1 sur `/coach` et `/coach/jetons` (coach permanent), puis
+     sur l'écran de la rencontre (coach temporaire).
+- **Résultat attendu** :
+  - **Aucun défilement horizontal de la page** (largeur du document = largeur de
+    l'écran), quel que soit l'espace.
+  - Sous 768 px, les liens sont **repliés** derrière un bouton **« Menu »** ;
+    « Se déconnecter » / « Terminer » restent visibles dans l'en-tête.
+  - « Menu » ouvre un panneau listant **les mêmes liens** que sur desktop (R23),
+    en colonne, cibles **≥ 44 px** ; le lien de la page courante est surligné.
+  - Toucher un lien navigue **et referme** le panneau ; **Échap** le referme.
+  - À partir de 768 px : rangée de liens en ligne, sans bouton « Menu ».
+
 ## Registre d'exécution
 
 | Date | Testeur | Version/commit | Cas | Résultat | Remarque |
@@ -160,3 +181,4 @@
 | 2026-09-25 | Playwright e2e | `24ad806` | CT-10 | ✅ | Lien classement admin → /admin/.../classement (jamais /coach) |
 | 2026-09-25 | Playwright e2e | `24ad806` | CT-11 | ✅ | Bandeaux sans « Accueil » ; liens attendus présents |
 | 2026-10-02 | Playwright e2e | develop | CT-08/09/10 | ✅ | Pré-conditions explicites (③ + jour J), état seed restauré — plus de dépendance à l'ordre |
+| 2026-10-02 | Playwright e2e | develop | CT-12 | ✅ | 375 px : aucun débordement (admin ×6 pages, coach ×3, coach temp., juge, classement ③) ; menu repliable, Échap, cibles ≥ 44 px — résidu : vrai téléphone |

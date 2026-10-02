@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Browser, type Page } from '@playwright/test'
 
 import { commeAdmin, commeCoach, commeCoachTemporaire, commeSansMapping } from './helpers/auth'
 import { JETON, RENCONTRE_PILOTE, RENCONTRE_PILOTE_DATE } from './helpers/donnees'
@@ -113,6 +113,69 @@ test.describe('Cahier 23 — Navigation & routing (spec #12)', () => {
     await expect(nav(page).getByRole('link', { name: 'Accueil' })).toHaveCount(0)
   })
 
+  // ---- CT-12 : bandeau sur téléphone (R23 ; conv. 08) ----
+  test('CT-12 · admin mobile : menu repliable, pas de défilement horizontal', async ({
+    browser,
+  }) => {
+    const { ctx, page } = await telephone(browser)
+    await commeAdmin(page)
+    for (const chemin of [
+      '/admin',
+      '/admin/rencontres',
+      `/admin/rencontres/${RENCONTRE_PILOTE}`,
+      `/admin/rencontres/${RENCONTRE_PILOTE}/resultats`,
+      '/admin/grimpeurs',
+      '/admin/clubs',
+    ]) {
+      await page.goto(chemin)
+      expect(await debordementHorizontal(page), chemin).toBe(0)
+    }
+
+    // Liens repliés derrière « Menu » ; déconnexion visible dans l'en-tête.
+    const menu = nav(page).getByRole('button', { name: 'Menu' })
+    await expect(menu).toHaveAttribute('aria-expanded', 'false')
+    await expect(nav(page).getByRole('link', { name: 'Rencontres' })).toBeHidden()
+    await expect(page.getByRole('button', { name: /se déconnecter/i })).toBeVisible()
+
+    // Ouvrir : mêmes liens qu'en desktop (R23), cibles ≥ 44 px, actif surligné.
+    await menu.click()
+    await expect(menu).toHaveAttribute('aria-expanded', 'true')
+    for (const label of ['Tableau de bord', 'Rencontres', 'Clubs', 'Grimpeurs', 'Gabarit', 'Jetons', 'Rôles']) {
+      const lien = nav(page).getByRole('link', { name: label })
+      await expect(lien).toBeVisible()
+      expect((await lien.boundingBox())!.height).toBeGreaterThanOrEqual(44)
+    }
+    await expect(nav(page).getByRole('link', { name: 'Clubs' })).toHaveAttribute('aria-current', 'page')
+    expect(await debordementHorizontal(page)).toBe(0)
+
+    // Échap referme ; un lien navigue et referme.
+    await page.keyboard.press('Escape')
+    await expect(menu).toHaveAttribute('aria-expanded', 'false')
+    await menu.click()
+    await nav(page).getByRole('link', { name: 'Gabarit' }).click()
+    await expect(page).toHaveURL(/\/admin\/gabarit$/)
+    await expect(menu).toHaveAttribute('aria-expanded', 'false')
+    await ctx.close()
+  })
+
+  test('CT-12 · coach mobile : pas de défilement horizontal', async ({ browser }) => {
+    const { ctx, page } = await telephone(browser)
+    await commeCoach(page)
+    for (const chemin of ['/coach', '/coach/jetons', `/coach/rencontres/${RENCONTRE_PILOTE}`]) {
+      await page.goto(chemin)
+      expect(await debordementHorizontal(page), chemin).toBe(0)
+    }
+    await expect(page.getByRole('button', { name: /se déconnecter/i })).toBeVisible()
+    await ctx.close()
+  })
+
+  test('CT-12 · desktop : liens en ligne, pas de bouton « Menu »', async ({ page }) => {
+    await commeAdmin(page)
+    await page.goto('/admin/clubs')
+    await expect(nav(page).getByRole('button', { name: 'Menu' })).toBeHidden()
+    await expect(nav(page).getByRole('link', { name: 'Rencontres' })).toBeVisible()
+  })
+
   // ---- Cas dépendant de la phase : rencontre pilote en ③, jour J ----
   // CT-08/09 ouvrent une session QR (fenêtre ③ + garde-fou date), CT-10 a besoin
   // du lien « Voir le classement » (visible dès la ③). Pré-conditions posées ici
@@ -163,5 +226,39 @@ test.describe('Cahier 23 — Navigation & routing (spec #12)', () => {
       // terminerSession → / → redirige vers /connexion (plus de session).
       await expect(page).toHaveURL(/\/connexion/)
     })
+
+    // ---- CT-12 : téléphone, écrans ③ (classement admin, coach temp., juge) ----
+    test('CT-12 · mobile en ③ : classement admin, coach temporaire, juge', async ({ browser }) => {
+      const admin = await telephone(browser)
+      await commeAdmin(admin.page)
+      await admin.page.goto(`/admin/rencontres/${RENCONTRE_PILOTE}/classement`)
+      expect(await debordementHorizontal(admin.page)).toBe(0)
+      await admin.ctx.close()
+
+      const temp = await telephone(browser)
+      await commeCoachTemporaire(temp.page)
+      expect(await debordementHorizontal(temp.page)).toBe(0)
+      await expect(temp.page.getByRole('button', { name: /terminer/i })).toBeVisible()
+      await temp.ctx.close()
+
+      const juge = await telephone(browser)
+      await juge.page.goto(`/scan?jeton=${JETON.juge}`)
+      await juge.page.waitForURL('**/juge')
+      expect(await debordementHorizontal(juge.page)).toBe(0)
+      await juge.ctx.close()
+    })
   })
 })
+
+/** Contexte « téléphone » ~375 px, tactile (conv. 08). */
+async function telephone(browser: Browser) {
+  const ctx = await browser.newContext({ viewport: { width: 375, height: 740 }, hasTouch: true })
+  return { ctx, page: await ctx.newPage() }
+}
+
+/** Défilement horizontal de la PAGE (px) : largeur du document − largeur visible. */
+function debordementHorizontal(page: Page): Promise<number> {
+  return page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  )
+}
