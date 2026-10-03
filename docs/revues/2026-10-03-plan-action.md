@@ -105,6 +105,8 @@ Aucune spec ne change : on impose en base ce que les specs exigent déjà
   ouverte à PUBLIC, `anon` limité aux 4 RPC des sessions QR.
 - [x] ✅ Appliquer la migration **à la main** en recette (SQL Editor) —
   2026-10-03.
+- [x] ✅ Automatiser le cahier 28 : `npm run test:cahier:securite`
+  (`e2e/securite-appels-directs.spec.ts`, 9 tests, stack locale).
 - [ ] ⏳ Dérouler le cahier 28 en recette.
 
 ## Lot 2 — Erreurs Supabase avalées (M5, M6, m8)

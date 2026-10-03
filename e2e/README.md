@@ -49,6 +49,18 @@ npm run test:e2e              # tous les cahiers E2E
 > l'engagement à l'état seed (idempotence) ; les tests de scan nettoient les
 > sessions QR.
 
+## Cartographie (cahier 28 — sécurité en base, appels directs)
+
+- `securite-appels-directs.spec.ts` (`npm run test:cahier:securite`) : **CT-01 →
+  CT-07 et CT-09** (9 tests, sans navigateur : API PostgREST/Auth via `request`
+  et SQL) — fonctions fermées à PUBLIC et `anon` limité aux RPC QR, création de
+  rencontre refusée (anon, coach) / acceptée (admin), `finaliser_inscription_coach`
+  hors `service_role`, fonction future fermée, coche/auteur non falsifiables
+  (coach, juge), coche conservée après correction.
+- CT-08 (non-régression) = suites des cahiers 17, 19, 20 et 27.
+- Nettoie ses données (rencontre du 01/12/2026, ligne de résultat, temps de
+  vitesse, sessions QR) et remet la rencontre pilote en ① à la fin.
+
 ## Cartographie (cahier 27 — contrôle des résultats)
 
 - `admin-controle.spec.ts` : **CT-02 → CT-12 implémentés et verts** (CT-01 =
