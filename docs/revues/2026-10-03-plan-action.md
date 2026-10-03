@@ -1,0 +1,210 @@
+# Plan d'action — revue globale du 2026-10-03
+
+Plan de traitement des constats de la
+[revue globale du 2026-10-03](./2026-10-03-revue-globale.md). Chaque lot suit
+le workflow du projet : **spec → tests → code → cahier de test**. Les
+migrations sont validées sur la stack locale, puis **appliquées à la main** en
+recette (prod à la bascule sur `main`).
+
+Statuts : ✅ fait · 🔄 en cours · ⏳ en attente (à faire) · ❓ décision requise ·
+🚫 bloqué (dépendance non levée)
+
+Dernière mise à jour : 2026-10-03.
+
+## Décisions à prendre
+
+Ces points bloquent certains lots. Ils relèvent de la **règle de changement** :
+validation explicite avant de toucher une spec.
+
+| # | Décision | Constat | Bloque | Statut |
+| --- | --- | --- | --- | --- |
+| D-A | Passer le plafond de 6 voies ado (spec #6 R14) de « règle applicative » à une garantie en base (trigger) : la spec le décrit explicitement comme applicatif | M7 | Lot 4 | ❓ |
+| D-B | Que deviennent les temps de vitesse d'un grimpeur retiré de la composition (purge, ou exclusion du rang) ? Comportement non décrit par la spec #10 / #7 | M3 | Lot 4 | ❓ |
+| D-C | `service_role` en lecture transverse : nouvel ADR + garde dans chaque loader, ou retour aux lectures RLS | M8 | Lot 5 | ❓ |
+| D-D | Une session anonyme sans QR doit-elle lire les tables « `using (true)` » / « ③+ » ? (helper `est_acteur_identifie()`) | m2 | Lot 6 | ❓ |
+| D-E | Un coach peut-il réactiver un jeton QR révoqué par l'admin ? (spec #2 R22/R23) | m4 | Lot 6 | ❓ |
+| D-F | Pages `/design-system` et `/templates/*` : garde, exclusion en prod, ou exception tracée dans la spec #12 | m1 | Lot 6 | ❓ |
+
+## Ordre des lots
+
+```mermaid
+flowchart TD
+  L0[Lot 0 — Préparation] --> L1[Lot 1 — Durcissement sécurité en base<br/>C1, M1, M2]
+  L0 --> L2[Lot 2 — Erreurs Supabase<br/>M5, M6, m8]
+  L0 --> L3[Lot 3 — Transitions de phase<br/>M4]
+  L1 --> L4[Lot 4 — Intégrité vitesse & plafond ado<br/>M3, M7]
+  DA{{D-A / D-B}} --> L4
+  DC{{D-C}} --> L5[Lot 5 — service_role / ADR<br/>M8]
+  DDEF{{D-D / D-E / D-F}} --> L6[Lot 6 — Mineurs<br/>m1–m9]
+  L1 --> L7[Lot 7 — Outillage & traçabilité<br/>suggestions]
+  L2 --> L6
+```
+
+Le lot 1 est prioritaire (faille critique exploitable avec la clé anon).
+Les lots 2 et 3 n'ont besoin d'aucune décision et peuvent avancer en parallèle.
+
+## Lot 0 — Préparation
+
+- [ ] ⏳ Créer la branche `feature/durcissement-securite` depuis `develop`
+  (worktree séparé pour permettre du travail en parallèle).
+- [ ] ⏳ Commiter le rapport de revue et ce plan sur `develop`.
+- [ ] ⏳ Trancher les décisions D-A à D-F (au fil de l'eau, sans bloquer les
+  lots 1 à 3).
+
+## Lot 1 — Durcissement sécurité en base (C1, M1, M2) — 🔴 prioritaire
+
+Aucune spec ne change : on impose en base ce que les specs exigent déjà
+(#3 R12, #2 R30–R33, #16 R11/R13, #9 R14).
+
+### C1 — `creer_rencontre_avec_gabarit`
+
+- [ ] ⏳ Migration : garde `if not interclub.est_admin() then raise exception
+  'acces_refuse'` dans la fonction (réécriture `create or replace`).
+- [ ] ⏳ Migration : `revoke execute … from public` puis
+  `grant execute … to authenticated`.
+
+### M1 — `finaliser_inscription_coach`
+
+- [ ] ⏳ Migration : `revoke execute … from public, anon, authenticated`
+  (seul `service_role` garde EXECUTE).
+- [ ] ⏳ Migration : `set search_path = ''` et noms de tables qualifiés.
+
+### M2 — Colonnes d'audit et de contrôle
+
+- [ ] ⏳ Migration : trigger `before insert or update` sur `resultat_voie` et
+  `resultat_bloc` — si non admin, `controle_le` / `controle_par` reprennent
+  leur ancienne valeur (`null` à l'insertion).
+- [ ] ⏳ Migration : même trigger force `auteur_utilisateur_id = auth.uid()` et
+  `auteur_role` au rôle réel, sur `resultat_voie`, `resultat_bloc` et
+  `temps_vitesse`.
+- [ ] ⏳ Vérifier que les Server Actions admin (contrôle, saisie admin) et coach
+  continuent de fonctionner (E2E cahiers 17, 19, 20, 27).
+
+### Fermeture par défaut (suggestion 1)
+
+- [ ] ⏳ Migration : `alter default privileges in schema interclub revoke
+  execute on functions from public;`
+- [ ] ⏳ Inventorier toutes les fonctions `security definer` existantes et
+  ré-accorder explicitement EXECUTE au strict nécessaire.
+
+### Validation et livraison
+
+- [ ] ⏳ Valider sur la stack locale (`db reset`, prévenir avant : réinitialise
+  la base locale) : appels `curl` avec la clé anon et un compte coach → refus.
+- [ ] ⏳ Rédiger le cahier `28-securite-appels-directs.cahier.md` (suggestion
+  2) : RPC en anonyme, PATCH des colonnes d'audit, rôle forgé.
+- [ ] ⏳ Faire passer `npm test`, `typecheck`, `lint`, `lint:md` et les E2E
+  concernés.
+- [ ] ⏳ Mettre à jour `supabase/migrations/JOURNAL.md`.
+- [ ] ⏳ Appliquer la migration **à la main** en recette (SQL Editor).
+- [ ] ⏳ Dérouler le cahier 28 en recette.
+
+## Lot 2 — Erreurs Supabase avalées (M5, M6, m8)
+
+Aucune spec ne change (convention 02 §7, spec #6 R18).
+
+### M6 — Loader du classement
+
+- [ ] ⏳ `src/lib/classement/classement.ts` : `throw` sur chaque `error`
+  (modèle : `export-classement.ts:50-51`).
+- [ ] ⏳ Vérifier l'affichage d'erreur côté écran (`error.tsx` du segment).
+
+### M5 — NP automatique de clôture
+
+- [ ] ⏳ `src/lib/rencontres/cloture.ts` : vérifier `error` sur chaque lecture et
+  sur les deux `upsert`.
+- [ ] ⏳ `src/lib/rencontres/actions.ts:168` : retirer le `catch {}` vide,
+  renvoyer un avertissement à l'admin si le NP échoue.
+- [ ] ⏳ Évaluer une RPC transactionnelle « changement de phase + NP »
+  (si retenue : migration + cahier).
+
+### Les autres lectures (54 au total dans `src/lib`)
+
+- [ ] ⏳ `src/lib/coach/resultats-actions.ts` (9 lectures).
+- [ ] ⏳ `src/lib/admin/resultats-actions.ts` (9 lectures).
+- [ ] ⏳ `src/lib/admin/controle.ts` (5 lectures) et `controle-actions.ts`
+  (m8 : valider aussi `type` explicitement).
+- [ ] ⏳ Reste de `src/lib` (recensement par `grep "const { data } = await"`).
+
+### Validation
+
+- [ ] ⏳ Tests, typecheck, lint ; E2E cahiers 17, 18, 19, 21, 27 au vert.
+
+## Lot 3 — Transitions de phase (M4)
+
+La spec #3 R17 impose déjà les transitions adjacentes : seuls tests et code
+changent.
+
+- [ ] ⏳ Test Vitest rouge `peutTransiter(courante, cible)` citant
+  « spec #3 R17 » (avancer, revenir, saut interdit, bornes).
+- [ ] ⏳ Implémenter `peutTransiter` dans `src/domaine/rencontre.ts` (vert).
+- [ ] ⏳ `src/lib/rencontres/actions.ts:133,159` : relire la phase courante en
+  base et refuser toute transition non adjacente.
+- [ ] ⏳ Optionnel : trigger SQL de garde sur `rencontre.phase`.
+- [ ] ⏳ Ajouter au cahier de la spec #3/#4 le cas « deux onglets admin
+  désynchronisés » et « POST direct d'un saut de phase ».
+
+## Lot 4 — Intégrité vitesse et plafond ado (M3, M7)
+
+🚫 Bloqué par D-A et D-B (changement de spec).
+
+### M3 — Temps de vitesse bornés aux grimpeurs engagés
+
+- [ ] 🚫 Mettre à jour la spec #10 (et #7 si besoin) selon D-B.
+- [ ] 🚫 Migration : `peut_ecrire_temps_vitesse` exige que le grimpeur soit
+  composé dans la rencontre.
+- [ ] 🚫 Migration : `recalculer_points_vitesse` filtre par `composition`.
+- [ ] 🚫 Migration : traitement des temps à la suppression d'une composition
+  (selon D-B).
+- [ ] 🚫 Cahier 20/21 : cas « grimpeur retiré après chronométrage ».
+
+### M7 — Plafond de 6 voies ado garanti en base
+
+- [ ] 🚫 Mettre à jour la spec #6 (section modèle de données, R14) selon D-A.
+- [ ] 🚫 Migration : trigger `count(*) < 6` par grimpeur et épreuve ado.
+- [ ] ⏳ `src/lib/coach/resultats-actions.ts:174` : vérifier `error` sur
+  `existantes` (indépendant de D-A, peut partir avec le lot 2).
+- [ ] 🚫 Cahier 17 : cas « 7ᵉ voie par upsert direct → refus ».
+
+### Livraison
+
+- [ ] 🚫 Validation locale, `JOURNAL.md`, application manuelle en recette,
+  déroulage des cahiers.
+
+## Lot 5 — `service_role` et ADR (M8)
+
+🚫 Bloqué par D-C.
+
+- [ ] 🚫 Option (a) : rédiger l'ADR `0005-…` actant la lecture transverse via
+  `service_role`, et ajouter une garde (`exigerAdmin` ou contexte) dans chacun
+  des 12 loaders concernés.
+- [ ] 🚫 Option (b) : basculer les loaders concernés sur le client RLS et
+  vérifier les policies « ③+ ».
+- [ ] ⏳ Mettre à jour le commentaire périmé de `src/lib/supabase/admin.ts`.
+
+## Lot 6 — Mineurs (m1–m9)
+
+- [ ] 🚫 m1 — Pages `/design-system` et `/templates/*` (selon D-F).
+- [ ] 🚫 m2 — Helper `est_acteur_identifie()` dans les policies de lecture
+  (selon D-D ; migration + cahier).
+- [ ] ⏳ m3 — Redirection ouverte : n'accepter que les chemins relatifs
+  commençant par `/` (`jetons/actions.ts:34,41`, `invitations/actions.ts:83,87`).
+- [ ] 🚫 m4 — Policy de mise à jour de `jeton_qr` (selon D-E).
+- [ ] ⏳ m5 — `/scan` : ne pas ouvrir de session anonyme si l'utilisateur est
+  déjà connecté (à vérifier contre la spec #2 avant de coder).
+- [ ] ⏳ m6 — `inscrireCoach` : distinguer les causes d'erreur de `createUser`.
+- [ ] ⏳ m7 — Factoriser le code commun admin/coach de `resultats-actions` et
+  renommer la fonction locale `exigerAdmin`.
+- [ ] ⏳ m8 — Traité dans le lot 2.
+- [ ] ⏳ m9 — Corriger l'avertissement de lint dans `grimpeur.test.ts:36`.
+
+## Lot 7 — Outillage et traçabilité (suggestions)
+
+- [ ] ⏳ Suggestion 1 — traitée dans le lot 1.
+- [ ] ⏳ Suggestion 2 — cahier 28, lot 1.
+- [ ] ⏳ Suggestion 3 — Préfixer les `describe` des tests par leur spec
+  (`spec #7 R8 …`) dans les 19 fichiers de `src/domaine/`.
+- [ ] ❓ Suggestion 4 — Tester les règles calculées en SQL : pgTAP sur la stack
+  locale, ou copie dans le domaine + tests d'équivalence (à décider).
+- [ ] ⏳ Relancer l'agent `revue-code-architecture` après les lots 1 à 4 pour
+  vérifier la fermeture des constats.
