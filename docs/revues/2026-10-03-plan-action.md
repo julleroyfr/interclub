@@ -45,36 +45,40 @@ Les lots 2 et 3 n'ont besoin d'aucune décision et peuvent avancer en parallèle
 
 ## Lot 0 — Préparation
 
-- [ ] ⏳ Créer la branche `feature/durcissement-securite` depuis `develop`
+- [x] ✅ Créer la branche `feature/durcissement-securite` depuis `develop`
   (worktree séparé pour permettre du travail en parallèle).
-- [ ] ⏳ Commiter le rapport de revue et ce plan sur `develop`.
+- [x] ✅ Commiter le rapport de revue et ce plan sur `develop` (`14792ec`).
 - [ ] ⏳ Trancher les décisions D-A à D-F (au fil de l'eau, sans bloquer les
   lots 1 à 3).
 
-## Lot 1 — Durcissement sécurité en base (C1, M1, M2) — 🔴 prioritaire
+## Lot 1 — Durcissement sécurité en base (C1, M1, M2) — 🔴 prioritaire — 🔄 en cours
+
+Migration `202610031100_durcissement_securite`, branche
+`feature/durcissement-securite`. Validée en transaction annulée sur la base
+locale le 2026-10-03 (C1, M1, M2, fermeture par défaut).
 
 Aucune spec ne change : on impose en base ce que les specs exigent déjà
 (#3 R12, #2 R30–R33, #16 R11/R13, #9 R14).
 
 ### C1 — `creer_rencontre_avec_gabarit`
 
-- [ ] ⏳ Migration : garde `if not interclub.est_admin() then raise exception
+- [x] ✅ Migration : garde `if not interclub.est_admin() then raise exception
   'acces_refuse'` dans la fonction (réécriture `create or replace`).
-- [ ] ⏳ Migration : `revoke execute … from public` puis
+- [x] ✅ Migration : `revoke execute … from public` puis
   `grant execute … to authenticated`.
 
 ### M1 — `finaliser_inscription_coach`
 
-- [ ] ⏳ Migration : `revoke execute … from public, anon, authenticated`
+- [x] ✅ Migration : `revoke execute … from public, anon, authenticated`
   (seul `service_role` garde EXECUTE).
-- [ ] ⏳ Migration : `set search_path = ''` et noms de tables qualifiés.
+- [x] ✅ Migration : `set search_path = ''` et noms de tables qualifiés.
 
 ### M2 — Colonnes d'audit et de contrôle
 
-- [ ] ⏳ Migration : trigger `before insert or update` sur `resultat_voie` et
+- [x] ✅ Migration : trigger `before insert or update` sur `resultat_voie` et
   `resultat_bloc` — si non admin, `controle_le` / `controle_par` reprennent
   leur ancienne valeur (`null` à l'insertion).
-- [ ] ⏳ Migration : même trigger force `auteur_utilisateur_id = auth.uid()` et
+- [x] ✅ Migration : même trigger force `auteur_utilisateur_id = auth.uid()` et
   `auteur_role` au rôle réel, sur `resultat_voie`, `resultat_bloc` et
   `temps_vitesse`.
 - [ ] ⏳ Vérifier que les Server Actions admin (contrôle, saisie admin) et coach
@@ -82,20 +86,23 @@ Aucune spec ne change : on impose en base ce que les specs exigent déjà
 
 ### Fermeture par défaut (suggestion 1)
 
-- [ ] ⏳ Migration : `alter default privileges in schema interclub revoke
-  execute on functions from public;`
-- [ ] ⏳ Inventorier toutes les fonctions `security definer` existantes et
+- [x] ✅ Migration : `alter default privileges for role postgres revoke
+  execute on functions from public;` (la variante `in schema` ne peut
+  qu'ajouter aux privilèges globaux : inopérante pour révoquer).
+- [x] ✅ Inventorier toutes les fonctions `security definer` existantes et
   ré-accorder explicitement EXECUTE au strict nécessaire.
 
 ### Validation et livraison
 
 - [ ] ⏳ Valider sur la stack locale (`db reset`, prévenir avant : réinitialise
   la base locale) : appels `curl` avec la clé anon et un compte coach → refus.
-- [ ] ⏳ Rédiger le cahier `28-securite-appels-directs.cahier.md` (suggestion
+- [x] ✅ Rédiger le cahier `28-securite-appels-directs.cahier.md` (suggestion
   2) : RPC en anonyme, PATCH des colonnes d'audit, rôle forgé.
 - [ ] ⏳ Faire passer `npm test`, `typecheck`, `lint`, `lint:md` et les E2E
   concernés.
-- [ ] ⏳ Mettre à jour `supabase/migrations/JOURNAL.md`.
+- [x] ✅ Mettre à jour `supabase/migrations/JOURNAL.md`.
+- [x] ✅ Contrôle permanent dans `npm run db:verifier` : aucune fonction
+  ouverte à PUBLIC, `anon` limité aux 4 RPC des sessions QR.
 - [ ] ⏳ Appliquer la migration **à la main** en recette (SQL Editor).
 - [ ] ⏳ Dérouler le cahier 28 en recette.
 
