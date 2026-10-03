@@ -36,5 +36,6 @@ export {
 } from './Tableau'
 
 export { Coquille } from './Coquille'
+export { EcranErreur } from './EcranErreur'
 export { NavPrincipale } from './NavPrincipale'
 export type { LienNav } from './NavPrincipale'

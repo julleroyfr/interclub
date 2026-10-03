@@ -165,6 +165,30 @@
   - Toucher un lien navigue **et referme** le panneau ; **Échap** le referme.
   - À partir de 768 px : rangée de liens en ligne, sans bouton « Menu ».
 
+### CT-13 `[manuel]` — Pages de maquette absentes hors développement local   (couvre : R24, rév. 2026-10-03)
+
+- **Rôle / compte** : `admin@test.local`, puis non connecté.
+- **Environnement** : **recette** (build de production). *(En `next dev`, les
+  maquettes sont servies par conception : ce cas ne se déroule pas en local.)*
+- **Étapes** : ouvrir `/design-system`, `/templates/nuit/dashboard`,
+  `/templates/nuit/equipe` et `/templates/nuit/vitesse`.
+- **Résultat attendu** : **404** pour chacune, **même connecté en admin**.
+- **Vérifié en local sur build de production** (`next build` + `next start`) le
+  2026-10-03 : 404 sur les quatre pages, 200 sur `/connexion`.
+
+### CT-14 `[auto]` — Écran d'erreur technique   (couvre : R25, rév. 2026-10-03)
+
+- **Rôle / compte** : `admin@test.local`.
+- **Pré-condition** : rencontre pilote en **③** ; **panne simulée** : retrait du
+  droit `select` de `service_role` sur `interclub.points_vitesse` (SQL), rétabli
+  à la fin du cas.
+- **Étapes** : ouvrir `/admin/rencontres/33333333-…/classement` ; puis rétablir
+  le droit et cliquer « Réessayer ».
+- **Résultat attendu** : écran « **Une erreur est survenue** », sans détail
+  technique, avec « **Réessayer** » et « **Revenir à l'accueil** » (lien vers
+  `/`) ; après rétablissement, « Réessayer » affiche le classement.
+- **Automatisé** : `e2e/ecran-erreur.spec.ts` (`npm run test:cahier:erreur`).
+
 ## Registre d'exécution
 
 | Date | Testeur | Version/commit | Cas | Résultat | Remarque |

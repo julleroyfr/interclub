@@ -1,4 +1,5 @@
 import { Coquille, type LienNav } from '@/composants'
+import { exigerDeveloppementLocal } from '@/lib/maquettes'
 
 const liens: LienNav[] = [
   { href: '/templates/nuit/dashboard', label: 'Dashboard' },
@@ -11,5 +12,7 @@ export default function LayoutNuit({
 }: {
   children: React.ReactNode
 }) {
+  // Maquette : servie en développement local seulement (spec #12 R24).
+  exigerDeveloppementLocal()
   return <Coquille liens={liens}>{children}</Coquille>
 }

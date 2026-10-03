@@ -1,4 +1,5 @@
 import { Coquille, type LienNav } from '@/composants'
+import { exigerDeveloppementLocal } from '@/lib/maquettes'
 
 const liens: LienNav[] = [
   { href: '/design-system', label: 'Design system' },
@@ -10,5 +11,7 @@ export default function LayoutDesignSystem({
 }: {
   children: React.ReactNode
 }) {
+  // Maquette : servie en développement local seulement (spec #12 R24).
+  exigerDeveloppementLocal()
   return <Coquille liens={liens}>{children}</Coquille>
 }

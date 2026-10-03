@@ -252,18 +252,24 @@ Débloqué : D-C tranché le 2026-10-03 (option a).
 
 ## Lot 6 — Mineurs (m1–m9)
 
-- [ ] ⏳ m1 — Pages `/design-system` et `/templates/*` : `notFound()` hors
-  développement local (D-F) ; exception tracée dans la spec #12.
-- [ ] ⏳ m2 — Helper `est_acteur_identifie()` dans les policies de lecture
-  (D-D ; vérifier la matrice de la spec #1 ; migration + cahier).
+- [x] ✅ m1 / D-F — spec #12 R24 (validée le 2026-10-03) ; garde
+  `exigerDeveloppementLocal()` dans les layouts `/design-system` et
+  `/templates/nuit` (`src/lib/maquettes.ts`, 3 tests) ; cahier 23 CT-13
+  (manuel en recette ; vérifié sur build de production local).
+- [x] ✅ m2 / D-D — spec #1 « acteur identifié » + R8 (validée le 2026-10-03) ;
+  migration `202610031400_lecture_acteur_identifie` ; cahier 28 CT-10
+  automatisé ; scripts `test-resultats` / `test-t6` adaptés (23/23 chacun).
+  Reste : application en recette.
 - [x] ✅ m3 — Redirection ouverte : `cheminDeRetour` (`src/lib/chemin-retour.ts`,
   6 tests) n'accepte qu'un chemin interne (pas `//`, `/\`, schéma ni URL).
 - [x] ✅ m4 / D-E — migration `202610031300_jeton_qr_revocation_definitive` :
   update limité à `actif`, réactivation interdite à un non-admin ; cahier 04
   CT-11 automatisé (`npm run test:cahier:securite`). Reste : application en
   recette.
-- [ ] ⏳ D-G — Écran d'erreur technique : règle ajoutée à la spec #12, puis
-  `error.tsx` + `global-error.tsx` (design system), cas au cahier 23.
+- [x] ✅ D-G — spec #12 R25 (validée le 2026-10-03) ; composant `EcranErreur`
+  (3 tests de composant), `app/error.tsx` (`unstable_retry`, Next 16) et
+  `app/global-error.tsx` ; cahier 23 CT-14 automatisé
+  (`npm run test:cahier:erreur`, panne simulée ; mutation vérifiée).
 - [ ] ⏳ m5 — `/scan` : ne pas ouvrir de session anonyme si l'utilisateur est
   déjà connecté (à vérifier contre la spec #2 avant de coder).
 - [x] ✅ m6 — `messageEchecCreationCompte` (domaine, 4 tests) : seul un e-mail

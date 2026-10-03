@@ -49,6 +49,15 @@ npm run test:e2e              # tous les cahiers E2E
 > l'engagement à l'état seed (idempotence) ; les tests de scan nettoient les
 > sessions QR.
 
+## Cartographie (cahier 23 CT-14 — écran d'erreur)
+
+- `ecran-erreur.spec.ts` (`npm run test:cahier:erreur`) : panne de lecture
+  simulée (droit `select` de `service_role` retiré sur `points_vitesse`, rétabli
+  dans un `finally`) ⇒ écran « Une erreur est survenue » sans détail technique,
+  puis « Réessayer » après rétablissement ⇒ classement (spec #12 R25).
+- CT-13 (pages de maquette en 404) ne se déroule pas en `next dev`, qui les sert
+  par conception : vérification en recette (manuel).
+
 ## Cartographie (cahier 12 CT-17 — pilotage de phase)
 
 - `pilotage-phase.spec.ts` (`npm run test:cahier:phase`) : changement de phase
