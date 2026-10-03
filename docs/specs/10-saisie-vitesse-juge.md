@@ -5,6 +5,12 @@
   les trois formes de résultat ; **temps en secondes** (numeric au millième) ;
   **correction autorisée** (ressaisie = remplacement) ; **liste de tous les
   compétiteurs engagés de la rencontre, regroupés par sexe** (Filles / Garçons).
+  **Rév. 2026-10-03 (validée le 2026-10-03)** — décision D-B de la
+  [revue du 2026-10-03](../revues/2026-10-03-plan-action.md) : ajout de **R7bis**
+  (seul un grimpeur **engagé** reçoit un résultat de vitesse, garanti en base) et
+  de **R18** (le **retrait** d'un grimpeur **supprime** son résultat de vitesse) et
+  **R18bis** (un **changement d'équipe** le **conserve**, spec #3 R41d) ; cycle de
+  vie, cas limites et modèle de données alignés.
 - **Sources** :
   - **Spec #1 — Rôles & autorisations** (`01-roles-et-autorisations.md`), vérité
     pour « qui peut faire quoi » : le **juge** est affecté par l'admin à
@@ -135,6 +141,11 @@ voie/bloc (authentifiés dès la ③, public à la ⑤ ; spec #1 R8).
 - **R7.** Pour saisir, le juge **sélectionne un grimpeur** (compétiteur engagé)
   puis enregistre son **résultat de vitesse**, qui prend **exactement une** des
   trois formes : **temps**, **chute**, **non-présentation** (spec #1 R31).
+- **R7bis.** Seul un grimpeur **engagé** dans la rencontre (composé dans une de
+  ses équipes, spec #5) peut **recevoir** un résultat de vitesse. Toute écriture
+  pour un grimpeur **non engagé** est **refusée**, quel que soit l'auteur (juge,
+  admin) et le chemin (écran ou appel direct à l'API) : la règle est **garantie
+  par la base**. *(Rév. 2026-10-03.)*
 - **R8.** Un **temps** est une durée **en secondes**, **strictement positive**,
   de précision au **millième** (ex. `8.123`). Une valeur nulle, négative ou non
   numérique est **refusée** (un temps chronométré est une durée réellement
@@ -202,6 +213,20 @@ voie/bloc (authentifiés dès la ③, public à la ⑤ ; spec #1 R8).
   `temps_vitesse` matérialisée — l'admin peut la corriger en ④ (spec #1 R6). *(À
   distinguer du NP automatique des voies/blocs enfant, spec #6 R18.)*
 
+### Retrait d'un grimpeur
+
+- **R18.** Le **retrait** d'un grimpeur de la composition de la rencontre (quel
+  qu'en soit l'auteur : coach avant la ③, spec #5 R12 ; admin en toute phase,
+  spec #1 R10) **supprime** son résultat de vitesse pour cette rencontre (décision
+  D-B du 2026-10-03). Le **classement de vitesse** de son sexe et les **points de
+  vitesse** de tous les grimpeurs concernés sont **recalculés** (spec #7 R15/R20) :
+  un grimpeur retiré ne décale plus le rang des engagés. *(Rév. 2026-10-03.)*
+- **R18bis.** Un **changement d'équipe** au sein de la même rencontre (spec #3
+  R41d) **n'est pas un retrait** : le grimpeur reste engagé et son résultat de
+  vitesse est **conservé**, ainsi que ses rangs et points. Seul un **retrait**
+  (R18) supprime le résultat, et cette suppression est **définitive** (pas de
+  restauration). *(Rév. 2026-10-03.)*
+
 ## Scénarios
 
 ### Nominal — saisie d'un temps
@@ -239,6 +264,13 @@ une **non-présentation** pour ce grimpeur (R7), alors le résultat enregistré 
   non proposé (spec #1 R30/R32, R5).
 - Deuxième saisie sur le **même** grimpeur → **remplace** la première (R11), n'en
   crée pas une seconde (R10).
+- Saisie (ou écriture directe à l'API) d'un résultat pour un grimpeur **non
+  engagé** dans la rencontre → **refusée** (R7bis).
+- Grimpeur **chronométré puis retiré** de la composition → son résultat de
+  vitesse est **supprimé** ; les rangs et points de vitesse de son sexe sont
+  recalculés sans lui (R18).
+- Grimpeur chronométré puis **changé d'équipe** par l'admin (spec #3 R41d) →
+  son résultat de vitesse est **conservé** (R18bis).
 
 ## Cycle de vie d'un résultat de vitesse
 
@@ -252,6 +284,9 @@ stateDiagram-v2
   Verrouille --> Corrige_admin : admin corrige en ④ (spec #1 R6)
   Corrige_admin --> Officiel : ⑤ résultats publics — figé (spec #1 R8)
   Verrouille --> Officiel : ⑤ résultats publics — figé
+  Saisi --> Saisi : changement d'équipe — résultat conservé (R18bis)
+  Saisi --> [*] : retrait du grimpeur (suppression, R18)
+  Verrouille --> [*] : retrait du grimpeur par l'admin (R18)
 
   note right of A_saisir
     Juge affecté à l'épreuve de vitesse de sa rencontre (R2/R6)
@@ -304,6 +339,16 @@ erDiagram
   fenêtre ③), la **rencontre**, l'**épreuve de vitesse** et le **couloir** ; sinon
   `null` (fail-closed). Elle permet à l'espace `/juge` de charger la liste des
   grimpeurs et de cibler l'épreuve sans que l'anonyme lise `jeton_qr` directement.
+- **Grimpeur engagé** (R7bis, rév. 2026-10-03) : l'écriture d'un
+  `temps_vitesse` exige que le grimpeur soit **composé** dans la rencontre de
+  l'épreuve (`composition.rencontre_id` = rencontre de l'épreuve). Garanti en base
+  pour **tous** les écrivains, admin compris (contrôle indépendant de la RLS).
+- **Purge au retrait** (R18, rév. 2026-10-03) : la **suppression** d'une ligne
+  `composition` supprime le `temps_vitesse` du grimpeur sur l'épreuve de vitesse
+  de la rencontre ; le trigger existant sur `temps_vitesse` recalcule alors
+  `points_vitesse` (spec #7 R20). Un **changement d'équipe** est une **mise à
+  jour** de `composition.equipe_id` (spec #3 R41d) : aucune suppression, donc
+  aucune purge (R18bis).
 - **RLS** : réutilise `peut_ecrire_temps_vitesse(epreuve)` (juge affecté à la
   rencontre **et** épreuve de type vitesse, R3/R30) pour `insert`/`update` ; la
   **lecture** suit `temps_vitesse_select` (déjà : admin, périmètre juge, ou
@@ -323,6 +368,10 @@ erDiagram
   2026-09-22**. Le domaine `vitesse.ts` (aujourd'hui en `centiemes`) est **aligné**
   sur les secondes.
 - **Correction par le juge** (remplacement) — **tranché le 2026-09-22**.
+- **Temps d'un grimpeur retiré** — **tranché le 2026-10-03** (D-B) : **purge**
+  (R18), préférée à l'exclusion du rang avec conservation. Le **changement
+  d'équipe** conserve le temps (R18bis) : c'est une mise à jour, pas un retrait
+  suivi d'un ajout (décision du 2026-10-03).
 - **Regroupement par sexe** de la liste — **tranché le 2026-09-22**.
 - **Lecture au fil de l'eau des `temps_vitesse`** : vérifier que la policy
   `temps_vitesse_select` ouvre bien la lecture aux **authentifiés dès la ③** (même

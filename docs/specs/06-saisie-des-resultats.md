@@ -6,7 +6,11 @@
   **rév. 2026-10-02** : ajout de **R21bis** (affichage avant la ③ — message
   explicite au lieu de « groupe de départ à définir » et de compteurs vides) ;
   **R1** alignée sur la spec #12 (non connecté → `/connexion`) ; **R6** : plus de
-  lecture publique à la ⑤ (pas d'espace public, spec #1 R8)
+  lecture publique à la ⑤ (pas d'espace public, spec #1 R8) ;
+  **rév. 2026-10-03 (validée le 2026-10-03)** : **R14** — le plafond de 6 voies ado
+  est **garanti par la base** quel que soit le chemin d'écriture (décision D-A de
+  la [revue du 2026-10-03](../revues/2026-10-03-plan-action.md)) ; « Modèle de
+  données » et « Cas limites » alignés
 - **Sources** :
   - **Spec #1 — Rôles & autorisations** (`01-roles-et-autorisations.md`), vérité
     pour « qui peut faire quoi » : un coach **saisit et modifie les résultats des
@@ -188,8 +192,11 @@ coach se ferme et l'**admin** vérifie/corrige ; la **⑤ résultats publics**
   **ajoute pas** une seconde.
 - **R14.** *(Ado)* Le nombre de voies réalisées par un grimpeur est **plafonné à 6**
   (règlement). Toute saisie d'une **7ᵉ** voie pour un grimpeur est **refusée** avec
-  un message explicite. *(Enfant : les voies sont bornées aux 3 du groupe de départ,
-  R9 — aucune autre voie n'est saisissable.)*
+  un message explicite. Le plafond est **garanti par la base** : il tient quel que
+  soit l'auteur (coach, admin — spec #9) et le chemin d'écriture (écran, appel
+  direct à l'API, deux saisies simultanées). *(Rév. 2026-10-03.)* *(Enfant : les
+  voies sont bornées aux 3 du groupe de départ, R9 — aucune autre voie n'est
+  saisissable.)*
 
 ### Saisie — épreuve de bloc
 
@@ -328,6 +335,10 @@ figés** (spec #1 R8). Un **visiteur non authentifié** n'y accède à aucun mom
 - *(Enfant)* Tentative de saisir une voie **hors** des 3 du groupe de départ →
   **refusée** (R9/R14).
 - *(Ado)* Tentative de saisir une **7ᵉ** voie pour un grimpeur → **refusée** (R14).
+- *(Ado)* **Deux saisies simultanées** (ex. coach et admin) portant chacune un
+  grimpeur à sa 7ᵉ voie, ou une **écriture directe** à l'API → la 7ᵉ est
+  **refusée par la base** (R14) ; l'écran affiche le même message que pour une
+  7ᵉ voie ordinaire.
 - *(Ado)* Deux voies de **même niveau** mais **voies distinctes** → **autorisées**
   (R11) ; deux résultats sur la **même** voie → le second **remplace** (R13).
 - Saisie d'une issue **incohérente** avec la catégorie (ex. « Zone 1 » en enfant,
@@ -405,9 +416,16 @@ erDiagram
   - `unique (bloc_id, grimpeur_id)` (R17) ;
   - le `palier_id` doit référencer un palier **du bloc** (`bloc_palier.bloc_id =
     resultat_bloc.bloc_id`) — garanti par trigger/`check`.
-- **Plafond 6 voies ado** (R14) : **règle applicative** (Server Action compte les
-  `resultat_voie` du grimpeur sur l'épreuve avant insertion). *(Enfant : borné aux
-  3 voies du groupe de départ côté domaine/Action.)*
+- **Plafond 6 voies ado** (R14) : **garanti en base** (rév. 2026-10-03) — un
+  **trigger** sur `resultat_voie` refuse l'**insertion** d'un résultat qui
+  porterait à **plus de 6** le nombre de `resultat_voie` du grimpeur sur
+  l'épreuve de voie d'une rencontre **ado** (la correction d'une voie déjà saisie,
+  R13, n'ajoute pas de ligne et reste permise). Les insertions concurrentes pour un
+  même grimpeur sont **sérialisées** (verrou par grimpeur et épreuve) pour qu'une
+  course ne puisse pas produire une 7ᵉ ligne. La **Server Action** garde son
+  contrôle préalable (domaine `verifierAjoutVoieAdo`) pour le **message**
+  explicite ; le refus du trigger est traduit vers ce même message. *(Enfant :
+  borné aux 3 voies du groupe de départ côté domaine/Action.)*
 - **NP automatique à la clôture** (R18) : opération **serveur** déclenchée par la
   transition ③→④ (RPC `SECURITY DEFINER` ou étape de `changerPhaseRencontre`),
   **idempotente** : insère les `resultat_voie`/`resultat_bloc` **manquants** avec

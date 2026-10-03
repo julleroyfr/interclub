@@ -8,6 +8,9 @@
   2026-09-23** — le modèle R46 (dernier échelon ouvert) est inchangé.
   **Champ `licence` (R21b) ajouté le 2026-09-25** : numéro de licence FFME,
   optionnel, entier positif.
+  **Changement d'équipe (R41d) ajouté et validé le 2026-10-03** (revue du
+  2026-10-03, D-B) : équipes du club d'affectation uniquement, résultats
+  conservés (spec #10 R18bis).
   **Nom d'équipe par défaut (R41c) ajouté le 2026-09-29** (renvoi spec #5
   R10bis) ; **recherche à l'ajout d'un grimpeur (R41c) le 2026-09-29** (renvoi
   spec #5 R12bis), étendue au **formulaire de prêt** le même jour.
@@ -384,6 +387,25 @@ saisie, les flux CRUD, et les règles de suppression (dépendances / cascade).
   **recherche nom/prénom** de la spec #5 R12bis (ajout 2026-09-29). Le
   formulaire de **prêt** (spec #1 R35 : club d'origine puis grimpeur) applique la
   **même recherche** aux grimpeurs du club d'origine (ajout 2026-09-29).
+- **R41d.** *(Ajout validé le 2026-10-03.)* Pour chaque membre d'une
+  équipe, l'admin peut **changer le grimpeur d'équipe** au sein de la **même
+  rencontre**, en **toute phase** (spec #1 R6/R10). L'équipe cible est choisie
+  **uniquement** parmi les **autres équipes du club d'affectation** du grimpeur,
+  c'est-à-dire le club de son équipe actuelle : son club d'origine, ou le **club
+  d'accueil** s'il est **prêté** (spec #1 R35/R36). Un changement vers une équipe
+  d'**un autre club** est **impossible** (non proposé, et refusé si demandé).
+  Le changement d'équipe :
+  - **n'est pas un retrait** : le grimpeur reste engagé ; son **groupe de départ**
+    et **tous ses résultats** (voie, bloc, vitesse — spec #10 R18bis) sont
+    **conservés** ;
+  - respecte le **plafond** d'effectif de l'équipe cible (spec #5 R15) ; un refus
+    est signalé par un message explicite et laisse le grimpeur dans son équipe
+    d'origine *(la catégorie, commune à toute la rencontre, ne peut pas
+    différer)* ;
+  - est **atomique** : à aucun moment le grimpeur n'est hors de toute équipe.
+
+  L'action n'est **pas proposée** quand le club d'affectation n'a **qu'une seule
+  équipe** dans la rencontre.
 - **R42.** La **structure** est organisée en **trois onglets** — **Voies de
   difficulté**, **Blocs**, **Vitesse** — chacun indiquant son **nombre
   d'éléments** et n'affichant qu'un seul type à la fois. Chaque onglet **liste les
