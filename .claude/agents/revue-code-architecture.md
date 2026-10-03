@@ -65,6 +65,11 @@ semble discutable, signale-le à part (section « Questions d'architecture »).
 - La clé `service_role` / tout secret n'est jamais importé dans un module
   atteignable côté client (`"use client"`, ou sans `server-only`). Seules les
   variables `NEXT_PUBLIC_` côté client.
+- Tout loader `service_role` commence par une garde de lecture
+  (`src/lib/auth/garde-lecture.ts`) ou figure parmi les exceptions de l'ADR 0005 ;
+  le test `src/lib/supabase/garde-service-role.test.ts` doit passer.
+- Toute fonction SQL a un `grant execute` explicite (rien à `PUBLIC`) ;
+  `npm run db:verifier` le contrôle sur la stack locale.
 - Pas d'espace public : toute route non authentifiée doit renvoyer vers
   `/connexion` (spec #12 R2), sauf exceptions documentées.
 

@@ -6,12 +6,14 @@ import { createClient } from '@supabase/supabase-js'
  * Client Supabase à privilèges **service_role** — réservé au serveur.
  *
  * Contourne la RLS : à n'utiliser QUE pour ce que la RLS ne peut pas faire côté
- * `authenticated`, et TOUJOURS derrière une garde de rôle applicatif (admin).
- * Aujourd'hui : lister les comptes Supabase (`auth.admin`) et lire le catalogue
- * `interclub.club` (pas encore ouvert en RLS, cf. T6) pour l'écran de mapping.
+ * `authenticated` — lectures d'administration et lecture transverse tous clubs
+ * (classement, contrôle, engagement…), en LECTURE seule sauf exceptions (ADR 0005).
+ * Toute fonction exportée qui l'utilise COMMENCE par une garde de lecture
+ * (`@/lib/auth/garde-lecture`) ou figure parmi les exceptions de l'ADR 0005 —
+ * vérifié par `garde-service-role.test.ts`.
  *
  * ⚠️ Ne JAMAIS importer ce module dans un Client Component : la clé service ne
- * doit jamais atteindre le navigateur. Cf. ADR 0002.
+ * doit jamais atteindre le navigateur. Cf. ADR 0002 et ADR 0005.
  */
 export function createAdminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL

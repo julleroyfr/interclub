@@ -1,6 +1,8 @@
 # ADR 0002 — Lister les comptes Supabase via la clé `service_role` (mapping de rôle)
 
-- **Statut** : acceptée (le 2026-07-22)
+- **Statut** : acceptée (le 2026-07-22) — **portée étendue** par
+  l'[ADR 0005](0005-lecture-transverse-service-role.md) (lecture transverse,
+  garde dans chaque loader, 2026-10-03)
 - **Décideurs** : julleroyfr (produit) + assistance technique
 - **Portée** : administration du mapping de rôle (T5b) ; usage d'un secret serveur
 - **Sources** :

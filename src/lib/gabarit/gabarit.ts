@@ -1,5 +1,6 @@
 import 'server-only'
 
+import { exigerLectureAdmin } from '@/lib/auth/garde-lecture'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { Categorie } from '@/domaine/rencontre'
 import type { TypeEpreuve, TypeVoie } from '@/domaine/gabarit'
@@ -70,6 +71,7 @@ export type EpreuveGabaritVue = {
 
 /** Gabarit complet d'une catégorie (toutes épreuves + voies). */
 export async function listerGabarit(categorie: Categorie): Promise<EpreuveGabaritVue[]> {
+  await exigerLectureAdmin('gabarit de rencontre')
   const admin = createAdminClient()
 
   const { data: epreuves, error: errEpreuves } = await admin

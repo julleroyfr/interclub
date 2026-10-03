@@ -4,6 +4,7 @@ import { headers } from 'next/headers'
 import QRCode from 'qrcode'
 
 import { construireUrlScan } from '@/domaine/session-qr'
+import { exigerLectureAdmin, exigerLectureCoachDuClub } from '@/lib/auth/garde-lecture'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 
@@ -64,6 +65,7 @@ function unNom(club: unknown): string | null {
 
 /** Toutes les rencontres (écran admin). Lecture catalogue via service_role. */
 export async function listerRencontres(): Promise<RencontreVue[]> {
+  await exigerLectureAdmin('rencontres (jetons)')
   const admin = createAdminClient()
   const { data, error } = await admin
     .from('rencontre')
@@ -83,6 +85,7 @@ export async function listerRencontres(): Promise<RencontreVue[]> {
 export async function listerRencontresDuClub(
   clubId: string,
 ): Promise<RencontreVue[]> {
+  await exigerLectureCoachDuClub(clubId, 'rencontres du club')
   const admin = createAdminClient()
   const { data, error } = await admin
     .from('rencontre')
@@ -112,6 +115,7 @@ export async function listerRencontresDuClub(
  * enregistrées pour la rencontre.
  */
 export async function listerClubsEngages(): Promise<ClubEngage[]> {
+  await exigerLectureAdmin('clubs engagés')
   const admin = createAdminClient()
   const { data, error } = await admin
     .from('club')
@@ -123,6 +127,7 @@ export async function listerClubsEngages(): Promise<ClubEngage[]> {
 
 /** Voies de vitesse d'une rencontre. */
 export async function listerVoies(rencontreId: string): Promise<VoieVue[]> {
+  await exigerLectureAdmin('voies de vitesse')
   const admin = createAdminClient()
   const { data, error } = await admin
     .from('voie_vitesse')

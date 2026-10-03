@@ -1,5 +1,6 @@
 import 'server-only'
 
+import { exigerLectureAdmin } from '@/lib/auth/garde-lecture'
 import { getEngagementRencontre, type EngagementRencontre } from '@/lib/coach/engagement'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -18,6 +19,7 @@ export type EngagementClub = {
 export async function chargerEngagementTousClubs(
   rencontreId: string,
 ): Promise<EngagementClub[]> {
+  await exigerLectureAdmin('engagement de tous les clubs')
   const admin = createAdminClient()
   const { data: clubs, error } = await admin.from('club').select('id, nom').order('nom')
   if (error) throw error

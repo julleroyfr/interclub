@@ -5,6 +5,7 @@ import {
   estEligibleCategorie,
   type Categorie,
 } from '@/domaine/rencontre'
+import { exigerLectureAdmin } from '@/lib/auth/garde-lecture'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 // Écran admin de gestion des prêts (spec #1 R35). Lecture des catalogues
@@ -39,6 +40,7 @@ export type EtatPret = { erreur?: string; succes?: string } | undefined
 export async function chargerPretsRencontre(
   rencontreId: string,
 ): Promise<ContextePretsRencontre> {
+  await exigerLectureAdmin('prêts de la rencontre')
   const admin = createAdminClient()
 
   const [rencRes, clubsRes, grimpeursRes, pretsRes, compoRes] = await Promise.all([

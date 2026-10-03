@@ -16,6 +16,7 @@ import {
   type Rang,
 } from '@/domaine/score'
 import { formaterTempsVitesse } from '@/domaine/vitesse'
+import { exigerLectureAdminOuCoach } from '@/lib/auth/garde-lecture'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { verifierLecture } from '@/lib/supabase/lecture'
 
@@ -135,6 +136,7 @@ const individuelVide = (): ClassementIndividuel => ({ filles: [], garcons: [] })
 export async function getClassementRencontre(
   rencontreId: string,
 ): Promise<ClassementRencontre | null> {
+  await exigerLectureAdminOuCoach('classement de la rencontre')
   const admin = createAdminClient()
 
   const rencontre = verifierLecture(

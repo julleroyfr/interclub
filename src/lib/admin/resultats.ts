@@ -7,6 +7,7 @@ import {
   type GrimpeurSaisie,
   type VoieOption,
 } from '@/lib/coach/resultats'
+import { exigerLectureAdmin } from '@/lib/auth/garde-lecture'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { verifierLecture } from '@/lib/supabase/lecture'
 
@@ -44,6 +45,7 @@ export type SaisieAdminRencontre = {
 export async function getSaisieAdminRencontre(
   rencontreId: string,
 ): Promise<SaisieAdminRencontre | null> {
+  await exigerLectureAdmin('saisie admin des résultats')
   const admin = createAdminClient()
 
   const rencontre = verifierLecture(

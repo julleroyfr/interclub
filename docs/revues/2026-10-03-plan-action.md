@@ -230,15 +230,25 @@ d'équipe conserve le temps de vitesse au lieu de le purger).
 - [x] ✅ Application manuelle en recette — 2026-10-03.
 - [ ] ⏳ Déroulage des cahiers 15 (CT-06/07), 17 (CT-16), 20 (CT-12/13) en recette.
 
-## Lot 5 — `service_role` et ADR (M8)
+## Lot 5 — `service_role` et ADR (M8) — ✅ fait (branche `feature/adr-service-role`)
 
 Débloqué : D-C tranché le 2026-10-03 (option a).
 
-- [ ] ⏳ Rédiger l'ADR `0005-…` actant la lecture transverse via
-  `service_role`, et ajouter une garde (`exigerAdmin` ou contexte) dans chacun
-  des 12 loaders concernés.
+- [x] ✅ ADR [`0005-lecture-transverse-service-role`](../decisions/0005-lecture-transverse-service-role.md)
+  (lecture transverse acceptée, garde par loader, exceptions justifiées) ;
+  ADR 0002 renvoie vers lui.
+- [x] ✅ Gardes de lecture `src/lib/auth/garde-lecture.ts` (`exigerLectureAdmin`,
+  `exigerLectureAdminOuCoach`, `exigerLectureCoachDuClub`) en tête des **12**
+  loaders ; exceptions : `resoudreInvitation`, `inscrireCoach` (secret
+  d'invitation), `exportDisponible` / `reponseExportPdf` (demandeur, spec #15).
+- [x] ✅ Test d'architecture `src/lib/supabase/garde-service-role.test.ts` (rouge
+  sur les 12 loaders avant la correction) — il a aussi repéré une garde mal
+  placée pendant l'implémentation.
 - ~~Option (b) : retour aux lectures RLS~~ — écartée (D-C).
-- [ ] ⏳ Mettre à jour le commentaire périmé de `src/lib/supabase/admin.ts`.
+- [x] ✅ Commentaire de `src/lib/supabase/admin.ts` mis à jour ; grille de l'agent
+  `revue-code-architecture` complétée (gardes ADR 0005, `grant execute`).
+- [x] ✅ Vitest (348) et E2E complète (130) au vert : aucun parcours légitime
+  bloqué.
 
 ## Lot 6 — Mineurs (m1–m9)
 

@@ -10,6 +10,7 @@ import {
 } from '@/domaine/controle'
 import { type Categorie, type Phase } from '@/domaine/rencontre'
 import { type IssueBloc, type IssueVoie } from '@/domaine/resultat'
+import { exigerLectureAdmin } from '@/lib/auth/garde-lecture'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { verifierLecture } from '@/lib/supabase/lecture'
 import { createClient } from '@/lib/supabase/server'
@@ -62,6 +63,7 @@ export async function getControleRencontre(
   rencontreId: string,
   { avecAuteurs = true }: { avecAuteurs?: boolean } = {},
 ): Promise<ControleRencontre | null> {
+  await exigerLectureAdmin('contrôle des résultats')
   const supabase = await createClient()
 
   const rencontre = verifierLecture(

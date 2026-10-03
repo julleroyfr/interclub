@@ -1,6 +1,7 @@
 import 'server-only'
 
 import { type RoleApplicatif } from '@/domaine/mapping-de-role'
+import { exigerLectureAdmin } from '@/lib/auth/garde-lecture'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 /** Compte Supabase existant, cible potentielle d'un mapping. */
@@ -31,6 +32,7 @@ export type ContexteMapping = {
  * `authenticated` (cf. ADR 0002, T6). À n'appeler que derrière une garde admin.
  */
 export async function chargerContexteMapping(): Promise<ContexteMapping> {
+  await exigerLectureAdmin('mapping des comptes')
   const admin = createAdminClient()
 
   const [comptesRes, clubsRes, mappingsRes] = await Promise.all([

@@ -4,6 +4,7 @@ import { headers } from 'next/headers'
 import QRCode from 'qrcode'
 
 import { construireUrlInvitation } from '@/domaine/invitation-coach'
+import { exigerLectureAdmin } from '@/lib/auth/garde-lecture'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 /** Invitation active d'un club, prête à afficher (QR + URL). */
@@ -48,6 +49,7 @@ async function versInvitationVue(row: {
 export async function listerInvitationsActives(): Promise<
   Map<string, InvitationVue>
 > {
+  await exigerLectureAdmin('invitations coach actives')
   const admin = createAdminClient()
   const { data, error } = await admin
     .from('invitation_coach')
