@@ -81,6 +81,16 @@
   acteur d'écriture en ③). Le **détail** de l'écran/parcours relève de la **spec #9**
   (`09-saisie-admin-resultats.md`) ; la saisie **coach** (spec #6) est inchangée.
 
+- **Révision** : 2026-10-03 (**validée le 2026-10-03**) — **acteur identifié**
+  (décision D-D de la [revue du 2026-10-03](../revues/2026-10-03-plan-action.md)).
+  Une session Supabase peut être « authentifiée » sans désigner aucun acteur de
+  la compétition (session anonyme ouverte sans scanner de QR, compte sans rôle) :
+  elle lisait alors clubs, rencontres et résultats dès la ③. Les lectures
+  ouvertes « à tout authentifié » sont désormais réservées aux **acteurs
+  identifiés** (nouveau terme, Vocabulaire). Impact : **R8 réécrite**, « RLS
+  attendue » alignée ; les specs qui renvoient à R8 (#6 R6, #7 R11, #10 R15)
+  héritent de la définition sans modification.
+
 ## Objectif
 
 Définir **qui peut faire quoi**, et **quand**, dans l'application interclub.
@@ -102,6 +112,12 @@ conditionne les accès temporels.
   l'épreuve de vitesse d'une rencontre.
 - **Session QR éphémère** : authentification temporaire liée à une rencontre,
   obtenue via un QR code, valable uniquement pendant la fenêtre de la rencontre.
+- **Acteur identifié** *(rév. 2026-10-03)* : session qui désigne un acteur de
+  la compétition — soit un **compte permanent mappé** (rôle admin ou coach,
+  spec #2 R4), soit une **session QR éphémère** ouverte sur un **jeton actif**
+  (coach temporaire ou juge). Une session authentifiée qui n'est **ni l'un ni
+  l'autre** (session anonyme ouverte sans QR, compte sans rôle, jeton révoqué)
+  n'est **pas** un acteur identifié : elle n'a **aucun** droit de lecture.
 - **QR code** : jeton d'accès affiché par l'admin (ou par un coach permanent pour
   ses coachs temporaires) ouvrant une session éphémère.
 - **Club** : structure regroupant des équipes et des grimpeurs.
@@ -197,7 +213,8 @@ conditionne les accès temporels.
     par l'admin dépend de la spec juge — hors périmètre à ce jour.)*
 - **R8.** Les résultats **et les classements** d'une rencontre sont **calculés et
   consultables au fil de l'eau** dès leur saisie en **③ compétition**, pour **tout
-  compte authentifié**, **tous clubs confondus**. Le **visiteur non authentifié**
+  acteur identifié** (Vocabulaire, rév. 2026-10-03), **tous clubs confondus**.
+  Une session authentifiée qui n'est pas un acteur identifié n'y a pas accès. Le **visiteur non authentifié**
   (`anon`) n'y a **jamais** accès, à aucune phase : il n'existe **pas d'espace
   public** (rév. 2026-10-02). Rien n'est visible **avant** la ③ (aucun résultat
   n'existe encore). La phase **⑤ résultats publics** **officialise** les résultats
@@ -512,13 +529,17 @@ le prêt** lui-même (R35).
 - **RLS attendue** :
   - **écriture** des équipes, grimpeurs et résultats **restreinte au club** du
     coach (R17–R20) ; la **lecture** des équipes/grimpeurs reste au périmètre
-    métier, mais la **lecture des résultats** est ouverte à **tout authentifié dès
-    la ③** (R8, voir ci-dessous) ;
+    métier, mais la **lecture des résultats** est ouverte à **tout acteur
+    identifié dès la ③** (R8, voir ci-dessous) ;
   - lecture des infos publiques ouverte aux coachs, tous clubs (R21) ;
-  - **lecture des résultats et classements ouverte à tout compte authentifié dès
+  - **lecture des résultats et classements ouverte à tout acteur identifié dès
     la phase ③ compétition** ; **aucune** lecture pour `anon` (visiteur non
     authentifié), à aucune phase — ni policy ni grant (R8, rév. 2026-10-02) ; la ⑤
     **fige** les résultats ;
+  - toute lecture aujourd'hui ouverte à « tout `authenticated` » (catalogues des
+    clubs, rencontres, épreuves, voies, barème ; résultats dès la ③) exige un
+    **acteur identifié** (rév. 2026-10-03) : une session anonyme sans session QR
+    active ou un compte sans rôle ne lit **rien** ;
   - écriture des **résultats de vitesse** d'un juge **restreinte à la voie de
     l'épreuve de vitesse qui lui est affectée** (R30) ;
   - rattachement d'un grimpeur **prêté** à une équipe d'accueil / équipe CT33

@@ -8,6 +8,11 @@
   2026-10-02) : ajout, sur la carte des routes, de l'écran admin
   `/admin/rencontres/{id}/controle` (④ contrôle, ⑤ lecture seule, spec #16
   R1–R3). Aucune règle `Rn` modifiée.
+- **Révision du 2026-10-03 (validée le 2026-10-03)** — décisions D-F et D-G de la
+  [revue du 2026-10-03](../revues/2026-10-03-plan-action.md) : ajout de **R24**
+  (pages de maquette `/design-system` et `/templates/**` limitées au
+  développement local) et **R25** (écran d'erreur technique). Cas limites
+  alignés ; aucune autre règle modifiée.
 - **Sources** :
   - **Décision produit du 2026-09-25** (arbitrages navigation) : entrée coach
     unique, vue classement admin dédiée, sortie de session juge, classement en
@@ -146,6 +151,29 @@ menant à une impasse (404 non intentionnel).
   lien « Accueil »** (R7) : la sortie se fait par « Se déconnecter » (permanent)
   ou « Terminer » (session QR).
 
+### Pages hors flux et erreurs *(rév. 2026-10-03)*
+
+- **R24.** Les pages de **maquette** `/design-system` et `/templates/**` (données
+  fictives, hors flux applicatif) ne sont servies qu'en **développement local**.
+  Sur tout environnement déployé (recette, prod), elles répondent **404**
+  (`notFound()`), **quelle que soit la session** — admin compris. Elles sont la
+  seule exception à R1 (aucune garde de rôle : elles n'existent simplement pas
+  hors du poste du développeur).
+- **R25.** Une **erreur technique** pendant le rendu d'une page (lecture en échec,
+  lecture refusée par un loader — ADR 0005 —, panne) affiche un **écran
+  d'erreur** au lieu de la page d'erreur générique du framework :
+  - un titre « **Une erreur est survenue** » et une phrase en français invitant à
+    réessayer, **sans** détail technique (ni message d'erreur brut, ni pile) ;
+  - un bouton « **Réessayer** » qui relance le rendu de la page ;
+  - un lien « **Revenir à l'accueil** » vers `/`, qui redirige selon le rôle
+    (R7) ;
+  - le même écran couvre une erreur dans la **mise en page racine** (écran
+    autonome, sans le bandeau) ;
+  - l'erreur reste **journalisée côté serveur** pour le diagnostic.
+
+  Les refus d'accès gardent leur comportement (R2 : `/connexion` ; R3 : 404) : ce
+  ne sont pas des erreurs techniques.
+
 ## Scénarios
 
 ### Nominal — entrée par rôle
@@ -172,6 +200,11 @@ menant à une impasse (404 non intentionnel).
 - Coach temporaire ouvrant `/coach/rencontres/{autre-id}/classement` →
   `notFound()` (R12).
 - Utilisateur déjà connecté ouvrant `/connexion` → redirigé vers son espace (R8).
+- **Admin** ouvrant `/design-system` ou `/templates/nuit/…` en **recette ou
+  prod** → **404** (R24) ; en développement local, la page s'affiche.
+- Une **lecture en échec** pendant le rendu du classement (droit manquant,
+  panne) → **écran d'erreur** « Une erreur est survenue » avec « Réessayer » et
+  « Revenir à l'accueil », sans détail technique (R25).
 
 ## Diagramme cible
 
