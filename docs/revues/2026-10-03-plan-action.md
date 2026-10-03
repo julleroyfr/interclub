@@ -283,9 +283,16 @@ Débloqué : D-C tranché le 2026-10-03 (option a).
 
 - [ ] ⏳ Suggestion 1 — traitée dans le lot 1.
 - [ ] ⏳ Suggestion 2 — cahier 28, lot 1.
-- [ ] ⏳ Suggestion 3 — Préfixer les `describe` des tests par leur spec
-  (`spec #7 R8 …`) dans les 19 fichiers de `src/domaine/`.
-- [ ] ❓ Suggestion 4 — Tester les règles calculées en SQL : pgTAP sur la stack
-  locale, ou copie dans le domaine + tests d'équivalence (à décider).
+- [x] ✅ Suggestion 3 — 66 `describe` de `src/domaine/` préfixés
+  « spec #N — » (attribution vérifiée une à une : `rencontre.test.ts` relève de
+  la spec #1, le barème R47/R48 de la spec #3).
+- [x] ✅ Suggestion 4 — décision du 2026-10-03 : **script psql** (sans nouvel
+  outil ni convention à changer). `scripts/test-points-vitesse.sh`
+  (`npm run test:points-vitesse`) : 20 cas spec #7 R15–R20 (rang par sexe, ex
+  æquo et saut de rang, barème par échelons, chute / non-présentation /
+  absence, recalcul au fil des écritures) sur un jeu d'essai dédié, en
+  transaction annulée. Vérifié par mutation (`dense_rank` ⇒ 6 KO). Le plafond
+  ado et la purge au retrait sont déjà couverts (cahiers 17 CT-16, 20 CT-13).
+- [x] ✅ `scripts/test-t5a.sh` CT-06 : comparé au nombre réel de comptes (8/8).
 - [ ] ⏳ Relancer l'agent `revue-code-architecture` après les lots 1 à 4 pour
   vérifier la fermeture des constats.
