@@ -106,8 +106,10 @@ Processus pour tout changement de schéma :
    Un fichier = un changement cohérent. Idempotent si possible
    (`create table if not exists`, `alter … add column if not exists`).
    Terminer par l'insertion de la ligne de suivi dans `interclub.version` (§5bis).
-2. **Valider en local** (§5.1) : `supabase db reset` pour vérifier que le SQL
-   rejoue proprement sur base neuve, puis dérouler les vérifications (contraintes,
+2. **Valider en local** (§5.1) : `npm run db:reset` (`supabase db reset` +
+   `npm run db:verifier`) pour vérifier que le SQL rejoue proprement sur base
+   neuve **et** que le schéma obtenu est cohérent (`scripts/verifier-schema.sh` :
+   aucune fonction surchargée), puis dérouler les vérifications (contraintes,
    RLS, cahier de test) sur la stack locale.
 3. **Relire** vis-à-vis de la spec (colonnes, contraintes, RLS).
 4. **Appliquer d'abord en RECETTE** dans le SQL Editor Supabase (copier le SQL
@@ -124,6 +126,13 @@ Règles :
 - Le SQL doit être **rejouable** sur une base neuve pour reconstruire le schéma
   (c'est précisément ce que `supabase db reset` vérifie en local).
 - Une migration appliquée n'est pas réécrite : on ajoute une nouvelle migration.
+- **Changer la signature d'une fonction** (ajout, retrait, renommage ou
+  changement de type d'un paramètre) : `create or replace function` ne remplace
+  **pas** l'ancienne, il crée une **surcharge**. PostgREST renvoie alors
+  `PGRST203` dès qu'un appel omet un paramètre à défaut. La même migration doit
+  donc commencer par `drop function if exists schema.fonction(<ancienne
+  signature>);`, puis recréer la fonction et ses `grant`. Incident du
+  2026-10-03 (`rechercher_grimpeurs`), détecté depuis par `npm run db:verifier`.
 - L'application vers recette/prod passe **exclusivement** par le SQL Editor à la
   main. Aucune commande CLI ne pousse vers le distant.
 

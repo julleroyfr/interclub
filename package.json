@@ -27,7 +27,8 @@
     "test:t6": "bash scripts/test-t6.sh",
     "test:resultats": "bash scripts/test-resultats.sh",
     "test:invitation": "bash scripts/test-invitation.sh",
-    "db:reset": "supabase db reset"
+    "db:reset": "supabase db reset && npm run db:verifier",
+    "db:verifier": "bash scripts/verifier-schema.sh"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",

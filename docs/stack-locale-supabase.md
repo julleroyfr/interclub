@@ -62,7 +62,7 @@ supabase stop --no-backup   # arrête et jette les données locales
 C'est **le** test de rejouabilité exigé par la convention (§5) :
 
 ```powershell
-supabase db reset
+npm run db:reset   # = supabase db reset + npm run db:verifier
 ```
 
 `db reset` :
@@ -73,6 +73,11 @@ supabase db reset
 
 Si une migration n'est pas rejouable (dépendance manquante, ordre, SQL non
 idempotent), `db reset` **échoue** ici — donc **avant** recette/prod. C'est le but.
+
+`npm run db:verifier` (`scripts/verifier-schema.sh`) contrôle ensuite le
+**schéma obtenu** : aucune fonction surchargée dans `interclub` (une signature
+modifiée via `create or replace` laisse l'ancienne en place → `PGRST203`). Il
+se lance aussi seul, sans reset.
 
 ## 4. Valider les impacts BDD
 
