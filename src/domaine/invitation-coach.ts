@@ -97,3 +97,23 @@ export function validerInscriptionCoach(demande: {
 
   return { email, motDePasse }
 }
+
+/**
+ * Message d'échec de la création du compte à l'inscription, d'après le code
+ * d'erreur de l'API Auth (spec #2 R32 ; revue du 2026-10-03, m6). Seul un e-mail
+ * déjà associé à un compte donne le message R32 (« connectez-vous ») : un mot de
+ * passe refusé ou une panne ne doivent pas faire croire que le compte existe.
+ */
+export function messageEchecCreationCompte(code: string | undefined): string {
+  switch (code) {
+    case 'email_exists':
+    case 'user_already_exists':
+      return 'Un compte existe déjà avec cet e-mail. Connectez-vous ou contactez un administrateur.'
+    case 'weak_password':
+      return 'Mot de passe refusé : choisissez un mot de passe plus long ou plus complexe.'
+    case 'email_address_invalid':
+      return "Cette adresse e-mail n'est pas acceptée. Vérifiez-la."
+    default:
+      return "L'inscription a échoué. Réessayez ou demandez une nouvelle invitation."
+  }
+}

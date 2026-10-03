@@ -2,8 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 
-import { type TypeVoie } from '@/domaine/gabarit'
-import { type Categorie, type Phase } from '@/domaine/rencontre'
+import { type Phase } from '@/domaine/rencontre'
 import {
   MESSAGE_PLAFOND_VOIES_ADO,
   type IssueBloc,
@@ -14,6 +13,7 @@ import {
   verifierAjoutVoieAdo,
 } from '@/domaine/resultat'
 import { type ContexteCoach, getContexteCoach } from '@/lib/auth/session'
+import { chargerContexteBloc, chargerContexteVoie, type Client, voiesDejaSaisiesAdo } from '@/lib/resultats/contexte-saisie'
 import { verifierLecture } from '@/lib/supabase/lecture'
 import { createClient } from '@/lib/supabase/server'
 
@@ -22,9 +22,6 @@ import { createClient } from '@/lib/supabase/server'
 // temporaire ; le domaine valide l'issue (R10/R12/R16), le plafond et l'unicité
 // ado (R11/R13/R14). La RLS (peut_ecrire_resultat_voie/_bloc) reste la frontière
 // ultime (périmètre-club via composition, prêté inclus R36).
-
-/** Client Supabase du projet (schéma `interclub`). */
-type Client = Awaited<ReturnType<typeof createClient>>
 
 export type EtatSaisie = { erreur?: string; succes?: string } | undefined
 
@@ -81,85 +78,6 @@ function messageEcriture(erreur: { code?: string; message?: string }): string {
   return 'La saisie a échoué. Réessayez.'
 }
 
-/** Contexte d'une voie de difficulté : rencontre, épreuve, catégorie, phase, type. */
-async function chargerContexteVoie(
-  supabase: Client,
-  voieId: string,
-): Promise<
-  | { rencontreId: string; epreuveId: string; categorie: Categorie; phase: Phase; typeVoie: TypeVoie }
-  | null
-> {
-  const voie = verifierLecture(
-    await supabase
-      .from('voie_difficulte')
-      .select('type_voie, epreuve_id')
-      .eq('id', voieId)
-      .maybeSingle(),
-    'de la voie',
-  )
-  if (!voie) return null
-  const ep = verifierLecture(
-    await supabase
-      .from('epreuve')
-      .select('rencontre_id')
-      .eq('id', voie.epreuve_id as string)
-      .maybeSingle(),
-    "de l'épreuve",
-  )
-  if (!ep) return null
-  const r = verifierLecture(
-    await supabase
-      .from('rencontre')
-      .select('categorie, phase')
-      .eq('id', ep.rencontre_id as string)
-      .maybeSingle(),
-    'de la rencontre',
-  )
-  if (!r) return null
-  return {
-    rencontreId: ep.rencontre_id as string,
-    epreuveId: voie.epreuve_id as string,
-    categorie: r.categorie as Categorie,
-    phase: r.phase as Phase,
-    typeVoie: voie.type_voie as TypeVoie,
-  }
-}
-
-/** Contexte d'un bloc : rencontre, phase. */
-async function chargerContexteBloc(
-  supabase: Client,
-  blocId: string,
-): Promise<{ rencontreId: string; phase: Phase } | null> {
-  const bloc = verifierLecture(
-    await supabase
-      .from('bloc')
-      .select('epreuve_id')
-      .eq('id', blocId)
-      .maybeSingle(),
-    'du bloc',
-  )
-  if (!bloc) return null
-  const ep = verifierLecture(
-    await supabase
-      .from('epreuve')
-      .select('rencontre_id')
-      .eq('id', bloc.epreuve_id as string)
-      .maybeSingle(),
-    "de l'épreuve",
-  )
-  if (!ep) return null
-  const r = verifierLecture(
-    await supabase
-      .from('rencontre')
-      .select('phase')
-      .eq('id', ep.rencontre_id as string)
-      .maybeSingle(),
-    'de la rencontre',
-  )
-  if (!r) return null
-  return { rencontreId: ep.rencontre_id as string, phase: r.phase as Phase }
-}
-
 /**
  * Enregistre (ou corrige) l'issue d'un grimpeur sur une voie de difficulté
  * (R8/R10/R12). Correction = remplacement (une seule issue par voie, R13). Pour
@@ -194,23 +112,7 @@ export async function saisirResultatVoie(
   // Ado : plafond 6 + unicité, uniquement quand on AJOUTE une voie non encore
   // saisie (une correction sur une voie déjà saisie est un remplacement, R13).
   if (ctx.categorie === 'ado') {
-    const voiesEp = verifierLecture(
-      await supabase
-        .from('voie_difficulte')
-        .select('id')
-        .eq('epreuve_id', ctx.epreuveId),
-      'des voies',
-    )
-    const idsEp = (voiesEp ?? []).map((v) => v.id as string)
-    const existantes = verifierLecture(
-      await supabase
-        .from('resultat_voie')
-        .select('voie_difficulte_id')
-        .eq('grimpeur_id', grimpeurId)
-        .in('voie_difficulte_id', idsEp),
-      'des résultats de voie',
-    )
-    const dejaSaisies = (existantes ?? []).map((r) => r.voie_difficulte_id as string)
+    const dejaSaisies = await voiesDejaSaisiesAdo(supabase, ctx.epreuveId, grimpeurId)
     if (!dejaSaisies.includes(voieId)) {
       try {
         verifierAjoutVoieAdo({ voiesSaisiesIds: dejaSaisies, voieCandidateId: voieId })

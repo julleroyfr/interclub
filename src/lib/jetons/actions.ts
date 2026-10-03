@@ -10,6 +10,7 @@ import {
   type NatureJeton,
 } from '@/domaine/jeton-qr'
 import { getUtilisateurCourant } from '@/lib/auth/session'
+import { cheminDeRetour } from '@/lib/chemin-retour'
 import { verifierLecture } from '@/lib/supabase/lecture'
 import { createClient } from '@/lib/supabase/server'
 
@@ -32,7 +33,7 @@ async function acteurCourant(): Promise<Acteur> {
  * index uniques garantissent R18/R19 (un seul jeton actif par voie / club).
  */
 export async function genererJeton(formData: FormData): Promise<void> {
-  const chemin = String(formData.get('chemin') ?? '/')
+  const chemin = cheminDeRetour(formData.get('chemin'), '/')
   const acteur = await acteurCourant()
   const nature = String(formData.get('nature') ?? '') as NatureJeton
   const clubId = (formData.get('clubId') as string | null) || null
@@ -80,7 +81,7 @@ async function jetonGerable(jetonId: string, acteur: Acteur) {
 
 /** Révoque un jeton : il devient inactif immédiatement (R22). */
 export async function revoquerJeton(formData: FormData): Promise<void> {
-  const chemin = String(formData.get('chemin') ?? '/')
+  const chemin = cheminDeRetour(formData.get('chemin'), '/')
   const jetonId = String(formData.get('jetonId') ?? '')
   const acteur = await acteurCourant()
 
@@ -105,7 +106,7 @@ export async function revoquerJeton(formData: FormData): Promise<void> {
  * d'abord libère l'index unique « un actif par voie / club » avant l'insert.
  */
 export async function regenererJeton(formData: FormData): Promise<void> {
-  const chemin = String(formData.get('chemin') ?? '/')
+  const chemin = cheminDeRetour(formData.get('chemin'), '/')
   const jetonId = String(formData.get('jetonId') ?? '')
   const acteur = await acteurCourant()
 

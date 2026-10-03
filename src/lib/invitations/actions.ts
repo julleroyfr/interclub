@@ -9,10 +9,12 @@ import {
   construireUrlInvitation,
   creerInvitationCoach,
   InvitationCoachInvalideError,
+  messageEchecCreationCompte,
   peutGererInvitation,
   validerInscriptionCoach,
 } from '@/domaine/invitation-coach'
 import { getUtilisateurCourant } from '@/lib/auth/session'
+import { cheminDeRetour } from '@/lib/chemin-retour'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { verifierLecture } from '@/lib/supabase/lecture'
 import { createClient } from '@/lib/supabase/server'
@@ -81,7 +83,7 @@ export async function genererInvitationInline(
  * unique partiel garantit « au plus une active par club » (R28).
  */
 export async function genererInvitation(formData: FormData): Promise<void> {
-  const chemin = String(formData.get('chemin') ?? '/admin/clubs')
+  const chemin = cheminDeRetour(formData.get('chemin'), '/admin/clubs')
   const utilisateur = await getUtilisateurCourant()
 
   if (!peutGererInvitation({ role: utilisateur?.role ?? null })) {
@@ -129,7 +131,7 @@ async function invitationGerable(invitationId: string) {
 
 /** Révoque une invitation : elle devient inactive immédiatement (R29). */
 export async function revoquerInvitation(formData: FormData): Promise<void> {
-  const chemin = String(formData.get('chemin') ?? '/admin/clubs')
+  const chemin = cheminDeRetour(formData.get('chemin'), '/admin/clubs')
   const invitationId = String(formData.get('invitationId') ?? '')
 
   if (!(await invitationGerable(invitationId))) {
@@ -153,7 +155,7 @@ export async function revoquerInvitation(formData: FormData): Promise<void> {
  * d'abord libère l'index unique « une active par club » avant l'insert.
  */
 export async function regenererInvitation(formData: FormData): Promise<void> {
-  const chemin = String(formData.get('chemin') ?? '/admin/clubs')
+  const chemin = cheminDeRetour(formData.get('chemin'), '/admin/clubs')
   const invitationId = String(formData.get('invitationId') ?? '')
 
   const invitation = await invitationGerable(invitationId)
@@ -223,11 +225,9 @@ export async function inscrireCoach(
     email_confirm: true,
   })
   if (eCreate || !cree?.user) {
-    // R32 : email déjà associé à un compte → refus, invite à se connecter.
-    return {
-      erreur:
-        'Un compte existe déjà avec cet e-mail. Connectez-vous ou contactez un administrateur.',
-    }
+    // R32 : seul un e-mail déjà associé à un compte invite à se connecter ; les
+    // autres refus (mot de passe, panne) ont leur propre message (m6).
+    return { erreur: messageEchecCreationCompte(eCreate?.code) }
   }
 
   const { error: eMapping } = await admin.rpc('finaliser_inscription_coach', {

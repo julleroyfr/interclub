@@ -33,7 +33,8 @@ describe("Saisie d'un grimpeur (R18)", () => {
 
   // Licence obligatoire, entier strictement positif (spec #3 R21b).
   it('rejette une licence absente (R21b)', () => {
-    const { licence: _, ...sanslicence } = valide
+    const sanslicence: Partial<typeof valide> = { ...valide }
+    delete sanslicence.licence
     expect(() => normaliserSaisieGrimpeur(sanslicence as never)).toThrow(
       GrimpeurInvalideError,
     )

@@ -14,6 +14,7 @@ import {
   creerInvitationCoach,
   peutGererInvitation,
   validerInscriptionCoach,
+  messageEchecCreationCompte,
 } from './invitation-coach'
 
 // ---------------------------------------------------------------------------
@@ -108,5 +109,36 @@ describe('validerInscriptionCoach', () => {
     expect(() =>
       validerInscriptionCoach({ email: 'coach@example.com', motDePasse: '123' }),
     ).toThrow(InvitationCoachInvalideError)
+  })
+})
+
+/**
+ * Message d'échec de création du compte à l'inscription (spec #2 R32 ; revue du
+ * 2026-10-03, constat m6) : seul un e-mail DÉJÀ UTILISÉ donne le message R32
+ * (« connectez-vous ») ; les autres refus de l'API Auth ont leur propre message.
+ */
+describe('messageEchecCreationCompte (spec #2 R32)', () => {
+  it('e-mail déjà associé à un compte → refus invitant à se connecter (R32)', () => {
+    for (const code of ['email_exists', 'user_already_exists']) {
+      expect(messageEchecCreationCompte(code)).toMatch(/existe déjà.*Connectez-vous/)
+    }
+  })
+
+  it('mot de passe refusé → message sur le mot de passe, pas sur l’e-mail', () => {
+    const message = messageEchecCreationCompte('weak_password')
+    expect(message).toMatch(/mot de passe/i)
+    expect(message).not.toMatch(/existe déjà/)
+  })
+
+  it('e-mail invalide → message sur l’adresse e-mail', () => {
+    expect(messageEchecCreationCompte('email_address_invalid')).toMatch(/adresse e-mail/i)
+  })
+
+  it('autre erreur ou code absent → échec générique, sans prétendre que le compte existe', () => {
+    for (const code of [undefined, 'over_request_rate_limit', 'unexpected_failure']) {
+      const message = messageEchecCreationCompte(code)
+      expect(message).toMatch(/L’inscription a échoué|L'inscription a échoué/)
+      expect(message).not.toMatch(/existe déjà/)
+    }
   })
 })
