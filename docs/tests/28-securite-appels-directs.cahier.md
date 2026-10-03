@@ -8,7 +8,7 @@
 > réservée à `service_role` (M1), colonnes de contrôle et d'auteur protégées
 > (M2). Constats et plan : [revue](../revues/2026-10-03-revue-globale.md),
 > [plan d'action](../revues/2026-10-03-plan-action.md).
-> **Automatisé** : `npm run test:cahier:securite` (`e2e/securite-appels-directs.spec.ts`, stack locale) rejoue CT-01 → CT-07 et CT-09 ; CT-08 = suites E2E existantes. En recette, les appels `curl` ci-dessous restent le mode d'exécution.
+> **Automatisé** : `npm run test:cahier:securite` (`e2e/securite-appels-directs.spec.ts`, stack locale) rejoue CT-01 → CT-07, CT-09 et CT-10 ; CT-08 = suites E2E existantes. En recette, les appels `curl` ci-dessous restent le mode d'exécution.
 > Règles : [docs/conventions/06-cahier-de-test.md](../conventions/06-cahier-de-test.md).
 
 - **Spec de référence** : `docs/specs/03-ecrans-de-parametrage-admin.md` (R12),
@@ -216,6 +216,18 @@ ligne de résultat créée puis supprimée dans le cas.
 - **Résultat attendu** : la ligne renvoyée a `auteur_utilisateur_id` = l'id de
   l'utilisateur anonyme du juge et `auteur_role = juge`.
 
+### CT-10 `[auto]` — Lecture réservée aux acteurs identifiés   (couvre : spec #1 Vocabulaire « acteur identifié » et R8, rév. 2026-10-03 ; décision D-D)
+
+- **Rôle / compte** : session **anonyme** ouverte sans QR (`POST
+  $URL/auth/v1/signup` avec `{}`), `sansmapping@test.local` (compte sans rôle),
+  puis `coach@test.local`.
+- **Pré-condition** : migration `202610031400_lecture_acteur_identifie`
+  appliquée.
+- **Étapes** : avec chaque jeton, `GET …/club`, `GET …/rencontre` et
+  `GET …/gabarit_epreuve` (en-tête `Accept-Profile: interclub`).
+- **Résultat attendu** : session anonyme sans QR et compte sans rôle → **listes
+  vides** pour les trois tables ; coach → listes **non vides**.
+
 ## Registre d'exécution
 
 | Date | Testeur | Version/commit | Cas | Résultat | Remarque |
@@ -229,3 +241,4 @@ ligne de résultat créée puis supprimée dans le cas.
 | | | | CT-07 | ✅ / ❌ | |
 | | | | CT-08 | ✅ / ❌ | |
 | | | | CT-09 | ✅ / ❌ | |
+| | | | CT-10 | ✅ / ❌ | |

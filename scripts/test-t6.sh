@@ -47,6 +47,8 @@ begin
   end;
   insert into pg_temp._res values (p_id, p_attendu_ok, v_ok, p_attendu_ok = v_ok);
 end $fn$;
+-- Fonctions fermées par défaut (migration 202610031100) : EXECUTE explicite.
+grant execute on function pg_temp.essai(text, boolean, text) to authenticated;
 
 -- ---- Fixtures (superuser, RLS contournée) -------------------------------
 -- Le jeu de test (seed 01) fournit déjà : épreuves voie (…801)/vitesse (…803),

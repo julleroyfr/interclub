@@ -60,6 +60,8 @@ begin
   end;
   insert into pg_temp._res values (p_id, p_attendu_ok, v_ok, p_attendu_ok = v_ok);
 end $fn$;
+-- Fonctions fermées par défaut (migration 202610031100) : EXECUTE explicite.
+grant execute on function pg_temp.essai(text, boolean, text) to authenticated;
 
 -- lire() : exécute un `select count(*)`, compare (count>0) au visible attendu.
 create or replace function pg_temp.lire(p_id text, p_attendu_visible boolean, p_sql text)
@@ -70,6 +72,8 @@ begin
   v_vis := (v_n > 0);
   insert into pg_temp._res values (p_id, p_attendu_visible, v_vis, p_attendu_visible = v_vis);
 end $fn$;
+-- Fonctions fermées par défaut (migration 202610031100) : EXECUTE explicite.
+grant execute on function pg_temp.lire(text, boolean, text) to authenticated;
 
 -- ---- Fixtures (superuser, RLS contournée) -------------------------------
 -- Le seed 01 fournit désormais, sur la rencontre ENFANT 33333333 (compétition),
@@ -77,6 +81,10 @@ end $fn$;
 -- blocs B1 (…9902) + B2 (…9903) avec leurs paliers (B1 « 1er essai » = …99a1).
 -- On les réutilise tels quels ; seule la catégorie ADO (R12) reste à créer ici,
 -- plus des résultats persistés (matière pour la LECTURE R6/R8 et l'UNICITÉ R13/R17).
+
+-- Rencontre pilote en COMPÉTITION : le seed la pose en ③, mais d'autres suites
+-- (E2E) la remettent en ① ; on fixe l'état attendu (transaction annulée à la fin).
+update interclub.rencontre set phase='competition' where id='33333333-3333-3333-3333-333333333333';
 
 -- Rencontre ADO (club A, compétition) + épreuve voie + voie tête ado.
 insert into interclub.rencontre (id, date_rencontre, club_porteur_id, categorie, phase)
@@ -148,20 +156,27 @@ update interclub.rencontre set phase='competition' where id='33333333-3333-3333-
 
 -- =========================================================================
 -- BLOC 3 — Lecture au fil de l'eau, tous clubs, dès la ③ (R6/R8) — CT-13.
---   `sansmapping` : authentifié, AUCUN rôle/club. Ne doit jamais écrire, mais
---   VOIT les résultats dès la ③.
+--   Lecteur : `coachb` (coach permanent du Club B) — lecture TOUS CLUBS des
+--   résultats du Club A dès la ③. `sansmapping` (authentifié, AUCUN rôle) n'est
+--   pas un acteur identifié (spec #1 rév. 2026-10-03, D-D) : il ne lit RIEN et
+--   n'écrit jamais.
 -- =========================================================================
--- En COMPÉTITION : lecture visible, écriture refusée.
+-- En COMPÉTITION : lecture visible pour un acteur identifié, tous clubs.
+select set_config('request.jwt.claims','{"sub":"dddddddd-dddd-dddd-dddd-dddddddddddd"}', true); set role authenticated;
+select pg_temp.lire('CT13-coachB-lit-voie-en-competition-VISIBLE', true, $$select count(*) from interclub.resultat_voie rv join interclub.voie_difficulte vd on vd.id=rv.voie_difficulte_id where vd.epreuve_id='88888888-8888-8888-8888-888888888801'$$);
+select pg_temp.lire('CT13-coachB-lit-bloc-en-competition-VISIBLE', true, $$select count(*) from interclub.resultat_bloc rb join interclub.bloc b on b.id=rb.bloc_id where b.epreuve_id='88888888-8888-8888-8888-888888888802'$$);
+reset role;
+-- Compte sans rôle : ni lecture (D-D) ni écriture.
 select set_config('request.jwt.claims','{"sub":"55555555-5555-5555-5555-555555555555"}', true); set role authenticated;
-select pg_temp.lire('CT13-lit-voie-en-competition-VISIBLE', true, $$select count(*) from interclub.resultat_voie rv join interclub.voie_difficulte vd on vd.id=rv.voie_difficulte_id where vd.epreuve_id='88888888-8888-8888-8888-888888888801'$$);
-select pg_temp.lire('CT13-lit-bloc-en-competition-VISIBLE', true, $$select count(*) from interclub.resultat_bloc rb join interclub.bloc b on b.id=rb.bloc_id where b.epreuve_id='88888888-8888-8888-8888-888888888802'$$);
+select pg_temp.lire('CT13-sansmapping-lit-voie-INVISIBLE', false, $$select count(*) from interclub.resultat_voie rv join interclub.voie_difficulte vd on vd.id=rv.voie_difficulte_id where vd.epreuve_id='88888888-8888-8888-8888-888888888801'$$);
+select pg_temp.lire('CT13-sansmapping-lit-bloc-INVISIBLE', false, $$select count(*) from interclub.resultat_bloc rb join interclub.bloc b on b.id=rb.bloc_id where b.epreuve_id='88888888-8888-8888-8888-888888888802'$$);
 select pg_temp.essai('CT13-sansmapping-ecrit-KO', false, $$insert into interclub.resultat_voie (voie_difficulte_id,grimpeur_id,issue) values ('99999999-9999-9999-9999-999999999901','a0000000-0000-0000-0000-0000000000a2','top')$$);
 reset role;
 
 -- En PRÉ-COMPÉTITION : plus rien de visible (avant la ③).
 update interclub.rencontre set phase='pre_competition' where id='33333333-3333-3333-3333-333333333333';
-select set_config('request.jwt.claims','{"sub":"55555555-5555-5555-5555-555555555555"}', true); set role authenticated;
-select pg_temp.lire('CT13-lit-voie-avant-③-INVISIBLE', false, $$select count(*) from interclub.resultat_voie rv join interclub.voie_difficulte vd on vd.id=rv.voie_difficulte_id where vd.epreuve_id='88888888-8888-8888-8888-888888888801'$$);
+select set_config('request.jwt.claims','{"sub":"dddddddd-dddd-dddd-dddd-dddddddddddd"}', true); set role authenticated;
+select pg_temp.lire('CT13-coachB-lit-voie-avant-③-INVISIBLE', false, $$select count(*) from interclub.resultat_voie rv join interclub.voie_difficulte vd on vd.id=rv.voie_difficulte_id where vd.epreuve_id='88888888-8888-8888-8888-888888888801'$$);
 reset role;
 update interclub.rencontre set phase='competition' where id='33333333-3333-3333-3333-333333333333';
 

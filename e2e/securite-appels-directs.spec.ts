@@ -356,6 +356,37 @@ test.describe('Cahier 28 — sécurité en base, appels PostgREST directs', () =
     })
   })
 
+  test('CT-10 — lecture réservée aux acteurs identifiés (spec #1 R8, rév. 2026-10-03, D-D)', async ({
+    request,
+  }) => {
+    const { url, anon } = infosApi()
+    const inscription = await request.post(`${url}/auth/v1/signup`, {
+      headers: { apikey: anon, 'Content-Type': 'application/json' },
+      data: {},
+    })
+    expect(inscription.ok()).toBe(true)
+    const jetonAnonyme = (await inscription.json()).access_token as string
+    const jetonSansRole = await jetonDe(
+      request,
+      COMPTES.sansMapping.email,
+      COMPTES.sansMapping.mdp,
+    )
+
+    const nbLignes = async (jeton: string, table: string) => {
+      const rep = await request.get(`${url}/rest/v1/${table}?select=id`, {
+        headers: entetes(jeton),
+      })
+      expect(rep.ok()).toBe(true)
+      return ((await rep.json()) as unknown[]).length
+    }
+
+    for (const table of ['club', 'rencontre', 'gabarit_epreuve']) {
+      expect(await nbLignes(jetonAnonyme, table)).toBe(0)
+      expect(await nbLignes(jetonSansRole, table)).toBe(0)
+      expect(await nbLignes(jetonCoach, table)).toBeGreaterThan(0)
+    }
+  })
+
   test.describe('Cahier 04 CT-11 — révocation définitive pour le coach (D-E, spec #2 R20–R23)', () => {
     const JETON_COACH_A = '55555555-5555-5555-5555-555555555551'
     const actif = () =>
