@@ -11,6 +11,7 @@ import {
   type Phase,
 } from '@/domaine/rencontre'
 import { getUtilisateurCourant } from '@/lib/auth/session'
+import { verifierLecture } from '@/lib/supabase/lecture'
 import { createClient } from '@/lib/supabase/server'
 
 import { materialiserNpCloture } from './cloture'
@@ -140,11 +141,10 @@ export async function changerPhaseRencontre(
   // jour-J (préparation OU compétition) n'est permise que le jour de la
   // rencontre. La date fait autorité en base.
   if (estPhaseJourJ(phase as Phase)) {
-    const { data: renc } = await supabase
-      .from('rencontre')
-      .select('date_rencontre')
-      .eq('id', id)
-      .maybeSingle()
+    const renc = verifierLecture(
+      await supabase.from('rencontre').select('date_rencontre').eq('id', id).maybeSingle(),
+      'de la date de la rencontre',
+    )
     if (!renc) return { erreur: 'Rencontre introuvable.' }
     if (!peutEntrerEnPhase(phase as Phase, renc.date_rencontre as string, aujourdhuiISO())) {
       const quoi = phase === 'preparation' ? 'La préparation' : 'La compétition'
@@ -161,13 +161,18 @@ export async function changerPhaseRencontre(
   if (error) return { erreur: messageErreur(error.code, 'ecriture') }
 
   // Passage en clôture (③→④) : poser le NP automatique sur les attendus non
-  // saisis (spec #6 R18). Idempotent, exécuté en tant qu'admin. Un échec ne doit
-  // pas masquer le changement de phase réussi ; on l'isole.
+  // saisis (spec #6 R18). Idempotent, exécuté en tant qu'admin. La phase est déjà
+  // changée : un échec du NP ne l'annule pas, mais il est SIGNALÉ à l'admin
+  // (jamais un faux succès, revue 2026-10-03 M5) — repasser en compétition puis
+  // en clôture le repose.
+  let npEnEchec = false
   if (phase === 'cloture') {
     try {
       await materialiserNpCloture(supabase, id)
-    } catch {
-      // Le NP pourra être reposé (idempotent) ; la phase est déjà changée.
+    } catch (e) {
+      // Trace serveur de l'erreur technique ; l'admin reçoit un message lisible.
+      console.error('NP automatique de clôture non posé', e)
+      npEnEchec = true
     }
   }
 
@@ -176,6 +181,14 @@ export async function changerPhaseRencontre(
   revalidatePath('/admin/rencontres')
   revalidatePath(`/admin/rencontres/${id}`)
   const label = PHASES.find((p) => p.value === phase)?.label ?? phase
+  if (npEnEchec) {
+    return {
+      erreur:
+        `Phase : ${label}. Attention : les non-présentations automatiques n'ont pas ` +
+        'pu être posées (erreur technique). Repassez en compétition puis en clôture ' +
+        'pour les poser.',
+    }
+  }
   return { succes: `Phase : ${label}.` }
 }
 

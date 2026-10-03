@@ -24,6 +24,7 @@ validation explicite avant de toucher une spec.
 | D-D | Une session anonyme sans QR doit-elle lire les tables « `using (true)` » / « ③+ » ? (helper `est_acteur_identifie()`) | m2 | Lot 6 | ❓ |
 | D-E | Un coach peut-il réactiver un jeton QR révoqué par l'admin ? (spec #2 R22/R23) | m4 | Lot 6 | ❓ |
 | D-F | Pages `/design-system` et `/templates/*` : garde, exclusion en prod, ou exception tracée dans la spec #12 | m1 | Lot 6 | ❓ |
+| D-G | Écran d'erreur technique (`error.tsx`) : aucune page d'erreur dans l'app ; une lecture en échec affiche la page générique de Next. Nouvel écran = spec #12 à compléter | M6 (lot 2) | — | ❓ |
 
 ## Ordre des lots
 
@@ -109,36 +110,60 @@ Aucune spec ne change : on impose en base ce que les specs exigent déjà
   (`e2e/securite-appels-directs.spec.ts`, 9 tests, stack locale).
 - [ ] ⏳ Dérouler le cahier 28 en recette.
 
-## Lot 2 — Erreurs Supabase avalées (M5, M6, m8)
+## Lot 2 — Erreurs Supabase avalées (M5, M6, m8) — 🔄 en cours
 
-Aucune spec ne change (convention 02 §7, spec #6 R18).
+Aucune spec ne change (convention 02 §7, spec #6 R18). Branche
+`feature/erreurs-supabase`. Helper pur `verifierLecture(reponse, quoi)`
+(`src/lib/supabase/lecture.ts`, 4 tests Vitest) : une lecture en échec lève
+`LectureImpossibleError` au lieu d'être lue comme « aucune donnée ».
 
 ### M6 — Loader du classement
 
-- [ ] ⏳ `src/lib/classement/classement.ts` : `throw` sur chaque `error`
-  (modèle : `export-classement.ts:50-51`).
-- [ ] ⏳ Vérifier l'affichage d'erreur côté écran (`error.tsx` du segment).
+- [x] ✅ `src/lib/classement/classement.ts` : les 14 lectures passent par
+  `verifierLecture`.
+- [ ] ❓ Affichage d'erreur côté écran : **aucun `error.tsx` dans l'app**. Une
+  erreur technique affiche la page d'erreur générique de Next (bruyante, mais
+  plus jamais un classement faux). Écran d'erreur dédié = nouvel écran, à
+  décider (décision D-G).
 
 ### M5 — NP automatique de clôture
 
-- [ ] ⏳ `src/lib/rencontres/cloture.ts` : vérifier `error` sur chaque lecture et
-  sur les deux `upsert`.
-- [ ] ⏳ `src/lib/rencontres/actions.ts:168` : retirer le `catch {}` vide,
-  renvoyer un avertissement à l'admin si le NP échoue.
+- [x] ✅ `src/lib/rencontres/cloture.ts` : chaque lecture vérifiée, les deux
+  `upsert` lèvent une erreur en cas d'échec.
+- [x] ✅ `src/lib/rencontres/actions.ts` : `catch {}` vide retiré ; si le NP
+  échoue, la phase reste changée et l'admin reçoit un message d'erreur
+  explicite (« repassez en compétition puis en clôture ») au lieu d'un succès.
 - [ ] ⏳ Évaluer une RPC transactionnelle « changement de phase + NP »
-  (si retenue : migration + cahier).
+  (si retenue : migration + cahier). Non fait : le message suffit à ne plus
+  masquer l'échec ; à reconsidérer avec le lot 3 (garde de transition).
 
-### Les autres lectures (54 au total dans `src/lib`)
+### Les autres lectures
 
-- [ ] ⏳ `src/lib/coach/resultats-actions.ts` (9 lectures).
-- [ ] ⏳ `src/lib/admin/resultats-actions.ts` (9 lectures).
-- [ ] ⏳ `src/lib/admin/controle.ts` (5 lectures) et `controle-actions.ts`
-  (m8 : valider aussi `type` explicitement).
-- [ ] ⏳ Reste de `src/lib` (recensement par `grep "const { data } = await"`).
+> Recensement corrigé : `prets.ts`, `clubs.ts`, `rencontres.ts`,
+> `tableau-de-bord.ts`, `jetons.ts`, `invitations.ts`, `grimpeurs.ts`,
+> `export-classement.ts`, `auth/mapping.ts` et l'essentiel d'`engagement.ts`
+> vérifiaient **déjà** leurs erreurs (`if (xxxRes.error) throw`) : la revue les
+> avait comptés à tort.
+
+- [x] ✅ `src/lib/coach/resultats-actions.ts` (9 lectures, dont `existantes` du
+  plafond ado — M7, partie indépendante de D-A).
+- [x] ✅ `src/lib/admin/resultats-actions.ts` (9 lectures).
+- [x] ✅ `src/lib/admin/controle.ts` (11 lectures, dont la résolution des
+  auteurs) et `controle-actions.ts` (4 lectures ; m8 : `type`, `coche` et
+  `resultatId` validés à l'exécution).
+- [x] ✅ Reste de `src/lib` : `admin/resultats.ts`, `coach/resultats.ts`,
+  `coach/actions.ts`, `coach/engagement.ts` (`clubRes` + noms des clubs
+  prêteurs), `rencontres/structure(-actions).ts`, `gabarit/actions.ts`,
+  `jetons/actions.ts`, `invitations/actions.ts`, `auth/actions.ts`. Scan final :
+  plus aucune lecture `const { data } = await` ni `xxxRes.data` non vérifiée.
 
 ### Validation
 
-- [ ] ⏳ Tests, typecheck, lint ; E2E cahiers 17, 18, 19, 21, 27 au vert.
+- [x] ✅ Typecheck, lint, Vitest (330 tests) ; **suite E2E complète** (117 tests,
+  chromium) au vert sur le code de la branche.
+- [ ] ⏳ Le chemin « NP en échec → message à l'admin » n'est pas couvert par un
+  test automatisé (il faut provoquer une panne de lecture) : cas à ajouter au
+  cahier 17.
 
 ## Lot 3 — Transitions de phase (M4)
 

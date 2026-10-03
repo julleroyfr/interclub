@@ -7,6 +7,7 @@ import {
   type Categorie,
   type Phase,
 } from '@/domaine/rencontre'
+import { verifierLecture } from '@/lib/supabase/lecture'
 import { createClient } from '@/lib/supabase/server'
 
 // Lecture de l'engagement d'un club en rencontre (spec #5 « Espace Coach ») :
@@ -260,8 +261,11 @@ export async function getEngagementRencontre(
     ...grimpeursPretes.map((g) => g.club_id),
   ].filter((id) => id !== clubId)
   if (clubIdsPrete.length > 0) {
-    const { data } = await supabase.from('club').select('id, nom').in('id', clubIdsPrete)
-    for (const c of data ?? []) nomClubs.set(c.id as string, c.nom as string)
+    const clubs = verifierLecture(
+      await supabase.from('club').select('id, nom').in('id', clubIdsPrete),
+      'des clubs',
+    )
+    for (const c of clubs ?? []) nomClubs.set(c.id as string, c.nom as string)
   }
 
   const dejaEngages = new Set<string>(idsCompo)
@@ -307,7 +311,7 @@ export async function getEngagementRencontre(
   ]
 
   const nomDuClub = (id: string) =>
-    ((clubRes.data ?? []).find((c) => c.id === id)?.nom as string | undefined) ?? '(club inconnu)'
+    ((verifierLecture(clubRes, 'des clubs') ?? []).find((c) => c.id === id)?.nom as string | undefined) ?? '(club inconnu)'
 
   return {
     id: rencontre.id as string,

@@ -8,6 +8,7 @@ import {
   type VoieOption,
 } from '@/lib/coach/resultats'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { verifierLecture } from '@/lib/supabase/lecture'
 
 // Assemblage de la saisie des résultats pour l'ADMIN (spec #9) : TOUS les clubs
 // engagés d'une rencontre. Réutilise le loader coach `getSaisieRencontre` par club
@@ -45,25 +46,34 @@ export async function getSaisieAdminRencontre(
 ): Promise<SaisieAdminRencontre | null> {
   const admin = createAdminClient()
 
-  const { data: rencontre } = await admin
-    .from('rencontre')
-    .select('id, date_rencontre, categorie, phase')
-    .eq('id', rencontreId)
-    .maybeSingle()
+  const rencontre = verifierLecture(
+    await admin
+      .from('rencontre')
+      .select('id, date_rencontre, categorie, phase')
+      .eq('id', rencontreId)
+      .maybeSingle(),
+    'de la rencontre',
+  )
   if (!rencontre) return null
 
   const phase = rencontre.phase as Phase
 
   // Clubs engagés (via leurs équipes), avec nom.
-  const { data: equipes } = await admin
-    .from('equipe')
-    .select('club_id')
-    .eq('rencontre_id', rencontreId)
+  const equipes = verifierLecture(
+    await admin
+      .from('equipe')
+      .select('club_id')
+      .eq('rencontre_id', rencontreId),
+    'des équipes',
+  )
   const clubIds = [...new Set((equipes ?? []).map((e) => e.club_id as string))]
   const nomClub = new Map<string, string>()
   if (clubIds.length) {
-    const { data } = await admin.from('club').select('id, nom').in('id', clubIds)
-    for (const c of data ?? []) nomClub.set(c.id as string, c.nom as string)
+    const clubs = verifierLecture(
+      await admin.from('club').select('id, nom').in('id', clubIds),
+      'des clubs',
+    )
+    for (const c of clubs ?? []) nomClub.set(c.id as string, c.nom as string)
   }
 
   // Par club : réutilise le loader coach (session admin → RLS ouvre tous les clubs).

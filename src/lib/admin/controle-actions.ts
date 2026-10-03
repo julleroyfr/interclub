@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { peutCocher } from '@/domaine/controle'
 import { type Phase } from '@/domaine/rencontre'
 import { getUtilisateurCourant } from '@/lib/auth/session'
+import { verifierLecture } from '@/lib/supabase/lecture'
 import { createClient } from '@/lib/supabase/server'
 
 // Coche de CONTRÔLE d'un résultat contre la fiche du juge (spec #16). Revérifie
@@ -23,6 +24,11 @@ export async function basculerControle(
 ): Promise<EtatControle> {
   const u = await getUtilisateurCourant()
   if (u?.role !== 'admin') return { erreur: 'Action réservée à un administrateur.' }
+  // Arguments venus du client (Server Action joignable en POST direct) : on ne
+  // se fie pas au typage TypeScript, absent à l'exécution.
+  if ((type !== 'voie' && type !== 'bloc') || typeof coche !== 'boolean' || !resultatId) {
+    return { erreur: 'Requête de contrôle invalide.' }
+  }
 
   const supabase = await createClient()
   const table = type === 'voie' ? 'resultat_voie' : 'resultat_bloc'
@@ -30,34 +36,46 @@ export async function basculerControle(
   const tableSupport = type === 'voie' ? 'voie_difficulte' : 'bloc'
 
   // Phase de la rencontre du résultat : résultat → voie/bloc → épreuve → rencontre.
-  const { data: resultat } = await supabase
-    .from(table)
-    .select(colonneSupport)
-    .eq('id', resultatId)
-    .maybeSingle()
+  const resultat = verifierLecture(
+    await supabase
+      .from(table)
+      .select(colonneSupport)
+      .eq('id', resultatId)
+      .maybeSingle(),
+    'du résultat',
+  )
   const supportId = (resultat as Record<string, unknown> | null)?.[colonneSupport] as
     | string
     | undefined
   if (!supportId) return { erreur: 'Résultat introuvable.' }
-  const { data: support } = await supabase
-    .from(tableSupport)
-    .select('epreuve_id')
-    .eq('id', supportId)
-    .maybeSingle()
-  const { data: epreuve } = support
-    ? await supabase
-        .from('epreuve')
-        .select('rencontre_id')
-        .eq('id', support.epreuve_id as string)
-        .maybeSingle()
-    : { data: null }
+  const support = verifierLecture(
+    await supabase
+      .from(tableSupport)
+      .select('epreuve_id')
+      .eq('id', supportId)
+      .maybeSingle(),
+    type === 'voie' ? 'de la voie' : 'du bloc',
+  )
+  const epreuve = support
+    ? verifierLecture(
+        await supabase
+          .from('epreuve')
+          .select('rencontre_id')
+          .eq('id', support.epreuve_id as string)
+          .maybeSingle(),
+        "de l'épreuve",
+      )
+    : null
   const rencontreId = epreuve?.rencontre_id as string | undefined
   if (!rencontreId) return { erreur: 'Résultat introuvable.' }
-  const { data: rencontre } = await supabase
-    .from('rencontre')
-    .select('phase')
-    .eq('id', rencontreId)
-    .maybeSingle()
+  const rencontre = verifierLecture(
+    await supabase
+      .from('rencontre')
+      .select('phase')
+      .eq('id', rencontreId)
+      .maybeSingle(),
+    'de la rencontre',
+  )
   if (!rencontre || !peutCocher(rencontre.phase as Phase)) {
     return {
       erreur:

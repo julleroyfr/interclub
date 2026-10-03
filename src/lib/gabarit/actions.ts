@@ -15,6 +15,7 @@ import type { Categorie } from '@/domaine/rencontre'
 import { BaremeVitesseInvalideError, type EchelonBareme } from '@/domaine/vitesse'
 import { getUtilisateurCourant } from '@/lib/auth/session'
 import { lireEchelonsSoumis } from '@/lib/bareme-vitesse'
+import { verifierLecture } from '@/lib/supabase/lecture'
 import { createClient } from '@/lib/supabase/server'
 
 export type EtatGabarit = { erreur?: string; succes?: string } | undefined
@@ -84,13 +85,16 @@ export async function ajouterVoieDifficulteGabarit(
   const supabase = await createClient()
 
   // Calcul du prochain ordre
-  const { data: derniere } = await supabase
-    .from('gabarit_voie_difficulte')
-    .select('ordre')
-    .eq('gabarit_epreuve_id', gabaritEpreuveId)
-    .order('ordre', { ascending: false })
-    .limit(1)
-    .single()
+  const derniere = verifierLecture(
+    await supabase
+      .from('gabarit_voie_difficulte')
+      .select('ordre')
+      .eq('gabarit_epreuve_id', gabaritEpreuveId)
+      .order('ordre', { ascending: false })
+      .limit(1)
+      .single(),
+    'des voies du gabarit',
+  )
 
   const ordre = ((derniere?.ordre as number | null) ?? 0) + 1
 
@@ -188,13 +192,16 @@ export async function ajouterBlocGabarit(
 
   const supabase = await createClient()
 
-  const { data: dernier } = await supabase
-    .from('gabarit_bloc')
-    .select('ordre')
-    .eq('gabarit_epreuve_id', gabaritEpreuveId)
-    .order('ordre', { ascending: false })
-    .limit(1)
-    .single()
+  const dernier = verifierLecture(
+    await supabase
+      .from('gabarit_bloc')
+      .select('ordre')
+      .eq('gabarit_epreuve_id', gabaritEpreuveId)
+      .order('ordre', { ascending: false })
+      .limit(1)
+      .single(),
+    'des blocs du gabarit',
+  )
 
   const ordre = ((dernier?.ordre as number | null) ?? 0) + 1
 
@@ -255,13 +262,16 @@ export async function ajouterPalierBlocGabarit(
 
   const supabase = await createClient()
 
-  const { data: dernier } = await supabase
-    .from('gabarit_bloc_palier')
-    .select('ordre')
-    .eq('gabarit_bloc_id', gabaritBlocId)
-    .order('ordre', { ascending: false })
-    .limit(1)
-    .single()
+  const dernier = verifierLecture(
+    await supabase
+      .from('gabarit_bloc_palier')
+      .select('ordre')
+      .eq('gabarit_bloc_id', gabaritBlocId)
+      .order('ordre', { ascending: false })
+      .limit(1)
+      .single(),
+    'des paliers du gabarit',
+  )
 
   const ordre = ((dernier?.ordre as number | null) ?? 0) + 1
 
@@ -312,13 +322,16 @@ export async function ajouterVoieVitesseGabarit(
 
   const supabase = await createClient()
 
-  const { data: derniere } = await supabase
-    .from('gabarit_voie_vitesse')
-    .select('ordre')
-    .eq('gabarit_epreuve_id', gabaritEpreuveId)
-    .order('ordre', { ascending: false })
-    .limit(1)
-    .single()
+  const derniere = verifierLecture(
+    await supabase
+      .from('gabarit_voie_vitesse')
+      .select('ordre')
+      .eq('gabarit_epreuve_id', gabaritEpreuveId)
+      .order('ordre', { ascending: false })
+      .limit(1)
+      .single(),
+    'des voies de vitesse du gabarit',
+  )
 
   const ordre = ((derniere?.ordre as number | null) ?? 0) + 1
 

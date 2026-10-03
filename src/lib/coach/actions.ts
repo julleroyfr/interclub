@@ -15,6 +15,7 @@ import {
   verifierAjoutComposition,
 } from '@/domaine/engagement'
 import { type ContexteCoach, getContexteCoach } from '@/lib/auth/session'
+import { verifierLecture } from '@/lib/supabase/lecture'
 import { createClient } from '@/lib/supabase/server'
 
 /** Client Supabase du projet (schéma `interclub`). */
@@ -69,11 +70,14 @@ async function chargerRencontre(
   supabase: Client,
   rencontreId: string,
 ): Promise<{ phase: Phase; categorie: Categorie; dateRencontre: string } | null> {
-  const { data } = await supabase
-    .from('rencontre')
-    .select('phase, categorie, date_rencontre')
-    .eq('id', rencontreId)
-    .maybeSingle()
+  const data = verifierLecture(
+    await supabase
+      .from('rencontre')
+      .select('phase, categorie, date_rencontre')
+      .eq('id', rencontreId)
+      .maybeSingle(),
+    'de la rencontre',
+  )
   if (!data) return null
   return {
     phase: data.phase as Phase,
@@ -108,11 +112,14 @@ async function equipeDuClub(
   equipeId: string,
   clubId: string,
 ): Promise<{ rencontreId: string } | null> {
-  const { data } = await supabase
-    .from('equipe')
-    .select('rencontre_id, club_id')
-    .eq('id', equipeId)
-    .maybeSingle()
+  const data = verifierLecture(
+    await supabase
+      .from('equipe')
+      .select('rencontre_id, club_id')
+      .eq('id', equipeId)
+      .maybeSingle(),
+    "de l'équipe",
+  )
   if (!data || (data.club_id as string) !== clubId) return null
   return { rencontreId: data.rencontre_id as string }
 }

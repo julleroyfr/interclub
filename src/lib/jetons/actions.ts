@@ -10,6 +10,7 @@ import {
   type NatureJeton,
 } from '@/domaine/jeton-qr'
 import { getUtilisateurCourant } from '@/lib/auth/session'
+import { verifierLecture } from '@/lib/supabase/lecture'
 import { createClient } from '@/lib/supabase/server'
 
 /** Rafraîchit les deux écrans de jetons puis revient sur `chemin`. */
@@ -64,11 +65,14 @@ export async function genererJeton(formData: FormData): Promise<void> {
 /** Lit un jeton via la RLS (null si non visible) et vérifie le droit de gestion. */
 async function jetonGerable(jetonId: string, acteur: Acteur) {
   const supabase = await createClient()
-  const { data } = await supabase
-    .from('jeton_qr')
-    .select('id, nature, club_id')
-    .eq('id', jetonId)
-    .maybeSingle()
+  const data = verifierLecture(
+    await supabase
+      .from('jeton_qr')
+      .select('id, nature, club_id')
+      .eq('id', jetonId)
+      .maybeSingle(),
+    'du jeton QR',
+  )
   if (!data) return null
   const cible = { nature: data.nature as NatureJeton, clubId: data.club_id as string | null }
   return peutGererJeton(acteur, cible) ? data : null

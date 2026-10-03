@@ -2,6 +2,7 @@ import 'server-only'
 
 import type { TypeEpreuve, TypeVoie } from '@/domaine/gabarit'
 import type { Categorie, Phase } from '@/domaine/rencontre'
+import { verifierLecture } from '@/lib/supabase/lecture'
 import { createClient } from '@/lib/supabase/server'
 
 // Lecture de la structure d'une rencontre (épreuves + voies/blocs/vitesse) pour
@@ -95,11 +96,14 @@ export async function getStructureRencontre(id: string): Promise<StructureRencon
   if (errR) throw errR
   if (!rencontre) return null
 
-  const { data: club } = await supabase
-    .from('club')
-    .select('nom')
-    .eq('id', rencontre.club_porteur_id as string)
-    .maybeSingle()
+  const club = verifierLecture(
+    await supabase
+      .from('club')
+      .select('nom')
+      .eq('id', rencontre.club_porteur_id as string)
+      .maybeSingle(),
+    'du club',
+  )
 
   const { data: epreuves, error: errE } = await supabase
     .from('epreuve')

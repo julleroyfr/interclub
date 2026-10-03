@@ -14,6 +14,7 @@ import {
 } from '@/domaine/invitation-coach'
 import { getUtilisateurCourant } from '@/lib/auth/session'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { verifierLecture } from '@/lib/supabase/lecture'
 import { createClient } from '@/lib/supabase/server'
 
 import { resoudreInvitation } from './invitations'
@@ -115,11 +116,14 @@ async function invitationGerable(invitationId: string) {
   if (!peutGererInvitation({ role: utilisateur?.role ?? null })) return null
 
   const supabase = await createClient()
-  const { data } = await supabase
-    .from('invitation_coach')
-    .select('id, club_id')
-    .eq('id', invitationId)
-    .maybeSingle()
+  const data = verifierLecture(
+    await supabase
+      .from('invitation_coach')
+      .select('id, club_id')
+      .eq('id', invitationId)
+      .maybeSingle(),
+    "de l'invitation",
+  )
   return data ?? null
 }
 

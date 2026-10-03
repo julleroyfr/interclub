@@ -13,6 +13,7 @@ import {
   verifierAjoutVoieAdo,
 } from '@/domaine/resultat'
 import { getUtilisateurCourant } from '@/lib/auth/session'
+import { verifierLecture } from '@/lib/supabase/lecture'
 import { createClient } from '@/lib/supabase/server'
 
 // Saisie / correction des résultats voie/bloc par l'ADMIN (spec #9). L'admin agit
@@ -66,23 +67,32 @@ async function chargerContexteVoie(
   | { rencontreId: string; epreuveId: string; categorie: Categorie; phase: Phase; typeVoie: TypeVoie }
   | null
 > {
-  const { data: voie } = await supabase
-    .from('voie_difficulte')
-    .select('type_voie, epreuve_id')
-    .eq('id', voieId)
-    .maybeSingle()
+  const voie = verifierLecture(
+    await supabase
+      .from('voie_difficulte')
+      .select('type_voie, epreuve_id')
+      .eq('id', voieId)
+      .maybeSingle(),
+    'de la voie',
+  )
   if (!voie) return null
-  const { data: ep } = await supabase
-    .from('epreuve')
-    .select('rencontre_id')
-    .eq('id', voie.epreuve_id as string)
-    .maybeSingle()
+  const ep = verifierLecture(
+    await supabase
+      .from('epreuve')
+      .select('rencontre_id')
+      .eq('id', voie.epreuve_id as string)
+      .maybeSingle(),
+    "de l'épreuve",
+  )
   if (!ep) return null
-  const { data: r } = await supabase
-    .from('rencontre')
-    .select('categorie, phase')
-    .eq('id', ep.rencontre_id as string)
-    .maybeSingle()
+  const r = verifierLecture(
+    await supabase
+      .from('rencontre')
+      .select('categorie, phase')
+      .eq('id', ep.rencontre_id as string)
+      .maybeSingle(),
+    'de la rencontre',
+  )
   if (!r) return null
   return {
     rencontreId: ep.rencontre_id as string,
@@ -98,23 +108,32 @@ async function chargerContexteBloc(
   supabase: Client,
   blocId: string,
 ): Promise<{ rencontreId: string; phase: Phase } | null> {
-  const { data: bloc } = await supabase
-    .from('bloc')
-    .select('epreuve_id')
-    .eq('id', blocId)
-    .maybeSingle()
+  const bloc = verifierLecture(
+    await supabase
+      .from('bloc')
+      .select('epreuve_id')
+      .eq('id', blocId)
+      .maybeSingle(),
+    'du bloc',
+  )
   if (!bloc) return null
-  const { data: ep } = await supabase
-    .from('epreuve')
-    .select('rencontre_id')
-    .eq('id', bloc.epreuve_id as string)
-    .maybeSingle()
+  const ep = verifierLecture(
+    await supabase
+      .from('epreuve')
+      .select('rencontre_id')
+      .eq('id', bloc.epreuve_id as string)
+      .maybeSingle(),
+    "de l'épreuve",
+  )
   if (!ep) return null
-  const { data: r } = await supabase
-    .from('rencontre')
-    .select('phase')
-    .eq('id', ep.rencontre_id as string)
-    .maybeSingle()
+  const r = verifierLecture(
+    await supabase
+      .from('rencontre')
+      .select('phase')
+      .eq('id', ep.rencontre_id as string)
+      .maybeSingle(),
+    'de la rencontre',
+  )
   if (!r) return null
   return { rencontreId: ep.rencontre_id as string, phase: r.phase as Phase }
 }
@@ -151,16 +170,22 @@ export async function saisirResultatVoieAdmin(
 
   // Ado : plafond 6 + unicité, uniquement à l'AJOUT d'une voie non encore saisie.
   if (ctx.categorie === 'ado') {
-    const { data: voiesEp } = await supabase
-      .from('voie_difficulte')
-      .select('id')
-      .eq('epreuve_id', ctx.epreuveId)
+    const voiesEp = verifierLecture(
+      await supabase
+        .from('voie_difficulte')
+        .select('id')
+        .eq('epreuve_id', ctx.epreuveId),
+      'des voies',
+    )
     const idsEp = (voiesEp ?? []).map((v) => v.id as string)
-    const { data: existantes } = await supabase
-      .from('resultat_voie')
-      .select('voie_difficulte_id')
-      .eq('grimpeur_id', grimpeurId)
-      .in('voie_difficulte_id', idsEp)
+    const existantes = verifierLecture(
+      await supabase
+        .from('resultat_voie')
+        .select('voie_difficulte_id')
+        .eq('grimpeur_id', grimpeurId)
+        .in('voie_difficulte_id', idsEp),
+      'des résultats de voie',
+    )
     const dejaSaisies = (existantes ?? []).map((r) => r.voie_difficulte_id as string)
     if (!dejaSaisies.includes(voieId)) {
       try {
@@ -212,10 +237,13 @@ export async function saisirResultatBlocAdmin(
   const refus = refuserSiHorsFenetre(ctx.phase)
   if (refus) return refus
 
-  const { data: paliers } = await supabase
-    .from('bloc_palier')
-    .select('id')
-    .eq('bloc_id', blocId)
+  const paliers = verifierLecture(
+    await supabase
+      .from('bloc_palier')
+      .select('id')
+      .eq('bloc_id', blocId),
+    'des paliers',
+  )
   const paliersDuBloc = (paliers ?? []).map((p) => p.id as string)
 
   try {

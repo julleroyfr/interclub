@@ -14,6 +14,7 @@ import type { Categorie } from '@/domaine/rencontre'
 import { BaremeVitesseInvalideError, type EchelonBareme } from '@/domaine/vitesse'
 import { getUtilisateurCourant } from '@/lib/auth/session'
 import { lireEchelonsSoumis } from '@/lib/bareme-vitesse'
+import { verifierLecture } from '@/lib/supabase/lecture'
 import { createClient } from '@/lib/supabase/server'
 
 /** Client Supabase du projet (schéma `interclub`), tel que renvoyé par `createClient`. */
@@ -57,11 +58,14 @@ async function refuserSiPasPreCompetition(
   supabase: Client,
   rencontreId: string,
 ): Promise<EtatStructure | null> {
-  const { data: rencontre } = await supabase
-    .from('rencontre')
-    .select('phase')
-    .eq('id', rencontreId)
-    .maybeSingle()
+  const rencontre = verifierLecture(
+    await supabase
+      .from('rencontre')
+      .select('phase')
+      .eq('id', rencontreId)
+      .maybeSingle(),
+    'de la rencontre',
+  )
 
   if (!rencontre) return { erreur: 'Rencontre introuvable.' }
   if (rencontre.phase !== 'pre_competition') {
@@ -77,13 +81,16 @@ async function prochainOrdre(
   colonneParent: string,
   parentId: string,
 ): Promise<number> {
-  const { data } = await supabase
-    .from(table)
-    .select('ordre')
-    .eq(colonneParent, parentId)
-    .order('ordre', { ascending: false })
-    .limit(1)
-    .maybeSingle()
+  const data = verifierLecture(
+    await supabase
+      .from(table)
+      .select('ordre')
+      .eq(colonneParent, parentId)
+      .order('ordre', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    `du dernier ordre (${table})`,
+  )
   return ((data?.ordre as number | null) ?? 0) + 1
 }
 
@@ -106,12 +113,15 @@ export async function ajouterEpreuveRencontre(
   const refusPhase = await refuserSiPasPreCompetition(supabase, rencontreId)
   if (refusPhase) return refusPhase
 
-  const { data: existante } = await supabase
-    .from('epreuve')
-    .select('id')
-    .eq('rencontre_id', rencontreId)
-    .eq('type', type)
-    .maybeSingle()
+  const existante = verifierLecture(
+    await supabase
+      .from('epreuve')
+      .select('id')
+      .eq('rencontre_id', rencontreId)
+      .eq('type', type)
+      .maybeSingle(),
+    "de l'épreuve",
+  )
   if (existante) return { erreur: 'Cette épreuve existe déjà.' }
 
   const { error } = await supabase
@@ -234,13 +244,16 @@ export async function ajouterVoieVitesseRencontre(
   const refusPhase = await refuserSiPasPreCompetition(supabase, rencontreId)
   if (refusPhase) return refusPhase
 
-  const { data: derniere } = await supabase
-    .from('voie_vitesse')
-    .select('numero')
-    .eq('rencontre_id', rencontreId)
-    .order('numero', { ascending: false })
-    .limit(1)
-    .maybeSingle()
+  const derniere = verifierLecture(
+    await supabase
+      .from('voie_vitesse')
+      .select('numero')
+      .eq('rencontre_id', rencontreId)
+      .order('numero', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    'des voies de vitesse',
+  )
   const numero = ((derniere?.numero as number | null) ?? 0) + 1
 
   const { error } = await supabase

@@ -5,6 +5,7 @@ import {
   voiesDuGroupeDepart,
 } from '@/domaine/engagement'
 import { manquantsCloture } from '@/domaine/resultat'
+import { verifierLecture } from '@/lib/supabase/lecture'
 import { createClient } from '@/lib/supabase/server'
 
 // NP automatique à la clôture (spec #6 R18). Au passage ③ compétition → ④ clôture,
@@ -16,30 +17,32 @@ import { createClient } from '@/lib/supabase/server'
 // Opération IDEMPOTENTE (n'écrase aucun résultat existant) exécutée par l'admin
 // (est_admin() → écriture autorisée en clôture par la RLS). La dérivation des
 // niveaux vient du domaine testé (`voiesDuGroupeDepart`, `manquantsCloture`).
+// Toute lecture ou écriture en échec LÈVE une erreur (jamais « rien à poser ») :
+// l'appelant prévient l'admin que le NP n'a pas été posé (revue 2026-10-03, M5).
 
 /** Client Supabase du projet (schéma `interclub`). */
 type Client = Awaited<ReturnType<typeof createClient>>
 
 /**
  * Matérialise les résultats « NP » manquants pour une rencontre passée en clôture
- * (R18). À appeler après le passage en phase `cloture`. Idempotente.
+ * (R18). À appeler après le passage en phase `cloture`. Idempotente. Lève une
+ * erreur si une lecture ou une écriture échoue.
  */
 export async function materialiserNpCloture(
   supabase: Client,
   rencontreId: string,
 ): Promise<void> {
-  const { data: renc } = await supabase
-    .from('rencontre')
-    .select('categorie')
-    .eq('id', rencontreId)
-    .maybeSingle()
+  const renc = verifierLecture(
+    await supabase.from('rencontre').select('categorie').eq('id', rencontreId).maybeSingle(),
+    'de la rencontre',
+  )
   if (!renc) return
   const categorie = renc.categorie as 'enfant' | 'ado'
 
-  const { data: epreuves } = await supabase
-    .from('epreuve')
-    .select('id, type')
-    .eq('rencontre_id', rencontreId)
+  const epreuves = verifierLecture(
+    await supabase.from('epreuve').select('id, type').eq('rencontre_id', rencontreId),
+    'des épreuves',
+  )
   const epreuveVoie = (epreuves ?? []).find((e) => e.type === 'voie')?.id as string | undefined
   const epreuveBloc = (epreuves ?? []).find((e) => e.type === 'bloc')?.id as string | undefined
 
@@ -47,13 +50,13 @@ export async function materialiserNpCloture(
   const [voiesRes, blocsRes] = await Promise.all([
     epreuveVoie
       ? supabase.from('voie_difficulte').select('id, niveau, ordre').eq('epreuve_id', epreuveVoie)
-      : Promise.resolve({ data: [] as { id: string; niveau: string; ordre: number }[] }),
+      : Promise.resolve({ data: [] as { id: string; niveau: string; ordre: number }[], error: null }),
     epreuveBloc
       ? supabase.from('bloc').select('id').eq('epreuve_id', epreuveBloc)
-      : Promise.resolve({ data: [] as { id: string }[] }),
+      : Promise.resolve({ data: [] as { id: string }[], error: null }),
   ])
-  const voies = (voiesRes.data ?? []) as { id: string; niveau: string; ordre: number }[]
-  const blocs = ((blocsRes.data ?? []) as { id: string }[]).map((b) => b.id)
+  const voies = (verifierLecture(voiesRes, 'des voies') ?? []) as { id: string; niveau: string; ordre: number }[]
+  const blocs = ((verifierLecture(blocsRes, 'des blocs') ?? []) as { id: string }[]).map((b) => b.id)
 
   // Voie représentative par niveau (plus petit `ordre`) — pour poser le NP enfant.
   const voieParNiveau = new Map<string, { id: string; ordre: number }>()
@@ -65,10 +68,13 @@ export async function materialiserNpCloture(
   }
 
   // Grimpeurs engagés (composition porte `rencontre_id` dénormalisé) + groupe.
-  const { data: compos } = await supabase
-    .from('composition')
-    .select('grimpeur_id, groupe_depart')
-    .eq('rencontre_id', rencontreId)
+  const compos = verifierLecture(
+    await supabase
+      .from('composition')
+      .select('grimpeur_id, groupe_depart')
+      .eq('rencontre_id', rencontreId),
+    'des compositions',
+  )
   if (!compos || compos.length === 0) return
 
   // Résultats déjà saisis.
@@ -79,18 +85,18 @@ export async function materialiserNpCloture(
           .from('resultat_voie')
           .select('voie_difficulte_id, grimpeur_id')
           .in('voie_difficulte_id', voies.map((v) => v.id))
-      : Promise.resolve({ data: [] as { voie_difficulte_id: string; grimpeur_id: string }[] }),
+      : Promise.resolve({ data: [] as { voie_difficulte_id: string; grimpeur_id: string }[], error: null }),
     blocs.length
       ? supabase
           .from('resultat_bloc')
           .select('bloc_id, grimpeur_id')
           .in('grimpeur_id', grimpeurIds)
-      : Promise.resolve({ data: [] as { bloc_id: string; grimpeur_id: string }[] }),
+      : Promise.resolve({ data: [] as { bloc_id: string; grimpeur_id: string }[], error: null }),
   ])
 
   // Par grimpeur : niveaux de voie déjà saisis + blocs déjà saisis.
   const niveauxSaisis = new Map<string, Set<string>>()
-  for (const r of (rvRes.data ?? []) as { voie_difficulte_id: string; grimpeur_id: string }[]) {
+  for (const r of (verifierLecture(rvRes, 'des résultats de voie') ?? []) as { voie_difficulte_id: string; grimpeur_id: string }[]) {
     const niv = niveauParVoie.get(r.voie_difficulte_id)
     if (!niv) continue
     const gid = r.grimpeur_id
@@ -98,7 +104,7 @@ export async function materialiserNpCloture(
     niveauxSaisis.get(gid)!.add(niv)
   }
   const blocsSaisis = new Map<string, Set<string>>()
-  for (const r of (rbRes.data ?? []) as { bloc_id: string; grimpeur_id: string }[]) {
+  for (const r of (verifierLecture(rbRes, 'des résultats de bloc') ?? []) as { bloc_id: string; grimpeur_id: string }[]) {
     const gid = r.grimpeur_id
     if (!blocsSaisis.has(gid)) blocsSaisis.set(gid, new Set())
     blocsSaisis.get(gid)!.add(r.bloc_id)
@@ -135,13 +141,15 @@ export async function materialiserNpCloture(
 
   // Insert idempotent : ignore un éventuel doublon (relance de clôture).
   if (npVoie.length > 0) {
-    await supabase
+    const { error } = await supabase
       .from('resultat_voie')
       .upsert(npVoie, { onConflict: 'voie_difficulte_id,grimpeur_id', ignoreDuplicates: true })
+    if (error) throw new Error(`Écriture des NP de voie impossible : ${error.message}`)
   }
   if (npBloc.length > 0) {
-    await supabase
+    const { error } = await supabase
       .from('resultat_bloc')
       .upsert(npBloc, { onConflict: 'bloc_id,grimpeur_id', ignoreDuplicates: true })
+    if (error) throw new Error(`Écriture des NP de bloc impossible : ${error.message}`)
   }
 }

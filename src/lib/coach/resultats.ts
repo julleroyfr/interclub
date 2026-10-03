@@ -5,6 +5,7 @@ import { type TypeVoie } from '@/domaine/gabarit'
 import { PLAFOND_VOIES_ADO, type IssueBloc, type IssueVoie } from '@/domaine/resultat'
 import { type Categorie, type Phase } from '@/domaine/rencontre'
 import { scoreBloc, scoreVoie, type BaremeVoie } from '@/domaine/score'
+import { verifierLecture } from '@/lib/supabase/lecture'
 import { createClient } from '@/lib/supabase/server'
 
 // Lecture de la saisie des résultats d'une rencontre pour le club du coach
@@ -113,11 +114,14 @@ export async function getSaisieRencontre(
 ): Promise<SaisieRencontre | null> {
   const supabase = await createClient()
 
-  const { data: rencontre } = await supabase
-    .from('rencontre')
-    .select('id, date_rencontre, categorie, phase, club_porteur_id')
-    .eq('id', rencontreId)
-    .maybeSingle()
+  const rencontre = verifierLecture(
+    await supabase
+      .from('rencontre')
+      .select('id, date_rencontre, categorie, phase, club_porteur_id')
+      .eq('id', rencontreId)
+      .maybeSingle(),
+    'de la rencontre',
+  )
   if (!rencontre) return null
 
   const categorie = rencontre.categorie as Categorie
@@ -128,13 +132,14 @@ export async function getSaisieRencontre(
     supabase.from('epreuve').select('id, type').eq('rencontre_id', rencontreId),
     supabase.from('equipe').select('id, nom').eq('rencontre_id', rencontreId).eq('club_id', clubId),
   ])
-  const epreuveVoie = (epreuvesRes.data ?? []).find((e) => e.type === 'voie')?.id as string | undefined
-  const epreuveBloc = (epreuvesRes.data ?? []).find((e) => e.type === 'bloc')?.id as string | undefined
-  const epreuveVitesse = (epreuvesRes.data ?? []).find((e) => e.type === 'vitesse')?.id as
+  const epreuves = verifierLecture(epreuvesRes, 'des épreuves') ?? []
+  const epreuveVoie = epreuves.find((e) => e.type === 'voie')?.id as string | undefined
+  const epreuveBloc = epreuves.find((e) => e.type === 'bloc')?.id as string | undefined
+  const epreuveVitesse = epreuves.find((e) => e.type === 'vitesse')?.id as
     | string
     | undefined
 
-  const equipes = (equipesRes.data ?? []) as { id: string; nom: string }[]
+  const equipes = (verifierLecture(equipesRes, 'des équipes') ?? []) as { id: string; nom: string }[]
   const equipeIds = equipes.map((e) => e.id)
   const nomEquipe = new Map(equipes.map((e) => [e.id, e.nom]))
 
@@ -148,25 +153,27 @@ export async function getSaisieRencontre(
           )
           .eq('epreuve_id', epreuveVoie)
           .order('ordre')
-      : Promise.resolve({ data: [] as Record<string, unknown>[] }),
+      : Promise.resolve({ data: [] as Record<string, unknown>[], error: null }),
     epreuveBloc
       ? supabase.from('bloc').select('id, code, ordre').eq('epreuve_id', epreuveBloc).order('ordre')
-      : Promise.resolve({ data: [] as Record<string, unknown>[] }),
+      : Promise.resolve({ data: [] as Record<string, unknown>[], error: null }),
     epreuveBloc
       ? supabase
           .from('bloc_palier')
           .select('id, bloc_id, libelle, ordre, points')
           .order('ordre')
-      : Promise.resolve({ data: [] as Record<string, unknown>[] }),
+      : Promise.resolve({ data: [] as Record<string, unknown>[], error: null }),
     equipeIds.length
       ? supabase
           .from('composition')
           .select('equipe_id, grimpeur_id, groupe_depart')
           .in('equipe_id', equipeIds)
-      : Promise.resolve({ data: [] as Record<string, unknown>[] }),
+      : Promise.resolve({ data: [] as Record<string, unknown>[], error: null }),
   ])
+  const paliers = verifierLecture(paliersRes, 'des paliers') ?? []
+  const lignesVoies = verifierLecture(voiesRes, 'des voies') ?? []
 
-  const voies = (voiesRes.data ?? []).map((v) => ({
+  const voies = lignesVoies.map((v) => ({
     voieDifficulteId: v.id as string,
     niveau: v.niveau as string,
     cotation: v.cotation as string,
@@ -176,7 +183,7 @@ export async function getSaisieRencontre(
   const voieParId = new Map(voies.map((v) => [v.voieDifficulteId, v]))
   // Barème par voie (points stockés, spec #3 R38) — pour le score au fil de l'eau (R23).
   const baremeParVoie = new Map<string, BaremeVoie>()
-  for (const v of voiesRes.data ?? []) {
+  for (const v of lignesVoies) {
     baremeParVoie.set(v.id as string, {
       points: (v.points as number) ?? 0,
       pointsPriseValorisee: (v.points_prise_valorisee as number | null) ?? null,
@@ -192,7 +199,7 @@ export async function getSaisieRencontre(
   }
 
   const paliersParBloc = new Map<string, PalierOption[]>()
-  for (const p of paliersRes.data ?? []) {
+  for (const p of paliers) {
     const bid = p.bloc_id as string
     if (!paliersParBloc.has(bid)) paliersParBloc.set(bid, [])
     paliersParBloc.get(bid)!.push({ id: p.id as string, libelle: p.libelle as string, ordre: p.ordre as number })
@@ -201,16 +208,16 @@ export async function getSaisieRencontre(
   for (const liste of paliersParBloc.values()) for (const p of liste) libellePalier.set(p.id, p.libelle)
   // Points par palier (spec #3 R39) — pour le score de bloc (R23).
   const pointsPalier = new Map<string, number>()
-  for (const p of paliersRes.data ?? []) pointsPalier.set(p.id as string, (p.points as number) ?? 0)
+  for (const p of paliers) pointsPalier.set(p.id as string, (p.points as number) ?? 0)
 
-  const blocsConfig: BlocConfig[] = (blocsRes.data ?? []).map((b) => ({
+  const blocsConfig: BlocConfig[] = (verifierLecture(blocsRes, 'des blocs') ?? []).map((b) => ({
     blocId: b.id as string,
     code: b.code as string,
     ordre: b.ordre as number,
     paliers: paliersParBloc.get(b.id as string) ?? [],
   }))
 
-  const compos = (composRes.data ?? []).map((c) => ({
+  const compos = (verifierLecture(composRes, 'des compositions') ?? []).map((c) => ({
     equipeId: c.equipe_id as string,
     grimpeurId: c.grimpeur_id as string,
     groupeDepart: (c.groupe_depart as string | null) ?? null,
@@ -221,26 +228,26 @@ export async function getSaisieRencontre(
   const [grimpeursRes, rvRes, rbRes, tvRes, pvRes] = await Promise.all([
     grimpeurIds.length
       ? supabase.from('grimpeur').select('id, nom, prenom, club_id').in('id', grimpeurIds)
-      : Promise.resolve({ data: [] as Record<string, unknown>[] }),
+      : Promise.resolve({ data: [] as Record<string, unknown>[], error: null }),
     epreuveVoie && voies.length
       ? supabase
           .from('resultat_voie')
           .select('voie_difficulte_id, grimpeur_id, issue')
           .in('voie_difficulte_id', voies.map((v) => v.voieDifficulteId))
-      : Promise.resolve({ data: [] as Record<string, unknown>[] }),
+      : Promise.resolve({ data: [] as Record<string, unknown>[], error: null }),
     epreuveBloc && blocsConfig.length
       ? supabase
           .from('resultat_bloc')
           .select('bloc_id, grimpeur_id, issue, palier_id')
           .in('bloc_id', blocsConfig.map((b) => b.blocId))
-      : Promise.resolve({ data: [] as Record<string, unknown>[] }),
+      : Promise.resolve({ data: [] as Record<string, unknown>[], error: null }),
     epreuveVitesse && grimpeurIds.length
       ? supabase
           .from('temps_vitesse')
           .select('grimpeur_id, issue, temps')
           .eq('epreuve_id', epreuveVitesse)
           .in('grimpeur_id', grimpeurIds)
-      : Promise.resolve({ data: [] as Record<string, unknown>[] }),
+      : Promise.resolve({ data: [] as Record<string, unknown>[], error: null }),
     // Points de vitesse matérialisés par le trigger (R20), lus pour le score (R23).
     epreuveVitesse && grimpeurIds.length
       ? supabase
@@ -248,11 +255,11 @@ export async function getSaisieRencontre(
           .select('grimpeur_id, points')
           .eq('epreuve_id', epreuveVitesse)
           .in('grimpeur_id', grimpeurIds)
-      : Promise.resolve({ data: [] as Record<string, unknown>[] }),
+      : Promise.resolve({ data: [] as Record<string, unknown>[], error: null }),
   ])
 
   const infoGrimpeur = new Map<string, { nom: string; prenom: string; clubId: string }>()
-  for (const g of grimpeursRes.data ?? []) {
+  for (const g of verifierLecture(grimpeursRes, 'des grimpeurs') ?? []) {
     infoGrimpeur.set(g.id as string, {
       nom: g.nom as string,
       prenom: g.prenom as string,
@@ -265,19 +272,22 @@ export async function getSaisieRencontre(
   )
   const nomClub = new Map<string, string>()
   if (clubIdsAutres.length) {
-    const { data } = await supabase.from('club').select('id, nom').in('id', clubIdsAutres)
-    for (const c of data ?? []) nomClub.set(c.id as string, c.nom as string)
+    const clubs = verifierLecture(
+      await supabase.from('club').select('id, nom').in('id', clubIdsAutres),
+      'des clubs',
+    )
+    for (const c of clubs ?? []) nomClub.set(c.id as string, c.nom as string)
   }
 
   // Résultats par grimpeur.
   const issueVoieParGrimpeur = new Map<string, Map<string, IssueVoie>>()
-  for (const r of rvRes.data ?? []) {
+  for (const r of verifierLecture(rvRes, 'des résultats de voie') ?? []) {
     const gid = r.grimpeur_id as string
     if (!issueVoieParGrimpeur.has(gid)) issueVoieParGrimpeur.set(gid, new Map())
     issueVoieParGrimpeur.get(gid)!.set(r.voie_difficulte_id as string, r.issue as IssueVoie)
   }
   const resBlocParGrimpeur = new Map<string, Map<string, { issue: IssueBloc; palierId: string | null }>>()
-  for (const r of rbRes.data ?? []) {
+  for (const r of verifierLecture(rbRes, 'des résultats de bloc') ?? []) {
     const gid = r.grimpeur_id as string
     if (!resBlocParGrimpeur.has(gid)) resBlocParGrimpeur.set(gid, new Map())
     resBlocParGrimpeur.get(gid)!.set(r.bloc_id as string, {
@@ -286,13 +296,13 @@ export async function getSaisieRencontre(
     })
   }
   const formeVitesseParGrimpeur = new Map<string, { issue: string; temps: number | null }>()
-  for (const t of tvRes.data ?? [])
+  for (const t of verifierLecture(tvRes, 'des temps de vitesse') ?? [])
     formeVitesseParGrimpeur.set(t.grimpeur_id as string, {
       issue: t.issue as string,
       temps: (t.temps as number | null) ?? null,
     })
   const pointsVitesseParGrimpeur = new Map<string, number>()
-  for (const p of pvRes.data ?? [])
+  for (const p of verifierLecture(pvRes, 'des points de vitesse') ?? [])
     pointsVitesseParGrimpeur.set(p.grimpeur_id as string, (p.points as number) ?? 0)
 
   const grimpeurs: GrimpeurSaisie[] = compos.map((c) => {
@@ -414,7 +424,7 @@ export async function getSaisieRencontre(
     dateRencontre: rencontre.date_rencontre as string,
     categorie,
     phase,
-    clubPorteurNom: (clubRes.data?.nom as string) ?? '(club inconnu)',
+    clubPorteurNom: (verifierLecture(clubRes, 'du club')?.nom as string) ?? '(club inconnu)',
     ouverteSaisie: phase === 'competition',
     voiesEpreuve: voies,
     blocsConfig,

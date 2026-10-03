@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
+import { verifierLecture } from '@/lib/supabase/lecture'
 import { createClient } from '@/lib/supabase/server'
 
 /** État renvoyé au formulaire de connexion (pour `useActionState`). */
@@ -36,11 +37,14 @@ export async function seConnecter(
 
   // Redirection vers l'espace du rôle (spec #2 R1) : on lit le mapping avec le
   // client déjà authentifié (session en mémoire). Sans rôle → accueil générique.
-  const { data: mapping } = await supabase
-    .from('compte')
-    .select('role')
-    .eq('utilisateur_id', data.user.id)
-    .maybeSingle()
+  const mapping = verifierLecture(
+    await supabase
+      .from('compte')
+      .select('role')
+      .eq('utilisateur_id', data.user.id)
+      .maybeSingle(),
+    'du compte',
+  )
 
   const destination =
     mapping?.role === 'admin' ? '/admin' : mapping?.role === 'coach' ? '/coach' : '/'
