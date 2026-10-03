@@ -219,7 +219,8 @@ d'équipe conserve le temps de vitesse au lieu de le purger).
 
 - [x] ✅ Validation locale (transaction annulée, application + rejeu,
   `db:verifier`, Vitest 339, E2E complète 124 + mutation), `JOURNAL.md`.
-- [ ] ⏳ Application manuelle en recette, puis déroulage des cahiers 15, 17, 20.
+- [x] ✅ Application manuelle en recette — 2026-10-03.
+- [ ] ⏳ Déroulage des cahiers 15 (CT-06/07), 17 (CT-16), 20 (CT-12/13) en recette.
 
 ## Lot 5 — `service_role` et ADR (M8)
 
