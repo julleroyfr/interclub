@@ -182,33 +182,44 @@ changent.
 
 ## Lot 4 — Intégrité vitesse et plafond ado (M3, M7)
 
-Débloqué : D-A (trigger) et D-B (purge) tranchés le 2026-10-03. Révision des
-specs #6 et #10 d'abord.
+Débloqué : D-A (trigger) et D-B (purge) tranchés le 2026-10-03. — 🔄 en cours,
+branche `feature/integrite-vitesse-plafond`, migration
+`202610031200_integrite_vitesse_plafond_changement_equipe`.
+
+Révisions de specs **validées le 2026-10-03** : #6 R14 (plafond en base),
+spec #10 R7bis/R18/R18bis, et **spec #3 R41d** (nouvelle : changement d'équipe admin, club
+d'affectation uniquement — demandé par l'utilisateur pour que le changement
+d'équipe conserve le temps de vitesse au lieu de le purger).
 
 ### M3 — Temps de vitesse bornés aux grimpeurs engagés
 
-- [ ] ⏳ Réviser la spec #10 (et #7 si besoin) : retrait d'un grimpeur ⇒ ses
-  temps de vitesse sont supprimés (D-B), rang et points recalculés.
-- [ ] ⏳ Migration : `peut_ecrire_temps_vitesse` exige que le grimpeur soit
-  composé dans la rencontre.
-- [ ] ⏳ Migration : trigger sur `composition` (suppression) qui purge les
-  `temps_vitesse` du grimpeur pour la rencontre (le trigger existant recalcule
-  `points_vitesse`).
-- [ ] ⏳ Cahier 20/21 : cas « grimpeur retiré après chronométrage ».
+- [x] ✅ Spec #10 révisée (R7bis, R18, R18bis) ; spec #7 inchangée (R20 recalcule
+  déjà à la suppression).
+- [x] ✅ Migration : trigger « grimpeur engagé » sur `temps_vitesse` (tous les
+  écrivains, admin compris — plutôt qu'une condition RLS).
+- [x] ✅ Migration : trigger AFTER DELETE sur `composition` qui purge le temps de
+  vitesse ; nettoyage des temps orphelins existants.
+- [x] ✅ Changement d'équipe (spec #3 R41d) : domaine `verifierChangementEquipe` /
+  `equipesCiblesChangement` (9 tests), trigger `verifier_changement_equipe`,
+  `grant update(equipe_id)`, action `changerEquipeAdmin`, contrôle dans le
+  panneau admin.
+- [x] ✅ Cahiers 15 (CT-06/07) et 20 (CT-12/13), automatisés
+  (`npm run test:cahier:integrite`).
 
 ### M7 — Plafond de 6 voies ado garanti en base
 
-- [ ] ⏳ Réviser la spec #6 (section modèle de données, R14) : plafond garanti
-  en base par trigger, en plus de la Server Action (D-A).
-- [ ] ⏳ Migration : trigger `count(*) < 6` par grimpeur et épreuve ado.
+- [x] ✅ Spec #6 révisée (R14, modèle de données, cas limites).
+- [x] ✅ Migration : trigger plafond (correction de la même voie permise,
+  insertions sérialisées) ; refus traduit par le message du domaine.
 - [x] ✅ `src/lib/coach/resultats-actions.ts` : `error` vérifiée sur
   `existantes` (fait au lot 2).
-- [ ] ⏳ Cahier 17 : cas « 7ᵉ voie par upsert direct → refus ».
+- [x] ✅ Cahier 17 CT-16 (7ᵉ voie par écriture directe → refus), automatisé.
 
 ### Livraison
 
-- [ ] ⏳ Validation locale, `JOURNAL.md`, application manuelle en recette,
-  déroulage des cahiers.
+- [x] ✅ Validation locale (transaction annulée, application + rejeu,
+  `db:verifier`, Vitest 339, E2E complète 124 + mutation), `JOURNAL.md`.
+- [ ] ⏳ Application manuelle en recette, puis déroulage des cahiers 15, 17, 20.
 
 ## Lot 5 — `service_role` et ADR (M8)
 

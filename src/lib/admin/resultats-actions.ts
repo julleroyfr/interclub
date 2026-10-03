@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { type TypeVoie } from '@/domaine/gabarit'
 import { type Categorie, type Phase } from '@/domaine/rencontre'
 import {
+  MESSAGE_PLAFOND_VOIES_ADO,
   type IssueBloc,
   type IssueVoie,
   ResultatInvalideError,
@@ -52,8 +53,11 @@ function refuserSiHorsFenetre(phase: Phase): EtatSaisie | null {
 }
 
 /** Traduit un refus d'écriture (RLS) ou une erreur base en message lisible (R4). */
-function messageEcriture(code: string | undefined): string {
-  if (code === '42501') {
+function messageEcriture(erreur: { code?: string; message?: string }): string {
+  // Plafond de 6 voies ado garanti en base (spec #6 R14, rév. 2026-10-03) :
+  // même message que le contrôle préalable du domaine.
+  if (erreur.message === 'plafond_voies_ado') return MESSAGE_PLAFOND_VOIES_ADO
+  if (erreur.code === '42501') {
     return 'Écriture non autorisée : rôle ou phase invalide.'
   }
   return 'La saisie a échoué. Réessayez.'
@@ -207,7 +211,7 @@ export async function saisirResultatVoieAdmin(
     },
     { onConflict: 'voie_difficulte_id,grimpeur_id' },
   )
-  if (error) return { erreur: messageEcriture(error.code) }
+  if (error) return { erreur: messageEcriture(error) }
 
   revalidatePath(`/admin/rencontres/${ctx.rencontreId}/resultats`)
   return { succes: 'Résultat enregistré.' }
@@ -264,7 +268,7 @@ export async function saisirResultatBlocAdmin(
     },
     { onConflict: 'bloc_id,grimpeur_id' },
   )
-  if (error) return { erreur: messageEcriture(error.code) }
+  if (error) return { erreur: messageEcriture(error) }
 
   revalidatePath(`/admin/rencontres/${ctx.rencontreId}/resultats`)
   return { succes: 'Résultat enregistré.' }
@@ -296,7 +300,7 @@ export async function retirerResultatVoieAdmin(
     .delete()
     .eq('voie_difficulte_id', voieId)
     .eq('grimpeur_id', grimpeurId)
-  if (error) return { erreur: messageEcriture(error.code) }
+  if (error) return { erreur: messageEcriture(error) }
 
   revalidatePath(`/admin/rencontres/${ctx.rencontreId}/resultats`)
   return { succes: 'Résultat retiré.' }

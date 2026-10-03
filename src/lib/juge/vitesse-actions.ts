@@ -18,8 +18,13 @@ import { createClient } from '@/lib/supabase/server'
 export type EtatSaisieVitesse = { erreur?: string; succes?: string } | undefined
 
 /** Traduit un refus d'écriture (RLS) ou une erreur base en message lisible (R4). */
-function messageEcriture(code: string | undefined): string {
-  if (code === '42501') {
+function messageEcriture(erreur: { code?: string; message?: string }): string {
+  // Seul un grimpeur engagé reçoit un résultat de vitesse, garanti en base
+  // (spec #10 R7bis, rév. 2026-10-03).
+  if (erreur.message === 'grimpeur_non_engage') {
+    return "Ce grimpeur n'est pas engagé dans la rencontre."
+  }
+  if (erreur.code === '42501') {
     return 'Saisie non autorisée : hors compétition, ou hors de votre épreuve de vitesse.'
   }
   return 'La saisie a échoué. Réessayez.'
@@ -79,7 +84,7 @@ export async function saisirTempsVitesse(
     },
     { onConflict: 'epreuve_id,grimpeur_id' },
   )
-  if (error) return { erreur: messageEcriture(error.code) }
+  if (error) return { erreur: messageEcriture(error) }
 
   revalidatePath('/juge')
   return { succes: 'Résultat enregistré.' }

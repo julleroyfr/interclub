@@ -236,8 +236,27 @@ Cas particuliers à préparer à la main :
   - Vitesse et score affichés (R22/R23).
   - *(Vérifier à l'œil : lisibilité du message sur téléphone.)*
 
+### CT-16 `[auto]` — 7ᵉ voie ado refusée par la base, correction permise   (couvre : R14, rév. 2026-10-03)
+
+- **Rôle / compte** : `coach@test.local` (jeton d'API).
+- **Pré-condition** : rencontre **ado** `adadadad-…` en **③** ; un grimpeur de
+  l'équipe **Ados A1** a **6** voies saisies (SQL).
+- **Étapes** :
+  1. Appel direct `POST …/resultat_voie` d'une **7ᵉ** voie pour ce grimpeur
+     (sans passer par l'écran).
+  2. Appel direct `POST …/resultat_voie` en **upsert** (`Prefer:
+     resolution=merge-duplicates`) qui **corrige** l'une de ses 6 voies.
+- **Résultat attendu** :
+  1. **refus** de la base (`plafond_voies_ado`) ; toujours **6** voies ;
+  2. la correction **passe** (même voie, R13) ; toujours **6** voies.
+- **Message** : à l'écran, ce refus est traduit par « Un grimpeur ado réalise au
+  plus 6 voies. » (même message que le contrôle préalable).
+
 ## Registre d'exécution
 
+> **Automatisé** (rév. 2026-10-03) : CT-16 par `e2e/integrite-engagement.spec.ts`
+> (`npm run test:cahier:integrite`).
+>
 > **Couverture automatique** (2026-09-18, stack locale, branche `develop` WIP) :
 > les règles **enforçables en base** sont vérifiées par `npm run test:resultats`
 > (`scripts/test-resultats.sh`, 21/21 assertions) ; les règles **applicatives**

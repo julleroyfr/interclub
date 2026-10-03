@@ -49,6 +49,16 @@ npm run test:e2e              # tous les cahiers E2E
 > l'engagement à l'état seed (idempotence) ; les tests de scan nettoient les
 > sessions QR.
 
+## Cartographie (intégrité engagement & résultats — lot 4, 2026-10-03)
+
+- `integrite-engagement.spec.ts` (`npm run test:cahier:integrite`) : cahier 15
+  **CT-06/CT-07** (changement d'équipe dans le club d'affectation, résultats
+  conservés ; hors club refusé par la base), cahier 17 **CT-16** (7ᵉ voie ado
+  refusée par la base, correction permise), cahier 20 **CT-12/CT-13** (vitesse
+  refusée pour un non-engagé ; retrait ⇒ résultat purgé, rangs recalculés).
+- Remet la rencontre pilote à l'état seed (① , sans temps) et nettoie les
+  résultats ado posés.
+
 ## Cartographie (cahier 28 — sécurité en base, appels directs)
 
 - `securite-appels-directs.spec.ts` (`npm run test:cahier:securite`) : **CT-01 →

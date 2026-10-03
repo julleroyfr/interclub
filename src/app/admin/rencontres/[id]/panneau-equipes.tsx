@@ -6,11 +6,13 @@ import { Bouton, Carte, ChampSelect, ChampTexte, TitreSection } from '@/composan
 import {
   EFFECTIF_EQUIPE_MAX,
   GROUPES_DEPART,
+  equipesCiblesChangement,
   filtrerGrimpeursRecherche,
   nomEquipeParDefaut,
 } from '@/domaine/engagement'
 import {
   ajouterGrimpeurAdmin,
+  changerEquipeAdmin,
   creerEquipeAdmin,
   definirGroupeAdmin,
   retirerGrimpeurAdmin,
@@ -78,6 +80,15 @@ export function PanneauEquipes({
                           equipe={eq}
                           roster={c.engagement.roster}
                           estEnfant={estEnfant}
+                          autresEquipes={equipesCiblesChangement(
+                            c.engagement.equipes.map((e) => ({
+                              id: e.id,
+                              clubId: c.clubId,
+                              nom: e.nom,
+                              complete: e.membres.length >= EFFECTIF_EQUIPE_MAX,
+                            })),
+                            eq.id,
+                          )}
                         />
                       </li>
                     ))}
@@ -101,16 +112,22 @@ export function PanneauEquipes({
   )
 }
 
+/** Équipe proposée pour un changement d'équipe (spec #3 R41d). */
+type EquipeCible = { id: string; nom: string; complete: boolean }
+
 function CarteEquipe({
   rencontreId,
   equipe,
   roster,
   estEnfant,
+  autresEquipes,
 }: {
   rencontreId: string
   equipe: EquipeEngagee
   roster: OptionGrimpeur[]
   estEnfant: boolean
+  /** Autres équipes du club d'affectation (spec #3 R41d). */
+  autresEquipes: EquipeCible[]
 }) {
   const complete = equipe.membres.length >= EFFECTIF_EQUIPE_MAX
   const disponibles = roster.filter((g) => !g.dejaEngage)
@@ -133,6 +150,7 @@ function CarteEquipe({
               equipeId={equipe.id}
               membre={m}
               estEnfant={estEnfant}
+              autresEquipes={autresEquipes}
             />
           ))}
         </ul>
@@ -162,11 +180,13 @@ function LigneMembre({
   equipeId,
   membre,
   estEnfant,
+  autresEquipes,
 }: {
   rencontreId: string
   equipeId: string
   membre: MembreEquipe
   estEnfant: boolean
+  autresEquipes: EquipeCible[]
 }) {
   const [etatRetrait, actionRetrait, retraitEnCours] = useActionState(
     retirerGrimpeurAdmin,
@@ -234,7 +254,72 @@ function LigneMembre({
           {etatRetrait.erreur}
         </p>
       )}
+
+      {autresEquipes.length > 0 && (
+        <FormChangerEquipe
+          rencontreId={rencontreId}
+          equipeId={equipeId}
+          membre={membre}
+          autresEquipes={autresEquipes}
+        />
+      )}
     </li>
+  )
+}
+
+/**
+ * Change le grimpeur d'équipe au sein de son club d'affectation (spec #3 R41d) :
+ * mise à jour, pas retrait + ajout — groupe de départ et résultats conservés
+ * (spec #10 R18bis). Les équipes complètes sont proposées mais désactivées.
+ */
+function FormChangerEquipe({
+  rencontreId,
+  equipeId,
+  membre,
+  autresEquipes,
+}: {
+  rencontreId: string
+  equipeId: string
+  membre: MembreEquipe
+  autresEquipes: EquipeCible[]
+}) {
+  const [etat, action, enCours] = useActionState(changerEquipeAdmin, etatInitial)
+  const idCible = useId()
+
+  return (
+    <form action={action} className="flex w-full flex-col gap-2 sm:flex-row sm:items-center">
+      <input type="hidden" name="rencontreId" value={rencontreId} />
+      <input type="hidden" name="equipeId" value={equipeId} />
+      <input type="hidden" name="grimpeurId" value={membre.grimpeurId} />
+      <label htmlFor={idCible} className="text-xs text-texte-attenue sm:shrink-0">
+        Changer {membre.prenom} {membre.nom} d’équipe
+      </label>
+      <select
+        id={idCible}
+        name="equipeCibleId"
+        required
+        defaultValue=""
+        className="h-11 w-full rounded-lg border border-bordure bg-black/30 px-3 text-base text-texte-fort [color-scheme:dark] focus:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent/20 sm:w-auto sm:text-sm"
+      >
+        <option value="" disabled className="bg-fond text-texte">
+          Équipe de destination…
+        </option>
+        {autresEquipes.map((e) => (
+          <option key={e.id} value={e.id} disabled={e.complete} className="bg-fond text-texte">
+            {e.nom}
+            {e.complete ? ` (complète, ${EFFECTIF_EQUIPE_MAX})` : ''}
+          </option>
+        ))}
+      </select>
+      <Bouton type="submit" taille="sm" variante="secondaire" disabled={enCours} className="h-11">
+        Changer d’équipe
+      </Bouton>
+      {etat?.erreur && (
+        <p role="alert" className="text-xs text-danger">
+          {etat.erreur}
+        </p>
+      )}
+    </form>
   )
 }
 

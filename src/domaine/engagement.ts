@@ -157,3 +157,57 @@ export function verifierAjoutComposition(ajout: AjoutComposition): void {
     )
   }
 }
+
+/** Refus d'un changement d'équipe hors club d'affectation ou hors rencontre (spec #3 R41d). */
+export const MESSAGE_CHANGEMENT_HORS_CLUB =
+  "Un grimpeur ne peut changer que pour une autre équipe de son club d'affectation, dans la même rencontre."
+
+/** Équipe d'une rencontre, vue pour un changement d'équipe (spec #3 R41d). */
+export type EquipeDeRencontre = { id: string; clubId: string; rencontreId: string }
+
+/** Contexte d'un changement d'équipe, à valider avant écriture (spec #3 R41d). */
+export type ChangementEquipe = {
+  /** Équipe actuelle du grimpeur : son club est le club d'affectation. */
+  equipeSource: EquipeDeRencontre
+  /** Équipe visée, avec son effectif actuel. */
+  equipeCible: EquipeDeRencontre & { effectif: number }
+}
+
+/**
+ * Vérifie qu'un grimpeur peut changer d'équipe (spec #3 R41d) : vers une AUTRE
+ * équipe de la même rencontre et du même club d'affectation (club de l'équipe
+ * actuelle — club d'accueil pour un prêté ; jamais un autre club), dont
+ * l'effectif reste sous le plafond (spec #5 R15). Le changement n'est pas un
+ * retrait : le grimpeur reste engagé (spec #10 R18bis). Lance
+ * `EngagementInvalideError` au premier invariant violé.
+ */
+export function verifierChangementEquipe({ equipeSource, equipeCible }: ChangementEquipe): void {
+  if (equipeCible.id === equipeSource.id) {
+    throw new EngagementInvalideError('Le grimpeur est déjà dans cette équipe.')
+  }
+  if (
+    equipeCible.rencontreId !== equipeSource.rencontreId ||
+    equipeCible.clubId !== equipeSource.clubId
+  ) {
+    throw new EngagementInvalideError(MESSAGE_CHANGEMENT_HORS_CLUB)
+  }
+  if (equipeCible.effectif >= EFFECTIF_EQUIPE_MAX) {
+    throw new EngagementInvalideError(
+      `L'effectif d'une équipe est plafonné à ${EFFECTIF_EQUIPE_MAX} grimpeurs.`,
+    )
+  }
+}
+
+/**
+ * Équipes proposées pour un changement d'équipe (spec #3 R41d) : les autres
+ * équipes du club d'affectation (club de l'équipe actuelle), dans l'ordre reçu.
+ * Vide si le club n'a qu'une équipe — l'action n'est alors pas proposée.
+ */
+export function equipesCiblesChangement<E extends { id: string; clubId: string }>(
+  equipesRencontre: readonly E[],
+  equipeActuelleId: string,
+): E[] {
+  const actuelle = equipesRencontre.find((e) => e.id === equipeActuelleId)
+  if (!actuelle) return []
+  return equipesRencontre.filter((e) => e.clubId === actuelle.clubId && e.id !== actuelle.id)
+}

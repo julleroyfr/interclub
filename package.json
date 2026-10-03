@@ -22,6 +22,7 @@
     "test:cahier:juge": "playwright test juge-vitesse --project=chromium --workers=1",
     "test:cahier:vitesse": "playwright test vitesse-classement --project=chromium --workers=1",
     "test:cahier:securite": "playwright test securite-appels-directs --project=chromium --workers=1",
+    "test:cahier:integrite": "playwright test integrite-engagement --project=chromium --workers=1",
     "test:t5a": "bash scripts/test-t5a.sh",
     "test:t5b": "bash scripts/test-t5b.sh",
     "test:t5c": "bash scripts/test-t5c.sh",

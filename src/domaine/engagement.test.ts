@@ -8,6 +8,8 @@ import {
   filtrerGrimpeursRecherche,
   nomEquipeParDefaut,
   normaliserNomEquipe,
+  equipesCiblesChangement,
+  verifierChangementEquipe,
   verifierAjoutComposition,
   voiesDuGroupeDepart,
 } from './engagement'
@@ -178,5 +180,81 @@ describe('Ajout d’un grimpeur à une équipe (R13/R14/R15)', () => {
 
   it('plafond d’équipe fixé à 8 (règlement §6)', () => {
     expect(EFFECTIF_EQUIPE_MAX).toBe(8)
+  })
+})
+
+/**
+ * Changement d'équipe par l'admin (spec #3 R41d, validée le 2026-10-03) : au sein
+ * de la même rencontre, vers une autre équipe du CLUB D'AFFECTATION uniquement
+ * (club de l'équipe actuelle — club d'accueil pour un prêté), plafond de l'équipe
+ * cible respecté (spec #5 R15). Le grimpeur reste engagé : ses résultats sont
+ * conservés (spec #10 R18bis) — c'est une mise à jour, pas un retrait + ajout.
+ */
+describe('verifierChangementEquipe (spec #3 R41d)', () => {
+  const source = { id: 'eq-A1', clubId: 'club-A', rencontreId: 'r-1' }
+  const cible = { id: 'eq-A2', clubId: 'club-A', rencontreId: 'r-1', effectif: 3 }
+
+  it('accepte une autre équipe du même club dans la même rencontre (R41d)', () => {
+    expect(() => verifierChangementEquipe({ equipeSource: source, equipeCible: cible })).not.toThrow()
+  })
+
+  it('refuse une équipe d’un autre club, même pour un prêté (R41d)', () => {
+    expect(() =>
+      verifierChangementEquipe({
+        equipeSource: source,
+        equipeCible: { ...cible, id: 'eq-B1', clubId: 'club-B' },
+      }),
+    ).toThrow(EngagementInvalideError)
+  })
+
+  it('refuse une équipe d’une autre rencontre (R41d)', () => {
+    expect(() =>
+      verifierChangementEquipe({ equipeSource: source, equipeCible: { ...cible, rencontreId: 'r-2' } }),
+    ).toThrow(EngagementInvalideError)
+  })
+
+  it('refuse l’équipe actuelle comme cible (pas un changement, R41d)', () => {
+    expect(() =>
+      verifierChangementEquipe({ equipeSource: source, equipeCible: { ...cible, id: source.id } }),
+    ).toThrow(EngagementInvalideError)
+  })
+
+  it('refuse une équipe cible déjà au plafond de 8 (R41d, spec #5 R15)', () => {
+    expect(() =>
+      verifierChangementEquipe({
+        equipeSource: source,
+        equipeCible: { ...cible, effectif: EFFECTIF_EQUIPE_MAX },
+      }),
+    ).toThrow(EngagementInvalideError)
+  })
+
+  it('accepte une équipe cible à 7 membres : le grimpeur en devient le 8ᵉ (R41d, spec #5 R15)', () => {
+    expect(() =>
+      verifierChangementEquipe({
+        equipeSource: source,
+        equipeCible: { ...cible, effectif: EFFECTIF_EQUIPE_MAX - 1 },
+      }),
+    ).not.toThrow()
+  })
+})
+
+describe('equipesCiblesChangement (spec #3 R41d)', () => {
+  const equipes = [
+    { id: 'eq-A1', clubId: 'club-A', nom: 'Club A 1' },
+    { id: 'eq-A2', clubId: 'club-A', nom: 'Club A 2' },
+    { id: 'eq-A3', clubId: 'club-A', nom: 'Club A 3' },
+    { id: 'eq-B1', clubId: 'club-B', nom: 'Club B 1' },
+  ]
+
+  it('propose les autres équipes du club d’affectation, sans l’équipe actuelle ni les autres clubs (R41d)', () => {
+    expect(equipesCiblesChangement(equipes, 'eq-A1').map((e) => e.id)).toEqual(['eq-A2', 'eq-A3'])
+  })
+
+  it('ne propose rien quand le club d’affectation n’a qu’une équipe (R41d)', () => {
+    expect(equipesCiblesChangement(equipes, 'eq-B1')).toEqual([])
+  })
+
+  it('ne propose rien pour une équipe inconnue', () => {
+    expect(equipesCiblesChangement(equipes, 'eq-inconnue')).toEqual([])
   })
 })

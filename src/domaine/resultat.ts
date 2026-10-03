@@ -26,6 +26,9 @@ export type IssueBloc = 'palier' | 'echec' | 'np'
 /** Nombre maximal de voies réalisées par un grimpeur ado (règlement ; R14). */
 export const PLAFOND_VOIES_ADO = 6
 
+/** Message du refus d'une 7ᵉ voie ado (R14), partagé avec la traduction du refus de la base. */
+export const MESSAGE_PLAFOND_VOIES_ADO = `Un grimpeur ado réalise au plus ${PLAFOND_VOIES_ADO} voies.`
+
 /** Saisie de résultat invalide (issue incohérente, palier absent, plafond, doublon). */
 export class ResultatInvalideError extends Error {
   constructor(message: string) {
@@ -138,7 +141,7 @@ export function verifierAjoutVoieAdo({
   }
   if (voiesSaisiesIds.length >= PLAFOND_VOIES_ADO) {
     throw new ResultatInvalideError(
-      `Un grimpeur ado réalise au plus ${PLAFOND_VOIES_ADO} voies.`,
+      MESSAGE_PLAFOND_VOIES_ADO,
     )
   }
 }

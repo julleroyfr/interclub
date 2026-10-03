@@ -6,10 +6,13 @@
 > une fois l'engagement gelé). Les invariants d'engagement restent (R14 double,
 > R15 plafond, R34 catégorie).
 > Marquage `[auto]`/`[manuel]` : cf. [convention 06 §3.1](../conventions/06-cahier-de-test.md).
-> Automatisé : `e2e/admin-equipes.spec.ts`.
+> Automatisé : `e2e/admin-equipes.spec.ts` ; CT-06/CT-07 :
+> `e2e/integrite-engagement.spec.ts` (`npm run test:cahier:integrite`).
 
 - **Spec de référence** : `docs/specs/01-roles-et-autorisations.md` (R6, R10, R14,
-  R15, R34) ; `docs/specs/05-espace-coach.md` (R12).
+  R15, R34) ; `docs/specs/05-espace-coach.md` (R12) ;
+  `docs/specs/03-ecrans-de-parametrage-admin.md` (R41d, rév. 2026-10-03) ;
+  `docs/specs/10-saisie-vitesse-juge.md` (R18bis).
 - **Pré-requis** : migrations à jour ; seed 01 ; app dev port 3011.
 - **Environnement** : local (stack Docker) — version/commit : `______`
 
@@ -71,6 +74,33 @@ A2 (vide) — Club A ; B1 (Cléo) — Club B ; Devi Bravo (Club B) libre.
   seul et présélectionné ; Chloé Alpha seule ; « zzz » → compteur 0, ajout
   bloqué).
 
+### CT-06 `[auto]` — Changement d'équipe dans le club d'affectation, résultats conservés   (couvre : spec #3 R41d ; spec #10 R18bis)
+
+- **Rôle / compte** : `admin@test.local`.
+- **Pré-condition** : rencontre pilote en **③ compétition** ; **Ana** (A1,
+  groupe M2) a un **temps de vitesse** (posé en SQL : 9,500 s).
+- **Étapes** : bloc **Club A**, ligne **Ana Alpha** de l'équipe A1 : ouvrir
+  « Changer Ana Alpha d'équipe » ; relever les équipes proposées ; choisir **A2**
+  puis « Changer d'équipe ».
+- **Résultat attendu** :
+  - seule **A2** est proposée (ni A1, ni **B1** d'un autre club) ;
+  - Ana apparaît dans **A2** et plus dans A1 ; son **groupe de départ M2** est
+    conservé ;
+  - son **temps de vitesse** (9,500 s) et ses **points de vitesse** sont
+    **conservés** (aucune purge : ce n'est pas un retrait).
+
+### CT-07 `[auto]` — Changement hors club refusé ; club à une seule équipe   (couvre : spec #3 R41d)
+
+- **Rôle / compte** : `admin@test.local` (jeton d'API pour l'étape 2).
+- **Étapes** :
+  1. Bloc **Club B** (une seule équipe, B1) : ligne **Cléo Bravo**.
+  2. Appel direct : `PATCH …/composition?equipe_id=eq.<A1>&grimpeur_id=eq.<Ana>`
+     avec `{"equipe_id": "<B1>"}` (équipe d'un autre club).
+- **Résultat attendu** :
+  1. **aucun** contrôle « Changer d'équipe » pour Cléo (son club n'a qu'une
+     équipe) ;
+  2. **refus** de la base (`changement_equipe_hors_club`) ; Ana reste dans A1.
+
 ## Registre d'exécution
 
 | Date | Testeur | Version/commit | Cas | Marque | Résultat | Remarque |
@@ -79,4 +109,6 @@ A2 (vide) — Club A ; B1 (Cléo) — Club B ; Devi Bravo (Club B) libre.
 | | | | CT-02 | auto | ✅ / ❌ | CRUD autre club en compétition |
 | | | | CT-03 | manuel | ✅ / ❌ | invariants R14/R15/R34 |
 | | | | CT-04 | auto | ✅ / ❌ | nom d'équipe par défaut (R10bis) |
+| | | | CT-06 | auto | ✅ / ❌ | changement d'équipe, résultats conservés (R41d) |
+| | | | CT-07 | auto | ✅ / ❌ | hors club refusé, club à une équipe (R41d) |
 | | | | CT-05 | auto | ✅ / ❌ | recherche à l'ajout (R12bis) |

@@ -158,14 +158,20 @@ test.describe('Cahier 20 — saisie de la vitesse par le juge (spec #10)', () =>
          join interclub.jeton_qr j on j.id = s.jeton_qr_id
         where j.valeur = '${JETON.juge}' order by s.created_at desc limit 1;`,
     )
-    const essai = (epreuve: string) => {
+    // Grimpeur ENGAGÉ dans la rencontre visée : sinon le refus viendrait du
+    // contrôle « grimpeur engagé » (spec #10 R7bis) et non du périmètre RLS testé ici.
+    const engageAdo = execSql(
+      `select grimpeur_id from interclub.composition
+        where rencontre_id = 'adadadad-adad-adad-adad-adadadadadad' order by grimpeur_id limit 1;`,
+    )
+    const essai = (epreuve: string, grimpeur: string = GRIMPEURS.cleo) => {
       try {
         execSql(
           `begin;
            select set_config('request.jwt.claims', '{"sub":"${juge}","role":"authenticated"}', true);
            set local role authenticated;
            insert into interclub.temps_vitesse (epreuve_id, grimpeur_id, temps, issue)
-             values ('${epreuve}','${GRIMPEURS.cleo}',7.7,'temps');
+             values ('${epreuve}','${grimpeur}',7.7,'temps');
            rollback;`,
         )
         return 'accepte'
@@ -174,7 +180,7 @@ test.describe('Cahier 20 — saisie de la vitesse par le juge (spec #10)', () =>
       }
     }
     expect(essai(EPREUVE_VITESSE)).toBe('accepte') // sa rencontre (contrôle positif)
-    expect(essai(EPREUVE_VITESSE_ADO)).toBe('refus_rls') // une autre rencontre
+    expect(essai(EPREUVE_VITESSE_ADO, engageAdo)).toBe('refus_rls') // une autre rencontre
     expect(essai('88888888-8888-8888-8888-888888888801')).toBe('refus_rls') // épreuve non-vitesse
   })
 

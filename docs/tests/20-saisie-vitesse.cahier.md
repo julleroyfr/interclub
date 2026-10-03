@@ -180,6 +180,31 @@ tous (cf. `00-catalogue-jeux-de-donnees.md` § Notes).
   **au clavier** (champ numérique, `Entrée` = OK). Les lignes sont **compactes**
   (adaptées à plusieurs dizaines de grimpeurs par sexe).
 
+### CT-12 — Résultat refusé pour un grimpeur non engagé `[auto]` (couvre : R7bis, rév. 2026-10-03)
+
+- **Rôle / compte** : `admin@test.local` (jeton d'API ; l'admin écrit aussi la
+  vitesse, R7bis s'applique à tous les écrivains).
+- **Pré-condition** : rencontre `33333333` en **③** ; **Devi Bravo** n'est
+  **pas** engagé.
+- **Étapes** : appel direct `POST …/temps_vitesse` pour Devi (épreuve de vitesse
+  `…8803`, `issue = temps`, `temps = 9.1`).
+- **Résultat attendu** : **refus** de la base (`grimpeur_non_engage`) ; aucune
+  ligne créée. À l'écran juge, ce refus est traduit par « Ce grimpeur n'est pas
+  engagé dans la rencontre. ».
+
+### CT-13 — Retrait d'un grimpeur chronométré : résultat supprimé, rangs recalculés `[auto]` (couvre : R18, spec #7 R15/R20)
+
+- **Rôle / compte** : `admin@test.local`.
+- **Pré-condition** : rencontre `33333333` en **③** ; **Ana** (F) chronométrée en
+  **8,000 s** et une autre engagée **F** plus lente — ou, à défaut, Ana seule
+  (rang 1).
+- **Étapes** : panneau équipes admin, retirer **Ana** de A1 (bouton « × »).
+- **Résultat attendu** : le `temps_vitesse` et les `points_vitesse` d'Ana sont
+  **supprimés** ; les rangs des autres grimpeuses sont **recalculés** sans elle.
+  La suppression est définitive (ré-engager Ana ne restaure pas son temps).
+
+> **Automatisé** (rév. 2026-10-03) : `e2e/integrite-engagement.spec.ts` (`npm run test:cahier:integrite`).
+
 ## Registre d'exécution
 
 | Date | Testeur | Version/commit | Cas | Résultat | Remarque |
