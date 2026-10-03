@@ -22,7 +22,7 @@ import {
 // écriture Supabase, et modélise le cycle de vie en trois phases successives
 // (R5). Aucune dépendance Supabase ici — uniquement les invariants.
 
-describe('Saisie d’une rencontre (R12)', () => {
+describe('spec #1 — Saisie d’une rencontre (R12)', () => {
   const valide = {
     dateRencontre: '2026-11-14',
     clubPorteurId: '11111111-1111-1111-1111-111111111111',
@@ -88,7 +88,7 @@ describe('Saisie d’une rencontre (R12)', () => {
   })
 })
 
-describe('Saison sportive (R37)', () => {
+describe('spec #1 — Saison sportive (R37)', () => {
   describe('anneeSaison — calcul depuis la date de la rencontre', () => {
     it('rencontre en septembre → année de début de saison = année de la date (R37)', () => {
       expect(anneeSaison('2025-09-01')).toBe(2025)
@@ -128,7 +128,7 @@ describe('Saison sportive (R37)', () => {
   })
 })
 
-describe('Cycle de vie en cinq phases (R5, rév. 2026-09-01)', () => {
+describe('spec #1 — Cycle de vie en cinq phases (R5, rév. 2026-09-01)', () => {
   it('ordonne les phases : pré-compétition → préparation → compétition → clôture → résultats publics', () => {
     expect(PHASES.map((p) => p.value)).toEqual([
       'pre_competition',
@@ -162,7 +162,7 @@ describe('Cycle de vie en cinq phases (R5, rév. 2026-09-01)', () => {
   })
 })
 
-describe('Garde-fou « jour J » — préparation ET compétition (R5, rév. 2026-09-02)', () => {
+describe('spec #1 — Garde-fou « jour J » — préparation ET compétition (R5, rév. 2026-09-02)', () => {
   it('marque préparation et compétition comme phases jour J', () => {
     expect(estPhaseJourJ('preparation')).toBe(true)
     expect(estPhaseJourJ('competition')).toBe(true)
@@ -188,7 +188,7 @@ describe('Garde-fou « jour J » — préparation ET compétition (R5, rév. 202
   })
 })
 
-describe('Éligibilité d’un grimpeur à la catégorie d’une rencontre (R34)', () => {
+describe('spec #1 — Éligibilité d’un grimpeur à la catégorie d’une rencontre (R34)', () => {
   // Saison 2026 (rencontre entre sept. 2026 et août 2027). Âge = 2026 − année.
   const SAISON = 2026
 
@@ -217,7 +217,7 @@ describe('Éligibilité d’un grimpeur à la catégorie d’une rencontre (R34)
   })
 })
 
-describe('Retour arrière effectif depuis la compétition (R5, rév. 2026-09-02)', () => {
+describe('spec #1 — Retour arrière effectif depuis la compétition (R5, rév. 2026-09-02)', () => {
   it('le jour J : compétition → préparation', () => {
     expect(phasePrecedenteEffective('competition', '2026-10-12', '2026-10-12')).toBe(
       'preparation',

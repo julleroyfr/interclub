@@ -17,7 +17,7 @@ const ligne = (rang: number, nom: string, prenom: string, score: number): LigneT
   score,
 })
 
-describe('Fusion du classement mixte affiché (R4)', () => {
+describe('spec #14 — Fusion du classement mixte affiché (R4)', () => {
   it('mélange les deux classements Filles et Garçons en une seule liste (R4)', () => {
     const filles = [ligne(1, 'Martin', 'Léa', 28)]
     const garcons = [ligne(1, 'Garnier', 'Noé', 24)]
@@ -44,7 +44,7 @@ describe('Fusion du classement mixte affiché (R4)', () => {
   })
 })
 
-describe('Ordre de la liste mixte (R5)', () => {
+describe('spec #14 — Ordre de la liste mixte (R5)', () => {
   it('trie par rang croissant (R5)', () => {
     const filles = [ligne(1, 'Perez', 'Chloé', 20)]
     const garcons = [ligne(1, 'Garnier', 'Noé', 24), ligne(2, 'Blanc', 'Hugo', 19)]
@@ -86,7 +86,7 @@ describe('Ordre de la liste mixte (R5)', () => {
   })
 })
 
-describe('Étiquette de sexe (R6)', () => {
+describe('spec #14 — Étiquette de sexe (R6)', () => {
   it("chaque ligne fusionnée est taguée du sexe de son classement d'origine", () => {
     const filles = [ligne(1, 'Martin', 'Léa', 28)]
     const garcons = [ligne(1, 'Garnier', 'Noé', 24)]
@@ -98,7 +98,7 @@ describe('Étiquette de sexe (R6)', () => {
   })
 })
 
-describe('Cas limites (R4)', () => {
+describe('spec #14 — Cas limites (R4)', () => {
   it("une liste vide d'un côté → la liste mixte ne contient que l'autre sexe", () => {
     const filles = [ligne(1, 'Martin', 'Léa', 28)]
 

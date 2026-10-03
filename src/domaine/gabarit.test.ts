@@ -34,7 +34,7 @@ function voie(
 // R37 : niveau d'une voie de difficulté contraint aux valeurs réglementaires.
 // R30 : copie du gabarit → épreuves instanciées pour une rencontre.
 
-describe('Validation du niveau de voie (R37)', () => {
+describe('spec #3 — Validation du niveau de voie (R37)', () => {
   describe('Catégorie enfant — moulinette', () => {
     it('accepte tous les niveaux moulinette valides M1–M4 pour enfant (R37)', () => {
       for (const niveau of NIVEAUX_MOULINETTE) {
@@ -84,7 +84,7 @@ describe('Validation du niveau de voie (R37)', () => {
   })
 })
 
-describe('Validation des points (R38, R39)', () => {
+describe('spec #3 — Validation des points (R38, R39)', () => {
   it('accepte 0 et les entiers positifs', () => {
     for (const n of [0, 1, 4, 22, 60]) {
       expect(() => validerPoints(n)).not.toThrow()
@@ -101,7 +101,7 @@ describe('Validation des points (R38, R39)', () => {
   })
 })
 
-describe('Champs de points applicables à une voie (R38, R43)', () => {
+describe('spec #3 — Champs de points applicables à une voie (R38, R43)', () => {
   it('voie tête enfant : prise valorisée, pas de zones (R38)', () => {
     expect(champsPointsVoie('enfant', 'tete')).toEqual({ priseValorisee: true, zones: false })
   })
@@ -119,7 +119,7 @@ describe('Champs de points applicables à une voie (R38, R43)', () => {
   })
 })
 
-describe('Copie gabarit → épreuves de rencontre (R30)', () => {
+describe('spec #3 — Copie gabarit → épreuves de rencontre (R30)', () => {
   it('produit une liste vide depuis un gabarit vide (R35)', () => {
     expect(construireEpreuvesDepuisGabarit([])).toEqual([])
   })

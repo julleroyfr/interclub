@@ -20,7 +20,7 @@ import {
 // ---------------------------------------------------------------------------
 // construireUrlInvitation — format de l'URL encodée dans le QR (R26)
 // ---------------------------------------------------------------------------
-describe('construireUrlInvitation', () => {
+describe('spec #2 — construireUrlInvitation', () => {
   it("construit une URL d'inscription correcte (R26)", () => {
     expect(construireUrlInvitation('https://app.example.com', 'abc-123')).toBe(
       'https://app.example.com/inscription?invitation=abc-123',
@@ -49,7 +49,7 @@ describe('construireUrlInvitation', () => {
 // ---------------------------------------------------------------------------
 // creerInvitationCoach — périmètre « exactement un club » (R28)
 // ---------------------------------------------------------------------------
-describe('creerInvitationCoach', () => {
+describe('spec #2 — creerInvitationCoach', () => {
   it('normalise une invitation liée à un club (R28)', () => {
     expect(creerInvitationCoach({ clubId: ' club-1 ' })).toEqual({
       clubId: 'club-1',
@@ -66,7 +66,7 @@ describe('creerInvitationCoach', () => {
 // ---------------------------------------------------------------------------
 // peutGererInvitation — génération / révocation réservées à l'admin (R29)
 // ---------------------------------------------------------------------------
-describe('peutGererInvitation', () => {
+describe('spec #2 — peutGererInvitation', () => {
   it("autorise l'admin (R29)", () => {
     expect(peutGererInvitation({ role: 'admin' })).toBe(true)
   })
@@ -83,7 +83,7 @@ describe('peutGererInvitation', () => {
 // ---------------------------------------------------------------------------
 // validerInscriptionCoach — identifiants email + mot de passe (R30)
 // ---------------------------------------------------------------------------
-describe('validerInscriptionCoach', () => {
+describe('spec #2 — validerInscriptionCoach', () => {
   it('normalise un email valide et un mot de passe suffisant (R30)', () => {
     expect(
       validerInscriptionCoach({

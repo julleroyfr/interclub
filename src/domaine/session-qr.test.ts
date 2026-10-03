@@ -13,7 +13,7 @@ import {
 // ---------------------------------------------------------------------------
 // construireUrlScan — format de l'URL encodée dans le QR (ADR 0003/T5d)
 // ---------------------------------------------------------------------------
-describe('construireUrlScan', () => {
+describe('spec #2 — construireUrlScan', () => {
   it('construit une URL de scan correcte (R6, ADR 0003)', () => {
     expect(construireUrlScan('https://app.example.com', 'abc-123')).toBe(
       'https://app.example.com/scan?jeton=abc-123',
@@ -40,7 +40,7 @@ describe('construireUrlScan', () => {
 // ---------------------------------------------------------------------------
 // interpreterResultatScan — parsing du résultat JSONB de la RPC `ouvrir_session_qr`
 // ---------------------------------------------------------------------------
-describe('interpreterResultatScan', () => {
+describe('spec #2 — interpreterResultatScan', () => {
   it('interprète un résultat coach_temporaire (R6, R9a, R10)', () => {
     const data = {
       nature: 'coach_temporaire',
@@ -91,7 +91,7 @@ describe('interpreterResultatScan', () => {
 // ---------------------------------------------------------------------------
 // urlDeRedirection — chemin cible après ouverture de session (R10, R11)
 // ---------------------------------------------------------------------------
-describe('urlDeRedirection', () => {
+describe('spec #2 — urlDeRedirection', () => {
   it('redirige un coach temporaire DIRECTEMENT vers sa rencontre (spec #5 R8bis)', () => {
     expect(
       urlDeRedirection({

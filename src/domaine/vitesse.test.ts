@@ -14,7 +14,7 @@ import {
 // formes (temps en secondes / chute / non-présentation), unique par grimpeur et
 // par rencontre ; une ressaisie remplace (correction). Aucune dépendance Supabase.
 
-describe('Résultat de vitesse — trois formes (R7)', () => {
+describe('spec #10 — Résultat de vitesse — trois formes (R7)', () => {
   it('accepte un temps chronométré en secondes (R8)', () => {
     // Étant donné un juge qui chronomètre un grimpeur en 8,123 s
     // Quand il enregistre ce temps
@@ -56,7 +56,7 @@ describe('Résultat de vitesse — trois formes (R7)', () => {
   })
 })
 
-describe('Unicité et correction du résultat par grimpeur (R10/R11)', () => {
+describe('spec #10 — Unicité et correction du résultat par grimpeur (R10/R11)', () => {
   it('enregistre un premier résultat pour un grimpeur (R10)', () => {
     // Étant donné aucune saisie
     const saisies = new Map()
@@ -84,7 +84,7 @@ describe('Unicité et correction du résultat par grimpeur (R10/R11)', () => {
   })
 })
 
-describe('Formatage du temps (R13)', () => {
+describe('spec #10 — Formatage du temps (R13)', () => {
   it('formate un temps en secondes au millième', () => {
     expect(formaterTempsVitesse(8.123)).toBe('8,123 s')
     expect(formaterTempsVitesse(8.4)).toBe('8,400 s')
@@ -106,7 +106,7 @@ const ech = (
   decrement = 0,
 ): EchelonBareme => ({ rangMin, rangMax, points, decrement })
 
-describe('Validation d’un jeu d’échelons de barème (R47/R48)', () => {
+describe('spec #3 — Validation d’un jeu d’échelons de barème (R47/R48)', () => {
   it('accepte le barème enfant nominal et le renvoie trié (R48)', () => {
     // Étant donné le barème enfant (§ Matin) donné en désordre
     const desordre = [ech(11, null, 9), ech(1, 5, 15, 1), ech(6, 10, 10)]

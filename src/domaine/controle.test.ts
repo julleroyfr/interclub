@@ -27,7 +27,7 @@ function ligne(p: Partial<LigneControle> & Pick<LigneControle, 'nom' | 'prenom'>
 
 const cochee = { controleLe: '2026-03-14T18:42:00Z', controlePar: 'Julien L.' }
 
-describe('disponibilité de l’écran selon la phase (R2)', () => {
+describe('spec #16 — disponibilité de l’écran selon la phase (R2)', () => {
   it('④ clôture : contrôle (coches modifiables) (R2)', () => {
     expect(modeControle('cloture')).toBe('controle')
   })
@@ -43,7 +43,7 @@ describe('disponibilité de l’écran selon la phase (R2)', () => {
   })
 })
 
-describe('écriture d’une coche selon la phase (R13)', () => {
+describe('spec #16 — écriture d’une coche selon la phase (R13)', () => {
   it('autorisée uniquement en ④ clôture (R13)', () => {
     expect(peutCocher('cloture')).toBe(true)
   })
@@ -56,7 +56,7 @@ describe('écriture d’une coche selon la phase (R13)', () => {
   })
 })
 
-describe('issue affichée, sans points (R8)', () => {
+describe('spec #16 — issue affichée, sans points (R8)', () => {
   it('voie : libellés lisibles de chaque issue (R8)', () => {
     expect(libelleIssueVoie('top')).toBe('Top')
     expect(libelleIssueVoie('prise_valorisee')).toBe('Prise valorisée')
@@ -81,7 +81,7 @@ describe('issue affichée, sans points (R8)', () => {
   })
 })
 
-describe('tri des lignes (R7)', () => {
+describe('spec #16 — tri des lignes (R7)', () => {
   it('trie par nom puis prénom, en ordre alphabétique français (R7)', () => {
     const lignes = [
       ligne({ nom: 'Martin', prenom: 'Léo' }),
@@ -104,7 +104,7 @@ describe('tri des lignes (R7)', () => {
   })
 })
 
-describe('filtres d’affichage (R9)', () => {
+describe('spec #16 — filtres d’affichage (R9)', () => {
   const lignes = [
     ligne({ nom: 'Lefèvre', prenom: 'Tom' }),
     ligne({ nom: 'Garcia', prenom: 'Inès', ...cochee }),
@@ -146,7 +146,7 @@ describe('filtres d’affichage (R9)', () => {
   })
 })
 
-describe('progression du contrôle d’un support (R5)', () => {
+describe('spec #16 — progression du contrôle d’un support (R5)', () => {
   it('compte les lignes cochées sur le total (R5)', () => {
     const p = progression([
       ligne({ nom: 'A', prenom: 'a', ...cochee }),
@@ -171,7 +171,7 @@ describe('progression du contrôle d’un support (R5)', () => {
   })
 })
 
-describe('progression globale de la rencontre (R3)', () => {
+describe('spec #16 — progression globale de la rencontre (R3)', () => {
   it('additionne les progressions de tous les supports (R3)', () => {
     const p = progressionGlobale([
       [ligne({ nom: 'A', prenom: 'a', ...cochee }), ligne({ nom: 'B', prenom: 'b' })],
@@ -186,7 +186,7 @@ describe('progression globale de la rencontre (R3)', () => {
   })
 })
 
-describe('auteur affiché d’une coche (R11)', () => {
+describe('spec #16 — auteur affiché d’une coche (R11)', () => {
   it('nom court = partie de l’email avant « @ » (R11)', () => {
     expect(nomCourtAuteur('julien.leroy@club.fr')).toBe('julien.leroy')
   })

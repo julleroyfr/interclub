@@ -14,7 +14,7 @@ import {
 const CLUB_A = 'club-a'
 const CLUB_B = 'club-b'
 
-describe("Éligibilité à l'export (R1–R5)", () => {
+describe("spec #15 — Éligibilité à l'export (R1–R5)", () => {
   const engages = [CLUB_A]
 
   it("l'admin peut exporter une rencontre en ⑤ (R3)", () => {
@@ -61,7 +61,7 @@ describe("Éligibilité à l'export (R1–R5)", () => {
   )
 })
 
-describe('Nom du fichier (R9)', () => {
+describe('spec #15 — Nom du fichier (R9)', () => {
   it('suit le motif classement-<date>-<categorie>.pdf', () => {
     expect(nomFichierExport('2026-10-12', 'ado')).toBe('classement-2026-10-12-ado.pdf')
     expect(nomFichierExport('2026-11-03', 'enfant')).toBe('classement-2026-11-03-enfant.pdf')
@@ -93,7 +93,7 @@ const source = (surcharge: Partial<SourceExport> = {}): SourceExport => ({
 // 13 octobre 2026, 07:42 UTC = 09:42 à Paris (heure d'été).
 const GENERE_LE = new Date('2026-10-13T07:42:00Z')
 
-describe('En-tête du document (R10)', () => {
+describe('spec #15 — En-tête du document (R10)', () => {
   const doc = construireDocumentExport(source(), GENERE_LE)
 
   it('porte le titre « Classement officiel »', () => {
@@ -129,7 +129,7 @@ describe('En-tête du document (R10)', () => {
   })
 })
 
-describe('Sections (R11–R16)', () => {
+describe('spec #15 — Sections (R11–R16)', () => {
   const doc = construireDocumentExport(source(), GENERE_LE)
 
   it('contient quatre sections dans l’ordre Filles, Garçons, Équipes, Clubs (R11)', () => {

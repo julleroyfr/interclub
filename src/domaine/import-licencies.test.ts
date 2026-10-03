@@ -23,7 +23,7 @@ function ligne(
   return { ligne: numero, cellules: [nom, prenom, dateNaissance, sexe, licence, structure] }
 }
 
-describe('année de référence & seuil d’âge (R6, R7)', () => {
+describe('spec #13 — année de référence & seuil d’âge (R6, R7)', () => {
   it('année de référence par défaut = année de fin de la saison courante = anneeSaison + 1 (R6)', () => {
     // 2026-09-25 → saison 2026 (2026–2027) → référence 2027
     expect(anneeReferenceParDefaut('2026-09-25')).toBe(2027)
@@ -38,7 +38,7 @@ describe('année de référence & seuil d’âge (R6, R7)', () => {
   })
 })
 
-describe('conversion du sexe (R9)', () => {
+describe('spec #13 — conversion du sexe (R9)', () => {
   it('convertit « Homme » en « H » et « Femme » en « F »', () => {
     expect(convertirSexe('Homme')).toBe('H')
     expect(convertirSexe('Femme')).toBe('F')
@@ -55,7 +55,7 @@ describe('conversion du sexe (R9)', () => {
   })
 })
 
-describe('extraction de l’année depuis JJ/MM/AAAA (R9)', () => {
+describe('spec #13 — extraction de l’année depuis JJ/MM/AAAA (R9)', () => {
   it('extrait l’année d’une date valide', () => {
     expect(anneeDepuisDateFr('08/03/1978')).toBe(1978)
     expect(anneeDepuisDateFr('29/03/2008')).toBe(2008)
@@ -78,7 +78,7 @@ describe('extraction de l’année depuis JJ/MM/AAAA (R9)', () => {
   })
 })
 
-describe('analyse de l’import (R7, R8, R9, R10, R14)', () => {
+describe('spec #13 — analyse de l’import (R7, R8, R9, R10, R14)', () => {
   it('retient une ligne valide et éligible, normalisée (R9)', () => {
     const res = analyserImport(
       [ligne(3, '  AARNINK ', 'Naoki', '14/08/2010', 'Homme', '477725', 'S.A.G.C.  ESCALADE')],

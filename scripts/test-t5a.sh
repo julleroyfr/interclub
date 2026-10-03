@@ -73,9 +73,16 @@ TS=$(token sansmapping@test.local "$MDP")
 n=$(compte_get "$TC" | nb_lignes)
 if [ "$n" = "1" ]; then ok "CT-05 coach voit 1 ligne (la sienne)"; else ko "CT-05 coach voit $n ligne(s) (attendu 1)"; fi
 
-# CT-06 — l'admin lit tous les comptes
+# CT-06 — l'admin lit TOUS les comptes : comparé au nombre réel en base (le seed
+# et les suites E2E en ajoutent ; un nombre figé rendait le test fragile).
+attendu=$(docker exec "${SUPABASE_DB_CONTAINER:-supabase_db_interclub}" psql -U postgres -tAc \
+  "select count(*) from interclub.compte;" 2>/dev/null | tr -d '[:space:]')
 n=$(compte_get "$TA" | nb_lignes)
-if [ "$n" = "2" ]; then ok "CT-06 admin voit 2 lignes"; else ko "CT-06 admin voit $n ligne(s) (attendu 2)"; fi
+if [ -n "$attendu" ] && [ "$n" = "$attendu" ]; then
+  ok "CT-06 admin voit les $n comptes"
+else
+  ko "CT-06 admin voit $n ligne(s) (attendu ${attendu:-?}, total en base)"
+fi
 
 # CT-04 — compte sans mapping : aucune ligne (rôle nul, R5)
 n=$(compte_get "$TS" | nb_lignes)

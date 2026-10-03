@@ -11,7 +11,7 @@ import {
 } from './resultat'
 import { voiesDuGroupeDepart } from './engagement'
 
-describe('issues de voie saisissables selon catégorie/type (R10/R12)', () => {
+describe('spec #6 — issues de voie saisissables selon catégorie/type (R10/R12)', () => {
   it('enfant tête : Top, Prise valorisée, Échec (R10)', () => {
     expect(issuesVoieSaisissables('enfant', 'tete')).toEqual([
       'top',
@@ -32,7 +32,7 @@ describe('issues de voie saisissables selon catégorie/type (R10/R12)', () => {
   })
 })
 
-describe("validation d'une issue de voie saisie (R10/R12)", () => {
+describe("spec #6 — validation d'une issue de voie saisie (R10/R12)", () => {
   it('refuse la prise valorisée sur une voie moulinette (R10)', () => {
     expect(() => validerIssueVoie('prise_valorisee', 'enfant', 'moulinette')).toThrow(
       ResultatInvalideError,
@@ -55,7 +55,7 @@ describe("validation d'une issue de voie saisie (R10/R12)", () => {
   })
 })
 
-describe("validation d'un résultat de bloc (R16)", () => {
+describe("spec #6 — validation d'un résultat de bloc (R16)", () => {
   const paliers = ['p1', 'p2', 'p3']
   it('accepte un palier appartenant au bloc (R16)', () => {
     expect(() =>
@@ -84,7 +84,7 @@ describe("validation d'un résultat de bloc (R16)", () => {
   })
 })
 
-describe("ajout d'une voie ado — unicité et plafond (R11/R13/R14)", () => {
+describe("spec #6 — ajout d'une voie ado — unicité et plafond (R11/R13/R14)", () => {
   it('plafond de 6 voies : refuse la 7ᵉ (R14)', () => {
     const six = ['v1', 'v2', 'v3', 'v4', 'v5', 'v6']
     expect(() =>
@@ -105,7 +105,7 @@ describe("ajout d'une voie ado — unicité et plafond (R11/R13/R14)", () => {
   })
 })
 
-describe('NP automatique à la clôture (R9/R18)', () => {
+describe('spec #6 — NP automatique à la clôture (R9/R18)', () => {
   it('enfant : passe en NP les voies attendues (3 du groupe) non saisies (R9/R18)', () => {
     // Groupe M2 → M2·M3·M4 : 3 voies attendues (R9, cf. R20 spec #5)
     const attendus = voiesDuGroupeDepart('M2')
@@ -122,7 +122,7 @@ describe('NP automatique à la clôture (R9/R18)', () => {
 // R21bis (rév. 2026-10-02) : avant la ③, la structure (voies/blocs) n'est pas
 // lisible — message unique, ni « groupe à définir » ni compteurs ; R9 : « groupe
 // de départ à définir » réservé à un enfant réellement sans groupe, dès la ③.
-describe('Affichage des voies et blocs selon la phase (R21bis, R9)', () => {
+describe('spec #6 — Affichage des voies et blocs selon la phase (R21bis, R9)', () => {
   it('avant la ③, annonce la structure à venir — même pour un enfant avec groupe (R21bis)', () => {
     for (const phase of ['pre_competition', 'preparation'] as const) {
       expect(affichageVoiesBlocs(phase, 'enfant', 'T1')).toBe('avant_competition')

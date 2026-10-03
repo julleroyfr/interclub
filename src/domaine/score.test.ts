@@ -19,7 +19,7 @@ import {
 // R1 : le score de voie découle de l'issue enregistrée (spec #6) et du barème de
 // la voie (spec #3 R38). Un champ de points absent (null) → 0.
 
-describe('Score de voie (R1)', () => {
+describe('spec #7 — Score de voie (R1)', () => {
   // Barème type d'une voie tête enfant (T3 « Matin ») : voie entière 7, prise
   // valorisée 4 ; pas de zones (enfant).
   const enfantTete: BaremeVoie = {
@@ -70,7 +70,7 @@ describe('Score de voie (R1)', () => {
 
 // R2 : le score de bloc vaut les points du palier atteint (issue `palier` →
 // points du `bloc_palier` référencé, spec #3 R39) ; `echec` et `np` → 0.
-describe('Score de bloc (R2)', () => {
+describe('spec #7 — Score de bloc (R2)', () => {
   it('palier atteint → points du palier (R2)', () => {
     expect(scoreBloc('palier', 30)).toBe(30)
   })
@@ -87,7 +87,7 @@ describe('Score de bloc (R2)', () => {
 
 // R3 : le score individuel est la somme de tous les scores de voie et de bloc.
 // R4 : une voie / un bloc sans résultat compte 0 (le total évolue à chaque saisie).
-describe('Score individuel (R3/R4)', () => {
+describe('spec #7 — Score individuel (R3/R4)', () => {
   const bareme = (points: number): BaremeVoie => ({
     points,
     pointsPriseValorisee: Math.ceil(points / 2),
@@ -146,7 +146,7 @@ describe('Score individuel (R3/R4)', () => {
 
 // R5 : le score d'une équipe est la somme des scores individuels de tous ses
 // grimpeurs composés (y compris un grimpeur prêté rattaché à cette équipe, R7).
-describe('Score d’équipe (R5)', () => {
+describe('spec #7 — Score d’équipe (R5)', () => {
   it('somme les scores individuels des membres (R5)', () => {
     const scores = new Map<string, number>([
       ['g1', 10],
@@ -169,7 +169,7 @@ describe('Score d’équipe (R5)', () => {
 // R6 : le score d'un club est la somme des scores de toutes ses équipes engagées.
 // R7 : un grimpeur prêté compte pour l'équipe / le club d'ACCUEIL (où il est
 // composé), pas pour son club d'origine (côté équipe/club).
-describe('Score de club (R6) et grimpeur prêté (R7)', () => {
+describe('spec #7 — Score de club (R6) et grimpeur prêté (R7)', () => {
   it('somme les scores de toutes les équipes du club (R6)', () => {
     // Spec #7, scénario « équipe et club » : Club A aligne A1 et A2.
     const scores = new Map<string, number>([
@@ -224,7 +224,7 @@ describe('Score de club (R6) et grimpeur prêté (R7)', () => {
 // nombre d'ex æquo (classement standard 1, 2, 2, 4).
 // R9 : à score égal, l'ordre d'affichage est déterministe (ici par nom), mais le
 // rang reste identique pour les ex æquo.
-describe('Moteur de classement — rangs et ordre (R8/R9)', () => {
+describe('spec #7 — Moteur de classement — rangs et ordre (R8/R9)', () => {
   type Item = { nom: string; prenom: string; score: number }
   const item = (nom: string, score: number, prenom = ''): Item => ({
     nom,
@@ -287,7 +287,7 @@ describe('Moteur de classement — rangs et ordre (R8/R9)', () => {
 // R8b : le classement individuel est établi séparément par sexe (deux classements
 // Filles / Garçons, rangs repartant de 1 dans chacun). R7 (individuel) : le
 // grimpeur prêté reste rattaché à son club d'origine.
-describe('Classement individuel par sexe (R8b/R7)', () => {
+describe('spec #7 — Classement individuel par sexe (R8b/R7)', () => {
   const g = (
     grimpeurId: string,
     nom: string,

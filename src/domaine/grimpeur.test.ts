@@ -12,7 +12,7 @@ import {
 // valide/normalise nom, prenom, annee_naissance, sexe et licence avant ecriture
 // Supabase. Aucune dependance Supabase ici.
 
-describe("Saisie d'un grimpeur (R18)", () => {
+describe("spec #1 — Saisie d'un grimpeur (R18)", () => {
   const valide = {
     nom: 'Dupont',
     prenom: 'Lea',

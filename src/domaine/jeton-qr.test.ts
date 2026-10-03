@@ -12,7 +12,7 @@ import {
 // révocation et régénération. Aucune dépendance Supabase (la valeur/`actif` en base
 // et les policies RLS sont testées ailleurs : migration + cahier).
 
-describe('Création & périmètre d’un jeton (R9, R17)', () => {
+describe('spec #2 — Création & périmètre d’un jeton (R9, R17)', () => {
   it('accepte un jeton coach temporaire = un club, sans voie (R9a)', () => {
     expect(
       creerJetonQr({
@@ -112,7 +112,7 @@ describe('Création & périmètre d’un jeton (R9, R17)', () => {
   })
 })
 
-describe('Qui peut générer/révoquer un jeton (R15, R16, R20, R21)', () => {
+describe('spec #2 — Qui peut générer/révoquer un jeton (R15, R16, R20, R21)', () => {
   const jetonCoachA = { nature: 'coach_temporaire' as const, clubId: 'club-a' }
   const jetonCoachB = { nature: 'coach_temporaire' as const, clubId: 'club-b' }
   const jetonJuge = { nature: 'juge' as const, clubId: null }
@@ -146,7 +146,7 @@ describe('Qui peut générer/révoquer un jeton (R15, R16, R20, R21)', () => {
   })
 })
 
-describe('Révocation (R22) & régénération (R23)', () => {
+describe('spec #2 — Révocation (R22) & régénération (R23)', () => {
   const jeton = {
     rencontreId: 'r-1',
     nature: 'juge' as const,

@@ -9,7 +9,7 @@ import {
 // pour un coach) à un compte permanent, avant toute écriture Supabase. Reflète la
 // contrainte SQL `chk_compte_role_club`. Aucune dépendance Supabase.
 
-describe('Mapping de rôle (R1–R5)', () => {
+describe('spec #2 — Mapping de rôle (R1–R5)', () => {
   it('accepte un mapping admin sans club (R1, R3)', () => {
     // Un admin porte le rôle admin et n'a PAS de club (R3).
     expect(

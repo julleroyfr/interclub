@@ -6,7 +6,7 @@ import { normaliserNomClub, NomClubInvalideError, NOM_CLUB_MAX } from './club'
 // Supabase (la table `club.nom` est `text not null unique`). Aucune dépendance
 // Supabase ici — uniquement les invariants de saisie.
 
-describe('Nom de club (R11)', () => {
+describe('spec #1 — Nom de club (R11)', () => {
   it('normalise un nom valide en retirant les espaces de bord', () => {
     expect(normaliserNomClub('  Club A  ')).toBe('Club A')
   })

@@ -18,7 +18,7 @@ import {
 // compositions, groupe de départ). Aucune dépendance Supabase : uniquement les
 // invariants métier vérifiés avant écriture (la RLS reste la frontière ultime).
 
-describe('Nom d’équipe — normalisation (R4/R10)', () => {
+describe('spec #5 — Nom d’équipe — normalisation (R4/R10)', () => {
   it('retire les espaces de bord et réduit les espaces internes (R4)', () => {
     expect(normaliserNomEquipe('  A  1  ')).toBe('A 1')
   })
@@ -28,7 +28,7 @@ describe('Nom d’équipe — normalisation (R4/R10)', () => {
   })
 })
 
-describe('Nom d’équipe par défaut (R10bis)', () => {
+describe('spec #5 — Nom d’équipe par défaut (R10bis)', () => {
   it('propose « <club> 1 » quand le club n’a aucune équipe', () => {
     expect(nomEquipeParDefaut('Vertical', [])).toBe('Vertical 1')
   })
@@ -56,7 +56,7 @@ describe('Nom d’équipe par défaut (R10bis)', () => {
   })
 })
 
-describe('Recherche dans le roster à l’ajout (R12bis)', () => {
+describe('spec #5 — Recherche dans le roster à l’ajout (R12bis)', () => {
   const roster = [
     { id: '1', prenom: 'Ana', nom: 'Alpha' },
     { id: '2', prenom: 'Éléonore', nom: 'Dupré' },
@@ -90,7 +90,7 @@ describe('Recherche dans le roster à l’ajout (R12bis)', () => {
   })
 })
 
-describe('Groupe de départ — liste sélectionnable (R19)', () => {
+describe('spec #5 — Groupe de départ — liste sélectionnable (R19)', () => {
   it('propose l’échelle M1–M4 puis T1–T8, sans T9 ni T10', () => {
     expect(GROUPES_DEPART).toEqual([
       'M1', 'M2', 'M3', 'M4',
@@ -104,7 +104,7 @@ describe('Groupe de départ — liste sélectionnable (R19)', () => {
   })
 })
 
-describe('Groupe de départ — dérivation des 3 voies croissantes (R20)', () => {
+describe('spec #5 — Groupe de départ — dérivation des 3 voies croissantes (R20)', () => {
   it('M2 ⇒ M2, M3, M4', () => {
     expect(voiesDuGroupeDepart('M2')).toEqual(['M2', 'M3', 'M4'])
   })
@@ -133,7 +133,7 @@ describe('Groupe de départ — dérivation des 3 voies croissantes (R20)', () =
   })
 })
 
-describe('Ajout d’un grimpeur à une équipe (R13/R14/R15)', () => {
+describe('spec #5 — Ajout d’un grimpeur à une équipe (R13/R14/R15)', () => {
   const base = {
     grimpeurId: 'g-neuf',
     grimpeurClubId: 'club-A',
