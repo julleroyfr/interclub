@@ -1,5 +1,6 @@
-import { expect, test, type Browser, type Page } from '@playwright/test'
+import type { Browser, Page } from '@playwright/test'
 
+import { expect, test } from './helpers/fixtures'
 import { commeAdmin, commeCoach, commeCoachTemporaire, commeSansMapping } from './helpers/auth'
 import { JETON, RENCONTRE_PILOTE, RENCONTRE_PILOTE_DATE } from './helpers/donnees'
 import { nettoyerSessionsQr, poserDate, poserPhase } from './helpers/sql'

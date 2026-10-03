@@ -1,5 +1,6 @@
-import { expect, test, type Page } from '@playwright/test'
+import type { Page } from '@playwright/test'
 
+import { expect, test } from './helpers/fixtures'
 import { commeAdmin, commeCoach } from './helpers/auth'
 import { GRIMPEURS, JETON, RENCONTRE_PILOTE, RENCONTRE_PILOTE_DATE } from './helpers/donnees'
 import { execSql, nettoyerSessionsQr, poserDate, poserPhase, reinitialiserEngagement } from './helpers/sql'

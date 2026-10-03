@@ -18,6 +18,15 @@ convention [06 §3.1](../docs/conventions/06-cahier-de-test.md).
   `docker exec supabase_db_interclub psql …`, cf. `helpers/sql.ts`). Conteneur
   surchargeable via `SUPABASE_DB_CONTAINER`.
 
+## Filet « aucune erreur de page »
+
+Les specs importent `test`/`expect` depuis `helpers/fixtures.ts`, **pas**
+directement depuis `@playwright/test`. Une fixture automatique y fait échouer
+tout test dont une page lève une erreur non interceptée (`pageerror`), y compris
+dans les contextes ouverts par `browser.newContext()`. Chaque écran visité est
+ainsi aussi un test « la page ne plante pas » (cf. incident PGRST203 du
+2026-10-03, que CT-12 du cahier 23 ne voyait pas).
+
 ## Lancer
 
 ```bash

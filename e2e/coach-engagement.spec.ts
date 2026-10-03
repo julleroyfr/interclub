@@ -1,5 +1,6 @@
-import { expect, test, type Page } from '@playwright/test'
+import type { Page } from '@playwright/test'
 
+import { expect, test } from './helpers/fixtures'
 import { infosApi } from './helpers/api'
 import {
   commeAdmin,

@@ -1,5 +1,6 @@
-import { expect, test, type Locator, type Page } from '@playwright/test'
+import type { Locator, Page } from '@playwright/test'
 
+import { expect, test } from './helpers/fixtures'
 import { commeAdmin, commeCoach, commeCoachTemporaire } from './helpers/auth'
 import { GRIMPEURS, RENCONTRE_PILOTE, RENCONTRE_PILOTE_DATE } from './helpers/donnees'
 import { execSql, nettoyerSessionsQr, poserDate, poserPhase, reinitialiserEngagement } from './helpers/sql'

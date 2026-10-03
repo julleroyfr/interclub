@@ -1,7 +1,8 @@
 import { readFileSync } from 'node:fs'
 
-import { expect, test, type Locator, type Page } from '@playwright/test'
+import type { Locator, Page } from '@playwright/test'
 
+import { expect, test } from './helpers/fixtures'
 import { commeAdmin, commeCoach, commeSansMapping, seConnecter } from './helpers/auth'
 import { EQUIPES, GRIMPEURS, MDP, RENCONTRE_PILOTE } from './helpers/donnees'
 import { execSql, poserPhase } from './helpers/sql'
