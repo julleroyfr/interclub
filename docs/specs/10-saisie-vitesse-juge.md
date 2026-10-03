@@ -11,6 +11,12 @@
   de **R18** (le **retrait** d'un grimpeur **supprime** son résultat de vitesse) et
   **R18bis** (un **changement d'équipe** le **conserve**, spec #3 R41d) ; cycle de
   vie, cas limites et modèle de données alignés.
+  **Rév. 2026-10-03 — saisie hors ligne (validée le 2026-10-03)** : **R4**
+  complétée (refus « saisie plus récente » et « compétition clôturée »), ajout de
+  **R11bis** (heure de saisie, la saisie la plus récente l'emporte) et de
+  **R14bis** (affichage immédiat, états en attente / synchronisée / rejetée) ;
+  « Modèle de données » : colonne `saisi_le` — voir
+  [spec #17](17-saisie-hors-ligne.md).
 - **Sources** :
   - **Spec #1 — Rôles & autorisations** (`01-roles-et-autorisations.md`), vérité
     pour « qui peut faire quoi » : le **juge** est affecté par l'admin à
@@ -123,7 +129,12 @@ voie/bloc (authentifiés dès la ③, public à la ⑤ ; spec #1 R8).
   (`peut_ecrire_temps_vitesse`) reste la **frontière ultime**.
 - **R4.** Une violation de contrainte en base (unicité, forme d'issue invalide,
   temps non positif, clé étrangère, refus RLS) est **traduite en message lisible**
-  (jamais une erreur technique brute) (aligné spec #6 R4).
+  (jamais une erreur technique brute) (aligné spec #6 R4). Sont notamment
+  traduits *(rév. 2026-10-03, spec #17)* : le refus d'une saisie **plus
+  ancienne** que le résultat existant (*« une saisie plus récente existe déjà »*,
+  R11bis) et le refus d'une saisie arrivée **après la clôture** (*« La compétition
+  est clôturée : cette saisie n'a pas été enregistrée. Signalez-la à
+  l'organisateur. »*, spec #17 R20).
 - **R5.** Le juge ne peut effectuer **aucune autre action** que la saisie définie
   ici (aucun CRUD club, équipe, grimpeur, rencontre, ni saisie de voie/bloc) —
   spec #1 R30/R32.
@@ -160,6 +171,12 @@ voie/bloc (authentifiés dès la ③, public à la ⑤ ; spec #1 R8).
   précédent (correction d'une erreur de saisie), elle n'en **ajoute pas** un
   second (décision produit 2026-09-22). Le remplacement peut changer de forme
   (ex. « chute » corrigée en un temps, ou l'inverse).
+- **R11bis.** *(Rév. 2026-10-03, spec #17.)* Chaque résultat de vitesse porte son
+  **heure de saisie**. Une écriture dont l'heure de saisie est **strictement
+  antérieure** à celle du résultat existant est **refusée** : la saisie la plus
+  récente l'emporte, quel que soit l'ordre d'arrivée au serveur (spec #17
+  R9–R11). Le mécanisme de saisie hors ligne (file d'attente sur l'appareil,
+  synchronisation) est défini par la **spec #17**.
 
 ### Liste et retour IHM
 
@@ -177,6 +194,12 @@ voie/bloc (authentifiés dès la ③, public à la ⑤ ; spec #1 R8).
   **compteur Filles** (saisis / total) **et** un **compteur Garçons** (saisis /
   total) — cohérent avec le regroupement et le classement par sexe (R12 ; aligné
   spec #6 R20).
+- **R14bis.** *(Rév. 2026-10-03, spec #17.)* Une saisie est affichée **dès sa
+  validation**, avant la réponse du serveur, dans l'état **en attente** ; elle
+  passe **synchronisée** une fois enregistrée, ou **rejetée** en cas de refus
+  (l'écran revient alors à la valeur du serveur). Les compteurs Filles / Garçons
+  (R14) et le filtre « à saisir » (R14b) tiennent compte des saisies en attente.
+  Détail : spec #17 R22–R28.
 - **R14b.** L'écran est dimensionné pour un **grand volume** : une épreuve peut
   compter **plusieurs dizaines de compétiteurs par sexe** (ordre de grandeur : au
   moins 50). Il doit donc rester **exploitable rapidement** — au minimum une
@@ -333,6 +356,10 @@ erDiagram
     'vitesse'`) ; à **doubler d'un `check`/trigger** si nécessaire.
   - **traçabilité de l'auteur** (aligné spec #9) : `auteur_utilisateur_id uuid
     null`, `auteur_role text null check (auteur_role in ('juge','admin'))`.
+  - **heure de saisie** (R11bis, rév. 2026-10-03) : `saisi_le timestamptz not
+    null default now()` ; un trigger refuse une écriture plus ancienne que la
+    ligne existante et ramène une heure future à `now()` (spec #17 « Contraintes
+    de données »).
 - **Résolution du contexte juge** : une **RPC** `contexte_juge()` (SECURITY
   DEFINER, analogue à `contexte_coach_temporaire`, migration `202609011500`)
   renvoie, pour la **session juge active** de l'utilisateur courant (jeton juge,

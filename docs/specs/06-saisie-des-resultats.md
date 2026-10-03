@@ -10,7 +10,12 @@
   **rév. 2026-10-03 (validée le 2026-10-03)** : **R14** — le plafond de 6 voies ado
   est **garanti par la base** quel que soit le chemin d'écriture (décision D-A de
   la [revue du 2026-10-03](../revues/2026-10-03-plan-action.md)) ; « Modèle de
-  données » et « Cas limites » alignés
+  données » et « Cas limites » alignés ;
+  **rév. 2026-10-03 — saisie hors ligne (validée le 2026-10-03)** : **R4**
+  complétée (refus « saisie plus récente » et « compétition clôturée »), ajout de
+  **R20bis** (affichage immédiat, états en attente / synchronisée / rejetée) et de
+  **R13bis** (heure de saisie, la saisie la plus récente l'emporte) ; « Modèle de
+  données » : colonne `saisi_le` — voir [spec #17](17-saisie-hors-ligne.md)
 - **Sources** :
   - **Spec #1 — Rôles & autorisations** (`01-roles-et-autorisations.md`), vérité
     pour « qui peut faire quoi » : un coach **saisit et modifie les résultats des
@@ -139,7 +144,11 @@ coach se ferme et l'**admin** vérifie/corrige ; la **⑤ résultats publics**
   **sans écriture** (aligné spec #5 R3).
 - **R4.** Une violation de contrainte en base (unicité, valeur d'issue invalide,
   clé étrangère) est **traduite en message lisible** (jamais une erreur technique
-  brute) (aligné spec #5 R5).
+  brute) (aligné spec #5 R5). Sont notamment traduits *(rév. 2026-10-03, spec
+  #17)* : le refus d'une saisie **plus ancienne** que le résultat existant
+  (*« une saisie plus récente existe déjà »*, R13bis) et le refus d'une saisie
+  arrivée **après la clôture** (*« La compétition est clôturée : cette saisie n'a
+  pas été enregistrée. Signalez-la à l'organisateur. »*, spec #17 R20).
 
 ### Fenêtre temporelle (phase)
 
@@ -190,6 +199,13 @@ coach se ferme et l'**admin** vérifie/corrige ; la **⑤ résultats publics**
   (unicité `(voie, grimpeur)`, garantie en base). Une seconde saisie sur la même
   voie pour le même grimpeur **remplace** la première (correction), elle n'en
   **ajoute pas** une seconde.
+- **R13bis.** *(Rév. 2026-10-03, spec #17.)* Chaque résultat de voie ou de bloc
+  porte son **heure de saisie**. Une écriture (saisie, correction ou **retrait**
+  d'un résultat de voie) dont l'heure de saisie est **strictement antérieure** à
+  celle du résultat existant est **refusée** : la saisie la plus récente
+  l'emporte, quel que soit l'ordre d'arrivée au serveur (spec #17 R9–R11). Le
+  mécanisme de saisie hors ligne (file d'attente sur l'appareil, synchronisation)
+  est défini par la **spec #17**.
 - **R14.** *(Ado)* Le nombre de voies réalisées par un grimpeur est **plafonné à 6**
   (règlement). Toute saisie d'une **7ᵉ** voie pour un grimpeur est **refusée** avec
   un message explicite. Le plafond est **garanti par la base** : il tient quel que
@@ -240,6 +256,11 @@ coach se ferme et l'**admin** vérifie/corrige ; la **⑤ résultats publics**
   (revalidation) : l'issue enregistrée est visible immédiatement, le compteur de
   progression est actualisé (ex. enfant *« 2/3 voies saisies »*, ado *« n/6 »*,
   blocs *« 1/2 »*) (aligné spec #5 R18).
+- **R20bis.** *(Rév. 2026-10-03, spec #17.)* Une saisie est affichée **dès sa
+  validation**, avant la réponse du serveur, dans l'état **en attente** ; elle
+  passe **synchronisée** une fois enregistrée, ou **rejetée** en cas de refus
+  (l'écran revient alors à la valeur du serveur). Les compteurs de progression
+  (R20) tiennent compte des saisies en attente. Détail : spec #17 R22–R28.
 - **R21.** L'écran présente la saisie **par grimpeur** puis **par épreuve** (voies,
   blocs) ; pour chaque voie/bloc attendu, il affiche l'issue courante ou l'état
   « à saisir ».
@@ -416,6 +437,10 @@ erDiagram
   - `unique (bloc_id, grimpeur_id)` (R17) ;
   - le `palier_id` doit référencer un palier **du bloc** (`bloc_palier.bloc_id =
     resultat_bloc.bloc_id`) — garanti par trigger/`check`.
+- **Heure de saisie** (R13bis, rév. 2026-10-03) : `saisi_le timestamptz not null
+  default now()` sur `resultat_voie` et `resultat_bloc` ; un trigger refuse une
+  écriture plus ancienne que la ligne existante et ramène une heure future à
+  `now()` (spec #17 « Contraintes de données »).
 - **Plafond 6 voies ado** (R14) : **garanti en base** (rév. 2026-10-03) — un
   **trigger** sur `resultat_voie` refuse l'**insertion** d'un résultat qui
   porterait à **plus de 6** le nombre de `resultat_voie` du grimpeur sur
