@@ -11,20 +11,21 @@ Statuts : ✅ fait · 🔄 en cours · ⏳ en attente (à faire) · ❓ décisio
 
 Dernière mise à jour : 2026-10-03.
 
-## Décisions à prendre
+## Décisions
 
-Ces points bloquent certains lots. Ils relèvent de la **règle de changement** :
-validation explicite avant de toucher une spec.
+Ces points relèvent de la **règle de changement** : validation explicite avant
+de toucher une spec. **Toutes tranchées le 2026-10-03** par julleroyfr ; chaque
+changement de spec suit ensuite l'ordre spec → tests → code.
 
-| # | Décision | Constat | Bloque | Statut |
-| --- | --- | --- | --- | --- |
-| D-A | Passer le plafond de 6 voies ado (spec #6 R14) de « règle applicative » à une garantie en base (trigger) : la spec le décrit explicitement comme applicatif | M7 | Lot 4 | ❓ |
-| D-B | Que deviennent les temps de vitesse d'un grimpeur retiré de la composition (purge, ou exclusion du rang) ? Comportement non décrit par la spec #10 / #7 | M3 | Lot 4 | ❓ |
-| D-C | `service_role` en lecture transverse : nouvel ADR + garde dans chaque loader, ou retour aux lectures RLS | M8 | Lot 5 | ❓ |
-| D-D | Une session anonyme sans QR doit-elle lire les tables « `using (true)` » / « ③+ » ? (helper `est_acteur_identifie()`) | m2 | Lot 6 | ❓ |
-| D-E | Un coach peut-il réactiver un jeton QR révoqué par l'admin ? (spec #2 R22/R23) | m4 | Lot 6 | ❓ |
-| D-F | Pages `/design-system` et `/templates/*` : garde, exclusion en prod, ou exception tracée dans la spec #12 | m1 | Lot 6 | ❓ |
-| D-G | Écran d'erreur technique (`error.tsx`) : aucune page d'erreur dans l'app ; une lecture en échec affiche la page générique de Next. Nouvel écran = spec #12 à compléter | M6 (lot 2) | — | ❓ |
+| # | Question | Décision (2026-10-03) | Constat | Lot | Spec touchée |
+| --- | --- | --- | --- | --- | --- |
+| D-A | Plafond de 6 voies ado (spec #6 R14) : « règle applicative » ou garantie en base ? | ✅ **Trigger SQL** : la base refuse une 7ᵉ voie par grimpeur et épreuve ado (en plus de la Server Action) | M7 | 4 | #6 (modèle, R14) |
+| D-B | Temps de vitesse d'un grimpeur retiré de la composition ? | ✅ **Purger** : retirer un grimpeur supprime ses temps de vitesse de la rencontre (trigger) ; la saisie reste refusée pour un non-engagé (#10 R7) | M3 | 4 | #10 (et #7 si besoin) |
+| D-C | `service_role` en lecture transverse ? | ✅ **ADR 0005 + garde dans chaque loader** `service_role` (pas de retour aux lectures RLS) | M8 | 5 | — (ADR) |
+| D-D | Session anonyme sans QR : lit-elle clubs, rencontres, résultats ③+ ? | ✅ **Fermer** : helper `est_acteur_identifie()` (compte mappé OU session QR active) dans les policies de lecture | m2 | 6 | #1 (matrice) / #12 à vérifier |
+| D-E | Un coach peut-il réactiver un jeton QR révoqué ? | ✅ **Révocation définitive** : pour le coach, une mise à jour ne peut que révoquer (`actif` true → false), ni réactiver ni changer de rencontre ; rétablir = régénérer (R23) | m4 | 6 | aucune (application de #2 R20–R23) |
+| D-F | Pages `/design-system` et `/templates/*` publiques ? | ✅ **Exclure de la prod** : `notFound()` hors développement local (invisibles en recette et en prod) | m1 | 6 | #12 (exception de routage) |
+| D-G | Écran d'erreur technique (`error.tsx`) ? | ✅ **Oui, écran sobre** : message en français + « Réessayer » + lien vers l'accueil (`error.tsx` + `global-error.tsx`) | M6 | 6 | #12 (nouvelle règle) |
 
 ## Ordre des lots
 
@@ -34,9 +35,9 @@ flowchart TD
   L0 --> L2[Lot 2 — Erreurs Supabase<br/>M5, M6, m8]
   L0 --> L3[Lot 3 — Transitions de phase<br/>M4]
   L1 --> L4[Lot 4 — Intégrité vitesse & plafond ado<br/>M3, M7]
-  DA{{D-A / D-B}} --> L4
-  DC{{D-C}} --> L5[Lot 5 — service_role / ADR<br/>M8]
-  DDEF{{D-D / D-E / D-F}} --> L6[Lot 6 — Mineurs<br/>m1–m9]
+  DA{{D-A / D-B ✅}} --> L4
+  DC{{D-C ✅}} --> L5[Lot 5 — service_role / ADR<br/>M8]
+  DDEF{{D-D / D-E / D-F / D-G ✅}} --> L6[Lot 6 — Mineurs<br/>m1–m9]
   L1 --> L7[Lot 7 — Outillage & traçabilité<br/>suggestions]
   L2 --> L6
 ```
@@ -181,50 +182,56 @@ changent.
 
 ## Lot 4 — Intégrité vitesse et plafond ado (M3, M7)
 
-🚫 Bloqué par D-A et D-B (changement de spec).
+Débloqué : D-A (trigger) et D-B (purge) tranchés le 2026-10-03. Révision des
+specs #6 et #10 d'abord.
 
 ### M3 — Temps de vitesse bornés aux grimpeurs engagés
 
-- [ ] 🚫 Mettre à jour la spec #10 (et #7 si besoin) selon D-B.
-- [ ] 🚫 Migration : `peut_ecrire_temps_vitesse` exige que le grimpeur soit
+- [ ] ⏳ Réviser la spec #10 (et #7 si besoin) : retrait d'un grimpeur ⇒ ses
+  temps de vitesse sont supprimés (D-B), rang et points recalculés.
+- [ ] ⏳ Migration : `peut_ecrire_temps_vitesse` exige que le grimpeur soit
   composé dans la rencontre.
-- [ ] 🚫 Migration : `recalculer_points_vitesse` filtre par `composition`.
-- [ ] 🚫 Migration : traitement des temps à la suppression d'une composition
-  (selon D-B).
-- [ ] 🚫 Cahier 20/21 : cas « grimpeur retiré après chronométrage ».
+- [ ] ⏳ Migration : trigger sur `composition` (suppression) qui purge les
+  `temps_vitesse` du grimpeur pour la rencontre (le trigger existant recalcule
+  `points_vitesse`).
+- [ ] ⏳ Cahier 20/21 : cas « grimpeur retiré après chronométrage ».
 
 ### M7 — Plafond de 6 voies ado garanti en base
 
-- [ ] 🚫 Mettre à jour la spec #6 (section modèle de données, R14) selon D-A.
-- [ ] 🚫 Migration : trigger `count(*) < 6` par grimpeur et épreuve ado.
-- [ ] ⏳ `src/lib/coach/resultats-actions.ts:174` : vérifier `error` sur
-  `existantes` (indépendant de D-A, peut partir avec le lot 2).
-- [ ] 🚫 Cahier 17 : cas « 7ᵉ voie par upsert direct → refus ».
+- [ ] ⏳ Réviser la spec #6 (section modèle de données, R14) : plafond garanti
+  en base par trigger, en plus de la Server Action (D-A).
+- [ ] ⏳ Migration : trigger `count(*) < 6` par grimpeur et épreuve ado.
+- [x] ✅ `src/lib/coach/resultats-actions.ts` : `error` vérifiée sur
+  `existantes` (fait au lot 2).
+- [ ] ⏳ Cahier 17 : cas « 7ᵉ voie par upsert direct → refus ».
 
 ### Livraison
 
-- [ ] 🚫 Validation locale, `JOURNAL.md`, application manuelle en recette,
+- [ ] ⏳ Validation locale, `JOURNAL.md`, application manuelle en recette,
   déroulage des cahiers.
 
 ## Lot 5 — `service_role` et ADR (M8)
 
-🚫 Bloqué par D-C.
+Débloqué : D-C tranché le 2026-10-03 (option a).
 
-- [ ] 🚫 Option (a) : rédiger l'ADR `0005-…` actant la lecture transverse via
+- [ ] ⏳ Rédiger l'ADR `0005-…` actant la lecture transverse via
   `service_role`, et ajouter une garde (`exigerAdmin` ou contexte) dans chacun
   des 12 loaders concernés.
-- [ ] 🚫 Option (b) : basculer les loaders concernés sur le client RLS et
-  vérifier les policies « ③+ ».
+- ~~Option (b) : retour aux lectures RLS~~ — écartée (D-C).
 - [ ] ⏳ Mettre à jour le commentaire périmé de `src/lib/supabase/admin.ts`.
 
 ## Lot 6 — Mineurs (m1–m9)
 
-- [ ] 🚫 m1 — Pages `/design-system` et `/templates/*` (selon D-F).
-- [ ] 🚫 m2 — Helper `est_acteur_identifie()` dans les policies de lecture
-  (selon D-D ; migration + cahier).
+- [ ] ⏳ m1 — Pages `/design-system` et `/templates/*` : `notFound()` hors
+  développement local (D-F) ; exception tracée dans la spec #12.
+- [ ] ⏳ m2 — Helper `est_acteur_identifie()` dans les policies de lecture
+  (D-D ; vérifier la matrice de la spec #1 ; migration + cahier).
 - [ ] ⏳ m3 — Redirection ouverte : n'accepter que les chemins relatifs
   commençant par `/` (`jetons/actions.ts:34,41`, `invitations/actions.ts:83,87`).
-- [ ] 🚫 m4 — Policy de mise à jour de `jeton_qr` (selon D-E).
+- [ ] ⏳ m4 — Policy de mise à jour de `jeton_qr` : pour le coach, révocation
+  seule (D-E) ; migration + cahier 04.
+- [ ] ⏳ D-G — Écran d'erreur technique : règle ajoutée à la spec #12, puis
+  `error.tsx` + `global-error.tsx` (design system), cas au cahier 23.
 - [ ] ⏳ m5 — `/scan` : ne pas ouvrir de session anonyme si l'utilisateur est
   déjà connecté (à vérifier contre la spec #2 avant de coder).
 - [ ] ⏳ m6 — `inscrireCoach` : distinguer les causes d'erreur de `createUser`.
