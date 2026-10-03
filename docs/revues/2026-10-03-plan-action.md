@@ -259,13 +259,13 @@ Débloqué : D-C tranché le 2026-10-03 (option a).
 - [x] ✅ m2 / D-D — spec #1 « acteur identifié » + R8 (validée le 2026-10-03) ;
   migration `202610031400_lecture_acteur_identifie` ; cahier 28 CT-10
   automatisé ; scripts `test-resultats` / `test-t6` adaptés (23/23 chacun).
-  Reste : application en recette.
+  Appliquée en recette le 2026-10-03.
 - [x] ✅ m3 — Redirection ouverte : `cheminDeRetour` (`src/lib/chemin-retour.ts`,
   6 tests) n'accepte qu'un chemin interne (pas `//`, `/\`, schéma ni URL).
 - [x] ✅ m4 / D-E — migration `202610031300_jeton_qr_revocation_definitive` :
   update limité à `actif`, réactivation interdite à un non-admin ; cahier 04
-  CT-11 automatisé (`npm run test:cahier:securite`). Reste : application en
-  recette.
+  CT-11 automatisé (`npm run test:cahier:securite`). Appliquée en recette le
+  2026-10-03.
 - [x] ✅ D-G — spec #12 R25 (validée le 2026-10-03) ; composant `EcranErreur`
   (3 tests de composant), `app/error.tsx` (`unstable_retry`, Next 16) et
   `app/global-error.tsx` ; cahier 23 CT-14 automatisé
