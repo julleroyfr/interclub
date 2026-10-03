@@ -103,7 +103,8 @@ Aucune spec ne change : on impose en base ce que les specs exigent déjà
 - [x] ✅ Mettre à jour `supabase/migrations/JOURNAL.md`.
 - [x] ✅ Contrôle permanent dans `npm run db:verifier` : aucune fonction
   ouverte à PUBLIC, `anon` limité aux 4 RPC des sessions QR.
-- [ ] ⏳ Appliquer la migration **à la main** en recette (SQL Editor).
+- [x] ✅ Appliquer la migration **à la main** en recette (SQL Editor) —
+  2026-10-03.
 - [ ] ⏳ Dérouler le cahier 28 en recette.
 
 ## Lot 2 — Erreurs Supabase avalées (M5, M6, m8)
