@@ -49,9 +49,8 @@ score, vitesse, pret, invitation-coach…) ; parcours couverts par cahiers
 > ✅ **Migrations appliquées en recette** (2026-09-28, confirmé sur
 > `interclub.version`) : tout le lot, du socle `202607221000` jusqu'à
 > `202609251300_rpc_rechercher_grimpeurs_filtre_club` inclus, puis
-> `202610021000_controle_resultats` (2026-10-02). ⚠️ **À appliquer** :
-> `202610021100_grant_temps_vitesse_service_role` (libellé de vitesse du
-> classement, repéré par l'E2E du cahier 21).
+> `202610021000_controle_resultats` (2026-10-02), puis
+> `202610021100_grant_temps_vitesse_service_role` (2026-10-03).
 > `supabase/migrations/JOURNAL.md` à jour. **Reste à faire côté utilisateur** :
 > dérouler les cahiers `docs/tests/11→27` en colonne **Recette**, puis
 > application **prod** à la bascule sur `main` (reportée volontairement).
