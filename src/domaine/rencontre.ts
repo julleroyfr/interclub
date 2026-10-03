@@ -197,6 +197,27 @@ export function phasePrecedenteEffective(
   return phasePrecedente(phase)
 }
 
+/**
+ * Vrai si la transition `courante` → `cible` est permise (spec #3 R17) : un pas
+ * en avant (`phaseSuivante`) ou un pas en arrière (`phasePrecedenteEffective`,
+ * qui porte la seule exception — retour ③ → ① hors jour J, spec #1 R5). Tout
+ * saut, dépassement des bornes ou « transition » vers la phase courante est
+ * refusé. À évaluer contre la phase EN BASE, pas celle affichée par l'écran.
+ * Le garde-fou jour J de l'entrée en ②/③ reste vérifié à part
+ * (`peutEntrerEnPhase`).
+ */
+export function peutTransiter(
+  courante: Phase,
+  cible: Phase,
+  dateRencontre: string,
+  aujourdhui: string,
+): boolean {
+  return (
+    cible === phaseSuivante(courante) ||
+    cible === phasePrecedenteEffective(courante, dateRencontre, aujourdhui)
+  )
+}
+
 /** Vrai si la phase génère des écritures de résultats → live utile (③ compétition / ④ clôture, spec #11 R7). */
 export function phaseEnDirect(phase: Phase): boolean {
   return phase === 'competition' || phase === 'cloture'

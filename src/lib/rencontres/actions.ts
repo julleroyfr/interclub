@@ -6,6 +6,7 @@ import {
   estPhaseJourJ,
   normaliserSaisieRencontre,
   peutEntrerEnPhase,
+  peutTransiter,
   PHASES,
   SaisieRencontreInvalideError,
   type Phase,
@@ -137,20 +138,32 @@ export async function changerPhaseRencontre(
 
   const supabase = await createClient()
 
+  // La phase et la date EN BASE font autorité, pas celles affichées par l'écran
+  // (onglet périmé, second admin, POST direct — revue 2026-10-03, M4).
+  const renc = verifierLecture(
+    await supabase.from('rencontre').select('phase, date_rencontre').eq('id', id).maybeSingle(),
+    'de la rencontre',
+  )
+  if (!renc) return { erreur: 'Rencontre introuvable.' }
+  const courante = renc.phase as Phase
+  const dateRencontre = renc.date_rencontre as string
+  const aujourdhui = aujourdhuiISO()
+
+  // Pas à pas entre phases adjacentes, sans saut (spec #3 R17).
+  if (!peutTransiter(courante, phase as Phase, dateRencontre, aujourdhui)) {
+    const labelCourante = PHASES.find((p) => p.value === courante)?.label ?? courante
+    return {
+      erreur: `La rencontre est en phase « ${labelCourante} » : ce changement de phase n'est plus possible. Rechargez la page.`,
+    }
+  }
+
   // Garde-fou « jour J » (spec #1 R5, rév. 2026-09-02) : l'entrée dans une phase
   // jour-J (préparation OU compétition) n'est permise que le jour de la
   // rencontre. La date fait autorité en base.
-  if (estPhaseJourJ(phase as Phase)) {
-    const renc = verifierLecture(
-      await supabase.from('rencontre').select('date_rencontre').eq('id', id).maybeSingle(),
-      'de la date de la rencontre',
-    )
-    if (!renc) return { erreur: 'Rencontre introuvable.' }
-    if (!peutEntrerEnPhase(phase as Phase, renc.date_rencontre as string, aujourdhuiISO())) {
-      const quoi = phase === 'preparation' ? 'La préparation' : 'La compétition'
-      return {
-        erreur: `${quoi} ne peut être activée que le jour de la rencontre.`,
-      }
+  if (estPhaseJourJ(phase as Phase) && !peutEntrerEnPhase(phase as Phase, dateRencontre, aujourdhui)) {
+    const quoi = phase === 'preparation' ? 'La préparation' : 'La compétition'
+    return {
+      erreur: `${quoi} ne peut être activée que le jour de la rencontre.`,
     }
   }
 

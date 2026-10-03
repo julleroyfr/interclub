@@ -14,6 +14,7 @@ import {
   phasePrecedente,
   phasePrecedenteEffective,
   phaseSuivante,
+  peutTransiter,
 } from './rencontre'
 
 // Spec #1 « Rôles & autorisations » — CRUD rencontre réservé à l'admin (R12).
@@ -239,5 +240,52 @@ describe('Retour arrière effectif depuis la compétition (R5, rév. 2026-09-02)
     expect(phasePrecedenteEffective('cloture', '2026-10-12', '2026-10-13')).toBe(
       'competition',
     )
+  })
+})
+
+/**
+ * Transitions de phase (spec #3 R17) : pas à pas, entre phases ADJACENTES, sans
+ * saut ni dépassement des bornes — vérifié côté serveur contre la phase EN BASE
+ * (revue du 2026-10-03, M4 : un onglet admin périmé ou un POST direct pouvait
+ * sauter des phases). Seule exception : le retour ③ → ① hors jour J (spec #1 R5,
+ * rév. 2026-09-02, `phasePrecedenteEffective`).
+ */
+describe('peutTransiter (spec #3 R17)', () => {
+  const JOUR_J = '2026-10-12'
+  const AUTRE_JOUR = '2026-10-05'
+
+  it('autorise d’avancer d’une phase (R17)', () => {
+    expect(peutTransiter('pre_competition', 'preparation', JOUR_J, JOUR_J)).toBe(true)
+    expect(peutTransiter('preparation', 'competition', JOUR_J, JOUR_J)).toBe(true)
+    expect(peutTransiter('competition', 'cloture', JOUR_J, JOUR_J)).toBe(true)
+    expect(peutTransiter('cloture', 'resultats_publics', JOUR_J, JOUR_J)).toBe(true)
+  })
+
+  it('autorise de revenir d’une phase (R17)', () => {
+    expect(peutTransiter('resultats_publics', 'cloture', JOUR_J, JOUR_J)).toBe(true)
+    expect(peutTransiter('cloture', 'competition', JOUR_J, JOUR_J)).toBe(true)
+    expect(peutTransiter('competition', 'preparation', JOUR_J, JOUR_J)).toBe(true)
+    expect(peutTransiter('preparation', 'pre_competition', JOUR_J, JOUR_J)).toBe(true)
+  })
+
+  it('refuse tout saut de phase, en avant comme en arrière (R17)', () => {
+    expect(peutTransiter('pre_competition', 'resultats_publics', JOUR_J, JOUR_J)).toBe(false)
+    expect(peutTransiter('pre_competition', 'competition', JOUR_J, JOUR_J)).toBe(false)
+    // Onglet périmé : la base est en ④, l'onglet (resté en ③) demande ②.
+    expect(peutTransiter('cloture', 'preparation', JOUR_J, JOUR_J)).toBe(false)
+    expect(peutTransiter('resultats_publics', 'competition', JOUR_J, JOUR_J)).toBe(false)
+  })
+
+  it('refuse de « transiter » vers la phase courante (R17)', () => {
+    expect(peutTransiter('competition', 'competition', JOUR_J, JOUR_J)).toBe(false)
+  })
+
+  it('exception : retour ③ → ① hors jour J (spec #1 R5) ; ③ → ② alors refusé', () => {
+    expect(peutTransiter('competition', 'pre_competition', AUTRE_JOUR, JOUR_J)).toBe(true)
+    expect(peutTransiter('competition', 'preparation', AUTRE_JOUR, JOUR_J)).toBe(false)
+  })
+
+  it('le jour J, le retour ③ → ① saute la ② : refusé (R17)', () => {
+    expect(peutTransiter('competition', 'pre_competition', JOUR_J, JOUR_J)).toBe(false)
   })
 })

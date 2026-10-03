@@ -49,6 +49,13 @@ npm run test:e2e              # tous les cahiers E2E
 > l'engagement à l'état seed (idempotence) ; les tests de scan nettoient les
 > sessions QR.
 
+## Cartographie (cahier 12 CT-17 — pilotage de phase)
+
+- `pilotage-phase.spec.ts` (`npm run test:cahier:phase`) : changement de phase
+  refusé depuis un écran périmé (④ en base, « ← Préparation » refusé, spec #3
+  R17) et transition adjacente acceptée. Remet la rencontre pilote en ① et à sa
+  date seed.
+
 ## Cartographie (intégrité engagement & résultats — lot 4, 2026-10-03)
 
 - `integrite-engagement.spec.ts` (`npm run test:cahier:integrite`) : cahier 15

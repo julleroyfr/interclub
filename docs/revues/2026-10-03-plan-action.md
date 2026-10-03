@@ -166,19 +166,27 @@ Aucune spec ne change (convention 02 §7, spec #6 R18). Branche
   test automatisé (il faut provoquer une panne de lecture) : cas à ajouter au
   cahier 17.
 
-## Lot 3 — Transitions de phase (M4)
+## Lot 3 — Transitions de phase (M4) — ✅ fait (branche `feature/transitions-phase`)
 
 La spec #3 R17 impose déjà les transitions adjacentes : seuls tests et code
 changent.
 
-- [ ] ⏳ Test Vitest rouge `peutTransiter(courante, cible)` citant
-  « spec #3 R17 » (avancer, revenir, saut interdit, bornes).
-- [ ] ⏳ Implémenter `peutTransiter` dans `src/domaine/rencontre.ts` (vert).
-- [ ] ⏳ `src/lib/rencontres/actions.ts:133,159` : relire la phase courante en
-  base et refuser toute transition non adjacente.
-- [ ] ⏳ Optionnel : trigger SQL de garde sur `rencontre.phase`.
-- [ ] ⏳ Ajouter au cahier de la spec #3/#4 le cas « deux onglets admin
-  désynchronisés » et « POST direct d'un saut de phase ».
+- [x] ✅ Test Vitest rouge `peutTransiter(courante, cible, date, aujourdhui)`
+  citant « spec #3 R17 » (avancer, revenir, saut interdit, bornes, phase
+  courante) — 6 tests, dont l'**exception** retour ③ → ① hors jour J (spec #1
+  R5, `phasePrecedenteEffective`).
+- [x] ✅ `peutTransiter` dans `src/domaine/rencontre.ts` (vert).
+- [x] ✅ `changerPhaseRencontre` relit **toujours** la phase et la date en base et
+  refuse toute transition non adjacente (« La rencontre est en phase « … » :
+  ce changement de phase n'est plus possible. Rechargez la page. »). Les deux
+  surfaces (liste, tableau de bord) passent par cette action.
+- ~~Trigger SQL de garde sur `rencontre.phase`~~ — non retenu : l'écriture de
+  phase est réservée à l'admin (RLS) et passe par l'action ; un trigger
+  bloquerait aussi les pré-conditions SQL des E2E et du seed.
+- [x] ✅ Cahier 12 : CT-17 `[auto]` (écran périmé : ④ en base, « ← Préparation »
+  refusé), automatisé (`npm run test:cahier:phase`) ; CT-13 étape 4 (POST direct)
+  renvoyée aux tests Vitest de `peutTransiter`. Vérifié par mutation (ancienne
+  action ⇒ CT-17 échoue).
 
 ## Lot 4 — Intégrité vitesse et plafond ado (M3, M7)
 

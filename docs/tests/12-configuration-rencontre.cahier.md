@@ -194,6 +194,9 @@ d'ouverture du **tableau de bord** → `/admin/rencontres/<id>`.
      seconde surface de la même action).
   4. Contournement : invoquer `changerPhaseRencontre` vers une phase **non
      adjacente** ou en préparation hors jour J → **refus** (garde autoritaire).
+     *(Garde effective depuis le 2026-10-03 : l'action relit la phase en base et
+     applique `peutTransiter`, couvert par Vitest — `rencontre.test.ts`,
+     « peutTransiter (spec #3 R17) » ; scénario d'écran : CT-17.)*
 
 ### CT-14 — Lien vers les jetons QR de la rencontre (couvre R41b)
 
@@ -247,6 +250,20 @@ d'ouverture du **tableau de bord** → `/admin/rencontres/<id>`.
 - **Rétablir** ensuite le barème enfant d'origine (`1–5` = 15 décr 1 … `46e et +` = 2,
   chute 1, NP 0) pour les autres cahiers.
 
+### CT-17 `[auto]` — Changement de phase refusé depuis un écran périmé (couvre R17, R41a)
+
+- **Rôle** : admin. **Pré-condition** : rencontre pilote `33333333-…` en **③
+  compétition**, **datée du jour même**.
+- **Étapes** :
+  1. Ouvrir le tableau de bord : le bouton « ← » propose **Préparation**.
+  2. Sans recharger, faire passer la rencontre en **④ clôture** par un autre
+     moyen (second admin, ou SQL Editor).
+  3. Cliquer « ← » (qui vise encore la ② préparation).
+- **Résultat attendu** : **refus** avec le message « La rencontre est en phase
+  « Clôture » : ce changement de phase n'est plus possible. Rechargez la page. » ;
+  la rencontre **reste en ④** (aucun saut ④ → ②).
+- **Automatisé** : `e2e/pilotage-phase.spec.ts` (`npm run test:cahier:phase`).
+
 ## Registre d'exécution
 
 | Cas | Environnement | Date | Testeur | Verdict | Notes |
@@ -267,6 +284,7 @@ d'ouverture du **tableau de bord** → `/admin/rencontres/<id>`.
 | CT-14 | | | | ⬜ | lien QR (R41b) |
 | CT-15 | | | | ⬜ | blocs équipes (R41c) |
 | CT-16 | | | | ⬜ | barème par rang, édition + validation (R47/R48) |
+| CT-17 | | | | ⬜ | phase refusée depuis un écran périmé (R17) |
 
 > Le domaine (`validerNiveauVoie` R37, `validerPoints` R38, `champsPointsVoie`
 > R38/R43) est couvert par Vitest (`npm run test`, `src/domaine/gabarit.test.ts`).
