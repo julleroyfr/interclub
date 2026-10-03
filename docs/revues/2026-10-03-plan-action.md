@@ -256,19 +256,22 @@ Débloqué : D-C tranché le 2026-10-03 (option a).
   développement local (D-F) ; exception tracée dans la spec #12.
 - [ ] ⏳ m2 — Helper `est_acteur_identifie()` dans les policies de lecture
   (D-D ; vérifier la matrice de la spec #1 ; migration + cahier).
-- [ ] ⏳ m3 — Redirection ouverte : n'accepter que les chemins relatifs
-  commençant par `/` (`jetons/actions.ts:34,41`, `invitations/actions.ts:83,87`).
-- [ ] ⏳ m4 — Policy de mise à jour de `jeton_qr` : pour le coach, révocation
-  seule (D-E) ; migration + cahier 04.
+- [x] ✅ m3 — Redirection ouverte : `cheminDeRetour` (`src/lib/chemin-retour.ts`,
+  6 tests) n'accepte qu'un chemin interne (pas `//`, `/\`, schéma ni URL).
+- [x] ✅ m4 / D-E — migration `202610031300_jeton_qr_revocation_definitive` :
+  update limité à `actif`, réactivation interdite à un non-admin ; cahier 04
+  CT-11 automatisé (`npm run test:cahier:securite`). Reste : application en
+  recette.
 - [ ] ⏳ D-G — Écran d'erreur technique : règle ajoutée à la spec #12, puis
   `error.tsx` + `global-error.tsx` (design system), cas au cahier 23.
 - [ ] ⏳ m5 — `/scan` : ne pas ouvrir de session anonyme si l'utilisateur est
   déjà connecté (à vérifier contre la spec #2 avant de coder).
-- [ ] ⏳ m6 — `inscrireCoach` : distinguer les causes d'erreur de `createUser`.
-- [ ] ⏳ m7 — Factoriser le code commun admin/coach de `resultats-actions` et
-  renommer la fonction locale `exigerAdmin`.
-- [ ] ⏳ m8 — Traité dans le lot 2.
-- [ ] ⏳ m9 — Corriger l'avertissement de lint dans `grimpeur.test.ts:36`.
+- [x] ✅ m6 — `messageEchecCreationCompte` (domaine, 4 tests) : seul un e-mail
+  déjà utilisé donne le message R32 (spec #2).
+- [x] ✅ m7 — `src/lib/resultats/contexte-saisie.ts` (contextes voie/bloc,
+  voies ado déjà saisies) ; garde locale renommée `verifierAdminSaisie`.
+- [x] ✅ m8 — Traité dans le lot 2.
+- [x] ✅ m9 — Avertissement de lint corrigé (lint à 0).
 
 ## Lot 7 — Outillage et traçabilité (suggestions)
 

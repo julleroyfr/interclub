@@ -127,6 +127,25 @@ restent à dérouler à la main.
 - **Résultat attendu** : la génération **réussit** — un jeton est générable avant
   la phase ② (son ouverture de session, elle, sera bornée à la phase ② en T5d).
 
+### CT-11 `[auto]` — Révocation définitive pour le coach   (couvre : R20–R23 ; décision D-E du 2026-10-03 ; négatif)
+
+- **Rôle / compte** : `coach@test.local` (jeton d'API), puis `admin@test.local`.
+- **Pré-condition** : migration `202610031300_jeton_qr_revocation_definitive`
+  appliquée ; jeton **coach temporaire** du Club A (seed `55555555-…-551`).
+- **Étapes** (appels directs `PATCH …/jeton_qr?id=eq.<jeton>`) :
+  1. Coach : `{"actif": false}` (révocation).
+  2. Coach : `{"actif": true}` (réactivation du jeton révoqué).
+  3. Coach : `{"rencontre_id": "<autre rencontre>"}` (changement de rencontre).
+  4. Admin : `{"actif": true}`.
+- **Résultat attendu** :
+  1. révocation **acceptée** ;
+  2. **refus** (`reactivation_jeton_interdite`) — rétablir l'accès = régénérer
+     un nouveau jeton (R23) ;
+  3. **refus** (droit de colonne : seule `actif` est modifiable) ;
+  4. l'admin peut réactiver (D-E ne vise que le coach) — remet le seed en état.
+- **Automatisé** : `e2e/securite-appels-directs.spec.ts`
+  (`npm run test:cahier:securite`).
+
 ## Registre d'exécution
 
 | Date | Testeur | Version/commit | Cas | Résultat | Remarque |
@@ -141,3 +160,4 @@ restent à dérouler à la main.
 | 2026-07-23 | julleroyfr | `51e0ac7` | CT-08 | ✅ | `test:t5c` (local, 201/409) |
 | 2026-07-23 | julleroyfr | `51e0ac7` | CT-09 | ✅ | `test:t5c` (local, 403) ; IHM 404 à faire |
 | | | | CT-10 | ✅ / ❌ | IHM |
+| | | | CT-11 | ✅ / ❌ | auto : révocation définitive coach (D-E) |

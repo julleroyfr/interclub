@@ -355,4 +355,40 @@ test.describe('Cahier 28 — sécurité en base, appels PostgREST directs', () =
       })
     })
   })
+
+  test.describe('Cahier 04 CT-11 — révocation définitive pour le coach (D-E, spec #2 R20–R23)', () => {
+    const JETON_COACH_A = '55555555-5555-5555-5555-555555555551'
+    const actif = () =>
+      execSql(`select actif from interclub.jeton_qr where id = '${JETON_COACH_A}';`)
+
+    test.afterAll(() => {
+      execSql(`update interclub.jeton_qr set actif = true where id = '${JETON_COACH_A}';`)
+    })
+
+    test('le coach révoque, ne réactive pas, ne change pas la rencontre ; l’admin réactive', async ({
+      request,
+    }) => {
+      const { url } = infosApi()
+      const patch = (jeton: string, data: object) =>
+        request.patch(`${url}/rest/v1/jeton_qr?id=eq.${JETON_COACH_A}`, {
+          headers: { ...entetes(jeton, true), Prefer: 'return=minimal' },
+          data,
+        })
+
+      expect((await patch(jetonCoach, { actif: false })).status()).toBe(204)
+      expect(actif()).toBe('f')
+
+      const reactivation = await patch(jetonCoach, { actif: true })
+      expect(reactivation.status()).toBe(403)
+      expect((await reactivation.json()).message).toBe('reactivation_jeton_interdite')
+      expect(actif()).toBe('f')
+
+      const autreRencontre = await patch(jetonCoach, { rencontre_id: RENCONTRE_ADO })
+      expect([401, 403]).toContain(autreRencontre.status())
+      expect((await autreRencontre.json()).code).toBe('42501')
+
+      expect((await patch(jetonAdmin, { actif: true })).status()).toBe(204)
+      expect(actif()).toBe('t')
+    })
+  })
 })

@@ -69,7 +69,8 @@ npm run test:e2e              # tous les cahiers E2E
 ## Cartographie (cahier 28 — sécurité en base, appels directs)
 
 - `securite-appels-directs.spec.ts` (`npm run test:cahier:securite`) : **CT-01 →
-  CT-07 et CT-09** (9 tests, sans navigateur : API PostgREST/Auth via `request`
+  CT-07 et CT-09** du cahier 28, plus le **CT-11 du cahier 04** (révocation de
+  jeton définitive pour le coach, D-E) (10 tests, sans navigateur : API PostgREST/Auth via `request`
   et SQL) — fonctions fermées à PUBLIC et `anon` limité aux RPC QR, création de
   rencontre refusée (anon, coach) / acceptée (admin), `finaliser_inscription_coach`
   hors `service_role`, fonction future fermée, coche/auteur non falsifiables
