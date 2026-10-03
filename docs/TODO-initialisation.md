@@ -68,6 +68,8 @@ Tâches identifiées mais reportées, à traiter quand l'occasion se présente.
 | ID | Tâche | Origine | Notes |
 | ---- | ------- | --------- | ------- |
 | D3 | **Cache/optimisation des bascules d'écran — saisie résultats (#6)** : navigation grimpeurs ‹/› (R25) et bascule par équipe / alphabétique (R24) | demandé 2026-09-08 | Éviter de recharger les données à chaque bascule (stratégie de cache). Point technique hors règles de spec. |
+| D5 | **Double saisie du mot de passe — inscription coach permanent** (`/inscription`, spec #2 R30) : champ « Confirmer le mot de passe », refus si les deux saisies diffèrent | demandé 2026-10-03 | Évite les erreurs de frappe à la création du compte. Change le comportement de l'écran → révision spec #2 à valider, puis tests → code → cahier. |
+| D6 | **Temps réel des prêts sur l'écran de composition d'équipe du coach** (spec #5) : un grimpeur prêté au club pendant que le coach compose son équipe n'apparaît dans la liste déroulante qu'après rechargement de la page | demandé 2026-10-03 | Étendre le temps réel (spec #11) à l'écran d'engagement coach : table des prêts à ajouter à la publication Realtime (nouvelle migration) + composant `TempsReel` sur l'écran. Révision spec #11 (périmètre des écrans) à valider, puis tests → code → cahier 22. |
 
 ## ✅ Fait (archive — non rappelé)
 
