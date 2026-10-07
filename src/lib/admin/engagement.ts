@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { anneeSaison, bornesAnneeNaissance, type Categorie, type Phase } from '@/domaine/rencontre'
+import { anneeSaison, type Categorie, type Phase } from '@/domaine/rencontre'
 import { exigerLectureAdmin } from '@/lib/auth/garde-lecture'
 import {
   assemblerEngagementClub,
@@ -8,9 +8,9 @@ import {
   type GrimpeurLu,
 } from '@/lib/coach/assemblage-engagement'
 import { versGrimpeurLu } from '@/lib/coach/engagement'
+import { lireGrimpeursEligibles } from '@/lib/grimpeurs/eligibles'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { verifierLecture } from '@/lib/supabase/lecture'
-import { lireToutesLesPages } from '@/lib/supabase/pagination'
 import { createClient } from '@/lib/supabase/server'
 
 // Engagement de TOUS les clubs d'une rencontre, pour l'écran admin (spec #1 R10).
@@ -33,22 +33,15 @@ export async function chargerEngagementTousClubs(
   const admin = createAdminClient()
   const supabase = await createClient()
 
-  const [clubsRes, rencRes] = await Promise.all([
+  // Vague 1 : tout ce qui ne dépend que de la rencontre. Vague 2 : le roster,
+  // qui dépend de sa catégorie (lecture partagée avec le panneau Prêts).
+  const [clubsRes, rencRes, equipesRes, pretsRes] = await Promise.all([
     admin.from('club').select('id, nom').order('nom'),
     supabase
       .from('rencontre')
       .select('id, date_rencontre, categorie, phase, club_porteur_id')
       .eq('id', rencontreId)
       .maybeSingle(),
-  ])
-  const clubs = verifierLecture(clubsRes, 'des clubs') ?? []
-  const rencontre = verifierLecture(rencRes, 'de la rencontre')
-  if (!rencontre) return []
-
-  const categorie = rencontre.categorie as Categorie
-  const saison = anneeSaison(rencontre.date_rencontre as string)
-
-  const [equipesRes, pretsRes, roster] = await Promise.all([
     supabase
       .from('equipe')
       .select(
@@ -60,8 +53,16 @@ export async function chargerEngagementTousClubs(
       .from('pret')
       .select('club_accueil_id, grimpeur:grimpeur_id(id, nom, prenom, club_id, annee_naissance)')
       .eq('rencontre_id', rencontreId),
-    lireRosterEligible(supabase, categorie, saison),
   ])
+  const clubs = verifierLecture(clubsRes, 'des clubs') ?? []
+  const rencontre = verifierLecture(rencRes, 'de la rencontre')
+  if (!rencontre) return []
+
+  const categorie = rencontre.categorie as Categorie
+  const roster = await lireGrimpeursEligibles(
+    categorie,
+    anneeSaison(rencontre.date_rencontre as string),
+  )
   const equipesLues = verifierLecture(equipesRes, 'des équipes') ?? []
   const pretsLus = verifierLecture(pretsRes, 'des prêts') ?? []
 
@@ -130,28 +131,6 @@ export async function chargerEngagementTousClubs(
       ),
     }
   })
-}
-
-/**
- * Grimpeurs éligibles à la catégorie (R34, tous clubs), triés par nom puis
- * prénom : la lecture ne ramène que la tranche d'âge, pas tout le fichier des
- * licenciés, et elle est paginée (plafond de lignes de l'API).
- */
-async function lireRosterEligible(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  categorie: Categorie,
-  saison: number,
-): Promise<GrimpeurLu[]> {
-  const { min, max } = bornesAnneeNaissance(categorie, saison)
-  const lignes = await lireToutesLesPages((debut, fin) => {
-    let q = supabase
-      .from('grimpeur')
-      .select('id, nom, prenom, club_id, annee_naissance')
-      .gte('annee_naissance', min)
-    if (max !== null) q = q.lte('annee_naissance', max)
-    return q.order('nom').order('prenom').order('id').range(debut, fin)
-  }, 'des grimpeurs')
-  return lignes.map(versGrimpeurLu)
 }
 
 /** Relation embarquée : objet ou tableau selon l'inférence du client. */

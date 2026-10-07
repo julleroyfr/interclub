@@ -1,10 +1,10 @@
 import 'server-only'
 
-import { anneeSaison, bornesAnneeNaissance, type Categorie } from '@/domaine/rencontre'
+import { anneeSaison, type Categorie } from '@/domaine/rencontre'
 import { exigerLectureAdmin } from '@/lib/auth/garde-lecture'
+import { lireGrimpeursEligibles } from '@/lib/grimpeurs/eligibles'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { verifierLecture } from '@/lib/supabase/lecture'
-import { lireToutesLesPages } from '@/lib/supabase/pagination'
 
 // Écran admin de gestion des prêts (spec #1 R35). Lecture des catalogues
 // (rencontres, grimpeurs, clubs, prêts) via le client **service_role** — non
@@ -60,22 +60,13 @@ export async function chargerPretsRencontre(
   const composLues = verifierLecture(compoRes, 'des compositions') ?? []
 
   // Catégorie de la rencontre : on ne propose au prêt que les grimpeurs éligibles
-  // à cette tranche d'âge (R34) — filtrée dès la lecture, paginée car le fichier
-  // des licenciés dépasse le plafond de lignes d'une réponse de l'API.
-  const bornes = rencontre
-    ? bornesAnneeNaissance(
+  // à cette tranche d'âge (R34). Lecture partagée avec le panneau Équipes.
+  const grimpeursLus = rencontre
+    ? await lireGrimpeursEligibles(
         rencontre.categorie as Categorie,
         anneeSaison(rencontre.date_rencontre as string),
       )
-    : null
-  const grimpeursLus = await lireToutesLesPages((debut, fin) => {
-    let q = admin.from('grimpeur').select('id, nom, prenom, club_id')
-    if (bornes) {
-      q = q.gte('annee_naissance', bornes.min)
-      if (bornes.max !== null) q = q.lte('annee_naissance', bornes.max)
-    }
-    return q.order('nom').order('prenom').order('id').range(debut, fin)
-  }, 'des grimpeurs')
+    : []
 
   // Grimpeurs indisponibles au prêt : déjà engagés (R14) OU déjà prêtés.
   const indisponibles = new Set<string>([
@@ -93,13 +84,8 @@ export async function chargerPretsRencontre(
   }))
 
   const grimpeurs: GrimpeurOption[] = grimpeursLus
-    .filter((g) => !indisponibles.has(g.id as string))
-    .map((g) => ({
-      id: g.id as string,
-      prenom: g.prenom as string,
-      nom: g.nom as string,
-      clubId: g.club_id as string,
-    }))
+    .filter((g) => !indisponibles.has(g.id))
+    .map((g) => ({ id: g.id, prenom: g.prenom, nom: g.nom, clubId: g.clubId }))
 
   const prets: PretExistant[] = pretsLus.map((p) => {
     const brut = p.grimpeur as unknown
