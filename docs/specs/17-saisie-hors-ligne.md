@@ -1,6 +1,8 @@
 # Spec : Saisie hors ligne — coach et juge (phase compétition)
 
-- **Statut** : brouillon (rédigée le 2026-10-03)
+- **Statut** : validée (le 2026-10-07) — rédigée le 2026-10-03 ; points à valider
+  tranchés le 2026-10-07 (déploiement pendant la ③ : perte acceptée, R21 ; retrait
+  concurrent sans trace : accepté, ressaisie si besoin)
 - **Sources** :
   - **Besoin exprimé le 2026-10-03** : dans les salles d'escalade, le réseau est
     souvent de mauvaise qualité et subit des **coupures**. Les **coachs** et les
@@ -174,10 +176,10 @@ l'heure d'arrivée au serveur, qui départage deux écritures sur un même résu
   clôture ou au-delà) est **refusée** (décision 2a) avec le message : *« La
   compétition est clôturée : cette saisie n'a pas été enregistrée. Signalez-la à
   l'organisateur. »* La correction relève alors de l'**admin** (spec #9 R5).
-- **R21.** Après une **mise à jour de l'application** pendant la compétition, une
-  saisie dont l'envoi échoue pour cette raison est traitée comme un **échec
-  temporaire** (R17) : elle reste en attente et est renvoyée après rechargement de
-  l'écran, sans perte.
+- **R21.** L'application n'est **pas mise à jour** (déploiement) pendant une
+  rencontre en ③ compétition (consigne d'exploitation, décision du 2026-10-07).
+  Si une mise à jour a lieu malgré tout, les saisies **en attente** à ce moment
+  **peuvent être perdues** : aucune reprise n'est garantie.
 
 ### Affichage
 
@@ -270,8 +272,8 @@ synchronisées et enregistrées au nom de la nouvelle session.
   saisies en attente → il ne voit ni n'envoie la file du club A (R4).
 - L'utilisateur ferme le navigateur avec des saisies en attente → confirmation
   demandée (R28) ; à la réouverture de l'écran, la file est synchronisée.
-- Mise à jour de l'application pendant la coupure → saisie gardée en attente puis
-  renvoyée après rechargement (R21).
+- Mise à jour de l'application pendant la compétition (contraire à la consigne)
+  → les saisies en attente peuvent être **perdues** (R21).
 - Ouverture de l'écran de saisie **sans réseau** → hors périmètre (R5).
 
 ## Cycle de vie d'une saisie
@@ -357,10 +359,12 @@ sequenceDiagram
   saisie hors ligne **plus ancienne** que ce retrait, arrivée ensuite, recrée donc
   le résultat (aucune trace du retrait ne subsiste pour la comparer). Cas jugé
   marginal (deux appareils du même club agissant sur la même voie, l'un hors
-  ligne) : **accepté en l'état** sauf avis contraire.
-- **Déploiement pendant une compétition** : R21 évite toute perte, mais la
-  consigne d'exploitation reste de **ne pas pousser sur `main`** pendant une
-  rencontre en ③ (push = déploiement Netlify).
+  ligne) — **tranché le 2026-10-07** : **accepté en l'état** ; le cas échéant, le
+  résultat est **ressaisi** ou retiré à nouveau.
+- **Déploiement pendant une compétition** — **tranché le 2026-10-07** : **pas de
+  push sur `main`** pendant une rencontre en ③ (push = déploiement Netlify) ; en
+  cas de déploiement malgré tout, la perte des saisies en attente est **acceptée**
+  (R21).
 
 ## Hors périmètre
 
