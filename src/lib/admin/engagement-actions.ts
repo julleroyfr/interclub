@@ -12,6 +12,7 @@ import {
 } from '@/domaine/engagement'
 import { anneeSaison, estEligibleCategorie, type Categorie } from '@/domaine/rencontre'
 import { getUtilisateurCourant } from '@/lib/auth/session'
+import { mesurer } from '@/lib/perf/mesure'
 import { verifierLecture } from '@/lib/supabase/lecture'
 import { createClient } from '@/lib/supabase/server'
 
@@ -52,9 +53,9 @@ export async function creerEquipeAdmin(
   }
 
   const supabase = await createClient()
-  const { error } = await supabase
-    .from('equipe')
-    .insert({ rencontre_id: rencontreId, club_id: clubId, nom })
+  const { error } = await mesurer('action creerEquipe insert', () =>
+    supabase.from('equipe').insert({ rencontre_id: rencontreId, club_id: clubId, nom }),
+  )
   if (error) {
     if (error.code === '23505') return { erreur: `Une équipe « ${nom} » existe déjà pour ce club.` }
     return { erreur: 'La création a échoué. Réessayez.' }

@@ -1,6 +1,8 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+import { mesurer } from '@/lib/perf/mesure'
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
@@ -26,7 +28,7 @@ export async function updateSession(request: NextRequest) {
   )
 
   // Rafraîchit la session — NE PAS ajouter de logique entre createServerClient et getUser
-  await supabase.auth.getUser()
+  await mesurer(`proxy getUser ${request.nextUrl.pathname}`, () => supabase.auth.getUser())
 
   return supabaseResponse
 }

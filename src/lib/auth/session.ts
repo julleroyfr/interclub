@@ -3,6 +3,7 @@ import 'server-only'
 import { cache } from 'react'
 import { notFound, redirect } from 'next/navigation'
 
+import { mesurer } from '@/lib/perf/mesure'
 import { createClient } from '@/lib/supabase/server'
 
 /** Rôle applicatif d'un compte permanent (spec #2 R1). */
@@ -34,14 +35,12 @@ export const getUtilisateurCourant = cache(
 
     const {
       data: { user },
-    } = await supabase.auth.getUser()
+    } = await mesurer('session getUser', () => supabase.auth.getUser())
     if (!user) return null
 
-    const { data, error } = await supabase
-      .from('compte')
-      .select('role, club_id')
-      .eq('utilisateur_id', user.id)
-      .maybeSingle()
+    const { data, error } = await mesurer('session compte', () =>
+      supabase.from('compte').select('role, club_id').eq('utilisateur_id', user.id).maybeSingle(),
+    )
 
     // Une erreur de lecture ne doit pas prétendre à un rôle : on reste fail-closed.
     if (error) {
