@@ -118,13 +118,18 @@ export type ContexteCoach =
  * compétition) et le jeton actif ; sinon `null` (fail-closed).
  */
 export const getContexteCoach = cache(async (): Promise<ContexteCoach | null> => {
-  const utilisateur = await getUtilisateurCourant()
+  // Les deux résolutions partent EN PARALLÈLE (un aller-retour au lieu de deux,
+  // la session QR temporaire étant le cas courant le jour J) ; le coach
+  // permanent reste prioritaire, la réponse de la RPC est alors ignorée.
+  const supabase = await createClient()
+  const [utilisateur, { data, error }] = await Promise.all([
+    getUtilisateurCourant(),
+    supabase.rpc('contexte_coach_temporaire'),
+  ])
   if (utilisateur?.role === 'coach' && utilisateur.clubId) {
     return { type: 'permanent', clubId: utilisateur.clubId }
   }
 
-  const supabase = await createClient()
-  const { data, error } = await supabase.rpc('contexte_coach_temporaire')
   if (error) {
     console.error('Lecture du contexte coach temporaire impossible :', error.message)
     return null

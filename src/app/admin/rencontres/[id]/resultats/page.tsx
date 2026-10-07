@@ -74,6 +74,7 @@ export default async function PageSaisieAdmin({
             <TempsReel
               tables={['resultat_voie', 'resultat_bloc', 'temps_vitesse', 'points_vitesse']}
               actif={phaseEnDirect(saisie.phase)}
+              ignorerMesEcritures
             />
           </div>
         </div>

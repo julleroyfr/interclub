@@ -137,8 +137,6 @@ export async function getSaisieTousClubs(rencontreId: string): Promise<SaisieTou
 }
 
 type Ligne = Record<string, unknown>
-const AUCUNE_REPONSE = Promise.resolve({ data: [] as Ligne[], error: null })
-const AUCUNE_LIGNE = Promise.resolve([] as Ligne[])
 
 /** Relation embarquée : objet ou tableau selon l'inférence du client. */
 function premier(v: unknown): Ligne | null {
@@ -148,9 +146,11 @@ function premier(v: unknown): Ligne | null {
 
 /**
  * Lectures + assemblage de la saisie, pour UN club (`clubId`) ou pour tous les
- * clubs engagés (`null`). Les lectures sont les mêmes à l'étendue près ; celles
- * qui peuvent dépasser le plafond de lignes de l'API (compositions, résultats de
- * toute une rencontre) sont paginées.
+ * clubs engagés (`null`). Toutes les lectures partent en UNE vague : chaque table
+ * est filtrée sur la rencontre par jointure (épreuve, voie, bloc), sans attendre
+ * d'identifiants — chaque aller-retour vers la base compte, l'écran étant relu
+ * après chaque saisie. Les lectures pouvant dépasser le plafond de lignes de
+ * l'API (compositions, résultats de toute une rencontre) sont paginées.
  */
 async function chargerSaisie(
   rencontreId: string,
@@ -158,78 +158,120 @@ async function chargerSaisie(
 ): Promise<SaisieTousClubs | null> {
   const supabase = await createClient()
 
-  const rencontre = verifierLecture(
-    await supabase
-      .from('rencontre')
-      .select('id, date_rencontre, categorie, phase, club_porteur_id')
-      .eq('id', rencontreId)
-      .maybeSingle(),
-    'de la rencontre',
-  )
-  if (!rencontre) return null
-
-  const categorie = rencontre.categorie as Categorie
-  const phase = rencontre.phase as Phase
+  type Reponse = { data: Ligne[] | null; error: { message: string; code?: string } | null }
+  /** Lecture paginée d'une requête construite par `requete` (ordre total requis). */
+  const pagine = (requete: (debut: number, fin: number) => unknown, quoi: string) =>
+    lireToutesLesPages((debut, fin) => requete(debut, fin) as PromiseLike<Reponse>, quoi)
 
   const requeteEquipes = supabase
     .from('equipe')
     .select('id, nom, club_id')
     .eq('rencontre_id', rencontreId)
-  const [clubRes, epreuvesRes, equipesRes] = await Promise.all([
-    supabase.from('club').select('nom').eq('id', rencontre.club_porteur_id as string).maybeSingle(),
-    supabase.from('epreuve').select('id, type').eq('rencontre_id', rencontreId),
+
+  const [
+    rencRes,
+    equipesRes,
+    voiesRes,
+    blocsRes,
+    paliersRes,
+    compos,
+    rvLignes,
+    rbLignes,
+    tvLignes,
+    pvLignes,
+  ] = await Promise.all([
+    supabase
+      .from('rencontre')
+      .select('id, date_rencontre, categorie, phase, club:club_porteur_id(nom)')
+      .eq('id', rencontreId)
+      .maybeSingle(),
     clubId ? requeteEquipes.eq('club_id', clubId) : requeteEquipes,
+    supabase
+      .from('voie_difficulte')
+      .select(
+        'id, niveau, cotation, type_voie, ordre, points, points_prise_valorisee, points_zone1, points_zone2, epreuve!inner(rencontre_id)',
+      )
+      .eq('epreuve.rencontre_id', rencontreId)
+      .order('ordre'),
+    supabase
+      .from('bloc')
+      .select('id, code, ordre, epreuve!inner(rencontre_id)')
+      .eq('epreuve.rencontre_id', rencontreId)
+      .order('ordre'),
+    supabase
+      .from('bloc_palier')
+      .select('id, bloc_id, libelle, ordre, points, bloc!inner(epreuve!inner(rencontre_id))')
+      .eq('bloc.epreuve.rencontre_id', rencontreId)
+      .order('ordre'),
+    // Compositions, grimpeur embarqué (nom, prénom, club d'origine et son nom).
+    pagine((debut, fin) => {
+      const q = supabase
+        .from('composition')
+        .select(
+          'equipe_id, grimpeur_id, groupe_depart, equipe!inner(club_id), grimpeur:grimpeur_id(nom, prenom, club_id, club:club_id(nom))',
+        )
+        .eq('rencontre_id', rencontreId)
+      return (clubId ? q.eq('equipe.club_id', clubId) : q).order('grimpeur_id').range(debut, fin)
+    }, 'des compositions'),
+    // Résultats et vitesse de TOUTE la rencontre (lisibles au fil de l'eau, spec
+    // #1 R8), rattachés ensuite aux seuls grimpeurs composés.
+    pagine(
+      (debut, fin) =>
+        supabase
+          .from('resultat_voie')
+          .select('id, voie_difficulte_id, grimpeur_id, issue, voie_difficulte!inner(epreuve!inner(rencontre_id))')
+          .eq('voie_difficulte.epreuve.rencontre_id', rencontreId)
+          .order('id')
+          .range(debut, fin),
+      'des résultats de voie',
+    ),
+    pagine(
+      (debut, fin) =>
+        supabase
+          .from('resultat_bloc')
+          .select('id, bloc_id, grimpeur_id, issue, palier_id, bloc!inner(epreuve!inner(rencontre_id))')
+          .eq('bloc.epreuve.rencontre_id', rencontreId)
+          .order('id')
+          .range(debut, fin),
+      'des résultats de bloc',
+    ),
+    pagine(
+      (debut, fin) =>
+        supabase
+          .from('temps_vitesse')
+          .select('grimpeur_id, issue, temps, epreuve!inner(rencontre_id)')
+          .eq('epreuve.rencontre_id', rencontreId)
+          .order('grimpeur_id')
+          .range(debut, fin),
+      'des temps de vitesse',
+    ),
+    // Points de vitesse matérialisés par le trigger (R20), lus pour le score (R23).
+    pagine(
+      (debut, fin) =>
+        supabase
+          .from('points_vitesse')
+          .select('grimpeur_id, points, epreuve!inner(rencontre_id)')
+          .eq('epreuve.rencontre_id', rencontreId)
+          .order('grimpeur_id')
+          .range(debut, fin),
+      'des points de vitesse',
+    ),
   ])
-  const epreuves = verifierLecture(epreuvesRes, 'des épreuves') ?? []
-  const epreuveVoie = epreuves.find((e) => e.type === 'voie')?.id as string | undefined
-  const epreuveBloc = epreuves.find((e) => e.type === 'bloc')?.id as string | undefined
-  const epreuveVitesse = epreuves.find((e) => e.type === 'vitesse')?.id as
-    | string
-    | undefined
+
+  const rencontre = verifierLecture(rencRes, 'de la rencontre')
+  if (!rencontre) return null
+
+  const categorie = rencontre.categorie as Categorie
+  const phase = rencontre.phase as Phase
 
   const equipes = (verifierLecture(equipesRes, 'des équipes') ?? []) as {
     id: string
     nom: string
     club_id: string
   }[]
-  const equipeIds = equipes.map((e) => e.id)
   const nomEquipe = new Map(equipes.map((e) => [e.id, e.nom]))
   const clubEquipe = new Map(equipes.map((e) => [e.id, e.club_id]))
 
-  // Structure (voies, blocs+paliers) + compositions, grimpeur embarqué (nom,
-  // prénom, club d'origine) : pas de seconde lecture des grimpeurs.
-  const [voiesRes, blocsRes, paliersRes, compos] = await Promise.all([
-    epreuveVoie
-      ? supabase
-          .from('voie_difficulte')
-          .select(
-            'id, niveau, cotation, type_voie, ordre, points, points_prise_valorisee, points_zone1, points_zone2',
-          )
-          .eq('epreuve_id', epreuveVoie)
-          .order('ordre')
-      : AUCUNE_REPONSE,
-    epreuveBloc
-      ? supabase.from('bloc').select('id, code, ordre').eq('epreuve_id', epreuveBloc).order('ordre')
-      : AUCUNE_REPONSE,
-    // Paliers des seuls blocs de l'épreuve (jointure sur le bloc).
-    epreuveBloc
-      ? supabase
-          .from('bloc_palier')
-          .select('id, bloc_id, libelle, ordre, points, bloc!inner(epreuve_id)')
-          .eq('bloc.epreuve_id', epreuveBloc)
-          .order('ordre')
-      : AUCUNE_REPONSE,
-    equipeIds.length
-      ? lireToutesLesPages((debut, fin) => {
-          const q = supabase
-            .from('composition')
-            .select('equipe_id, grimpeur_id, groupe_depart, grimpeur:grimpeur_id(nom, prenom, club_id)')
-          return (clubId ? q.in('equipe_id', equipeIds) : q.eq('rencontre_id', rencontreId))
-            .order('grimpeur_id')
-            .range(debut, fin)
-        }, 'des compositions')
-      : AUCUNE_LIGNE,
-  ])
   const paliers = verifierLecture(paliersRes, 'des paliers') ?? []
   const lignesVoies = verifierLecture(voiesRes, 'des voies') ?? []
 
@@ -278,6 +320,8 @@ async function chargerSaisie(
   }))
 
   const infoGrimpeur = new Map<string, { nom: string; prenom: string; clubId: string }>()
+  // Noms des clubs d'origine, embarqués avec le grimpeur (prêtés).
+  const nomClub = new Map<string, string>()
   const lignesCompo = compos.map((c) => {
     const g = premier(c.grimpeur)
     if (g) {
@@ -286,6 +330,8 @@ async function chargerSaisie(
         prenom: g.prenom as string,
         clubId: g.club_id as string,
       })
+      const club = premier(g.club)
+      if (club) nomClub.set(g.club_id as string, club.nom as string)
     }
     return {
       equipeId: c.equipe_id as string,
@@ -293,83 +339,6 @@ async function chargerSaisie(
       groupeDepart: (c.groupe_depart as string | null) ?? null,
     }
   })
-  const grimpeurIds = [...new Set(lignesCompo.map((c) => c.grimpeurId))]
-  const voieIds = voies.map((v) => v.voieDifficulteId)
-  const blocIds = blocsConfig.map((b) => b.blocId)
-
-  // Résultats + vitesse (temps saisi + points), paginés. Pour un club : bornés à
-  // ses grimpeurs ; pour tous les clubs : toute la rencontre (sans liste d'ids).
-  const lirePagine = (
-    table: string,
-    colonnes: string,
-    filtre: { col: string; val: string | string[] },
-    ordre: string,
-    quoi: string,
-  ) =>
-    lireToutesLesPages((debut, fin) => {
-      let q = supabase.from(table).select(colonnes)
-      q = Array.isArray(filtre.val) ? q.in(filtre.col, filtre.val) : q.eq(filtre.col, filtre.val)
-      if (clubId) q = q.in('grimpeur_id', grimpeurIds)
-      return q.order(ordre).range(debut, fin) as unknown as PromiseLike<{
-        data: Ligne[] | null
-        error: { message: string; code?: string } | null
-      }>
-    }, quoi)
-
-  const [rvLignes, rbLignes, tvLignes, pvLignes] = await Promise.all([
-    epreuveVoie && voieIds.length && grimpeurIds.length
-      ? lirePagine(
-          'resultat_voie',
-          'id, voie_difficulte_id, grimpeur_id, issue',
-          { col: 'voie_difficulte_id', val: voieIds },
-          'id',
-          'des résultats de voie',
-        )
-      : AUCUNE_LIGNE,
-    epreuveBloc && blocIds.length && grimpeurIds.length
-      ? lirePagine(
-          'resultat_bloc',
-          'id, bloc_id, grimpeur_id, issue, palier_id',
-          { col: 'bloc_id', val: blocIds },
-          'id',
-          'des résultats de bloc',
-        )
-      : AUCUNE_LIGNE,
-    epreuveVitesse && grimpeurIds.length
-      ? lirePagine(
-          'temps_vitesse',
-          'grimpeur_id, issue, temps',
-          { col: 'epreuve_id', val: epreuveVitesse },
-          'grimpeur_id',
-          'des temps de vitesse',
-        )
-      : AUCUNE_LIGNE,
-    // Points de vitesse matérialisés par le trigger (R20), lus pour le score (R23).
-    epreuveVitesse && grimpeurIds.length
-      ? lirePagine(
-          'points_vitesse',
-          'grimpeur_id, points',
-          { col: 'epreuve_id', val: epreuveVitesse },
-          'grimpeur_id',
-          'des points de vitesse',
-        )
-      : AUCUNE_LIGNE,
-  ])
-
-  // Noms des clubs d'origine des grimpeurs prêtés (club ≠ celui de leur équipe).
-  const clubIdsOrigine = new Set<string>()
-  for (const c of lignesCompo) {
-    const origine = infoGrimpeur.get(c.grimpeurId)?.clubId
-    if (origine && origine !== clubEquipe.get(c.equipeId)) clubIdsOrigine.add(origine)
-  }
-  const nomClub = new Map<string, string>()
-  if (clubIdsOrigine.size) {
-    const clubs = verifierLecture(
-      await supabase.from('club').select('id, nom').in('id', [...clubIdsOrigine]),
-      'des clubs',
-    )
-    for (const c of clubs ?? []) nomClub.set(c.id as string, c.nom as string)
-  }
 
   // Résultats par grimpeur.
   const issueVoieParGrimpeur = new Map<string, Map<string, IssueVoie>>()
@@ -526,7 +495,7 @@ async function chargerSaisie(
     dateRencontre: rencontre.date_rencontre as string,
     categorie,
     phase,
-    clubPorteurNom: (verifierLecture(clubRes, 'du club')?.nom as string) ?? '(club inconnu)',
+    clubPorteurNom: (premier(rencontre.club)?.nom as string | undefined) ?? '(club inconnu)',
     ouverteSaisie: phase === 'competition',
     voiesEpreuve: voies,
     blocsConfig,

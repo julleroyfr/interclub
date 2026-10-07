@@ -8,6 +8,16 @@
   2026-10-02, spec #8 abandonnée) : le **live public** n'est plus « différé » mais
   **sans objet** ; la contrainte « aucune ouverture `anon` » est conservée (il n'y
   a aucun visiteur anonyme à servir).
+- **Révision** : 2026-10-07 (validée le 2026-10-07) — ajout de **R6bis** : sur
+  les **écrans de saisie** (coach, admin, juge), un évènement dont l'**auteur** est
+  l'utilisateur courant est **ignoré** (son écran est déjà relu par la Server
+  Action, R6) ; **R4** précise le seul usage admis de la charge utile. Motif :
+  mesure en recette — chaque saisie déclenchait un second rafraîchissement complet
+  (~1,25 s) de l'écran de son propre auteur. Correctif associé (conformité à
+  **R5**) : le canal s'abonne avec le **jeton de session** de l'utilisateur ; il
+  s'abonnait jusque-là avec la clé anonyme (session pas encore chargée), Realtime
+  évaluait alors la RLS en anonyme et livrait des évènements **vidés** de leur
+  contenu (« 401 Unauthorized ») — simple signal, auteur illisible.
 - **Sources** :
   - **Spec #6 — Saisie des résultats** (`06-saisie-des-resultats.md`) : « Temps réel
     (pousser les MAJ sur les autres écrans) » noté **évolution future différée**
@@ -107,7 +117,9 @@ se **rafraîchissent d'eux-mêmes**, sans action ni rechargement de l'utilisateu
   lecture, spec #7 R10). Le canal temps réel ne transporte qu'un **signal de
   changement**, **jamais** de données recalculées. → **aucune logique de calcul
   n'est dupliquée côté client** ; le domaine (`score.ts`, etc.) reste l'unique
-  référence.
+  référence. *(Rév. 2026-10-07.)* Le **seul** usage admis de la charge utile est
+  d'en lire l'**auteur** de l'écriture, pour ignorer l'écho de ses propres saisies
+  (R6bis) ; aucune valeur reçue n'est affichée.
 
   **Compromis assumé (relecture vs. diff appliqué).** On **ne** met **pas** à jour
   l'écran avec la seule ligne reçue, parce qu'**une écriture ne correspond pas à une
@@ -134,6 +146,29 @@ se **rafraîchissent d'eux-mêmes**, sans action ni rechargement de l'utilisateu
   continue de se rafraîchir via le mécanisme existant (Server Action +
   `revalidatePath`). Le realtime **s'ajoute** pour les **autres** écrans ouverts ;
   il ne modifie pas le flux de saisie ni la revalidation actuelle.
+
+- **R6bis.** *(Rév. 2026-10-07.)* **Écho de ses propres saisies.** Sur les **écrans
+  de saisie** — saisie des résultats **coach** (#6), saisie **admin** (#9), saisie
+  vitesse **juge** (#10) — un évènement `INSERT` ou `UPDATE` dont l'**auteur**
+  enregistré (`auteur_utilisateur_id`, spec #9 R14 / spec #10) est l'**utilisateur
+  courant** ne déclenche **pas** de relecture : son écran a déjà été relu par la
+  Server Action (R6). Déclenchent toujours une relecture :
+  - les écritures d'un **autre** utilisateur ;
+  - les évènements **sans auteur connu** : `DELETE` (la charge utile ne porte que
+    la clé de la ligne supprimée) et tables sans auteur (`points_vitesse`,
+    dérivée par trigger) ;
+  - la **reconnexion** du canal (R11).
+
+  Les écrans de **classement** (#7) et de **contrôle** (#16) ne sont **pas**
+  concernés : ils se relisent à **toute** écriture, y compris celles du même
+  compte (ex. l'admin saisit dans un onglet et suit le classement dans un autre).
+
+  **Limite assumée** : un **même compte** ouvert sur **deux appareils**, chacun
+  sur un écran de saisie, ne voit pas en direct sur le second appareil les
+  saisies faites depuis le premier ; l'écran se met à jour à la prochaine
+  écriture d'un autre utilisateur, à la reconnexion (R11) ou au rechargement.
+  Les sessions QR (coach temporaire, juge) ont chacune leur propre identité :
+  plusieurs appareils sur un même jeton se voient donc en direct.
 
 - **R7.** **Cycle de vie de l'abonnement.** Le canal est **ouvert à l'affichage** de
   l'écran concerné et **fermé à son démontage** (navigation, fermeture). Aucune
@@ -186,6 +221,7 @@ sequenceDiagram
     SA-->>CoachA: revalidatePath → écran A à jour (R6)
     DB-->>RT: évènement de réplication (Postgres Changes)
     RT-->>CoachB: signal de changement (RLS respectée, R5)
+    RT-->>CoachA: écho de sa propre saisie — ignoré (R6bis)
     Note over CoachB: anti-rebond (R9)
     CoachB->>DB: relecture via loader (R4)
     DB-->>CoachB: données à jour → écran B rafraîchi
@@ -195,7 +231,9 @@ sequenceDiagram
   (coach A en saisie, coach B en saisie ou en classement),
 - **quand** le coach A enregistre un résultat,
 - **alors** l'écran de A se met à jour (revalidation, R6) **et** l'écran de B se
-  **rafraîchit tout seul** en quelques instants (R2/R4), sans que B ne fasse rien.
+  **rafraîchit tout seul** en quelques instants (R2/R4), sans que B ne fasse rien ;
+  l'écho de la saisie de A ne relance **pas** une seconde relecture de l'écran de
+  A (R6bis).
 
 ### Nominal — un temps de vitesse se propage partout
 

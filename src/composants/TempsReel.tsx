@@ -6,6 +6,8 @@ import type { RealtimeChannel } from '@supabase/supabase-js'
 
 import { createClient } from '@/lib/supabase/client'
 
+import { doitRelire, type EvenementTempsReel } from './echo-temps-reel'
+
 import { Pastille, type VariantePastille } from './Pastille'
 
 /**
@@ -34,10 +36,16 @@ const ANTI_REBOND_MS = 400
 export function TempsReel({
   tables,
   actif = true,
+  ignorerMesEcritures = false,
 }: {
   tables: TableTempsReel[]
   /** Faux hors phase de live (R7) : ni abonnement ni indicateur. */
   actif?: boolean
+  /**
+   * Écrans de SAISIE uniquement (R6bis) : ignore l'écho des écritures de
+   * l'utilisateur courant, déjà relues par la Server Action (R6).
+   */
+  ignorerMesEcritures?: boolean
 }) {
   const router = useRouter()
   const [etat, setEtat] = useState<EtatConnexion>('connexion')
@@ -62,28 +70,48 @@ export function TempsReel({
       rebond = setTimeout(() => router.refresh(), ANTI_REBOND_MS) // R4 + R9
     }
 
+    // Utilisateur courant (session locale) : sert uniquement à reconnaître
+    // l'écho de ses propres saisies (R6bis).
+    let utilisateurId: string | null = null
+    const surEvenement = (evenement: EvenementTempsReel) => {
+      if (doitRelire(evenement, { ignorerMesEcritures, utilisateurId })) rafraichir()
+    }
+
     const canal: RealtimeChannel = supabase.channel(`temps-reel:${cleTables}`)
     for (const table of listeTables) {
       canal.on(
         'postgres_changes',
         { event: '*', schema: 'interclub', table },
-        rafraichir, // charge utile ignorée : signal seul (R4)
+        surEvenement, // seul l'auteur est lu dans la charge utile (R4/R6bis)
       )
     }
 
-    canal.subscribe((status: string) => {
-      if (status === 'SUBSCRIBED') {
-        if (dejaConnecte) router.refresh() // rattrapage à la reconnexion (R11)
-        dejaConnecte = true
-        setEtat('connecte')
-      } else if (
-        status === 'CHANNEL_ERROR' ||
-        status === 'TIMED_OUT' ||
-        status === 'CLOSED'
-      ) {
-        setEtat('interrompu')
-      }
-    })
+    // Le canal s'abonne avec le JETON DE SESSION, pas la clé anonyme : sans lui,
+    // Realtime évalue la RLS en anonyme et livre des évènements vidés de leur
+    // contenu (« 401 Unauthorized ») — R5 ne serait qu'apparente et l'auteur
+    // illisible (R6bis). La session est donc chargée AVANT l'abonnement.
+    let annule = false
+    const demarrer = async () => {
+      const { data } = await supabase.auth.getSession()
+      if (annule) return
+      if (data.session) await supabase.realtime.setAuth(data.session.access_token)
+      utilisateurId = data.session?.user.id ?? null
+      if (annule) return
+      canal.subscribe((status: string) => {
+        if (status === 'SUBSCRIBED') {
+          if (dejaConnecte) router.refresh() // rattrapage à la reconnexion (R11)
+          dejaConnecte = true
+          setEtat('connecte')
+        } else if (
+          status === 'CHANNEL_ERROR' ||
+          status === 'TIMED_OUT' ||
+          status === 'CLOSED'
+        ) {
+          setEtat('interrompu')
+        }
+      })
+    }
+    void demarrer()
 
     // Réagir sans attendre le socket : couper l'indicateur hors ligne, forcer un
     // rattrapage au retour (R11). Le socket se ré-abonne de lui-même en parallèle.
@@ -93,12 +121,13 @@ export function TempsReel({
     window.addEventListener('online', surEnLigne)
 
     return () => {
+      annule = true
       if (rebond) clearTimeout(rebond)
       window.removeEventListener('offline', surHorsLigne)
       window.removeEventListener('online', surEnLigne)
       void supabase.removeChannel(canal) // désabonnement au démontage (R7)
     }
-  }, [actif, cleTables, router])
+  }, [actif, cleTables, ignorerMesEcritures, router])
 
   if (!actif) return null
 

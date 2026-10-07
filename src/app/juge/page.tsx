@@ -52,7 +52,7 @@ export default async function PageJuge() {
           </span>
           {/* Live : synchronise les temps entre écrans juge (spec #11 R1/R3). L'écran
               n'existe qu'en ③ (getContexteJuge) → actif par défaut. */}
-          <TempsReel tables={['temps_vitesse']} />
+          <TempsReel tables={['temps_vitesse']} ignorerMesEcritures />
           {/* Fin de session QR juge (spec #12 R17) : ferme la session → accueil. */}
           <form action={terminerSession} className="ml-auto">
             <button
