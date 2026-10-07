@@ -8,7 +8,7 @@
 > reconnexion**. Règles dans
 > [docs/conventions/06-cahier-de-test.md](../conventions/06-cahier-de-test.md).
 
-- **Spec de référence** : `docs/specs/11-realtime.md` (R1–R12 + « Contraintes de
+- **Spec de référence** : `docs/specs/11-realtime.md` (R1–R12, R6bis + « Contraintes de
   données » + « Points à surveiller ») ; s'appuie sur `06` (R22/R23),
   `07` (R10/R15/R20), `01` R8 (pas d'espace public, aucune RLS `anon`), `09`, `10`.
 - **Pré-requis** :
@@ -239,6 +239,29 @@ Routes utilisées :
   - (2) Saisie Devi par Coach A → **réussit** ✅
   - (3) Classement Coach B → **Devi mis à jour en direct** ✅
   - (4) Panneau saisie Coach B → **Devi absent**, écriture impossible via l'IHM ✅
+
+### CT-14 — Écho de ses propres saisies ignoré sur les écrans de saisie (couvre : R6bis, R4)
+
+- **Rôles** : `coach@test.local` (`JD-COACH-A`, écrivain) + `coach2@test.local`
+  (`JD-COACH-A2`, observateur, même club, compte **différent**) + `admin@test.local`.
+- **Pré-condition** : rencontre en ③. DevTools → **Network** ouvert sur la fenêtre de
+  l'écrivain, filtre `_rsc`.
+- **Étapes** :
+  1. Fenêtre **Coach A** : ouvrir la **saisie coach** ; saisir une issue de voie.
+     Observer le Network pendant 3 s après la réponse de l'action.
+  2. Fenêtre **Coach A2** (saisie coach, même rencontre) : vérifier la mise à jour.
+  3. Fenêtre **Coach A** : **retirer** le résultat de voie saisi en (1).
+  4. Fenêtre **Admin** : ouvrir la **saisie admin** dans un onglet et le
+     **classement admin** dans un autre ; saisir une issue depuis la saisie admin.
+- **Résultat attendu** :
+  - (1) **Une seule** requête de relecture (la réponse de l'action) ; **aucune**
+    requête `resultats?_rsc=…` supplémentaire déclenchée par le temps réel (R6bis) ✅
+  - (2) L'écran de **Coach A2** se rafraîchit tout seul (autre utilisateur, R2) ✅
+  - (3) Retrait (`DELETE`) : l'écran de Coach A **se relit** aussi via le temps réel
+    (auteur inconnu pour un `DELETE`, R6bis) — comportement attendu ✅
+  - (4) L'onglet **classement admin** se rafraîchit, bien que l'auteur soit le même
+    compte (le classement n'ignore rien, R6bis) ; l'onglet **saisie admin** ne
+    déclenche pas de relecture supplémentaire ✅
 
 ## Registre d'exécution
 

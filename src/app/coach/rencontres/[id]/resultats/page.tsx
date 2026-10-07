@@ -67,6 +67,7 @@ export default async function PageResultats({
             <TempsReel
               tables={['resultat_voie', 'resultat_bloc', 'temps_vitesse', 'points_vitesse']}
               actif={phaseEnDirect(saisie.phase)}
+              ignorerMesEcritures
             />
           </div>
         </div>
