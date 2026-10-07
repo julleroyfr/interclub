@@ -46,11 +46,17 @@ export default async function PageTableauDeBordRencontre({
   await exigerAdmin()
 
   const { id } = await params
-  const structure = await getStructureRencontre(id)
+  // Lectures indépendantes : en parallèle (chaque aller-retour vers la base
+  // compte, l'écran se recharge après chaque action du tableau de bord).
+  const [structure, { grimpeurs, clubs, prets }, engagementClubs, controle] = await Promise.all([
+    getStructureRencontre(id),
+    chargerPretsRencontre(id),
+    chargerEngagementTousClubs(id),
+    // Contrôle des résultats (spec #16) : ④ contrôle, ⑤ lecture seule (R2/R3).
+    getControleRencontre(id, { avecAuteurs: false }),
+  ])
   if (!structure) notFound()
 
-  const { grimpeurs, clubs, prets } = await chargerPretsRencontre(id)
-  const engagementClubs = await chargerEngagementTousClubs(id)
   const estEnfant = engagementClubs[0]?.engagement.categorie === 'enfant'
 
   // Compteurs du tableau de bord (R41).
@@ -60,8 +66,6 @@ export default async function PageTableauDeBordRencontre({
     structure.voiesVitesse.length
   const nbPrets = prets.length
 
-  // Contrôle des résultats (spec #16) : ④ contrôle, ⑤ lecture seule (R2/R3).
-  const controle = await getControleRencontre(id, { avecAuteurs: false })
   const progressionControle = controle
     ? progressionGlobale(controle.supports.map((s) => s.lignes))
     : null
