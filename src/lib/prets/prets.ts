@@ -1,12 +1,10 @@
 import 'server-only'
 
-import {
-  anneeSaison,
-  estEligibleCategorie,
-  type Categorie,
-} from '@/domaine/rencontre'
+import { anneeSaison, bornesAnneeNaissance, type Categorie } from '@/domaine/rencontre'
 import { exigerLectureAdmin } from '@/lib/auth/garde-lecture'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { verifierLecture } from '@/lib/supabase/lecture'
+import { lireToutesLesPages } from '@/lib/supabase/pagination'
 
 // Écran admin de gestion des prêts (spec #1 R35). Lecture des catalogues
 // (rencontres, grimpeurs, clubs, prêts) via le client **service_role** — non
@@ -43,75 +41,77 @@ export async function chargerPretsRencontre(
   await exigerLectureAdmin('prêts de la rencontre')
   const admin = createAdminClient()
 
-  const [rencRes, clubsRes, grimpeursRes, pretsRes, compoRes] = await Promise.all([
+  const [rencRes, clubsRes, pretsRes, compoRes] = await Promise.all([
     admin.from('rencontre').select('categorie, date_rencontre').eq('id', rencontreId).maybeSingle(),
     admin.from('club').select('id, nom').order('nom'),
-    admin
-      .from('grimpeur')
-      .select('id, nom, prenom, club_id, annee_naissance')
-      .order('nom')
-      .order('prenom'),
+    // Le grimpeur de chaque prêt est embarqué : son nom ne dépend pas de la
+    // lecture (filtrée par catégorie) des grimpeurs prêtables ci-dessous.
     admin
       .from('pret')
-      .select('rencontre_id, grimpeur_id, club_accueil_id')
+      .select('rencontre_id, grimpeur_id, club_accueil_id, grimpeur:grimpeur_id(nom, prenom, club_id)')
       .eq('rencontre_id', rencontreId),
     // Grimpeurs déjà engagés (toutes équipes) dans cette rencontre : indisponibles
     // au prêt (un grimpeur ne joue que pour une équipe/rencontre, R14).
     admin.from('composition').select('grimpeur_id').eq('rencontre_id', rencontreId),
   ])
-  if (rencRes.error) throw rencRes.error
-  if (clubsRes.error) throw clubsRes.error
-  if (grimpeursRes.error) throw grimpeursRes.error
-  if (pretsRes.error) throw pretsRes.error
-  if (compoRes.error) throw compoRes.error
+  const rencontre = verifierLecture(rencRes, 'de la rencontre')
+  const clubsLus = verifierLecture(clubsRes, 'des clubs') ?? []
+  const pretsLus = verifierLecture(pretsRes, 'des prêts') ?? []
+  const composLues = verifierLecture(compoRes, 'des compositions') ?? []
+
+  // Catégorie de la rencontre : on ne propose au prêt que les grimpeurs éligibles
+  // à cette tranche d'âge (R34) — filtrée dès la lecture, paginée car le fichier
+  // des licenciés dépasse le plafond de lignes d'une réponse de l'API.
+  const bornes = rencontre
+    ? bornesAnneeNaissance(
+        rencontre.categorie as Categorie,
+        anneeSaison(rencontre.date_rencontre as string),
+      )
+    : null
+  const grimpeursLus = await lireToutesLesPages((debut, fin) => {
+    let q = admin.from('grimpeur').select('id, nom, prenom, club_id')
+    if (bornes) {
+      q = q.gte('annee_naissance', bornes.min)
+      if (bornes.max !== null) q = q.lte('annee_naissance', bornes.max)
+    }
+    return q.order('nom').order('prenom').order('id').range(debut, fin)
+  }, 'des grimpeurs')
 
   // Grimpeurs indisponibles au prêt : déjà engagés (R14) OU déjà prêtés.
   const indisponibles = new Set<string>([
-    ...(compoRes.data ?? []).map((c) => c.grimpeur_id as string),
-    ...(pretsRes.data ?? []).map((p) => p.grimpeur_id as string),
+    ...composLues.map((c) => c.grimpeur_id as string),
+    ...pretsLus.map((p) => p.grimpeur_id as string),
   ])
 
   const nomClub = new Map<string, string>(
-    (clubsRes.data ?? []).map((c) => [c.id as string, c.nom as string]),
+    clubsLus.map((c) => [c.id as string, c.nom as string]),
   )
 
-  const clubs: ClubOption[] = (clubsRes.data ?? []).map((c) => ({
+  const clubs: ClubOption[] = clubsLus.map((c) => ({
     id: c.id as string,
     nom: c.nom as string,
   }))
 
-  // Catégorie de la rencontre : on ne propose au prêt que les grimpeurs éligibles
-  // à cette tranche d'âge (R34). Les noms des prêts existants sont résolus depuis
-  // TOUS les grimpeurs (map ci-dessous), indépendamment du filtre.
-  const categorie = rencRes.data?.categorie as Categorie | undefined
-  const saison = rencRes.data ? anneeSaison(rencRes.data.date_rencontre as string) : null
+  const grimpeurs: GrimpeurOption[] = grimpeursLus
+    .filter((g) => !indisponibles.has(g.id as string))
+    .map((g) => ({
+      id: g.id as string,
+      prenom: g.prenom as string,
+      nom: g.nom as string,
+      clubId: g.club_id as string,
+    }))
 
-  const infoGrimpeur = new Map<string, { nom: string; clubId: string }>()
-  const grimpeurs: GrimpeurOption[] = []
-  for (const g of grimpeursRes.data ?? []) {
-    const nomComplet = `${g.prenom as string} ${g.nom as string}`
-    infoGrimpeur.set(g.id as string, { nom: nomComplet, clubId: g.club_id as string })
-    const eligible =
-      !categorie ||
-      saison === null ||
-      estEligibleCategorie(g.annee_naissance as number, categorie, saison)
-    if (eligible && !indisponibles.has(g.id as string)) {
-      grimpeurs.push({
-        id: g.id as string,
-        prenom: g.prenom as string,
-        nom: g.nom as string,
-        clubId: g.club_id as string,
-      })
-    }
-  }
-
-  const prets: PretExistant[] = (pretsRes.data ?? []).map((p) => {
-    const g = infoGrimpeur.get(p.grimpeur_id as string)
+  const prets: PretExistant[] = pretsLus.map((p) => {
+    const brut = p.grimpeur as unknown
+    const g = (Array.isArray(brut) ? brut[0] : brut) as
+      | { nom: string; prenom: string; club_id: string }
+      | null
+      | undefined
     return {
       rencontreId: p.rencontre_id as string,
       grimpeurId: p.grimpeur_id as string,
-      grimpeurNom: g?.nom ?? '?',
-      clubOrigineNom: g ? (nomClub.get(g.clubId) ?? '?') : '?',
+      grimpeurNom: g ? `${g.prenom} ${g.nom}` : '?',
+      clubOrigineNom: g ? (nomClub.get(g.club_id) ?? '?') : '?',
       clubAccueilNom: nomClub.get(p.club_accueil_id as string) ?? '?',
     }
   })

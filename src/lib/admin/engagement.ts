@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { anneeSaison, estEligibleCategorie, type Categorie, type Phase } from '@/domaine/rencontre'
+import { anneeSaison, bornesAnneeNaissance, type Categorie, type Phase } from '@/domaine/rencontre'
 import { exigerLectureAdmin } from '@/lib/auth/garde-lecture'
 import {
   assemblerEngagementClub,
@@ -10,6 +10,7 @@ import {
 import { versGrimpeurLu } from '@/lib/coach/engagement'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { verifierLecture } from '@/lib/supabase/lecture'
+import { lireToutesLesPages } from '@/lib/supabase/pagination'
 import { createClient } from '@/lib/supabase/server'
 
 // Engagement de TOUS les clubs d'une rencontre, pour l'écran admin (spec #1 R10).
@@ -23,13 +24,6 @@ export type EngagementClub = {
   clubNom: string
   engagement: EngagementRencontre
 }
-
-/** Taille d'une page de lecture (≤ `max_rows` de l'API, 1000). */
-const TAILLE_PAGE = 1000
-
-/** Âges couverts par les catégories (R34) : bornes larges pour cibler la lecture. */
-const AGE_MIN_RECHERCHE = 0
-const AGE_MAX_RECHERCHE = 30
 
 /** Charge l'engagement de chaque club pour la rencontre (équipes + roster). */
 export async function chargerEngagementTousClubs(
@@ -53,12 +47,6 @@ export async function chargerEngagementTousClubs(
 
   const categorie = rencontre.categorie as Categorie
   const saison = anneeSaison(rencontre.date_rencontre as string)
-  // Années de naissance éligibles (R34) : la lecture du roster ne ramène que les
-  // grimpeurs de la catégorie, au lieu de tout le fichier des licenciés.
-  const anneesEligibles: number[] = []
-  for (let age = AGE_MIN_RECHERCHE; age <= AGE_MAX_RECHERCHE; age++) {
-    if (estEligibleCategorie(saison - age, categorie, saison)) anneesEligibles.push(saison - age)
-  }
 
   const [equipesRes, pretsRes, roster] = await Promise.all([
     supabase
@@ -72,7 +60,7 @@ export async function chargerEngagementTousClubs(
       .from('pret')
       .select('club_accueil_id, grimpeur:grimpeur_id(id, nom, prenom, club_id, annee_naissance)')
       .eq('rencontre_id', rencontreId),
-    lireRosterEligible(supabase, anneesEligibles),
+    lireRosterEligible(supabase, categorie, saison),
   ])
   const equipesLues = verifierLecture(equipesRes, 'des équipes') ?? []
   const pretsLus = verifierLecture(pretsRes, 'des prêts') ?? []
@@ -145,31 +133,25 @@ export async function chargerEngagementTousClubs(
 }
 
 /**
- * Grimpeurs nés une des `annees` (tous clubs), triés par nom puis prénom. Lus par
- * pages : la lecture peut dépasser la limite de lignes d'une réponse de l'API.
+ * Grimpeurs éligibles à la catégorie (R34, tous clubs), triés par nom puis
+ * prénom : la lecture ne ramène que la tranche d'âge, pas tout le fichier des
+ * licenciés, et elle est paginée (plafond de lignes de l'API).
  */
 async function lireRosterEligible(
   supabase: Awaited<ReturnType<typeof createClient>>,
-  annees: number[],
+  categorie: Categorie,
+  saison: number,
 ): Promise<GrimpeurLu[]> {
-  if (annees.length === 0) return []
-  const tous: GrimpeurLu[] = []
-  for (let debut = 0; ; debut += TAILLE_PAGE) {
-    const page =
-      verifierLecture(
-        await supabase
-          .from('grimpeur')
-          .select('id, nom, prenom, club_id, annee_naissance')
-          .in('annee_naissance', annees)
-          .order('nom')
-          .order('prenom')
-          .order('id')
-          .range(debut, debut + TAILLE_PAGE - 1),
-        'des grimpeurs',
-      ) ?? []
-    tous.push(...page.map(versGrimpeurLu))
-    if (page.length < TAILLE_PAGE) return tous
-  }
+  const { min, max } = bornesAnneeNaissance(categorie, saison)
+  const lignes = await lireToutesLesPages((debut, fin) => {
+    let q = supabase
+      .from('grimpeur')
+      .select('id, nom, prenom, club_id, annee_naissance')
+      .gte('annee_naissance', min)
+    if (max !== null) q = q.lte('annee_naissance', max)
+    return q.order('nom').order('prenom').order('id').range(debut, fin)
+  }, 'des grimpeurs')
+  return lignes.map(versGrimpeurLu)
 }
 
 /** Relation embarquée : objet ou tableau selon l'inférence du client. */
