@@ -60,8 +60,13 @@ export function NavPrincipale({ liens }: { liens: LienNav[] }) {
           const actif = l.href === actifHref
           return (
             <li key={l.href}>
+              {/* Pas de préchargement : les pages sont dynamiques (seule leur coquille
+                  serait préchargée) et Next le relance après CHAQUE action serveur —
+                  une rafale d'appels serveur à chaque saisie, coûteuse sur le
+                  réseau d'une salle. */}
               <Link
                 href={l.href}
+                prefetch={false}
                 aria-current={actif ? 'page' : undefined}
                 onClick={() => setOuvertSur(null)}
                 className={`flex min-h-11 items-center rounded-lg px-3 text-base font-medium transition md:min-h-0 md:py-1.5 md:text-sm ${

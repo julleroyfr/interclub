@@ -58,6 +58,7 @@ export default async function PageResultats({
             {saisie.phase !== 'pre_competition' && saisie.phase !== 'preparation' && (
               <Link
                 href={`/coach/rencontres/${id}/classement`}
+                prefetch={false}
                 className="text-sm font-semibold text-accent-doux underline-offset-2 hover:underline"
               >
                 Voir le classement →
