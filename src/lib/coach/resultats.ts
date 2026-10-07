@@ -6,6 +6,7 @@ import { PLAFOND_VOIES_ADO, type IssueBloc, type IssueVoie } from '@/domaine/res
 import { type Categorie, type Phase } from '@/domaine/rencontre'
 import { scoreBloc, scoreVoie, type BaremeVoie } from '@/domaine/score'
 import { verifierLecture } from '@/lib/supabase/lecture'
+import { lireToutesLesPages } from '@/lib/supabase/pagination'
 import { createClient } from '@/lib/supabase/server'
 
 // Lecture de la saisie des résultats d'une rencontre pour le club du coach
@@ -15,7 +16,8 @@ import { createClient } from '@/lib/supabase/server'
 // progression (R20). Le SCORE (R23) est calculé au fil de l'eau (voie + bloc +
 // vitesse) via le domaine `score.ts` (spec #7), la composante vitesse étant lue
 // depuis `points_vitesse` (matérialisée par le trigger, R20). La RLS borne la
-// lecture (club, phase ③+).
+// lecture (club, phase ③+). Le même chargement sert l'admin pour TOUS les clubs
+// en une seule série de lectures (spec #9, `getSaisieTousClubs`).
 
 /** Nombre de voies attendues pour un enfant (les 3 du groupe de départ, R9). */
 const VOIES_ENFANT = 3
@@ -104,6 +106,12 @@ export type SaisieRencontre = {
   grimpeurs: GrimpeurSaisie[]
 }
 
+/** Saisie de TOUS les clubs engagés d'une rencontre : grimpeurs par club. */
+export type SaisieTousClubs = Omit<SaisieRencontre, 'grimpeurs'> & {
+  /** Grimpeurs engagés, par club de leur équipe (clubs sans grimpeur absents). */
+  grimpeursParClub: Map<string, GrimpeurSaisie[]>
+}
+
 /**
  * Charge la saisie des résultats d'une rencontre pour le club donné. Renvoie
  * `null` si la rencontre est introuvable. À appeler derrière la garde coach.
@@ -112,64 +120,158 @@ export async function getSaisieRencontre(
   rencontreId: string,
   clubId: string,
 ): Promise<SaisieRencontre | null> {
+  const saisie = await chargerSaisie(rencontreId, clubId)
+  if (!saisie) return null
+  const { grimpeursParClub, ...rencontre } = saisie
+  return { ...rencontre, grimpeurs: grimpeursParClub.get(clubId) ?? [] }
+}
+
+/**
+ * Charge la saisie de TOUS les clubs engagés en une seule série de lectures
+ * (écran admin, spec #9) : sous session admin, la RLS `est_admin()` ouvre tous
+ * les clubs. Renvoie `null` si la rencontre est introuvable. À appeler derrière
+ * la garde admin.
+ */
+export async function getSaisieTousClubs(rencontreId: string): Promise<SaisieTousClubs | null> {
+  return chargerSaisie(rencontreId, null)
+}
+
+type Ligne = Record<string, unknown>
+
+/** Relation embarquée : objet ou tableau selon l'inférence du client. */
+function premier(v: unknown): Ligne | null {
+  const x = Array.isArray(v) ? v[0] : v
+  return x && typeof x === 'object' ? (x as Ligne) : null
+}
+
+/**
+ * Lectures + assemblage de la saisie, pour UN club (`clubId`) ou pour tous les
+ * clubs engagés (`null`). Toutes les lectures partent en UNE vague : chaque table
+ * est filtrée sur la rencontre par jointure (épreuve, voie, bloc), sans attendre
+ * d'identifiants — chaque aller-retour vers la base compte, l'écran étant relu
+ * après chaque saisie. Les lectures pouvant dépasser le plafond de lignes de
+ * l'API (compositions, résultats de toute une rencontre) sont paginées.
+ */
+async function chargerSaisie(
+  rencontreId: string,
+  clubId: string | null,
+): Promise<SaisieTousClubs | null> {
   const supabase = await createClient()
 
-  const rencontre = verifierLecture(
-    await supabase
+  type Reponse = { data: Ligne[] | null; error: { message: string; code?: string } | null }
+  /** Lecture paginée d'une requête construite par `requete` (ordre total requis). */
+  const pagine = (requete: (debut: number, fin: number) => unknown, quoi: string) =>
+    lireToutesLesPages((debut, fin) => requete(debut, fin) as PromiseLike<Reponse>, quoi)
+
+  const requeteEquipes = supabase
+    .from('equipe')
+    .select('id, nom, club_id')
+    .eq('rencontre_id', rencontreId)
+
+  const [
+    rencRes,
+    equipesRes,
+    voiesRes,
+    blocsRes,
+    paliersRes,
+    compos,
+    rvLignes,
+    rbLignes,
+    tvLignes,
+    pvLignes,
+  ] = await Promise.all([
+    supabase
       .from('rencontre')
-      .select('id, date_rencontre, categorie, phase, club_porteur_id')
+      .select('id, date_rencontre, categorie, phase, club:club_porteur_id(nom)')
       .eq('id', rencontreId)
       .maybeSingle(),
-    'de la rencontre',
-  )
+    clubId ? requeteEquipes.eq('club_id', clubId) : requeteEquipes,
+    supabase
+      .from('voie_difficulte')
+      .select(
+        'id, niveau, cotation, type_voie, ordre, points, points_prise_valorisee, points_zone1, points_zone2, epreuve!inner(rencontre_id)',
+      )
+      .eq('epreuve.rencontre_id', rencontreId)
+      .order('ordre'),
+    supabase
+      .from('bloc')
+      .select('id, code, ordre, epreuve!inner(rencontre_id)')
+      .eq('epreuve.rencontre_id', rencontreId)
+      .order('ordre'),
+    supabase
+      .from('bloc_palier')
+      .select('id, bloc_id, libelle, ordre, points, bloc!inner(epreuve!inner(rencontre_id))')
+      .eq('bloc.epreuve.rencontre_id', rencontreId)
+      .order('ordre'),
+    // Compositions, grimpeur embarqué (nom, prénom, club d'origine et son nom).
+    pagine((debut, fin) => {
+      const q = supabase
+        .from('composition')
+        .select(
+          'equipe_id, grimpeur_id, groupe_depart, equipe!inner(club_id), grimpeur:grimpeur_id(nom, prenom, club_id, club:club_id(nom))',
+        )
+        .eq('rencontre_id', rencontreId)
+      return (clubId ? q.eq('equipe.club_id', clubId) : q).order('grimpeur_id').range(debut, fin)
+    }, 'des compositions'),
+    // Résultats et vitesse de TOUTE la rencontre (lisibles au fil de l'eau, spec
+    // #1 R8), rattachés ensuite aux seuls grimpeurs composés.
+    pagine(
+      (debut, fin) =>
+        supabase
+          .from('resultat_voie')
+          .select('id, voie_difficulte_id, grimpeur_id, issue, voie_difficulte!inner(epreuve!inner(rencontre_id))')
+          .eq('voie_difficulte.epreuve.rencontre_id', rencontreId)
+          .order('id')
+          .range(debut, fin),
+      'des résultats de voie',
+    ),
+    pagine(
+      (debut, fin) =>
+        supabase
+          .from('resultat_bloc')
+          .select('id, bloc_id, grimpeur_id, issue, palier_id, bloc!inner(epreuve!inner(rencontre_id))')
+          .eq('bloc.epreuve.rencontre_id', rencontreId)
+          .order('id')
+          .range(debut, fin),
+      'des résultats de bloc',
+    ),
+    pagine(
+      (debut, fin) =>
+        supabase
+          .from('temps_vitesse')
+          .select('grimpeur_id, issue, temps, epreuve!inner(rencontre_id)')
+          .eq('epreuve.rencontre_id', rencontreId)
+          .order('grimpeur_id')
+          .range(debut, fin),
+      'des temps de vitesse',
+    ),
+    // Points de vitesse matérialisés par le trigger (R20), lus pour le score (R23).
+    pagine(
+      (debut, fin) =>
+        supabase
+          .from('points_vitesse')
+          .select('grimpeur_id, points, epreuve!inner(rencontre_id)')
+          .eq('epreuve.rencontre_id', rencontreId)
+          .order('grimpeur_id')
+          .range(debut, fin),
+      'des points de vitesse',
+    ),
+  ])
+
+  const rencontre = verifierLecture(rencRes, 'de la rencontre')
   if (!rencontre) return null
 
   const categorie = rencontre.categorie as Categorie
   const phase = rencontre.phase as Phase
 
-  const [clubRes, epreuvesRes, equipesRes] = await Promise.all([
-    supabase.from('club').select('nom').eq('id', rencontre.club_porteur_id as string).maybeSingle(),
-    supabase.from('epreuve').select('id, type').eq('rencontre_id', rencontreId),
-    supabase.from('equipe').select('id, nom').eq('rencontre_id', rencontreId).eq('club_id', clubId),
-  ])
-  const epreuves = verifierLecture(epreuvesRes, 'des épreuves') ?? []
-  const epreuveVoie = epreuves.find((e) => e.type === 'voie')?.id as string | undefined
-  const epreuveBloc = epreuves.find((e) => e.type === 'bloc')?.id as string | undefined
-  const epreuveVitesse = epreuves.find((e) => e.type === 'vitesse')?.id as
-    | string
-    | undefined
-
-  const equipes = (verifierLecture(equipesRes, 'des équipes') ?? []) as { id: string; nom: string }[]
-  const equipeIds = equipes.map((e) => e.id)
+  const equipes = (verifierLecture(equipesRes, 'des équipes') ?? []) as {
+    id: string
+    nom: string
+    club_id: string
+  }[]
   const nomEquipe = new Map(equipes.map((e) => [e.id, e.nom]))
+  const clubEquipe = new Map(equipes.map((e) => [e.id, e.club_id]))
 
-  // Structure (voies, blocs+paliers) + compositions du club.
-  const [voiesRes, blocsRes, paliersRes, composRes] = await Promise.all([
-    epreuveVoie
-      ? supabase
-          .from('voie_difficulte')
-          .select(
-            'id, niveau, cotation, type_voie, ordre, points, points_prise_valorisee, points_zone1, points_zone2',
-          )
-          .eq('epreuve_id', epreuveVoie)
-          .order('ordre')
-      : Promise.resolve({ data: [] as Record<string, unknown>[], error: null }),
-    epreuveBloc
-      ? supabase.from('bloc').select('id, code, ordre').eq('epreuve_id', epreuveBloc).order('ordre')
-      : Promise.resolve({ data: [] as Record<string, unknown>[], error: null }),
-    epreuveBloc
-      ? supabase
-          .from('bloc_palier')
-          .select('id, bloc_id, libelle, ordre, points')
-          .order('ordre')
-      : Promise.resolve({ data: [] as Record<string, unknown>[], error: null }),
-    equipeIds.length
-      ? supabase
-          .from('composition')
-          .select('equipe_id, grimpeur_id, groupe_depart')
-          .in('equipe_id', equipeIds)
-      : Promise.resolve({ data: [] as Record<string, unknown>[], error: null }),
-  ])
   const paliers = verifierLecture(paliersRes, 'des paliers') ?? []
   const lignesVoies = verifierLecture(voiesRes, 'des voies') ?? []
 
@@ -217,77 +319,36 @@ export async function getSaisieRencontre(
     paliers: paliersParBloc.get(b.id as string) ?? [],
   }))
 
-  const compos = (verifierLecture(composRes, 'des compositions') ?? []).map((c) => ({
-    equipeId: c.equipe_id as string,
-    grimpeurId: c.grimpeur_id as string,
-    groupeDepart: (c.groupe_depart as string | null) ?? null,
-  }))
-  const grimpeurIds = [...new Set(compos.map((c) => c.grimpeurId))]
-
-  // Noms/clubs des grimpeurs engagés + résultats + vitesse (temps saisi + points).
-  const [grimpeursRes, rvRes, rbRes, tvRes, pvRes] = await Promise.all([
-    grimpeurIds.length
-      ? supabase.from('grimpeur').select('id, nom, prenom, club_id').in('id', grimpeurIds)
-      : Promise.resolve({ data: [] as Record<string, unknown>[], error: null }),
-    epreuveVoie && voies.length
-      ? supabase
-          .from('resultat_voie')
-          .select('voie_difficulte_id, grimpeur_id, issue')
-          .in('voie_difficulte_id', voies.map((v) => v.voieDifficulteId))
-      : Promise.resolve({ data: [] as Record<string, unknown>[], error: null }),
-    epreuveBloc && blocsConfig.length
-      ? supabase
-          .from('resultat_bloc')
-          .select('bloc_id, grimpeur_id, issue, palier_id')
-          .in('bloc_id', blocsConfig.map((b) => b.blocId))
-      : Promise.resolve({ data: [] as Record<string, unknown>[], error: null }),
-    epreuveVitesse && grimpeurIds.length
-      ? supabase
-          .from('temps_vitesse')
-          .select('grimpeur_id, issue, temps')
-          .eq('epreuve_id', epreuveVitesse)
-          .in('grimpeur_id', grimpeurIds)
-      : Promise.resolve({ data: [] as Record<string, unknown>[], error: null }),
-    // Points de vitesse matérialisés par le trigger (R20), lus pour le score (R23).
-    epreuveVitesse && grimpeurIds.length
-      ? supabase
-          .from('points_vitesse')
-          .select('grimpeur_id, points')
-          .eq('epreuve_id', epreuveVitesse)
-          .in('grimpeur_id', grimpeurIds)
-      : Promise.resolve({ data: [] as Record<string, unknown>[], error: null }),
-  ])
-
   const infoGrimpeur = new Map<string, { nom: string; prenom: string; clubId: string }>()
-  for (const g of verifierLecture(grimpeursRes, 'des grimpeurs') ?? []) {
-    infoGrimpeur.set(g.id as string, {
-      nom: g.nom as string,
-      prenom: g.prenom as string,
-      clubId: g.club_id as string,
-    })
-  }
-  // Noms des clubs d'origine (grimpeurs prêtés).
-  const clubIdsAutres = [...new Set([...infoGrimpeur.values()].map((g) => g.clubId))].filter(
-    (id) => id !== clubId,
-  )
+  // Noms des clubs d'origine, embarqués avec le grimpeur (prêtés).
   const nomClub = new Map<string, string>()
-  if (clubIdsAutres.length) {
-    const clubs = verifierLecture(
-      await supabase.from('club').select('id, nom').in('id', clubIdsAutres),
-      'des clubs',
-    )
-    for (const c of clubs ?? []) nomClub.set(c.id as string, c.nom as string)
-  }
+  const lignesCompo = compos.map((c) => {
+    const g = premier(c.grimpeur)
+    if (g) {
+      infoGrimpeur.set(c.grimpeur_id as string, {
+        nom: g.nom as string,
+        prenom: g.prenom as string,
+        clubId: g.club_id as string,
+      })
+      const club = premier(g.club)
+      if (club) nomClub.set(g.club_id as string, club.nom as string)
+    }
+    return {
+      equipeId: c.equipe_id as string,
+      grimpeurId: c.grimpeur_id as string,
+      groupeDepart: (c.groupe_depart as string | null) ?? null,
+    }
+  })
 
   // Résultats par grimpeur.
   const issueVoieParGrimpeur = new Map<string, Map<string, IssueVoie>>()
-  for (const r of verifierLecture(rvRes, 'des résultats de voie') ?? []) {
+  for (const r of rvLignes) {
     const gid = r.grimpeur_id as string
     if (!issueVoieParGrimpeur.has(gid)) issueVoieParGrimpeur.set(gid, new Map())
     issueVoieParGrimpeur.get(gid)!.set(r.voie_difficulte_id as string, r.issue as IssueVoie)
   }
   const resBlocParGrimpeur = new Map<string, Map<string, { issue: IssueBloc; palierId: string | null }>>()
-  for (const r of verifierLecture(rbRes, 'des résultats de bloc') ?? []) {
+  for (const r of rbLignes) {
     const gid = r.grimpeur_id as string
     if (!resBlocParGrimpeur.has(gid)) resBlocParGrimpeur.set(gid, new Map())
     resBlocParGrimpeur.get(gid)!.set(r.bloc_id as string, {
@@ -296,18 +357,20 @@ export async function getSaisieRencontre(
     })
   }
   const formeVitesseParGrimpeur = new Map<string, { issue: string; temps: number | null }>()
-  for (const t of verifierLecture(tvRes, 'des temps de vitesse') ?? [])
+  for (const t of tvLignes)
     formeVitesseParGrimpeur.set(t.grimpeur_id as string, {
       issue: t.issue as string,
       temps: (t.temps as number | null) ?? null,
     })
   const pointsVitesseParGrimpeur = new Map<string, number>()
-  for (const p of verifierLecture(pvRes, 'des points de vitesse') ?? [])
+  for (const p of pvLignes)
     pointsVitesseParGrimpeur.set(p.grimpeur_id as string, (p.points as number) ?? 0)
 
-  const grimpeurs: GrimpeurSaisie[] = compos.map((c) => {
+  const grimpeursParClub = new Map<string, GrimpeurSaisie[]>()
+  for (const c of lignesCompo) {
+    const clubDeLEquipe = clubEquipe.get(c.equipeId) as string
     const info = infoGrimpeur.get(c.grimpeurId)
-    const prete = !!info && info.clubId !== clubId
+    const prete = !!info && info.clubId !== clubDeLEquipe
     const issuesVoie = issueVoieParGrimpeur.get(c.grimpeurId) ?? new Map<string, IssueVoie>()
 
     // Voies : enfant → les 3 du groupe de départ (voie représentative par niveau) ;
@@ -395,7 +458,7 @@ export async function getSaisieRencontre(
     const pointsVitesse = pointsVitesseParGrimpeur.get(c.grimpeurId) ?? 0
     const score = scoreVoies + scoreBlocs + pointsVitesse
 
-    return {
+    const grimpeur: GrimpeurSaisie = {
       grimpeurId: c.grimpeurId,
       score,
       pointsVitesse,
@@ -417,17 +480,25 @@ export async function getSaisieRencontre(
         blocsTotal: blocsConfig.length,
       },
     }
-  })
+    const liste = grimpeursParClub.get(clubDeLEquipe)
+    if (liste) liste.push(grimpeur)
+    else grimpeursParClub.set(clubDeLEquipe, [grimpeur])
+  }
+
+  // Ordre stable des grimpeurs d'un club : nom puis prénom.
+  for (const liste of grimpeursParClub.values()) {
+    liste.sort((a, b) => a.nom.localeCompare(b.nom, 'fr') || a.prenom.localeCompare(b.prenom, 'fr'))
+  }
 
   return {
     id: rencontre.id as string,
     dateRencontre: rencontre.date_rencontre as string,
     categorie,
     phase,
-    clubPorteurNom: (verifierLecture(clubRes, 'du club')?.nom as string) ?? '(club inconnu)',
+    clubPorteurNom: (premier(rencontre.club)?.nom as string | undefined) ?? '(club inconnu)',
     ouverteSaisie: phase === 'competition',
     voiesEpreuve: voies,
     blocsConfig,
-    grimpeurs,
+    grimpeursParClub,
   }
 }

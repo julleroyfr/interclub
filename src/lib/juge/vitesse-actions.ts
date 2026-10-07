@@ -69,9 +69,8 @@ export async function saisirTempsVitesse(
   }
 
   const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const { data: jeton } = await supabase.auth.getClaims()
+  const user = jeton?.claims.sub ? { id: jeton.claims.sub } : null
 
   const { error } = await supabase.from('temps_vitesse').upsert(
     {

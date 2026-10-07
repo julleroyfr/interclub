@@ -12,7 +12,16 @@ import { type createClient } from '@/lib/supabase/server'
 /** Client Supabase du projet (schéma `interclub`). */
 export type Client = Awaited<ReturnType<typeof createClient>>
 
-/** Contexte d'une voie de difficulté : rencontre, épreuve, catégorie, phase, type. */
+/** Relation embarquée : objet ou tableau selon l'inférence du client. */
+function premier(v: unknown): Record<string, unknown> | null {
+  const x = Array.isArray(v) ? v[0] : v
+  return x && typeof x === 'object' ? (x as Record<string, unknown>) : null
+}
+
+/**
+ * Contexte d'une voie de difficulté : rencontre, épreuve, catégorie, phase, type.
+ * Une seule lecture (épreuve et rencontre embarquées).
+ */
 export async function chargerContexteVoie(
   supabase: Client,
   voieId: string,
@@ -23,30 +32,14 @@ export async function chargerContexteVoie(
   const voie = verifierLecture(
     await supabase
       .from('voie_difficulte')
-      .select('type_voie, epreuve_id')
+      .select('type_voie, epreuve_id, epreuve:epreuve_id(rencontre_id, rencontre:rencontre_id(categorie, phase))')
       .eq('id', voieId)
       .maybeSingle(),
     'de la voie',
   )
-  if (!voie) return null
-  const ep = verifierLecture(
-    await supabase
-      .from('epreuve')
-      .select('rencontre_id')
-      .eq('id', voie.epreuve_id as string)
-      .maybeSingle(),
-    "de l'épreuve",
-  )
-  if (!ep) return null
-  const r = verifierLecture(
-    await supabase
-      .from('rencontre')
-      .select('categorie, phase')
-      .eq('id', ep.rencontre_id as string)
-      .maybeSingle(),
-    'de la rencontre',
-  )
-  if (!r) return null
+  const ep = premier(voie?.epreuve)
+  const r = premier(ep?.rencontre)
+  if (!voie || !ep || !r) return null
   return {
     rencontreId: ep.rencontre_id as string,
     epreuveId: voie.epreuve_id as string,
@@ -56,7 +49,7 @@ export async function chargerContexteVoie(
   }
 }
 
-/** Contexte d'un bloc : rencontre, phase. */
+/** Contexte d'un bloc : rencontre, phase. Une seule lecture (embarquées). */
 export async function chargerContexteBloc(
   supabase: Client,
   blocId: string,
@@ -64,56 +57,33 @@ export async function chargerContexteBloc(
   const bloc = verifierLecture(
     await supabase
       .from('bloc')
-      .select('epreuve_id')
+      .select('epreuve:epreuve_id(rencontre_id, rencontre:rencontre_id(phase))')
       .eq('id', blocId)
       .maybeSingle(),
     'du bloc',
   )
-  if (!bloc) return null
-  const ep = verifierLecture(
-    await supabase
-      .from('epreuve')
-      .select('rencontre_id')
-      .eq('id', bloc.epreuve_id as string)
-      .maybeSingle(),
-    "de l'épreuve",
-  )
-  if (!ep) return null
-  const r = verifierLecture(
-    await supabase
-      .from('rencontre')
-      .select('phase')
-      .eq('id', ep.rencontre_id as string)
-      .maybeSingle(),
-    'de la rencontre',
-  )
-  if (!r) return null
+  const ep = premier(bloc?.epreuve)
+  const r = premier(ep?.rencontre)
+  if (!ep || !r) return null
   return { rencontreId: ep.rencontre_id as string, phase: r.phase as Phase }
 }
 
 /**
  * Voies de l'épreuve ado déjà saisies pour ce grimpeur — base du contrôle
- * préalable du plafond de 6 (spec #6 R14 ; la base le garantit aussi).
+ * préalable du plafond de 6 (spec #6 R14 ; la base le garantit aussi). Une seule
+ * lecture (filtre sur l'épreuve par jointure).
  */
 export async function voiesDejaSaisiesAdo(
   supabase: Client,
   epreuveId: string,
   grimpeurId: string,
 ): Promise<string[]> {
-  const voiesEp = verifierLecture(
-    await supabase
-      .from('voie_difficulte')
-      .select('id')
-      .eq('epreuve_id', epreuveId),
-    'des voies',
-  )
-  const idsEp = (voiesEp ?? []).map((v) => v.id as string)
   const existantes = verifierLecture(
     await supabase
       .from('resultat_voie')
-      .select('voie_difficulte_id')
+      .select('voie_difficulte_id, voie_difficulte!inner(epreuve_id)')
       .eq('grimpeur_id', grimpeurId)
-      .in('voie_difficulte_id', idsEp),
+      .eq('voie_difficulte.epreuve_id', epreuveId),
     'des résultats de voie',
   )
   return (existantes ?? []).map((r) => r.voie_difficulte_id as string)
