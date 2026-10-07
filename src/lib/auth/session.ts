@@ -32,10 +32,13 @@ export const getUtilisateurCourant = cache(
   async (): Promise<UtilisateurCourant | null> => {
     const supabase = await createClient()
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    if (!user) return null
+    // Identité lue dans le jeton, vérifié localement (`getClaims`, clés de
+    // signature asymétriques) : pas d'aller-retour vers le serveur
+    // d'authentification. Le rôle, lui, est relu en base à chaque requête.
+    const { data: jeton } = await supabase.auth.getClaims()
+    const claims = jeton?.claims
+    if (!claims?.sub) return null
+    const user = { id: claims.sub, email: (claims.email as string | undefined) ?? null }
 
     const { data, error } = await supabase
       .from('compte')
@@ -50,7 +53,7 @@ export const getUtilisateurCourant = cache(
 
     return {
       id: user.id,
-      email: user.email ?? null,
+      email: user.email,
       role: (data?.role as RoleApplicatif | undefined) ?? null,
       clubId: data?.club_id ?? null,
     }

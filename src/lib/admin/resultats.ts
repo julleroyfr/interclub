@@ -2,7 +2,7 @@ import 'server-only'
 
 import { type Categorie, type Phase } from '@/domaine/rencontre'
 import {
-  getSaisieRencontre,
+  getSaisieTousClubs,
   type BlocConfig,
   type GrimpeurSaisie,
   type VoieOption,
@@ -12,10 +12,10 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { verifierLecture } from '@/lib/supabase/lecture'
 
 // Assemblage de la saisie des résultats pour l'ADMIN (spec #9) : TOUS les clubs
-// engagés d'une rencontre. Réutilise le loader coach `getSaisieRencontre` par club
-// (sous session admin, la RLS `est_admin()` donne accès à tous les clubs) — même
-// approche que `chargerEngagementTousClubs`. Le client `service_role` ne sert
-// qu'à énumérer les clubs engagés (catalogue transverse, ADR 0002/0003).
+// engagés d'une rencontre, lus en une seule série de lectures par le loader
+// partagé avec le coach (`getSaisieTousClubs` — sous session admin, la RLS
+// `est_admin()` ouvre tous les clubs). Le client `service_role` ne sert qu'à lire
+// le nom des clubs (catalogue transverse, ADR 0002/0003).
 
 /** Grimpeurs engagés d'un club, pour la liste maître (R10). */
 export type SaisieClub = {
@@ -46,66 +46,36 @@ export async function getSaisieAdminRencontre(
   rencontreId: string,
 ): Promise<SaisieAdminRencontre | null> {
   await exigerLectureAdmin('saisie admin des résultats')
-  const admin = createAdminClient()
 
-  const rencontre = verifierLecture(
-    await admin
-      .from('rencontre')
-      .select('id, date_rencontre, categorie, phase')
-      .eq('id', rencontreId)
-      .maybeSingle(),
-    'de la rencontre',
-  )
-  if (!rencontre) return null
+  const saisie = await getSaisieTousClubs(rencontreId)
+  if (!saisie) return null
 
-  const phase = rencontre.phase as Phase
-
-  // Clubs engagés (via leurs équipes), avec nom.
-  const equipes = verifierLecture(
-    await admin
-      .from('equipe')
-      .select('club_id')
-      .eq('rencontre_id', rencontreId),
-    'des équipes',
-  )
-  const clubIds = [...new Set((equipes ?? []).map((e) => e.club_id as string))]
+  const clubIds = [...saisie.grimpeursParClub.keys()]
   const nomClub = new Map<string, string>()
   if (clubIds.length) {
     const clubs = verifierLecture(
-      await admin.from('club').select('id, nom').in('id', clubIds),
+      await createAdminClient().from('club').select('id, nom').in('id', clubIds),
       'des clubs',
     )
     for (const c of clubs ?? []) nomClub.set(c.id as string, c.nom as string)
   }
 
-  // Par club : réutilise le loader coach (session admin → RLS ouvre tous les clubs).
-  let voiesEpreuve: VoieOption[] = []
-  let blocsConfig: BlocConfig[] = []
-  const clubs: SaisieClub[] = []
-  for (const clubId of clubIds) {
-    const saisie = await getSaisieRencontre(rencontreId, clubId)
-    if (!saisie) continue
-    // La structure (voies/blocs) est identique quel que soit le club.
-    if (!voiesEpreuve.length) voiesEpreuve = saisie.voiesEpreuve
-    if (!blocsConfig.length) blocsConfig = saisie.blocsConfig
-    if (saisie.grimpeurs.length) {
-      clubs.push({
-        clubId,
-        clubNom: nomClub.get(clubId) ?? '(club inconnu)',
-        grimpeurs: saisie.grimpeurs,
-      })
-    }
-  }
-  clubs.sort((a, b) => a.clubNom.localeCompare(b.clubNom, 'fr'))
+  const clubs: SaisieClub[] = clubIds
+    .map((clubId) => ({
+      clubId,
+      clubNom: nomClub.get(clubId) ?? '(club inconnu)',
+      grimpeurs: saisie.grimpeursParClub.get(clubId) ?? [],
+    }))
+    .sort((a, b) => a.clubNom.localeCompare(b.clubNom, 'fr'))
 
   return {
-    id: rencontre.id as string,
-    dateRencontre: rencontre.date_rencontre as string,
-    categorie: rencontre.categorie as Categorie,
-    phase,
-    ouverteSaisie: phase === 'competition' || phase === 'cloture',
-    voiesEpreuve,
-    blocsConfig,
+    id: saisie.id,
+    dateRencontre: saisie.dateRencontre,
+    categorie: saisie.categorie,
+    phase: saisie.phase,
+    ouverteSaisie: saisie.phase === 'competition' || saisie.phase === 'cloture',
+    voiesEpreuve: saisie.voiesEpreuve,
+    blocsConfig: saisie.blocsConfig,
     clubs,
   }
 }

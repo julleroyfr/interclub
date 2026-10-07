@@ -141,6 +141,20 @@ export function estEligibleCategorie(
     : age >= AGE_PIVOT && age <= AGE_ADO_MAX
 }
 
+/**
+ * Bornes d'année de naissance équivalentes à `estEligibleCategorie` (R34), pour
+ * filtrer une lecture en base : **enfant** = né en `saison − 13` ou après (pas de
+ * borne haute) ; **ado** = né de `saison − 19` à `saison − 13`.
+ */
+export function bornesAnneeNaissance(
+  categorie: Categorie,
+  anneeSaison: number,
+): { min: number; max: number | null } {
+  return categorie === 'enfant'
+    ? { min: anneeSaison - AGE_PIVOT, max: null }
+    : { min: anneeSaison - AGE_ADO_MAX, max: anneeSaison - AGE_PIVOT }
+}
+
 /** Phase suivante dans le cycle (R5), ou `null` si déjà à la dernière. */
 export function phaseSuivante(phase: Phase): Phase | null {
   const i = PHASES.findIndex((p) => p.value === phase)

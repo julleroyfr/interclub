@@ -5,6 +5,7 @@ import {
   PHASES,
   SaisieRencontreInvalideError,
   anneeSaison,
+  bornesAnneeNaissance,
   bornesSaison,
   estEligibleCategorie,
   estPhaseJourJ,
@@ -214,6 +215,24 @@ describe('spec #1 — Éligibilité d’un grimpeur à la catégorie d’une ren
   it('le pivot (13 ans) est éligible aux deux catégories (R34)', () => {
     expect(estEligibleCategorie(2013, 'enfant', SAISON)).toBe(true)
     expect(estEligibleCategorie(2013, 'ado', SAISON)).toBe(true)
+  })
+
+  it('bornes d’année de naissance : enfant = né en 2013 ou après, sans borne haute', () => {
+    expect(bornesAnneeNaissance('enfant', SAISON)).toEqual({ min: 2013, max: null })
+  })
+
+  it('bornes d’année de naissance : ado = né de 2007 à 2013', () => {
+    expect(bornesAnneeNaissance('ado', SAISON)).toEqual({ min: 2007, max: 2013 })
+  })
+
+  it('les bornes reproduisent exactement estEligibleCategorie', () => {
+    for (const categorie of ['enfant', 'ado'] as const) {
+      const { min, max } = bornesAnneeNaissance(categorie, SAISON)
+      for (let annee = 1990; annee <= 2035; annee++) {
+        const dansBornes = annee >= min && (max === null || annee <= max)
+        expect(dansBornes).toBe(estEligibleCategorie(annee, categorie, SAISON))
+      }
+    }
   })
 })
 

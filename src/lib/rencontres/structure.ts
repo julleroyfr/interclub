@@ -2,7 +2,6 @@ import 'server-only'
 
 import type { TypeEpreuve, TypeVoie } from '@/domaine/gabarit'
 import type { Categorie, Phase } from '@/domaine/rencontre'
-import { verifierLecture } from '@/lib/supabase/lecture'
 import { createClient } from '@/lib/supabase/server'
 
 // Lecture de la structure d'une rencontre (épreuves + voies/blocs/vitesse) pour
@@ -88,86 +87,71 @@ export type StructureRencontre = {
 export async function getStructureRencontre(id: string): Promise<StructureRencontre | null> {
   const supabase = await createClient()
 
-  const { data: rencontre, error: errR } = await supabase
-    .from('rencontre')
-    .select('id, date_rencontre, categorie, phase, club_porteur_id')
-    .eq('id', id)
-    .maybeSingle()
-  if (errR) throw errR
-  if (!rencontre) return null
-
-  const club = verifierLecture(
-    await supabase
-      .from('club')
-      .select('nom')
-      .eq('id', rencontre.club_porteur_id as string)
-      .maybeSingle(),
-    'du club',
-  )
-
-  const { data: epreuves, error: errE } = await supabase
-    .from('epreuve')
-    .select('id, type, points_chute, points_non_presentation')
-    .eq('rencontre_id', id)
-    .order('type')
-  if (errE) throw errE
-
-  const epreuveIds = (epreuves ?? []).map((e) => e.id as string)
-  const epreuveVitesse = (epreuves ?? []).find((e) => e.type === 'vitesse')
-
-  const vide = { data: [] as Record<string, unknown>[], error: null }
+  // Une seule vague de lectures : chaque table est filtrée sur la rencontre via
+  // une jointure (épreuve, bloc), sans attendre les identifiants des épreuves.
+  // Chaque aller-retour vers la base compte (écran rechargé après chaque action).
   const [
+    { data: rencontre, error: errR },
+    { data: epreuves, error: errE },
     { data: voies, error: errV },
     { data: blocs, error: errB },
+    { data: paliers, error: errP },
     { data: vitesses, error: errVV },
     { data: echelons, error: errEch },
   ] = await Promise.all([
-    epreuveIds.length === 0
-      ? Promise.resolve(vide)
-      : supabase
-          .from('voie_difficulte')
-          .select(
-            'id, epreuve_id, niveau, type_voie, cotation, points, points_prise_valorisee, points_zone1, points_zone2, ordre',
-          )
-          .in('epreuve_id', epreuveIds)
-          .order('ordre'),
-    epreuveIds.length === 0
-      ? Promise.resolve(vide)
-      : supabase
-          .from('bloc')
-          .select('id, epreuve_id, code, ordre')
-          .in('epreuve_id', epreuveIds)
-          .order('ordre'),
+    supabase
+      .from('rencontre')
+      .select('id, date_rencontre, categorie, phase, club_porteur_id, club:club_porteur_id(nom)')
+      .eq('id', id)
+      .maybeSingle(),
+    supabase
+      .from('epreuve')
+      .select('id, type, points_chute, points_non_presentation')
+      .eq('rencontre_id', id)
+      .order('type'),
+    supabase
+      .from('voie_difficulte')
+      .select(
+        'id, epreuve_id, niveau, type_voie, cotation, points, points_prise_valorisee, points_zone1, points_zone2, ordre, epreuve!inner(rencontre_id)',
+      )
+      .eq('epreuve.rencontre_id', id)
+      .order('ordre'),
+    supabase
+      .from('bloc')
+      .select('id, epreuve_id, code, ordre, epreuve!inner(rencontre_id)')
+      .eq('epreuve.rencontre_id', id)
+      .order('ordre'),
+    supabase
+      .from('bloc_palier')
+      .select('id, bloc_id, libelle, points, ordre, bloc!inner(epreuve!inner(rencontre_id))')
+      .eq('bloc.epreuve.rencontre_id', id)
+      .order('ordre'),
     supabase
       .from('voie_vitesse')
       .select('id, numero, libelle')
       .eq('rencontre_id', id)
       .order('numero'),
-    epreuveVitesse
-      ? supabase
-          .from('bareme_vitesse_echelon')
-          .select('id, rang_min, rang_max, points, decrement, ordre')
-          .eq('epreuve_id', epreuveVitesse.id as string)
-          .order('ordre')
-      : Promise.resolve(vide),
+    supabase
+      .from('bareme_vitesse_echelon')
+      .select('id, rang_min, rang_max, points, decrement, ordre, epreuve!inner(rencontre_id, type)')
+      .eq('epreuve.rencontre_id', id)
+      .eq('epreuve.type', 'vitesse')
+      .order('ordre'),
   ])
   // Ne jamais avaler une erreur d'accès (ex. grant/RLS manquant) : elle
   // masquerait la structure derrière un « 0 » trompeur.
+  if (errR) throw errR
+  if (!rencontre) return null
+  if (errE) throw errE
   if (errV) throw errV
   if (errB) throw errB
+  if (errP) throw errP
   if (errVV) throw errVV
   if (errEch) throw errEch
 
-  const blocIds = (blocs ?? []).map((b) => b.id as string)
-  const { data: paliers, error: errP } =
-    blocIds.length === 0
-      ? { data: [] as Record<string, unknown>[], error: null }
-      : await supabase
-          .from('bloc_palier')
-          .select('id, bloc_id, libelle, points, ordre')
-          .in('bloc_id', blocIds)
-          .order('ordre')
-  if (errP) throw errP
+  const clubBrut = (rencontre as Record<string, unknown>).club as unknown
+  const club = (Array.isArray(clubBrut) ? clubBrut[0] : clubBrut) as { nom: string } | null
+  const epreuveVitesse = (epreuves ?? []).find((e) => e.type === 'vitesse')
 
   return {
     id: rencontre.id as string,
