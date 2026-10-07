@@ -31,10 +31,8 @@ export type EtatSaisie = { erreur?: string; succes?: string } | undefined
  * résolu (l'écriture reste possible, auteur inconnu).
  */
 async function idUtilisateurAuth(supabase: Client): Promise<string | null> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  return user?.id ?? null
+  const { data } = await supabase.auth.getClaims()
+  return data?.claims.sub ?? null
 }
 
 /** Vérifie le contexte coach et renvoie son club + contexte, ou un état d'erreur. */

@@ -27,8 +27,10 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  // Rafraîchit la session — NE PAS ajouter de logique entre createServerClient et getUser
-  await mesurer(`proxy getUser ${request.nextUrl.pathname}`, () => supabase.auth.getUser())
+  // Rafraîchit la session — NE PAS ajouter de logique entre createServerClient et getClaims.
+  // `getClaims` vérifie la signature du jeton LOCALEMENT (clés asymétriques mises
+  // en cache) au lieu d'interroger le serveur d'authentification à chaque requête.
+  await mesurer(`proxy getClaims ${request.nextUrl.pathname}`, () => supabase.auth.getClaims())
 
   return supabaseResponse
 }
