@@ -3,7 +3,6 @@ import 'server-only'
 import { cache } from 'react'
 import { notFound, redirect } from 'next/navigation'
 
-import { mesurer } from '@/lib/perf/mesure'
 import { createClient } from '@/lib/supabase/server'
 
 /** Rôle applicatif d'un compte permanent (spec #2 R1). */
@@ -36,14 +35,16 @@ export const getUtilisateurCourant = cache(
     // Identité lue dans le jeton, vérifié localement (`getClaims`, clés de
     // signature asymétriques) : pas d'aller-retour vers le serveur
     // d'authentification. Le rôle, lui, est relu en base à chaque requête.
-    const { data: jeton } = await mesurer('session getClaims', () => supabase.auth.getClaims())
+    const { data: jeton } = await supabase.auth.getClaims()
     const claims = jeton?.claims
     if (!claims?.sub) return null
     const user = { id: claims.sub, email: (claims.email as string | undefined) ?? null }
 
-    const { data, error } = await mesurer('session compte', () =>
-      supabase.from('compte').select('role, club_id').eq('utilisateur_id', user.id).maybeSingle(),
-    )
+    const { data, error } = await supabase
+      .from('compte')
+      .select('role, club_id')
+      .eq('utilisateur_id', user.id)
+      .maybeSingle()
 
     // Une erreur de lecture ne doit pas prétendre à un rôle : on reste fail-closed.
     if (error) {

@@ -8,7 +8,6 @@ import { anneeSaison, CATEGORIES, labelSaison, type Categorie } from '@/domaine/
 import { getControleRencontre } from '@/lib/admin/controle'
 import { chargerEngagementTousClubs } from '@/lib/admin/engagement'
 import { liensAdmin } from '@/lib/admin/navigation'
-import { mesurer } from '@/lib/perf/mesure'
 import { exigerAdmin } from '@/lib/auth/session'
 import { chargerPretsRencontre } from '@/lib/prets/prets'
 import { getStructureRencontre } from '@/lib/rencontres/structure'
@@ -44,18 +43,18 @@ export default async function PageTableauDeBordRencontre({
 }) {
   // Écran réservé à l'admin (R40, spec #1 R12) : 404 pour les autres rôles.
   // La RLS reste la vraie frontière.
-  await mesurer('page garde admin', () => exigerAdmin())
+  await exigerAdmin()
 
   const { id } = await params
   // Lectures indépendantes : en parallèle (chaque aller-retour vers la base
   // compte, l'écran se recharge après chaque action du tableau de bord).
-  const [structure, { grimpeurs, clubs, prets }, engagementClubs, controle] = await mesurer('page données', () => Promise.all([
-    mesurer('structure', () => getStructureRencontre(id)),
-    mesurer('prets', () => chargerPretsRencontre(id)),
-    mesurer('engagement', () => chargerEngagementTousClubs(id)),
+  const [structure, { grimpeurs, clubs, prets }, engagementClubs, controle] = await Promise.all([
+    getStructureRencontre(id),
+    chargerPretsRencontre(id),
+    chargerEngagementTousClubs(id),
     // Contrôle des résultats (spec #16) : ④ contrôle, ⑤ lecture seule (R2/R3).
-    mesurer('controle', () => getControleRencontre(id, { avecAuteurs: false })),
-  ]))
+    getControleRencontre(id, { avecAuteurs: false }),
+  ])
   if (!structure) notFound()
 
   const estEnfant = engagementClubs[0]?.engagement.categorie === 'enfant'

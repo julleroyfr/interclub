@@ -4,7 +4,6 @@ import { cache } from 'react'
 
 import { bornesAnneeNaissance, type Categorie } from '@/domaine/rencontre'
 import { exigerLectureAdmin } from '@/lib/auth/garde-lecture'
-import { mesurer } from '@/lib/perf/mesure'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { lireToutesLesPages } from '@/lib/supabase/pagination'
 
@@ -28,14 +27,14 @@ export const lireGrimpeursEligibles = cache(
     await exigerLectureAdmin('grimpeurs éligibles')
     const admin = createAdminClient()
     const { min, max } = bornesAnneeNaissance(categorie, saison)
-    const lignes = await mesurer('grimpeurs eligibles', () => lireToutesLesPages((debut, fin) => {
+    const lignes = await lireToutesLesPages((debut, fin) => {
       let q = admin
         .from('grimpeur')
         .select('id, nom, prenom, club_id, annee_naissance')
         .gte('annee_naissance', min)
       if (max !== null) q = q.lte('annee_naissance', max)
       return q.order('nom').order('prenom').order('id').range(debut, fin)
-    }, 'des grimpeurs éligibles'))
+    }, 'des grimpeurs éligibles')
     return lignes.map((g) => ({
       id: g.id as string,
       nom: g.nom as string,
