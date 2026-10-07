@@ -4,6 +4,8 @@
   tranchés le 2026-10-07 (déploiement pendant la ③ : perte acceptée, R21 ; retrait
   concurrent sans trace : accepté, ressaisie si besoin)
 - **Sources** :
+  - **Maquette validée** (le 2026-10-07) : [`docs/maquettes/saisie-hors-ligne.html`](../maquettes/saisie-hors-ligne.html)
+    (bandeau réseau, états des saisies, saisies non envoyées, juge sur tablette).
   - **Besoin exprimé le 2026-10-03** : dans les salles d'escalade, le réseau est
     souvent de mauvaise qualité et subit des **coupures**. Les **coachs** et les
     **juges de vitesse** doivent pouvoir **continuer leur saisie sans réseau**,
