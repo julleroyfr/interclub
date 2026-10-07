@@ -24,6 +24,8 @@ export type GrimpeurVitesse = {
   issue: IssueVitesse | null
   /** Temps en secondes si `issue === 'temps'`, sinon `null` (R9). */
   temps: number | null
+  /** Saisie affichée avant la réponse du serveur (spec #17 R22) ; absent = valeur serveur. */
+  enAttente?: boolean
 }
 
 /** Données de saisie de la vitesse d'une rencontre pour le juge. */

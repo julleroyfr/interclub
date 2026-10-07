@@ -1,12 +1,48 @@
 'use client'
 
-import { useActionState, useMemo, useState } from 'react'
+import {
+  createContext,
+  type FormEvent,
+  startTransition,
+  use,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 
-import { formaterTempsVitesse } from '@/domaine/vitesse'
+import { formaterTempsVitesse, lireSaisieVitesse, ResultatVitesseInvalideError } from '@/domaine/vitesse'
 import type { GrimpeurVitesse, IssueVitesse } from '@/lib/juge/vitesse'
 import { saisirTempsVitesse, type EtatSaisieVitesse } from '@/lib/juge/vitesse-actions'
+import { appliquerVitesseOptimiste, type VitesseOptimiste } from '@/lib/saisie/saisie-optimiste'
 
-const etatInitial: EtatSaisieVitesse = undefined
+/** Délai d'affichage de la confirmation « enregistré » (spec #17 R23). */
+const DUREE_CONFIRMATION_MS = 2500
+
+/**
+ * Envoi d'un résultat avec affichage IMMÉDIAT (spec #17 R22/R23, spec #10
+ * R14bis) : contrôle local de la forme (R13), affichage « en attente », puis la
+ * requête ; la réponse confirme ou rejette (retour à la valeur du serveur).
+ */
+type Envoi = {
+  surSoumission: (grimpeurId: string) => (e: FormEvent<HTMLFormElement>) => void
+  /** Message par grimpeur : refus local (R13) ou rejet du serveur (R18). */
+  messages: Record<string, { texte: string; rejet: boolean }>
+  confirmes: Record<string, true>
+}
+
+const ContexteEnvoi = createContext<Envoi | null>(null)
+
+function useEnvoi(): Envoi {
+  const envoi = use(ContexteEnvoi)
+  if (!envoi) throw new Error('useEnvoi hors du panneau de vitesse')
+  return envoi
+}
+
+function sansCle<T>(dico: Record<string, T>, cle: string): Record<string, T> {
+  const copie = { ...dico }
+  delete copie[cle]
+  return copie
+}
 
 /** Libellé court de l'état courant d'un grimpeur (R13). */
 function libelleIssue(g: GrimpeurVitesse): string {
@@ -39,7 +75,57 @@ function trierAlpha(a: GrimpeurVitesse, b: GrimpeurVitesse): number {
  * groupés Filles / Garçons (R12), en deux colonnes côte à côte sur grand écran
  * (R14c). Recherche par nom et filtre « à saisir » pour tenir le volume (R14b).
  */
-export function PanneauVitesse({ grimpeurs }: { grimpeurs: GrimpeurVitesse[] }) {
+export function PanneauVitesse({ grimpeurs: grimpeursServeur }: { grimpeurs: GrimpeurVitesse[] }) {
+  // Résultats envoyés sans réponse encore, superposés aux données du serveur
+  // (spec #17 R22) : liste, compteurs et filtre « à saisir » en tiennent compte.
+  const [enAttente, setEnAttente] = useState<{ id: number; s: VitesseOptimiste }[]>([])
+  const prochainId = useRef(0)
+  const grimpeurs = useMemo(
+    () => enAttente.reduce((acc, e) => appliquerVitesseOptimiste(acc, e.s), grimpeursServeur),
+    [grimpeursServeur, enAttente],
+  )
+  const [messages, setMessages] = useState<Envoi['messages']>({})
+  const [confirmes, setConfirmes] = useState<Record<string, true>>({})
+
+  const surSoumission = (grimpeurId: string) => (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const fd = new FormData(e.currentTarget, (e.nativeEvent as SubmitEvent).submitter)
+    // Contrôle local AVANT tout affichage (R13) : une saisie invalide n'est ni
+    // affichée ni envoyée.
+    let resultat
+    try {
+      resultat = lireSaisieVitesse(String(fd.get('issue') ?? ''), String(fd.get('temps') ?? ''))
+    } catch (err) {
+      if (!(err instanceof ResultatVitesseInvalideError)) throw err
+      setMessages((m) => ({ ...m, [grimpeurId]: { texte: err.message, rejet: false } }))
+      return
+    }
+    const s: VitesseOptimiste = {
+      grimpeurId,
+      issue: resultat.type,
+      temps: resultat.type === 'temps' ? resultat.secondes : null,
+    }
+    const id = ++prochainId.current
+    setEnAttente((l) => [...l, { id, s }])
+    setMessages((m) => sansCle(m, grimpeurId))
+    void (async () => {
+      let reponse: EtatSaisieVitesse
+      try {
+        reponse = await saisirTempsVitesse(undefined, fd)
+      } catch {
+        reponse = { erreur: 'Le résultat n’a pas pu être envoyé. Réessayez.' }
+      }
+      startTransition(() => setEnAttente((l) => l.filter((x) => x.id !== id)))
+      if (reponse?.erreur) {
+        const texte = reponse.erreur
+        setMessages((m) => ({ ...m, [grimpeurId]: { texte, rejet: true } }))
+        return
+      }
+      setConfirmes((c) => ({ ...c, [grimpeurId]: true }))
+      setTimeout(() => setConfirmes((c) => sansCle(c, grimpeurId)), DUREE_CONFIRMATION_MS)
+    })()
+  }
+
   const [recherche, setRecherche] = useState('')
   const [filtreASaisir, setFiltreASaisir] = useState(false)
   const [filtreSexe, setFiltreSexe] = useState<'tous' | 'F' | 'H'>('tous')
@@ -79,6 +165,7 @@ export function PanneauVitesse({ grimpeurs }: { grimpeurs: GrimpeurVitesse[] }) 
   const uneColonne = filtreSexe !== 'tous'
 
   return (
+    <ContexteEnvoi value={{ surSoumission, messages, confirmes }}>
     <div className="flex flex-col gap-5">
       {/* Progression séparée par sexe (R14) */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -141,6 +228,7 @@ export function PanneauVitesse({ grimpeurs }: { grimpeurs: GrimpeurVitesse[] }) 
         )}
       </div>
     </div>
+    </ContexteEnvoi>
   )
 }
 
@@ -213,7 +301,8 @@ function GroupeSexe({
 
 /** Ligne dense d'un grimpeur : état courant + saisie inline (temps / chute / abs.). */
 function LigneVitesse({ grimpeur: g }: { grimpeur: GrimpeurVitesse }) {
-  const [etat, action, enCours] = useActionState(saisirTempsVitesse, etatInitial)
+  const { surSoumission, messages, confirmes } = useEnvoi()
+  const message = messages[g.grimpeurId]
 
   return (
     <li
@@ -228,13 +317,24 @@ function LigneVitesse({ grimpeur: g }: { grimpeur: GrimpeurVitesse }) {
         <div className="text-[11px] text-texte-doux">{g.clubNom}</div>
       </div>
 
+      {/* État d'envoi (R23) : icône ET texte, pas seulement une couleur. */}
+      {g.enAttente ? (
+        <span className="text-[10.5px] font-bold uppercase tracking-wide text-texte-attenue">⏳ En attente</span>
+      ) : message?.rejet ? (
+        <span className="text-[10.5px] font-bold uppercase tracking-wide text-danger">⚠ Rejetée</span>
+      ) : confirmes[g.grimpeurId] ? (
+        <span className="text-[10.5px] font-bold uppercase tracking-wide text-secondaire">✓ Enregistré</span>
+      ) : null}
+
       <span
-        className={`inline-flex min-w-[74px] items-center justify-center rounded-full px-2.5 py-1 text-xs font-bold tabular-nums ${classeIssue(g.issue)}`}
+        className={`inline-flex min-w-[74px] items-center justify-center rounded-full px-2.5 py-1 text-xs font-bold tabular-nums ${classeIssue(g.issue)} ${
+          g.enAttente ? 'border border-dashed border-current bg-transparent text-secondaire' : ''
+        }`}
       >
         {libelleIssue(g)}
       </span>
 
-      <form action={action} className="flex items-center gap-1.5">
+      <form onSubmit={surSoumission(g.grimpeurId)} className="flex items-center gap-1.5">
         <input type="hidden" name="grimpeurId" value={g.grimpeurId} />
         <input
           key={`${g.grimpeurId}-${g.issue}-${g.temps ?? ''}`}
@@ -251,7 +351,6 @@ function LigneVitesse({ grimpeur: g }: { grimpeur: GrimpeurVitesse }) {
           type="submit"
           name="issue"
           value="temps"
-          disabled={enCours}
           className="rounded-lg border border-accent bg-accent px-2.5 py-1.5 text-xs font-bold text-fond disabled:opacity-50"
         >
           OK
@@ -260,7 +359,6 @@ function LigneVitesse({ grimpeur: g }: { grimpeur: GrimpeurVitesse }) {
           type="submit"
           name="issue"
           value="chute"
-          disabled={enCours}
           className={`rounded-lg border px-2.5 py-1.5 text-xs font-bold disabled:opacity-50 ${
             g.issue === 'chute'
               ? 'border-danger/50 bg-danger/15 text-danger'
@@ -273,7 +371,6 @@ function LigneVitesse({ grimpeur: g }: { grimpeur: GrimpeurVitesse }) {
           type="submit"
           name="issue"
           value="non_presentation"
-          disabled={enCours}
           className={`rounded-lg border px-2.5 py-1.5 text-xs font-bold disabled:opacity-50 ${
             g.issue === 'non_presentation'
               ? 'border-bordure bg-surface-forte text-texte-fort'
@@ -284,9 +381,9 @@ function LigneVitesse({ grimpeur: g }: { grimpeur: GrimpeurVitesse }) {
         </button>
       </form>
 
-      {etat?.erreur && (
+      {message && (
         <p role="alert" className="w-full text-xs text-danger">
-          {etat.erreur}
+          {message.texte}
         </p>
       )}
     </li>

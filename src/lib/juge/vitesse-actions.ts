@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 
 import {
-  creerResultatVitesse,
+  lireSaisieVitesse,
   ResultatVitesseInvalideError,
   type ResultatVitesse,
 } from '@/domaine/vitesse'
@@ -30,16 +30,6 @@ function messageEcriture(erreur: { code?: string; message?: string }): string {
   return 'La saisie a échoué. Réessayez.'
 }
 
-/** Convertit la saisie du formulaire en résultat de vitesse du domaine (R7). */
-function lireResultat(formData: FormData): ResultatVitesse {
-  const issue = String(formData.get('issue') ?? '')
-  if (issue === 'chute') return { type: 'chute' }
-  if (issue === 'non_presentation') return { type: 'non_presentation' }
-  // Temps : accepte la virgule décimale (8,123) comme le point (8.123), R8.
-  const brut = String(formData.get('temps') ?? '').trim().replace(',', '.')
-  return { type: 'temps', secondes: Number(brut) }
-}
-
 /**
  * Enregistre (ou corrige) le résultat de vitesse d'un grimpeur (R7/R10/R11).
  * Correction = remplacement (upsert sur `(epreuve, grimpeur)`, R10). Bornée à la
@@ -62,7 +52,7 @@ export async function saisirTempsVitesse(
 
   let resultat: ResultatVitesse
   try {
-    resultat = creerResultatVitesse(lireResultat(formData))
+    resultat = lireSaisieVitesse(String(formData.get('issue') ?? ''), String(formData.get('temps') ?? ''))
   } catch (e) {
     if (e instanceof ResultatVitesseInvalideError) return { erreur: e.message }
     throw e

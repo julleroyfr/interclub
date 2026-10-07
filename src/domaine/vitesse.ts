@@ -46,6 +46,20 @@ export function creerResultatVitesse(resultat: ResultatVitesse): ResultatVitesse
 }
 
 /**
+ * Lit la saisie brute du juge (forme choisie + champ temps) en résultat validé
+ * (R7–R9). Le temps accepte la virgule décimale (`8,123`) comme le point (R8) ;
+ * chute et non-présentation ignorent le champ temps (R9). Partagée par l'écran
+ * (contrôle avant affichage) et la Server Action.
+ */
+export function lireSaisieVitesse(issue: string, tempsBrut: string): ResultatVitesse {
+  if (issue === 'chute') return creerResultatVitesse({ type: 'chute' })
+  if (issue === 'non_presentation') return creerResultatVitesse({ type: 'non_presentation' })
+  const texte = tempsBrut.trim().replace(',', '.')
+  const secondes = texte === '' ? Number.NaN : Number(texte)
+  return creerResultatVitesse({ type: 'temps', secondes })
+}
+
+/**
  * Enregistre le résultat d'un grimpeur dans les saisies d'une épreuve de vitesse
  * (R7/R10/R11). Fonction pure : renvoie une nouvelle map, sans muter l'entrée. Un
  * grimpeur a un seul résultat (R10) : une ressaisie REMPLACE la précédente

@@ -355,6 +355,20 @@ sequenceDiagram
   navigateur), jamais en base. Elle contient, par saisie : cible, valeur, heure de
   saisie, état, motif de rejet éventuel, périmètre de file.
 
+## Livraison par lots
+
+- **Lot 1 — affichage instantané** (2026-10-07, cahier
+  [29](../tests/29-saisie-hors-ligne.cahier.md)) : saisie coach (voie, bloc,
+  retrait) et juge (vitesse) affichée **dès le clic**, « en attente », puis
+  « enregistré » ou « rejetée » avec retour à la valeur du serveur et motif ;
+  compteurs tenant compte des saisies en attente. Couvre **R13** (contrôle local,
+  juge), **R18** (motifs), **R22**, **R23**, spec #6 **R20bis** et spec #10
+  **R14bis**. Les saisies en attente vivent **en mémoire de la page** : quitter ou
+  recharger l'écran pendant un envoi l'interrompt.
+- **Lot 2 — file hors ligne** (à venir) : file conservée sur l'appareil et
+  rejouée (R12, R14–R17, R19–R21), heure de saisie et migration `saisi_le`
+  (R6–R11), bandeau, listes et confirmation de sortie (R24–R28).
+
 ## Points à valider
 
 - **Retrait concurrent sans trace** : un retrait accepté supprime la ligne ; une
