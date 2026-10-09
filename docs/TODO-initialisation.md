@@ -74,8 +74,8 @@ Tâches identifiées mais reportées, à traiter quand l'occasion se présente.
 
 - **D6 — Temps réel de l'écran d'engagement coach** (2026-10-09) : spec #11
   rév. (R1/R3/R6bis/R7) ; tables `pret`, `equipe`, `composition` publiées
-  (migration `202610091200_realtime_engagement`, **à appliquer à la main en
-  recette**) ; `TempsReel` sur l'écran, actif tant que la composition est
+  (migration `202610091200_realtime_engagement`, appliquée en recette le
+  2026-10-09) ; `TempsReel` sur l'écran, actif tant que la composition est
   modifiable (`compositionModifiableParCoach`, 3 tests Vitest) ; cahier 22
   CT-16 à CT-19 + E2E `temps-reel-engagement.spec.ts`.
 - **D5 — Double saisie du mot de passe à l'inscription coach** (2026-10-09) :
