@@ -69,6 +69,7 @@ export default async function PageResultats({
               tables={['resultat_voie', 'resultat_bloc', 'temps_vitesse', 'points_vitesse']}
               actif={phaseEnDirect(saisie.phase)}
               ignorerMesEcritures
+              grimpeursAffiches={saisie.grimpeurs.map((g) => g.grimpeurId)}
             />
           </div>
         </div>

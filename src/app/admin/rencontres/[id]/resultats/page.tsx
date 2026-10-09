@@ -75,6 +75,7 @@ export default async function PageSaisieAdmin({
               tables={['resultat_voie', 'resultat_bloc', 'temps_vitesse', 'points_vitesse']}
               actif={phaseEnDirect(saisie.phase)}
               ignorerMesEcritures
+              grimpeursAffiches={saisie.clubs.flatMap((c) => c.grimpeurs.map((g) => g.grimpeurId))}
             />
           </div>
         </div>

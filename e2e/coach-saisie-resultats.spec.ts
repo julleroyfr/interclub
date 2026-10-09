@@ -61,6 +61,8 @@ function poserPhaseAdo(phase: 'competition' | 'cloture'): void {
 
 /** Ouvre le détail d'un grimpeur depuis la liste (libellé « Prénom Nom »). */
 async function ouvrirGrimpeur(page: Page, url: string, nom: string): Promise<void> {
+  // Naviguer interromprait les envois en cours : on attend leur enregistrement.
+  await enregistre(page)
   await page.goto(url)
   await page.getByRole('button', { name: new RegExp(`^${nom}`) }).click()
   await expect(page.getByRole('button', { name: '← Liste des grimpeurs' })).toBeVisible()
@@ -85,6 +87,15 @@ function compteur(page: Page, section: 'Voie de difficulté' | 'Bloc'): Locator 
 /** Pastille d'issue courante d'une ligne. */
 const pastille = (l: Locator) => l.locator('span.rounded-full')
 
+/**
+ * Attend que toutes les saisies affichées « en attente » soient enregistrées
+ * (spec #17 R22) : l'affichage est immédiat, l'enregistrement suit. À appeler
+ * avant de lire la base ou de quitter la page.
+ */
+async function enregistre(page: Page): Promise<void> {
+  await expect(page.getByText('⏳ En attente')).toHaveCount(0, { timeout: 10_000 })
+}
+
 /** Libellés des boutons d'issue d'une ligne. */
 const boutonsIssue = (l: Locator) => l.locator('form button').allInnerTexts()
 
@@ -103,6 +114,12 @@ test.describe('Cahier 17 — saisie des résultats voie & bloc (spec #6)', () =>
     poserPhase('competition')
     poserDate('today')
     poserPhaseAdo('competition')
+  })
+
+  // Aucune saisie ne doit rester en vol à la fin d'un test (page fermée = envoi
+  // interrompu).
+  test.afterEach(async ({ page }) => {
+    await enregistre(page)
   })
 
   test.afterAll(() => {
@@ -228,6 +245,7 @@ test.describe('Cahier 17 — saisie des résultats voie & bloc (spec #6)', () =>
     await t2.getByRole('button', { name: 'Top' }).click()
     await expect(pastille(t2)).toHaveText('Top')
     await expect(compteur(page, 'Voie de difficulté')).toHaveText('3/3')
+    await enregistre(page)
     expect(
       execSql(
         `select count(*) from interclub.resultat_voie
@@ -293,6 +311,7 @@ test.describe('Cahier 17 — saisie des résultats voie & bloc (spec #6)', () =>
     // Re-saisie : remplace (un seul résultat par bloc, R17).
     await b1.getByRole('button', { name: '2e essai' }).click()
     await expect(pastille(b1)).toHaveText('2e essai')
+    await enregistre(page)
     expect(
       execSql(
         `select count(*) from interclub.resultat_bloc
@@ -342,6 +361,35 @@ test.describe('Cahier 17 — saisie des résultats voie & bloc (spec #6)', () =>
     } finally {
       poserPhase('competition')
     }
+  })
+
+  test('CT-17 · score à jour sans relecture de l’écran (R20, rév. 2026-10-09)', async ({ page }) => {
+    await commeCoach(page)
+    await ouvrirGrimpeur(page, URL_ENFANT, 'Ana Alpha')
+    const score = page
+      .locator('div', { has: page.getByText('Score (voie + bloc + vitesse)', { exact: true }) })
+      .last()
+      .locator('span.font-extrabold')
+    const avant = await score.innerText()
+
+    // Aucune relecture de l'écran déclenchée après la saisie (R20, R6bis).
+    const relectures: string[] = []
+    page.on('request', (r) => {
+      if (r.method() === 'GET' && r.url().includes('/resultats') && r.url().includes('_rsc=')) {
+        relectures.push(r.url())
+      }
+    })
+    const b1 = ligne(page, 'Bloc', 'B1')
+    await b1.getByRole('button', { name: '1er essai' }).click()
+    await enregistre(page)
+    await expect(score).not.toHaveText(avant)
+    const apres = await score.innerText()
+    expect(relectures).toHaveLength(0)
+
+    // Le score affiché vaut celui d'une lecture complète.
+    await page.reload()
+    await page.getByRole('button', { name: /^Ana Alpha/ }).click()
+    await expect(score).toHaveText(apres)
   })
 
   test('CT-15 · avant la ③ : voies et blocs annoncés, pas de « groupe à définir » (R21bis)', async ({

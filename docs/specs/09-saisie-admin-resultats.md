@@ -3,6 +3,11 @@
 - **Statut** : **validée** (le 2026-09-22) — décisions tranchées : saisie admin
   ouverte **dès la ③** (répercutée dans spec #1 R7), **traçabilité de l'auteur**
   via migration, vitesse admin **hors périmètre** (voir « Décisions tranchées »).
+  **Rév. 2026-10-03 — saisie hors ligne (validée le 2026-10-03)** : **R6** — entre
+  admin et coach, c'est la saisie **la plus récente** (heure de saisie) qui
+  l'emporte, et non plus la dernière arrivée au serveur ; l'écriture admin prend
+  l'heure du serveur et n'est donc jamais refusée (R8 inchangée) — voir
+  [spec #17](17-saisie-hors-ligne.md).
 - **Sources** :
   - **Décision produit du 2026-09-22** : l'**administrateur** peut **saisir et
     modifier** les résultats de **n'importe quel grimpeur, tous clubs confondus**,
@@ -92,8 +97,13 @@ de plein droit, décision 2026-09-22) et en **④ clôture** (correction, spec #
 - **R6.** En ③, admin et coach écrivent sur les **mêmes** résultats sans verrou
   applicatif entre eux : l'unicité `(voie, grimpeur)` / `(bloc, grimpeur)` (spec #6
   R13/R17) garantit **un seul résultat** par voie/bloc ; une nouvelle saisie
-  (admin **ou** coach) **remplace** la précédente (dernière écriture gagnante,
-  correction). Aucun doublon n'est créé.
+  (admin **ou** coach) **remplace** la précédente (correction). Aucun doublon
+  n'est créé. *(Rév. 2026-10-03, spec #17.)* Le départage se fait sur l'**heure
+  de saisie** : la saisie **la plus récente** l'emporte, même si elle arrive au
+  serveur avant une saisie plus ancienne (coach revenu en ligne après une
+  coupure) ; cette dernière est alors **refusée** et signalée au coach (spec #17
+  R9). L'écriture admin prend l'**heure du serveur** (spec #17 R8) : elle n'est
+  jamais refusée par ce départage (R8).
 
 ### Règles de saisie (réutilisées de la spec #6)
 
@@ -166,8 +176,10 @@ par Top**, le score est recalculé, et aucun autre résultat n'est touché.
 
 Étant donné une rencontre en **③**, quand un **coach** saisit une voie pour son
 grimpeur puis que l'**admin** corrige cette même voie (ou l'inverse), alors il n'y
-a **qu'un seul** résultat pour cette voie (unicité, R6) : la **dernière écriture**
-l'emporte, sans doublon.
+a **qu'un seul** résultat pour cette voie (unicité, R6) : la saisie **la plus
+récente** l'emporte, sans doublon. Si le coach était **hors ligne** et que sa
+saisie, plus ancienne que celle de l'admin, arrive après elle, elle est
+**refusée** et la correction admin est conservée (R6, spec #17 R9).
 
 ### Cas limites / erreurs
 

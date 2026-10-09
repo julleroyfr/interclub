@@ -1,19 +1,18 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
-
 import {
-  creerResultatVitesse,
+  lireSaisieVitesse,
   ResultatVitesseInvalideError,
   type ResultatVitesse,
 } from '@/domaine/vitesse'
-import { getContexteJuge } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
 
-// Saisie du résultat de vitesse par le juge (spec #10). L'action revérifie la
-// session juge, la phase (③ compétition, R6) et cible l'épreuve de vitesse de sa
-// rencontre (R3) ; le domaine valide la forme (temps > 0 / chute / non-prés.,
-// R7/R8/R9). La RLS (peut_ecrire_temps_vitesse) reste la frontière ultime.
+// Saisie du résultat de vitesse par le juge (spec #10). Le domaine valide la
+// forme (temps > 0 / chute / non-prés., R7/R8/R9) sans appel réseau ; puis UN
+// appel à la fonction d'enregistrement contrôle la session juge (③, R6),
+// l'épreuve de vitesse de sa rencontre (R3) et le grimpeur engagé (R7bis), et
+// écrit (rév. 2026-10-09). La RLS (peut_ecrire_temps_vitesse) reste la
+// frontière ultime.
 
 export type EtatSaisieVitesse = { erreur?: string; succes?: string } | undefined
 
@@ -24,20 +23,13 @@ function messageEcriture(erreur: { code?: string; message?: string }): string {
   if (erreur.message === 'grimpeur_non_engage') {
     return "Ce grimpeur n'est pas engagé dans la rencontre."
   }
+  if (erreur.message === 'session_juge_absente') {
+    return 'Action réservée à un juge (session QR active en compétition).'
+  }
   if (erreur.code === '42501') {
     return 'Saisie non autorisée : hors compétition, ou hors de votre épreuve de vitesse.'
   }
   return 'La saisie a échoué. Réessayez.'
-}
-
-/** Convertit la saisie du formulaire en résultat de vitesse du domaine (R7). */
-function lireResultat(formData: FormData): ResultatVitesse {
-  const issue = String(formData.get('issue') ?? '')
-  if (issue === 'chute') return { type: 'chute' }
-  if (issue === 'non_presentation') return { type: 'non_presentation' }
-  // Temps : accepte la virgule décimale (8,123) comme le point (8.123), R8.
-  const brut = String(formData.get('temps') ?? '').trim().replace(',', '.')
-  return { type: 'temps', secondes: Number(brut) }
 }
 
 /**
@@ -49,42 +41,26 @@ export async function saisirTempsVitesse(
   _etat: EtatSaisieVitesse,
   formData: FormData,
 ): Promise<EtatSaisieVitesse> {
-  const contexte = await getContexteJuge()
-  if (!contexte) {
-    return { erreur: 'Action réservée à un juge (session QR active en compétition).' }
-  }
-  if (contexte.phase !== 'competition') {
-    return { erreur: "La saisie de la vitesse n'est ouverte qu'en phase compétition." }
-  }
-
   const grimpeurId = String(formData.get('grimpeurId') ?? '')
   if (!grimpeurId) return { erreur: 'Grimpeur requis.' }
 
   let resultat: ResultatVitesse
   try {
-    resultat = creerResultatVitesse(lireResultat(formData))
+    resultat = lireSaisieVitesse(String(formData.get('issue') ?? ''), String(formData.get('temps') ?? ''))
   } catch (e) {
     if (e instanceof ResultatVitesseInvalideError) return { erreur: e.message }
     throw e
   }
 
+  // Un seul appel : la fonction d'enregistrement contrôle la session juge (③),
+  // l'épreuve de sa rencontre, le grimpeur engagé, puis écrit (R3, rév.
+  // 2026-10-09). Pas de relecture de l'écran (R14).
   const supabase = await createClient()
-  const { data: jeton } = await supabase.auth.getClaims()
-  const user = jeton?.claims.sub ? { id: jeton.claims.sub } : null
-
-  const { error } = await supabase.from('temps_vitesse').upsert(
-    {
-      epreuve_id: contexte.epreuveVitesseId,
-      grimpeur_id: grimpeurId,
-      issue: resultat.type,
-      temps: resultat.type === 'temps' ? resultat.secondes : null,
-      auteur_utilisateur_id: user?.id ?? null,
-      auteur_role: 'juge',
-    },
-    { onConflict: 'epreuve_id,grimpeur_id' },
-  )
+  const { error } = await supabase.rpc('saisir_temps_vitesse', {
+    p_grimpeur: grimpeurId,
+    p_issue: resultat.type,
+    p_temps: resultat.type === 'temps' ? resultat.secondes : null,
+  })
   if (error) return { erreur: messageEcriture(error) }
-
-  revalidatePath('/juge')
   return { succes: 'Résultat enregistré.' }
 }

@@ -29,6 +29,8 @@ export type SaisieVoie = {
   cotation: string
   typeVoie: TypeVoie
   issue: IssueVoie | null
+  /** Saisie affichée avant la réponse du serveur (spec #17 R22) ; absent = valeur serveur. */
+  enAttente?: boolean
 }
 
 /** Issue d'un bloc pour un grimpeur ; `null` = à saisir. */
@@ -38,6 +40,8 @@ export type SaisieBloc = {
   issue: IssueBloc | null
   palierId: string | null
   palierLibelle: string | null
+  /** Saisie affichée avant la réponse du serveur (spec #17 R22) ; absent = valeur serveur. */
+  enAttente?: boolean
 }
 
 /**

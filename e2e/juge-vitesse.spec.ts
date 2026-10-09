@@ -48,6 +48,15 @@ async function saisirTemps(page: Page, nomPrenom: string, valeur: string): Promi
 }
 
 /** Compteur de progression d'un sexe (« Femmes 1 / 2 »). */
+/**
+ * Attend l'enregistrement des résultats affichés « en attente » (spec #17 R22) :
+ * l'affichage est immédiat, l'enregistrement suit. Avant de lire la base, de
+ * recharger ou de quitter la page.
+ */
+async function enregistre(page: Page): Promise<void> {
+  await expect(page.getByText('⏳ En attente')).toHaveCount(0, { timeout: 10_000 })
+}
+
 const compteur = (page: Page, titre: 'Femmes' | 'Hommes') =>
   page.locator('div.rounded-xl').filter({ has: page.locator('span.uppercase', { hasText: new RegExp(`^${titre}$`) }) })
 
@@ -92,8 +101,10 @@ test.describe('Cahier 20 — saisie de la vitesse par le juge (spec #10)', () =>
     await expect(pastille(page, 'Alpha Bob')).toHaveText('8,123 s')
     await expect(compteur(page, 'Hommes')).toContainText(/1\s*\/\s*1/)
     await expect(compteur(page, 'Femmes')).toContainText(/0\s*\/\s*2/)
+    await enregistre(page)
     await page.reload()
     await expect(pastille(page, 'Alpha Bob')).toHaveText('8,123 s')
+    await enregistre(page)
     expect(tempsEnBase(GRIMPEURS.bob)).toBe('temps|8.123')
   })
 
@@ -101,11 +112,13 @@ test.describe('Cahier 20 — saisie de la vitesse par le juge (spec #10)', () =>
     await commeJuge(page)
     await ligne(page, 'Alpha Ana').getByRole('button', { name: 'Chute' }).click()
     await expect(pastille(page, 'Alpha Ana')).toHaveText('Chute')
+    await enregistre(page)
     expect(tempsEnBase(GRIMPEURS.ana)).toBe('chute|')
     // Entrée valide le temps (OK est le premier bouton du formulaire, R14c).
     await page.getByLabel('Temps de Alpha Ana').fill('9.340')
     await page.getByLabel('Temps de Alpha Ana').press('Enter')
     await expect(pastille(page, 'Alpha Ana')).toHaveText('9,340 s')
+    await enregistre(page)
     expect(tempsEnBase(GRIMPEURS.ana)).toBe('temps|9.340')
     await expect(compteur(page, 'Femmes')).toContainText(/1\s*\/\s*2/)
   })
@@ -114,6 +127,7 @@ test.describe('Cahier 20 — saisie de la vitesse par le juge (spec #10)', () =>
     await commeJuge(page)
     await ligne(page, 'Bravo Cléo').getByRole('button', { name: 'Abs.' }).click()
     await expect(pastille(page, 'Bravo Cléo')).toHaveText('Non prés.')
+    await enregistre(page)
     expect(tempsEnBase(GRIMPEURS.cleo)).toBe('non_presentation|')
     await expect(compteur(page, 'Femmes')).toContainText(/2\s*\/\s*2/)
     await expect(compteur(page, 'Hommes')).toContainText(/1\s*\/\s*1/)
@@ -148,6 +162,7 @@ test.describe('Cahier 20 — saisie de la vitesse par le juge (spec #10)', () =>
       await expect(ligne(page, 'Bravo Cléo').getByRole('alert')).toContainText(/strictement positive/)
       await expect(pastille(page, 'Bravo Cléo')).toHaveText('à saisir')
     }
+    await enregistre(page)
     expect(tempsEnBase(GRIMPEURS.cleo)).toBe('')
   })
 
@@ -186,6 +201,7 @@ test.describe('Cahier 20 — saisie de la vitesse par le juge (spec #10)', () =>
 
   test('CT-10 · le coach lit la vitesse sans pouvoir la saisir (R15)', async ({ page }) => {
     await commeCoach(page)
+    await enregistre(page)
     await page.goto(`/coach/rencontres/${RENCONTRE_PILOTE}/resultats`)
     await page.getByRole('button', { name: /^Bob Alpha/ }).click()
     const vitesse = page.locator('div', { has: page.getByRole('heading', { name: '⚡ Vitesse' }) }).last()

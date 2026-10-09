@@ -4,6 +4,7 @@ import {
   creerResultatVitesse,
   enregistrerResultat,
   formaterTempsVitesse,
+  lireSaisieVitesse,
   ResultatVitesseInvalideError,
   validerEchelonsBareme,
   type EchelonBareme,
@@ -205,5 +206,23 @@ describe('spec #3 — Validation d’un jeu d’échelons de barème (R47/R48)',
     expect(() => validerEchelonsBareme([ech(1, 5), ech(6, 10)])).toThrow(
       BaremeVitesseInvalideError,
     )
+  })
+})
+
+describe('spec #10 — Lecture de la saisie du juge (R7/R8/R9)', () => {
+  it('lit un temps, virgule ou point décimal (R8)', () => {
+    expect(lireSaisieVitesse('temps', '8,123')).toEqual({ type: 'temps', secondes: 8.123 })
+    expect(lireSaisieVitesse('temps', ' 9.5 ')).toEqual({ type: 'temps', secondes: 9.5 })
+  })
+
+  it('une chute ou une non-présentation ignore le champ temps (R9)', () => {
+    expect(lireSaisieVitesse('chute', '8.1')).toEqual({ type: 'chute' })
+    expect(lireSaisieVitesse('non_presentation', '')).toEqual({ type: 'non_presentation' })
+  })
+
+  it('refuse un temps vide, nul ou non numérique (R8)', () => {
+    expect(() => lireSaisieVitesse('temps', '')).toThrow(ResultatVitesseInvalideError)
+    expect(() => lireSaisieVitesse('temps', '0')).toThrow(ResultatVitesseInvalideError)
+    expect(() => lireSaisieVitesse('temps', 'abc')).toThrow(ResultatVitesseInvalideError)
   })
 })

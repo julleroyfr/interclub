@@ -1,142 +1,75 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
-
-import { type Phase } from '@/domaine/rencontre'
-import {
-  MESSAGE_PLAFOND_VOIES_ADO,
-  type IssueBloc,
-  type IssueVoie,
-  ResultatInvalideError,
-  validerIssueVoie,
-  validerResultatBloc,
-  verifierAjoutVoieAdo,
-} from '@/domaine/resultat'
-import { type ContexteCoach, getContexteCoach } from '@/lib/auth/session'
-import { chargerContexteBloc, chargerContexteVoie, type Client, voiesDejaSaisiesAdo } from '@/lib/resultats/contexte-saisie'
-import { verifierLecture } from '@/lib/supabase/lecture'
+import { MESSAGE_PLAFOND_VOIES_ADO } from '@/domaine/resultat'
+import { lireReponseEnregistrement, type ScoreGrimpeur } from '@/lib/resultats/reponse-enregistrement'
 import { createClient } from '@/lib/supabase/server'
 
-// Saisie des résultats voie/bloc par le coach (spec #6). Chaque action revérifie
-// le contexte coach, la phase (③ compétition, R5/R7) et le périmètre du coach
-// temporaire ; le domaine valide l'issue (R10/R12/R16), le plafond et l'unicité
-// ado (R11/R13/R14). La RLS (peut_ecrire_resultat_voie/_bloc) reste la frontière
-// ultime (périmètre-club via composition, prêté inclus R36).
+// Saisie des résultats voie/bloc par le coach (spec #6). Chaque écriture est UN
+// SEUL appel à une fonction d'enregistrement en base (R3, rév. 2026-10-09 ;
+// migration 202610091000) qui contrôle — rôle coach (permanent ou session QR),
+// club du grimpeur (prêtés inclus), phase ③, issue admise, palier du bloc,
+// plafond ado — PUIS écrit, avec les droits de l'appelant (la RLS reste la
+// frontière ultime). La réponse porte les résultats du grimpeur, dont le score
+// est déduit par le domaine (R20) : l'écran n'est pas relu en entier.
 
-export type EtatSaisie = { erreur?: string; succes?: string } | undefined
+export type EtatSaisie =
+  | { erreur?: string; succes?: string; score?: ScoreGrimpeur }
+  | undefined
 
-/**
- * Id de l'utilisateur auth courant, pour tracer l'auteur d'une écriture (spec #9
- * R14). Couvre le coach permanent ET temporaire (session anonyme). `null` si non
- * résolu (l'écriture reste possible, auteur inconnu).
- */
-async function idUtilisateurAuth(supabase: Client): Promise<string | null> {
-  const { data } = await supabase.auth.getClaims()
-  return data?.claims.sub ?? null
+/** Traduit un refus de la fonction d'enregistrement en message lisible (R4). */
+function messageRefus(erreur: { code?: string; message?: string }): string {
+  switch (erreur.message) {
+    case 'hors_competition':
+      return "La saisie des résultats n'est ouverte qu'en phase compétition."
+    case 'hors_perimetre':
+      return 'Saisie non autorisée : grimpeur hors de votre club, ou session QR expirée.'
+    case 'voie_introuvable':
+      return 'Voie introuvable.'
+    case 'bloc_introuvable':
+      return 'Bloc introuvable.'
+    case 'issue_non_admise':
+      return 'Issue non admise pour cette voie ou ce bloc.'
+    case 'palier_invalide':
+      return 'Le palier choisi doit appartenir au bloc.'
+    // Plafond de 6 voies ado garanti en base (R14) : même message que le domaine.
+    case 'plafond_voies_ado':
+      return MESSAGE_PLAFOND_VOIES_ADO
+    default:
+      return erreur.code === '42501'
+        ? 'Saisie non autorisée : grimpeur hors de votre club, ou session QR expirée.'
+        : 'La saisie a échoué. Réessayez.'
+  }
 }
 
-/** Vérifie le contexte coach et renvoie son club + contexte, ou un état d'erreur. */
-async function exigerCoachClub(): Promise<
-  { clubId: string; contexte: ContexteCoach } | { erreur: string }
-> {
-  const contexte = await getContexteCoach()
-  if (!contexte) {
-    return { erreur: 'Action réservée à un coach (compte rattaché à un club ou session QR active).' }
-  }
-  return { clubId: contexte.clubId, contexte }
-}
-
-/**
- * Refuse la saisie hors de la fenêtre autorisée : phase ③ compétition (R5/R7) ;
- * un coach temporaire est borné à SA rencontre (session du jour). Renvoie un état
- * d'erreur, ou `null` si la saisie est permise pour ce contexte.
- */
-function refuserSiHorsSaisie(
-  contexte: ContexteCoach,
-  rencontreId: string,
-  phase: Phase,
-): EtatSaisie | null {
-  if (phase !== 'competition') {
-    return { erreur: "La saisie des résultats n'est ouverte qu'en phase compétition." }
-  }
-  if (contexte.type === 'temporaire' && contexte.rencontreId !== rencontreId) {
-    return { erreur: 'Votre session QR ne couvre pas cette rencontre.' }
-  }
-  return null
-}
-
-/** Traduit un refus d'écriture (RLS) ou une erreur base en message lisible (R4). */
-function messageEcriture(erreur: { code?: string; message?: string }): string {
-  // Plafond de 6 voies ado garanti en base (spec #6 R14, rév. 2026-10-03) :
-  // même message que le contrôle préalable du domaine.
-  if (erreur.message === 'plafond_voies_ado') return MESSAGE_PLAFOND_VOIES_ADO
-  if (erreur.code === '42501') {
-    return 'Saisie non autorisée : hors compétition, ou grimpeur hors de votre club.'
-  }
-  return 'La saisie a échoué. Réessayez.'
+/** Appelle une fonction d'enregistrement et lit le score renvoyé (R3/R20). */
+async function enregistrer(
+  fonction: 'saisir_resultat_voie' | 'saisir_resultat_bloc' | 'retirer_resultat_voie',
+  parametres: Record<string, string | null>,
+  succes: string,
+): Promise<EtatSaisie> {
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc(fonction, parametres)
+  if (error) return { erreur: messageRefus(error) }
+  return { succes, score: lireReponseEnregistrement(data) }
 }
 
 /**
  * Enregistre (ou corrige) l'issue d'un grimpeur sur une voie de difficulté
- * (R8/R10/R12). Correction = remplacement (une seule issue par voie, R13). Pour
- * l'ado, contrôle le plafond de 6 et l'unicité à l'AJOUT d'une nouvelle voie
- * (R11/R14).
+ * (R8/R10/R12). Correction = remplacement (R13) ; plafond ado (R14).
  */
 export async function saisirResultatVoie(
   _etat: EtatSaisie,
   formData: FormData,
 ): Promise<EtatSaisie> {
-  const coach = await exigerCoachClub()
-  if ('erreur' in coach) return coach
-
   const voieId = String(formData.get('voieDifficulteId') ?? '')
   const grimpeurId = String(formData.get('grimpeurId') ?? '')
-  const issue = String(formData.get('issue') ?? '') as IssueVoie
+  const issue = String(formData.get('issue') ?? '')
   if (!voieId || !grimpeurId) return { erreur: 'Voie et grimpeur requis.' }
-
-  const supabase = await createClient()
-  const ctx = await chargerContexteVoie(supabase, voieId)
-  if (!ctx) return { erreur: 'Voie introuvable.' }
-  const refus = refuserSiHorsSaisie(coach.contexte, ctx.rencontreId, ctx.phase)
-  if (refus) return refus
-
-  try {
-    validerIssueVoie(issue, ctx.categorie, ctx.typeVoie)
-  } catch (e) {
-    if (e instanceof ResultatInvalideError) return { erreur: e.message }
-    throw e
-  }
-
-  // Ado : plafond 6 + unicité, uniquement quand on AJOUTE une voie non encore
-  // saisie (une correction sur une voie déjà saisie est un remplacement, R13).
-  if (ctx.categorie === 'ado') {
-    const dejaSaisies = await voiesDejaSaisiesAdo(supabase, ctx.epreuveId, grimpeurId)
-    if (!dejaSaisies.includes(voieId)) {
-      try {
-        verifierAjoutVoieAdo({ voiesSaisiesIds: dejaSaisies, voieCandidateId: voieId })
-      } catch (e) {
-        if (e instanceof ResultatInvalideError) return { erreur: e.message }
-        throw e
-      }
-    }
-  }
-
-  const { error } = await supabase
-    .from('resultat_voie')
-    .upsert(
-      {
-        voie_difficulte_id: voieId,
-        grimpeur_id: grimpeurId,
-        issue,
-        auteur_utilisateur_id: await idUtilisateurAuth(supabase),
-        auteur_role: 'coach',
-      },
-      { onConflict: 'voie_difficulte_id,grimpeur_id' },
-    )
-  if (error) return { erreur: messageEcriture(error) }
-
-  revalidatePath(`/coach/rencontres/${ctx.rencontreId}/resultats`)
-  return { succes: 'Résultat enregistré.' }
+  return enregistrer(
+    'saisir_resultat_voie',
+    { p_voie: voieId, p_grimpeur: grimpeurId, p_issue: issue },
+    'Résultat enregistré.',
+  )
 }
 
 /**
@@ -147,55 +80,21 @@ export async function saisirResultatBloc(
   _etat: EtatSaisie,
   formData: FormData,
 ): Promise<EtatSaisie> {
-  const coach = await exigerCoachClub()
-  if ('erreur' in coach) return coach
-
   const blocId = String(formData.get('blocId') ?? '')
   const grimpeurId = String(formData.get('grimpeurId') ?? '')
-  const issue = String(formData.get('issue') ?? '') as IssueBloc
+  const issue = String(formData.get('issue') ?? '')
   const palierBrut = String(formData.get('palierId') ?? '')
-  const palierId = palierBrut === '' ? null : palierBrut
   if (!blocId || !grimpeurId) return { erreur: 'Bloc et grimpeur requis.' }
-
-  const supabase = await createClient()
-  const ctx = await chargerContexteBloc(supabase, blocId)
-  if (!ctx) return { erreur: 'Bloc introuvable.' }
-  const refus = refuserSiHorsSaisie(coach.contexte, ctx.rencontreId, ctx.phase)
-  if (refus) return refus
-
-  const paliers = verifierLecture(
-    await supabase
-      .from('bloc_palier')
-      .select('id')
-      .eq('bloc_id', blocId),
-    'des paliers',
+  return enregistrer(
+    'saisir_resultat_bloc',
+    {
+      p_bloc: blocId,
+      p_grimpeur: grimpeurId,
+      p_issue: issue,
+      p_palier: issue === 'palier' && palierBrut !== '' ? palierBrut : null,
+    },
+    'Résultat enregistré.',
   )
-  const paliersDuBloc = (paliers ?? []).map((p) => p.id as string)
-
-  try {
-    validerResultatBloc({ issue, palierId, paliersDuBloc })
-  } catch (e) {
-    if (e instanceof ResultatInvalideError) return { erreur: e.message }
-    throw e
-  }
-
-  const { error } = await supabase
-    .from('resultat_bloc')
-    .upsert(
-      {
-        bloc_id: blocId,
-        grimpeur_id: grimpeurId,
-        issue,
-        palier_id: issue === 'palier' ? palierId : null,
-        auteur_utilisateur_id: await idUtilisateurAuth(supabase),
-        auteur_role: 'coach',
-      },
-      { onConflict: 'bloc_id,grimpeur_id' },
-    )
-  if (error) return { erreur: messageEcriture(error) }
-
-  revalidatePath(`/coach/rencontres/${ctx.rencontreId}/resultats`)
-  return { succes: 'Résultat enregistré.' }
 }
 
 /**
@@ -206,26 +105,12 @@ export async function retirerResultatVoie(
   _etat: EtatSaisie,
   formData: FormData,
 ): Promise<EtatSaisie> {
-  const coach = await exigerCoachClub()
-  if ('erreur' in coach) return coach
-
   const voieId = String(formData.get('voieDifficulteId') ?? '')
   const grimpeurId = String(formData.get('grimpeurId') ?? '')
   if (!voieId || !grimpeurId) return { erreur: 'Voie et grimpeur requis.' }
-
-  const supabase = await createClient()
-  const ctx = await chargerContexteVoie(supabase, voieId)
-  if (!ctx) return { erreur: 'Voie introuvable.' }
-  const refus = refuserSiHorsSaisie(coach.contexte, ctx.rencontreId, ctx.phase)
-  if (refus) return refus
-
-  const { error } = await supabase
-    .from('resultat_voie')
-    .delete()
-    .eq('voie_difficulte_id', voieId)
-    .eq('grimpeur_id', grimpeurId)
-  if (error) return { erreur: messageEcriture(error) }
-
-  revalidatePath(`/coach/rencontres/${ctx.rencontreId}/resultats`)
-  return { succes: 'Résultat retiré.' }
+  return enregistrer(
+    'retirer_resultat_voie',
+    { p_voie: voieId, p_grimpeur: grimpeurId },
+    'Résultat retiré.',
+  )
 }
