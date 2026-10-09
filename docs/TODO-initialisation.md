@@ -65,12 +65,16 @@ score, vitesse, pret, invitation-coach…) ; parcours couverts par cahiers
 
 Tâches identifiées mais reportées, à traiter quand l'occasion se présente.
 
-| ID | Tâche | Origine | Notes |
-| ---- | ------- | --------- | ------- |
-| D3 | **Cache/optimisation des bascules d'écran — saisie résultats (#6)** : navigation grimpeurs ‹/› (R25) et bascule par équipe / alphabétique (R24) | demandé 2026-09-08 | Éviter de recharger les données à chaque bascule (stratégie de cache). Point technique hors règles de spec. |
+Aucun différé en cours (D1 → D7 traités, voir l'archive ci-dessous).
 
 ## ✅ Fait (archive — non rappelé)
 
+- **D3 — Cache des bascules d'écran, saisie des résultats** (clos le
+  2026-10-09, déjà couvert par l'implémentation) : la page charge une fois les
+  données de la rencontre ; la bascule par équipe / alphabétique (spec #6 R24)
+  et la navigation ‹/› (R25) sont un état du composant client, sans requête —
+  mesuré : 0 requête. Écran de saisie admin : même principe. Garde-fou : cahier
+  17 **CT-18** (E2E). Aucune spec modifiée.
 - **D7 — Création d'un compte admin depuis l'IHM** (2026-10-09) : sous la forme
   d'une **invitation administrateur** (décision produit du 2026-10-09) — QR/URL
   à usage unique, valable 15 minutes, généré sur `/admin/mapping` (spec #2

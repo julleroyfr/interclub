@@ -271,6 +271,18 @@ Cas particuliers à préparer à la main :
 - **Mesure** (recette) : noter la durée de la requête `resultats` (repère : bien
   en dessous de la seconde).
 
+### CT-18 `[auto]` — Bascules d'écran sans rechargement   (couvre : R24, R25 ; TODO D3, 2026-10-09)
+
+- **Rôle / compte** : coach permanent Club A.
+- **Pré-condition** : rencontre enfant en compétition ; DevTools → **Network**.
+- **Étapes** : basculer **Alphabétique** ↔ **Par équipe** ; ouvrir un grimpeur,
+  naviguer **›** / **‹** ; revenir à la liste ; rebasculer de vue et rouvrir un
+  grimpeur.
+- **Résultat attendu** : **aucune** requête réseau (hors canal temps réel
+  WebSocket) : les données de la rencontre sont chargées une fois, les
+  bascules ne les rechargent pas.
+- **Automatisé** : `e2e/coach-saisie-resultats.spec.ts` (CT-18).
+
 ## Registre d'exécution
 
 > **Automatisé** (rév. 2026-10-03) : CT-16 par `e2e/integrite-engagement.spec.ts`
@@ -302,3 +314,4 @@ Cas particuliers à préparer à la main :
 | | | | CT-14 | ✅ / ❌ | manuel (vitesse lecture seule) |
 | 2026-10-02 | agent/playwright | develop | CT-01 → CT-12, CT-14 | ✅ | `e2e/coach-saisie-resultats.spec.ts` (14 tests). Résidus manuels : couleurs des pastilles (CT-04), geste de balayage (CT-03), rendu des deux vues (CT-02) |
 | 2026-10-02 | agent/playwright | develop | CT-15 | ✅ | R21bis (rév. spec #6 2026-10-02) — message avant la ③, sans compteurs ni « groupe à définir » |
+| 2026-10-09 | Playwright e2e | develop | CT-18 | ✅ | 0 requête pendant 10 bascules de vue / grimpeur (garde-fou TODO D3) |
