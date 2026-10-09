@@ -1,5 +1,9 @@
 # Cahier de test : Invitation coach permanent — onboarding (spec #2 R26–R33)
 
+> **Révision du 2026-10-09** : double saisie du mot de passe (spec #2 R30 rév.,
+> TODO D5) — CT-02 mis à jour, **CT-11** ajouté. CT-02 et CT-11 automatisés :
+> `e2e/inscription-coach.spec.ts`.
+>
 > Couvre l'**onboarding par invitation** : affichage d'une invitation par club
 > (`/admin/clubs`), écran d'inscription public (`/inscription?invitation=…`),
 > création automatique du compte coach rattaché au club.
@@ -64,7 +68,8 @@ admin, R29) et **CT-09** (fail-closed RPC, R30/R33). Les cas nominaux
 - **Étapes** :
   1. Ouvrir l'URL de l'invitation de Club A (ou scanner le QR).
   2. L'écran d'inscription indique « Vous rejoindrez le club Club A ».
-  3. Saisir un e-mail neuf (`coach2@test.local`) + mot de passe (≥ 6 car.), valider.
+  3. Saisir un e-mail neuf (`coach2@test.local`), un mot de passe (≥ 6 car.)
+     et **le même** dans « Confirmer le mot de passe », valider.
   4. À l'arrivée sur `/connexion` (message « compte créé »), se connecter.
 - **Résultat attendu** : redirection vers `/coach` ; le nouveau compte est
   **coach permanent du Club A** (vérifiable dans `/admin/mapping`).
@@ -137,6 +142,16 @@ admin, R29) et **CT-09** (fail-closed RPC, R30/R33). Les cas nominaux
 - **Résultat attendu** : la connexion du coach **fonctionne** toujours (l'invitation
   ne sert qu'à l'onboarding, pas à la session).
 
+### CT-11 — Confirmation du mot de passe différente   (couvre : R30 ; négatif)
+
+- **Rôle / compte** : anonyme.
+- **Étapes** : via une invitation active de Club A, saisir un e-mail neuf
+  (`coach4@test.local`), `motdepasse` en « Mot de passe » et `motdepasze` en
+  « Confirmer le mot de passe », valider.
+- **Résultat attendu** : inscription **refusée**, message « Les deux mots de passe
+  ne correspondent pas. » ; on reste sur l'écran d'inscription ; **aucun** compte
+  `coach4@test.local` créé (absent de `/admin/mapping`).
+
 ## Registre d'exécution
 
 | Date | Testeur | Version/commit | Cas | Résultat | Remarque |
@@ -151,3 +166,5 @@ admin, R29) et **CT-09** (fail-closed RPC, R30/R33). Les cas nominaux
 | 2026-09-05 | agent | `local` | CT-08 | ✅ | `test:invitation` (local, 403) |
 | 2026-09-05 | agent | `local` | CT-09 | ✅ | `test:invitation` (local, RPC ≠ 200) |
 | | | | CT-10 | ✅ / ❌ | auth |
+| 2026-10-09 | Playwright e2e | develop | CT-02 | ✅ | `inscription-coach.spec.ts` : mots de passe identiques → `/connexion?inscrit=1`, compte créé |
+| 2026-10-09 | Playwright e2e | develop | CT-11 | ✅ | `inscription-coach.spec.ts` : message affiché, aucun compte créé |

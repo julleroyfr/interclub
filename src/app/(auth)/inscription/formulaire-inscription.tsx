@@ -32,6 +32,15 @@ export function FormulaireInscription({ invitation }: { invitation: string }) {
         required
       />
 
+      <ChampTexte
+        id="confirmationMotDePasse"
+        name="confirmationMotDePasse"
+        label="Confirmer le mot de passe"
+        type="password"
+        autoComplete="new-password"
+        required
+      />
+
       {etat?.erreur && (
         <p role="alert" className="text-sm text-danger">
           {etat.erreur}

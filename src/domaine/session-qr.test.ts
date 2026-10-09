@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest'
 import {
   SessionQrInvalideError,
   construireUrlScan,
+  decisionScan,
   interpreterResultatScan,
   urlDeRedirection,
 } from './session-qr'
@@ -112,5 +113,32 @@ describe('spec #2 — urlDeRedirection', () => {
         rencontreId: '33333333-3333-3333-3333-333333333333',
       }),
     ).toBe('/juge')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// decisionScan — scan par un utilisateur déjà connecté (R34, revue m5)
+// ---------------------------------------------------------------------------
+describe('spec #2 — decisionScan', () => {
+  it('sans session : ouvre la session QR (R6)', () => {
+    expect(decisionScan(null)).toEqual({ type: 'ouvrir' })
+  })
+
+  it('session QR éphémère déjà ouverte : ouvre la nouvelle session (R34)', () => {
+    expect(decisionScan({ estAnonyme: true, email: null })).toEqual({ type: 'ouvrir' })
+  })
+
+  it('compte permanent connecté : ne touche pas à la session, propose le choix (R34)', () => {
+    expect(decisionScan({ estAnonyme: false, email: 'admin@test.local' })).toEqual({
+      type: 'proposer_choix',
+      email: 'admin@test.local',
+    })
+  })
+
+  it('compte permanent sans e-mail connu : propose quand même le choix (R34)', () => {
+    expect(decisionScan({ estAnonyme: false, email: null })).toEqual({
+      type: 'proposer_choix',
+      email: null,
+    })
   })
 })

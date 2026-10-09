@@ -6,7 +6,7 @@ attente** (les tâches ✅ faites sont archivées en bas, pas rappelées).
 
 Statuts : ✅ fait · 🔄 en cours · ⏳ en attente (à faire) · 🚫 bloqué (dépendance non levée)
 
-Dernière mise à jour : 2026-10-02.
+Dernière mise à jour : 2026-10-09.
 
 ---
 
@@ -68,12 +68,16 @@ Tâches identifiées mais reportées, à traiter quand l'occasion se présente.
 | ID | Tâche | Origine | Notes |
 | ---- | ------- | --------- | ------- |
 | D3 | **Cache/optimisation des bascules d'écran — saisie résultats (#6)** : navigation grimpeurs ‹/› (R25) et bascule par équipe / alphabétique (R24) | demandé 2026-09-08 | Éviter de recharger les données à chaque bascule (stratégie de cache). Point technique hors règles de spec. |
-| D5 | **Double saisie du mot de passe — inscription coach permanent** (`/inscription`, spec #2 R30) : champ « Confirmer le mot de passe », refus si les deux saisies diffèrent | demandé 2026-10-03 | Évite les erreurs de frappe à la création du compte. Change le comportement de l'écran → révision spec #2 à valider, puis tests → code → cahier. |
 | D6 | **Temps réel des prêts sur l'écran de composition d'équipe du coach** (spec #5) : un grimpeur prêté au club pendant que le coach compose son équipe n'apparaît dans la liste déroulante qu'après rechargement de la page | demandé 2026-10-03 | Étendre le temps réel (spec #11) à l'écran d'engagement coach : table des prêts à ajouter à la publication Realtime (nouvelle migration) + composant `TempsReel` sur l'écran. Révision spec #11 (périmètre des écrans) à valider, puis tests → code → cahier 22. |
 | D7 | **Création d'un compte admin depuis l'IHM d'administration** : l'admin crée directement un nouveau compte admin (e-mail + mot de passe) | demandé 2026-10-03 | Aujourd'hui `/admin/mapping` attribue seulement le rôle `admin` à un compte **déjà existant** (spec #2 R4). Pour créer le compte, il faut la clé service, côté serveur (cf. ADR 0002). Révision spec #2 à valider (+ double saisie du mot de passe comme D5), puis tests → code → cahier. |
 
 ## ✅ Fait (archive — non rappelé)
 
+- **D5 — Double saisie du mot de passe à l'inscription coach** (2026-10-09) :
+  spec #2 R30 révisée ; champ « Confirmer le mot de passe » sur `/inscription`,
+  refus « Les deux mots de passe ne correspondent pas. » sans création de compte
+  (`validerInscriptionCoach`, 2 tests Vitest) ; cahier 16 CT-11 + E2E
+  `inscription-coach.spec.ts` (CT-02, CT-11).
 - **D1 — Live public : clos, sans objet** (2026-10-02) : décision produit « pas
   d'espace public ». Spec #8 abandonnée, spec #1 R8 révisée (visiteur non
   authentifié → aucun accès, redirigé vers `/connexion`), specs #2, #6, #7, #9,

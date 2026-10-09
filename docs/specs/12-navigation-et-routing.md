@@ -13,6 +13,9 @@
   (pages de maquette `/design-system` et `/templates/**` limitées au
   développement local) et **R25** (écran d'erreur technique). Cas limites
   alignés ; aucune autre règle modifiée.
+- **Révision du 2026-10-09 (validée le 2026-10-09)** — constat m5 de la revue
+  du 2026-10-03 : **R9** précise le cas d'un compte permanent déjà connecté qui
+  ouvre `/scan?jeton=` (spec #2 R34). Cas limite ajouté.
 - **Sources** :
   - **Décision produit du 2026-09-25** (arbitrages navigation) : entrée coach
     unique, vue classement admin dédiée, sortie de session juge, classement en
@@ -86,6 +89,9 @@ menant à une impasse (404 non intentionnel).
   formulaire.
 - **R9.** Le scan QR `/scan?jeton=` redirige selon la **nature** de la session :
   `coach_temporaire` → `/coach/rencontres/{rencontreId}` ; `juge` → `/juge`.
+  Ouvert par un **compte permanent déjà connecté**, `/scan` n'ouvre **aucune**
+  session : il propose « Aller à mon espace » (R6) ou « Me déconnecter et ouvrir
+  la session QR » (spec #2 R34).
 
 ### Espace coach
 
@@ -200,6 +206,8 @@ menant à une impasse (404 non intentionnel).
 - Coach temporaire ouvrant `/coach/rencontres/{autre-id}/classement` →
   `notFound()` (R12).
 - Utilisateur déjà connecté ouvrant `/connexion` → redirigé vers son espace (R8).
+- Compte permanent déjà connecté ouvrant `/scan?jeton=` → session conservée,
+  choix « Aller à mon espace » / « Me déconnecter et ouvrir la session QR » (R9).
 - **Admin** ouvrant `/design-system` ou `/templates/nuit/…` en **recette ou
   prod** → **404** (R24) ; en développement local, la page s'affiche.
 - Une **lecture en échec** pendant le rendu du classement (droit manquant,

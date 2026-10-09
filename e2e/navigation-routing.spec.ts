@@ -3,7 +3,7 @@ import type { Browser, Page } from '@playwright/test'
 import { expect, test } from './helpers/fixtures'
 import { commeAdmin, commeCoach, commeCoachTemporaire, commeSansMapping } from './helpers/auth'
 import { JETON, RENCONTRE_PILOTE, RENCONTRE_PILOTE_DATE } from './helpers/donnees'
-import { nettoyerSessionsQr, poserDate, poserPhase } from './helpers/sql'
+import { compterSessionsQr, nettoyerSessionsQr, poserDate, poserPhase } from './helpers/sql'
 
 /**
  * Cahier 23 — Navigation & routing (spec #12). Valide les redirections, la garde
@@ -226,6 +226,28 @@ test.describe('Cahier 23 — Navigation & routing (spec #12)', () => {
       await page.getByRole('button', { name: /terminer/i }).click()
       // terminerSession → / → redirige vers /connexion (plus de session).
       await expect(page).toHaveURL(/\/connexion/)
+    })
+
+    // ---- CT-15 : scan QR par un compte permanent déjà connecté (R9, spec #2 R34) ----
+    test('CT-15 · admin connecté scanne un QR : session conservée, choix proposé', async ({ page }) => {
+      await commeAdmin(page)
+      await page.goto(`/scan?jeton=${JETON.juge}`)
+      await expect(page.getByText('admin@test.local')).toBeVisible()
+      const sessionsAvant = compterSessionsQr()
+
+      // « Aller à mon espace » : la session admin est intacte, aucune session QR.
+      await page.getByRole('button', { name: 'Aller à mon espace' }).click()
+      await expect(page).toHaveURL(/\/admin$/)
+      expect(compterSessionsQr()).toBe(sessionsAvant)
+
+      // « Me déconnecter et ouvrir la session QR » : session juge ouverte.
+      await page.goto(`/scan?jeton=${JETON.juge}`)
+      await page.getByRole('button', { name: 'Me déconnecter et ouvrir la session QR' }).click()
+      await page.waitForURL('**/juge')
+      expect(compterSessionsQr()).toBe(sessionsAvant + 1)
+      // La session admin de cet appareil est fermée : /admin n'est plus accessible.
+      const resp = await page.goto('/admin')
+      expect(resp?.status()).toBe(404)
     })
 
     // ---- CT-12 : téléphone, écrans ③ (classement admin, coach temp., juge) ----

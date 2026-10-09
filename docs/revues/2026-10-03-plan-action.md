@@ -270,8 +270,10 @@ Débloqué : D-C tranché le 2026-10-03 (option a).
   (3 tests de composant), `app/error.tsx` (`unstable_retry`, Next 16) et
   `app/global-error.tsx` ; cahier 23 CT-14 automatisé
   (`npm run test:cahier:erreur`, panne simulée ; mutation vérifiée).
-- [ ] ⏳ m5 — `/scan` : ne pas ouvrir de session anonyme si l'utilisateur est
-  déjà connecté (à vérifier contre la spec #2 avant de coder).
+- [x] ✅ m5 — `/scan` : spec #2 R34 et spec #12 R9 (validées le 2026-10-09). Un
+  compte permanent connecté garde sa session ; choix « Aller à mon espace » ou
+  « Me déconnecter et ouvrir la session QR » (déconnexion locale à l'appareil).
+  `decisionScan` (domaine, 4 tests) ; cahier 23 CT-15 automatisé.
 - [x] ✅ m6 — `messageEchecCreationCompte` (domaine, 4 tests) : seul un e-mail
   déjà utilisé donne le message R32 (spec #2).
 - [x] ✅ m7 — `src/lib/resultats/contexte-saisie.ts` (contextes voie/bloc,
