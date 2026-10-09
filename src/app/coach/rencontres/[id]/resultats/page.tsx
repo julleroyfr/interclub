@@ -16,6 +16,11 @@ const labelPhase = (v: Phase) => PHASES.find((p) => p.value === v)?.label ?? v
 const labelCategorie = (v: Categorie) =>
   CATEGORIES.find((c) => c.value === v)?.labelCourt ?? v
 
+/** Heure du serveur au rendu : écart d'horloge de l'appareil (spec #17 R6). */
+function heureServeur(): number {
+  return Date.now()
+}
+
 function formaterDate(iso: string): string {
   const [a, m, j] = iso.split('-')
   if (!a || !m || !j) return iso
@@ -74,7 +79,12 @@ export default async function PageResultats({
           </div>
         </div>
 
-        <PanneauResultats saisie={saisie} />
+        <PanneauResultats
+          saisie={saisie}
+          clubId={contexte.clubId}
+          sessionQr={contexte.type === 'temporaire'}
+          heureServeur={heureServeur()}
+        />
       </div>
     </Coquille>
   )

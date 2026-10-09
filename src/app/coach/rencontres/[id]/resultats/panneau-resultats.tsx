@@ -1,15 +1,15 @@
 'use client'
 
-import { createContext, type FormEvent, startTransition, use, useMemo, useRef, useState } from 'react'
+import Link from 'next/link'
+import { createContext, type FormEvent, use, useMemo, useState } from 'react'
 
+import { BandeauSynchro } from '@/composants/saisie-hors-ligne/BandeauSynchro'
+import { ListeSaisies, type ResumeSaisie } from '@/composants/saisie-hors-ligne/ListeSaisies'
+import { useFileSaisies } from '@/composants/saisie-hors-ligne/useFileSaisies'
+import type { IssueEnvoi } from '@/domaine/hors-ligne'
 import { affichageVoiesBlocs, issuesVoieSaisissables, type IssueVoie } from '@/domaine/resultat'
 import { formaterTempsVitesse } from '@/domaine/vitesse'
-import {
-  retirerResultatVoie,
-  saisirResultatBloc,
-  saisirResultatVoie,
-  type EtatSaisie,
-} from '@/lib/coach/resultats-actions'
+import { enregistrerSaisieCoach } from '@/lib/coach/resultats-actions'
 import type {
   BlocConfig,
   GrimpeurSaisie,
@@ -29,19 +29,22 @@ import {
 /** Délai d'affichage de la confirmation « enregistré » (spec #17 R23). */
 const DUREE_CONFIRMATION_MS = 2500
 
+/** Saisie conservée dans la file de l'appareil : la saisie + son résumé (R26/R27). */
+type ContenuSaisie = { s: SaisieOptimiste; resume: ResumeSaisie }
+
 /**
- * Envoi d'une saisie avec affichage IMMÉDIAT (spec #17 R22/R23, spec #6 R20bis) :
- * la saisie s'affiche « en attente » dès le clic, la requête part ensuite ; la
- * réponse la confirme (« enregistré ») ou la rejette (retour à la valeur du
- * serveur + motif).
+ * Envoi d'une saisie (spec #17) : elle entre dans la file de l'appareil, s'affiche
+ * aussitôt « en attente » (R12/R22), puis est envoyée — y compris plus tard, sans
+ * réseau au moment du clic (R15). La réponse la confirme (« enregistré ») ou la
+ * rejette (retour à la valeur du serveur + motif, R18/R22).
  */
 type Envoi = {
   /**
    * Gestionnaire `onSubmit` d'un formulaire de saisie : `construire` traduit les
-   * champs (bouton cliqué compris) en saisie affichée aussitôt.
+   * champs (bouton cliqué compris) en saisie et en résumé lisible.
    */
-  surSoumission: (construire: (fd: FormData) => SaisieOptimiste) => (e: FormEvent<HTMLFormElement>) => void
-  /** Motif de rejet par cible (clé `cleSaisie`). */
+  surSoumission: (construire: (fd: FormData) => ContenuSaisie) => (e: FormEvent<HTMLFormElement>) => void
+  /** Motif de rejet par cible (clé `cleSaisie`), tant qu'aucune saisie plus récente n'a abouti. */
   rejets: Record<string, string>
   /** Cibles confirmées récemment par le serveur. */
   confirmes: Record<string, true>
@@ -62,11 +65,18 @@ function sansCle<T>(dico: Record<string, T>, cle: string): Record<string, T> {
   return copie
 }
 
-/** Action serveur correspondant à une saisie. */
-function actionDe(s: SaisieOptimiste): (etat: EtatSaisie, fd: FormData) => Promise<EtatSaisie> {
-  if (s.type === 'bloc') return saisirResultatBloc
-  if (s.type === 'retrait_voie') return retirerResultatVoie
-  return saisirResultatVoie
+/** Traduit la réponse de l'enregistrement en issue d'envoi (spec #17 R17–R20). */
+async function envoyerSaisie(
+  contenu: ContenuSaisie,
+  saisiLe: string,
+): Promise<{ issue: IssueEnvoi; heureServeur: number; donnees?: ScoreGrimpeur }> {
+  const r = await enregistrerSaisieCoach(contenu.s, saisiLe)
+  if (r.ok) return { issue: { type: 'acceptee' }, heureServeur: r.heureServeur, donnees: r.score }
+  const issue: IssueEnvoi =
+    r.refus.nature === 'definitif'
+      ? { type: 'definitif', motif: r.refus.message }
+      : { type: r.refus.nature }
+  return { issue, heureServeur: r.heureServeur }
 }
 
 /** État d'envoi d'une cible (R23) : icône ET texte, pas seulement une couleur. */
@@ -148,14 +158,23 @@ function libelleVitesse(vitesse: GrimpeurSaisie['vitesse']): string {
  * navigation précédent/suivant et balayage (R25). Vitesse et score en lecture
  * seule (R22/R23) : le score, restitué ici, agrège voie + bloc + vitesse (R23).
  */
-export function PanneauResultats({ saisie: saisieServeur }: { saisie: SaisieRencontre }) {
+export function PanneauResultats({
+  saisie: saisieServeur,
+  clubId,
+  sessionQr,
+  heureServeur,
+}: {
+  saisie: SaisieRencontre
+  /** Club du coach : périmètre de la file d'attente (spec #17 R4). */
+  clubId: string
+  /** Coach temporaire (session QR) : à rescanner si la session manque (R25). */
+  sessionQr: boolean
+  /** Heure du serveur au rendu (ms) : écart d'horloge de l'appareil (R6). */
+  heureServeur: number
+}) {
   const [vue, setVue] = useState<'equipe' | 'alpha'>('equipe')
   const [selId, setSelId] = useState<string | null>(null)
-  // Saisies envoyées dont la réponse n'est pas encore arrivée, dans l'ordre des
-  // clics. Superposées aux données du serveur (spec #17 R22) : l'écran et les
-  // compteurs en tiennent compte ; chacune reste affichée jusqu'à la réponse de
-  // SA requête, puis la valeur du serveur fait foi.
-  const [enAttente, setEnAttente] = useState<{ id: number; s: SaisieOptimiste }[]>([])
+  const [listeOuverte, setListeOuverte] = useState(false)
   // Saisies CONFIRMÉES par l'enregistrement, avec le score renvoyé (spec #6 R20,
   // rév. 2026-10-09) : l'écran n'est plus relu en entier après une saisie ; elles
   // restent affichées jusqu'à la prochaine lecture de l'écran (temps réel,
@@ -166,7 +185,25 @@ export function PanneauResultats({ saisie: saisieServeur }: { saisie: SaisieRenc
     setServeurVu(saisieServeur)
     setConfirmees([])
   }
-  const prochainId = useRef(0)
+  const [confirmes, setConfirmes] = useState<Record<string, true>>({})
+  // Heure de la dernière saisie acceptée par cible : un rejet plus ancien n'est
+  // plus signalé sur la cible (il reste dans la liste des rejets, R26).
+  const [accepteeLe, setAccepteeLe] = useState<Record<string, number>>({})
+
+  // File d'attente de l'appareil (spec #17 R12–R19, R28).
+  const fileSaisies = useFileSaisies<ContenuSaisie, ScoreGrimpeur>({
+    perimetre: { role: 'coach', rencontreId: saisieServeur.id, clubId },
+    heureServeur,
+    envoyer: (saisie, saisiLe) => envoyerSaisie(saisie.contenu, saisiLe),
+    surAcceptee: (saisie, score) => {
+      if (score) setConfirmees((c) => [...c, { s: saisie.contenu.s, score }])
+      setAccepteeLe((a) => ({ ...a, [saisie.cible]: saisie.saisiLe }))
+      setConfirmes((c) => ({ ...c, [saisie.cible]: true }))
+      setTimeout(() => setConfirmes((c) => sansCle(c, saisie.cible)), DUREE_CONFIRMATION_MS)
+    },
+  })
+
+  // Données du serveur + saisies confirmées + saisies en attente (spec #17 R22).
   const saisie = useMemo(() => {
     const confirme = confirmees.reduce(
       (acc, c) =>
@@ -177,49 +214,31 @@ export function PanneauResultats({ saisie: saisieServeur }: { saisie: SaisieRenc
         ),
       saisieServeur,
     )
-    return enAttente.reduce((acc, e) => appliquerSaisieOptimiste(acc, e.s), confirme)
-  }, [saisieServeur, confirmees, enAttente])
-  const [rejets, setRejets] = useState<Record<string, string>>({})
-  const [confirmes, setConfirmes] = useState<Record<string, true>>({})
+    return fileSaisies.file
+      .filter((e) => e.etat === 'en_attente')
+      .sort((a, b) => a.saisiLe - b.saisiLe)
+      .reduce((acc, e) => appliquerSaisieOptimiste(acc, e.contenu.s), confirme)
+  }, [saisieServeur, confirmees, fileSaisies.file])
 
-  // Hors transition, volontairement : l'affichage doit être IMMÉDIAT ; la
-  // requête part ensuite (les actions serveur sont traitées dans l'ordre).
-  function envoyer(s: SaisieOptimiste, formData: FormData) {
-    const cle = cleSaisie(s)
-    const id = ++prochainId.current
-    setEnAttente((l) => [...l, { id, s }])
-    setRejets((r) => sansCle(r, cle))
-    void (async () => {
-      let reponse: EtatSaisie
-      try {
-        reponse = await actionDe(s)(undefined, formData)
-      } catch {
-        reponse = { erreur: 'La saisie n’a pas pu être envoyée. Réessayez.' }
+  const rejets = useMemo(() => {
+    const r: Record<string, string> = {}
+    for (const e of fileSaisies.file) {
+      if (e.etat === 'rejetee' && e.motif && e.saisiLe > (accepteeLe[e.cible] ?? 0)) {
+        r[e.cible] = e.motif
       }
-      // Confirmée → passe dans les saisies confirmées (avec le score), dans la
-      // même mise à jour que son retrait de l'attente : aucun retour visible à
-      // l'ancienne valeur.
-      const score = reponse?.score
-      startTransition(() => {
-        setEnAttente((l) => l.filter((e) => e.id !== id))
-        if (!reponse?.erreur && score) setConfirmees((c) => [...c, { s, score }])
-      })
-      if (reponse?.erreur) {
-        const motif = reponse.erreur
-        setRejets((r) => ({ ...r, [cle]: motif }))
-        return
-      }
-      setConfirmes((c) => ({ ...c, [cle]: true }))
-      setTimeout(() => setConfirmes((c) => sansCle(c, cle)), DUREE_CONFIRMATION_MS)
-    })()
-  }
+    }
+    return r
+  }, [fileSaisies.file, accepteeLe])
 
   const surSoumission =
-    (construire: (fd: FormData) => SaisieOptimiste) => (e: FormEvent<HTMLFormElement>) => {
+    (construire: (fd: FormData) => ContenuSaisie) => (e: FormEvent<HTMLFormElement>) => {
       e.preventDefault()
       const fd = new FormData(e.currentTarget, (e.nativeEvent as SubmitEvent).submitter)
-      envoyer(construire(fd), fd)
+      const contenu = construire(fd)
+      fileSaisies.ajouter(cleSaisie(contenu.s), contenu)
     }
+
+  const nbRejetees = fileSaisies.file.filter((e) => e.etat === 'rejetee').length
 
   // Ordre de parcours de la vue courante (support de la navigation ‹/›, R25).
   const ordreVue = useMemo(() => {
@@ -243,6 +262,30 @@ export function PanneauResultats({ saisie: saisieServeur }: { saisie: SaisieRenc
   return (
     <ContexteEnvoi value={{ surSoumission, rejets, confirmes }}>
     <div className="flex flex-col gap-4">
+      <BandeauSynchro
+        enLigne={fileSaisies.enLigne}
+        nbEnAttente={fileSaisies.nbEnAttente}
+        nbRejetees={nbRejetees}
+        sessionAbsente={fileSaisies.sessionAbsente}
+        actionSession={
+          sessionQr ? (
+            <span className="text-xs font-bold">Rescannez le QR code de votre club.</span>
+          ) : (
+            <Link href="/connexion" className="min-h-9 rounded-lg border border-current px-3 py-2 text-xs font-bold">
+              Se reconnecter
+            </Link>
+          )
+        }
+        onVoirListe={() => setListeOuverte(true)}
+      />
+      {listeOuverte && (
+        <ListeSaisies
+          file={fileSaisies.file}
+          onAbandonner={fileSaisies.abandonner}
+          onRetirer={fileSaisies.retirerRejet}
+          onFermer={() => setListeOuverte(false)}
+        />
+      )}
       {!saisie.ouverteSaisie && (
         <p className="rounded-xl border border-bordure bg-surface px-4 py-3 text-sm text-texte-attenue">
           La saisie des résultats n’est ouverte qu’en phase compétition. Les
@@ -572,6 +615,7 @@ function LigneVoie({
   const issues = issuesVoieSaisissables(saisie.categorie, voie.typeVoie)
   const cible = { grimpeurId: grimpeur.grimpeurId, voieDifficulteId: voie.voieDifficulteId }
   const cle = cleSaisie({ type: 'voie', ...cible, issue: 'top' })
+  const nomGrimpeur = `${grimpeur.prenom} ${grimpeur.nom}`
 
   return (
     <li className="flex flex-col gap-2 py-2">
@@ -595,11 +639,13 @@ function LigneVoie({
       {saisie.ouverteSaisie && (
         <div className="flex flex-wrap items-center gap-1.5">
           <form
-            onSubmit={surSoumission((fd) => ({
-              type: 'voie',
-              ...cible,
-              issue: String(fd.get('issue')) as IssueVoie,
-            }))}
+            onSubmit={surSoumission((fd) => {
+              const issue = String(fd.get('issue')) as IssueVoie
+              return {
+                s: { type: 'voie', ...cible, issue },
+                resume: { grimpeur: nomGrimpeur, cible: `Voie ${voie.niveau}`, valeur: LIBELLE_ISSUE[issue] },
+              }
+            })}
             className="flex flex-wrap gap-1.5"
           >
             <input type="hidden" name="rencontreId" value={saisie.id} />
@@ -622,7 +668,12 @@ function LigneVoie({
             ))}
           </form>
           {retirable && voie.issue && (
-            <form onSubmit={surSoumission(() => ({ type: 'retrait_voie', ...cible }))}>
+            <form
+              onSubmit={surSoumission(() => ({
+                s: { type: 'retrait_voie', ...cible },
+                resume: { grimpeur: nomGrimpeur, cible: `Voie ${voie.niveau}`, valeur: 'Retrait' },
+              }))}
+            >
               <input type="hidden" name="rencontreId" value={saisie.id} />
               <input type="hidden" name="voieDifficulteId" value={voie.voieDifficulteId} />
               <input type="hidden" name="grimpeurId" value={grimpeur.grimpeurId} />
@@ -669,7 +720,15 @@ function FormAjoutVoieAdo({
           issue: String(fd.get('issue')) as IssueVoie,
         }
         setDerniereCle(cleSaisie(s))
-        return s
+        const niveau = disponibles.find((v) => v.voieDifficulteId === s.voieDifficulteId)?.niveau ?? ''
+        return {
+          s,
+          resume: {
+            grimpeur: `${grimpeur.prenom} ${grimpeur.nom}`,
+            cible: `Voie ${niveau}`,
+            valeur: LIBELLE_ISSUE[s.issue],
+          },
+        }
       })}
       className="mt-3 flex flex-col gap-2 rounded-xl border border-dashed border-bordure bg-accent/[0.03] p-3"
     >
@@ -753,6 +812,11 @@ function LigneBloc({
   const { surSoumission } = useEnvoi()
   const cible = { type: 'bloc' as const, grimpeurId: grimpeur.grimpeurId, blocId: bloc.blocId }
   const cle = cleSaisie({ ...cible, issue: 'echec', palierId: null })
+  const resume = (valeur: string): ResumeSaisie => ({
+    grimpeur: `${grimpeur.prenom} ${grimpeur.nom}`,
+    cible: `Bloc ${bloc.code}`,
+    valeur,
+  })
 
   const libelleCourant =
     bloc.issue === 'palier'
@@ -790,11 +854,13 @@ function LigneBloc({
         <div className="flex flex-wrap items-center gap-1.5">
           {/* Un bouton par essai (palier), comme les issues de voie. */}
           <form
-            onSubmit={surSoumission((fd) => ({
-              ...cible,
-              issue: 'palier',
-              palierId: String(fd.get('palierId') ?? ''),
-            }))}
+            onSubmit={surSoumission((fd) => {
+              const palierId = String(fd.get('palierId') ?? '')
+              return {
+                s: { ...cible, issue: 'palier', palierId },
+                resume: resume(paliers.find((p) => p.id === palierId)?.libelle ?? 'Palier'),
+              }
+            })}
             className="flex flex-wrap gap-1.5"
           >
             <input type="hidden" name="rencontreId" value={saisie.id} />
@@ -817,7 +883,12 @@ function LigneBloc({
             ))}
           </form>
           {/* Échec (aucun essai réussi). */}
-          <form onSubmit={surSoumission(() => ({ ...cible, issue: 'echec', palierId: null }))}>
+          <form
+            onSubmit={surSoumission(() => ({
+              s: { ...cible, issue: 'echec', palierId: null },
+              resume: resume('Échec'),
+            }))}
+          >
             <input type="hidden" name="rencontreId" value={saisie.id} />
             <input type="hidden" name="blocId" value={bloc.blocId} />
             <input type="hidden" name="grimpeurId" value={grimpeur.grimpeurId} />

@@ -365,9 +365,14 @@ sequenceDiagram
   juge), **R18** (motifs), **R22**, **R23**, spec #6 **R20bis** et spec #10
   **R14bis**. Les saisies en attente vivent **en mémoire de la page** : quitter ou
   recharger l'écran pendant un envoi l'interrompt.
-- **Lot 2 — file hors ligne** (à venir) : file conservée sur l'appareil et
-  rejouée (R12, R14–R17, R19–R21), heure de saisie et migration `saisi_le`
-  (R6–R11), bandeau, listes et confirmation de sortie (R24–R28).
+- **Lot 2 — file hors ligne** (2026-10-09, cahier
+  [29](../tests/29-saisie-hors-ligne.cahier.md) CT-07 à CT-14, migration
+  `202610091100_heure_saisie`) : file conservée sur l'appareil (stockage local
+  du navigateur) et rejouée automatiquement (R12, R14–R17), session absente
+  gardée en attente (R19), refus de clôture (R20), heure de saisie corrigée de
+  l'écart d'horloge et départage en base (R6–R11), bandeau, listes des saisies
+  rejetées / en attente et confirmation de sortie (R24–R28). Le lot 1 est
+  absorbé : toute saisie passe désormais par la file.
 
 ## Points à valider
 

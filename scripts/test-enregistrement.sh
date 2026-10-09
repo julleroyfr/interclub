@@ -150,7 +150,7 @@ reset role;
 
 update interclub.rencontre set phase='cloture' where id='33333333-3333-3333-3333-333333333333';
 select set_config('request.jwt.claims','{"sub":"cccccccc-cccc-cccc-cccc-cccccccccccc","role":"authenticated"}', true); set role authenticated;
-select pg_temp.code('R5-cloture-refuse', 'hors_competition',
+select pg_temp.code('R20-cloture-refuse', 'competition_cloturee',
   $$select interclub.saisir_resultat_voie('99999999-9999-9999-9999-999999999901','a0000000-0000-0000-0000-0000000000a2','echec')$$);
 reset role;
 update interclub.rencontre set phase='competition' where id='33333333-3333-3333-3333-333333333333';
