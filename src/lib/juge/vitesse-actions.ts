@@ -1,66 +1,46 @@
 'use server'
 
-import {
-  lireSaisieVitesse,
-  ResultatVitesseInvalideError,
-  type ResultatVitesse,
-} from '@/domaine/vitesse'
+import { creerResultatVitesse, ResultatVitesseInvalideError } from '@/domaine/vitesse'
+import type { IssueVitesse } from '@/lib/juge/vitesse'
+import { classerRefus, type Refus } from '@/lib/saisie/refus-enregistrement'
 import { createClient } from '@/lib/supabase/server'
 
-// Saisie du résultat de vitesse par le juge (spec #10). Le domaine valide la
-// forme (temps > 0 / chute / non-prés., R7/R8/R9) sans appel réseau ; puis UN
-// appel à la fonction d'enregistrement contrôle la session juge (③, R6),
-// l'épreuve de vitesse de sa rencontre (R3) et le grimpeur engagé (R7bis), et
-// écrit (rév. 2026-10-09). La RLS (peut_ecrire_temps_vitesse) reste la
+// Saisie du résultat de vitesse par le juge (spec #10), envoyée depuis la file
+// d'attente de l'appareil (spec #17 R12). La forme (temps > 0 / chute / non-prés.,
+// R7–R9) est revalidée par le domaine sans appel réseau ; puis UN appel à la
+// fonction d'enregistrement contrôle la session juge (③, R6), l'épreuve de sa
+// rencontre (R3), le grimpeur engagé (R7bis) et l'heure de saisie (spec #17 R9),
+// et écrit (rév. 2026-10-09). La RLS (peut_ecrire_temps_vitesse) reste la
 // frontière ultime.
 
-export type EtatSaisieVitesse = { erreur?: string; succes?: string } | undefined
+export type ReponseVitesse =
+  | { ok: true; heureServeur: number }
+  | { ok: false; refus: Refus; heureServeur: number }
 
-/** Traduit un refus d'écriture (RLS) ou une erreur base en message lisible (R4). */
-function messageEcriture(erreur: { code?: string; message?: string }): string {
-  // Seul un grimpeur engagé reçoit un résultat de vitesse, garanti en base
-  // (spec #10 R7bis, rév. 2026-10-03).
-  if (erreur.message === 'grimpeur_non_engage') {
-    return "Ce grimpeur n'est pas engagé dans la rencontre."
-  }
-  if (erreur.message === 'session_juge_absente') {
-    return 'Action réservée à un juge (session QR active en compétition).'
-  }
-  if (erreur.code === '42501') {
-    return 'Saisie non autorisée : hors compétition, ou hors de votre épreuve de vitesse.'
-  }
-  return 'La saisie a échoué. Réessayez.'
-}
-
-/**
- * Enregistre (ou corrige) le résultat de vitesse d'un grimpeur (R7/R10/R11).
- * Correction = remplacement (upsert sur `(epreuve, grimpeur)`, R10). Bornée à la
- * ③ compétition et à l'épreuve de vitesse de la rencontre du juge (R3/R6).
- */
-export async function saisirTempsVitesse(
-  _etat: EtatSaisieVitesse,
-  formData: FormData,
-): Promise<EtatSaisieVitesse> {
-  const grimpeurId = String(formData.get('grimpeurId') ?? '')
-  if (!grimpeurId) return { erreur: 'Grimpeur requis.' }
-
-  let resultat: ResultatVitesse
+/** Enregistre (ou corrige) le résultat de vitesse d'un grimpeur (R7/R10/R11). */
+export async function enregistrerTempsVitesse(
+  grimpeurId: string,
+  issue: IssueVitesse,
+  temps: number | null,
+  saisiLe: string,
+): Promise<ReponseVitesse> {
   try {
-    resultat = lireSaisieVitesse(String(formData.get('issue') ?? ''), String(formData.get('temps') ?? ''))
+    creerResultatVitesse(
+      issue === 'temps' ? { type: 'temps', secondes: temps ?? Number.NaN } : { type: issue },
+    )
   } catch (e) {
-    if (e instanceof ResultatVitesseInvalideError) return { erreur: e.message }
-    throw e
+    if (!(e instanceof ResultatVitesseInvalideError)) throw e
+    return { ok: false, refus: { nature: 'definitif', message: e.message }, heureServeur: Date.now() }
   }
 
-  // Un seul appel : la fonction d'enregistrement contrôle la session juge (③),
-  // l'épreuve de sa rencontre, le grimpeur engagé, puis écrit (R3, rév.
-  // 2026-10-09). Pas de relecture de l'écran (R14).
   const supabase = await createClient()
   const { error } = await supabase.rpc('saisir_temps_vitesse', {
     p_grimpeur: grimpeurId,
-    p_issue: resultat.type,
-    p_temps: resultat.type === 'temps' ? resultat.secondes : null,
+    p_issue: issue,
+    p_temps: issue === 'temps' ? temps : null,
+    p_saisi_le: saisiLe,
   })
-  if (error) return { erreur: messageEcriture(error) }
-  return { succes: 'Résultat enregistré.' }
+  const heureServeur = Date.now()
+  if (error) return { ok: false, refus: classerRefus(error), heureServeur }
+  return { ok: true, heureServeur }
 }

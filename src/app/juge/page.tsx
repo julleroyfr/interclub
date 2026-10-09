@@ -28,6 +28,11 @@ function formaterDate(iso: string): string {
  * `null` et l'espace est masqué (404). Plein écran, responsive (R14c). La RLS est
  * la frontière ultime.
  */
+/** Heure du serveur au rendu : écart d'horloge de l'appareil (spec #17 R6). */
+function heureServeur(): number {
+  return Date.now()
+}
+
 export default async function PageJuge() {
   const contexte = await exigerContexteJuge()
 
@@ -68,7 +73,11 @@ export default async function PageJuge() {
           </form>
         </header>
 
-        <PanneauVitesse grimpeurs={saisie.grimpeurs} />
+        <PanneauVitesse
+          grimpeurs={saisie.grimpeurs}
+          rencontreId={contexte.rencontreId}
+          heureServeur={heureServeur()}
+        />
       </div>
     </div>
   )

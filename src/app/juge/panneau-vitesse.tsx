@@ -1,27 +1,41 @@
 'use client'
 
-import {
-  createContext,
-  type FormEvent,
-  startTransition,
-  use,
-  useMemo,
-  useRef,
-  useState,
-} from 'react'
+import { createContext, type FormEvent, use, useMemo, useState } from 'react'
 
+import { BandeauSynchro } from '@/composants/saisie-hors-ligne/BandeauSynchro'
+import { ListeSaisies, type ResumeSaisie } from '@/composants/saisie-hors-ligne/ListeSaisies'
+import { useFileSaisies } from '@/composants/saisie-hors-ligne/useFileSaisies'
+import type { IssueEnvoi } from '@/domaine/hors-ligne'
 import { formaterTempsVitesse, lireSaisieVitesse, ResultatVitesseInvalideError } from '@/domaine/vitesse'
 import type { GrimpeurVitesse, IssueVitesse } from '@/lib/juge/vitesse'
-import { saisirTempsVitesse, type EtatSaisieVitesse } from '@/lib/juge/vitesse-actions'
+import { enregistrerTempsVitesse } from '@/lib/juge/vitesse-actions'
 import { appliquerVitesseOptimiste, type VitesseOptimiste } from '@/lib/saisie/saisie-optimiste'
+
+/** Résultat conservé dans la file de l'appareil, avec son résumé (R26/R27). */
+type ContenuVitesse = { s: VitesseOptimiste; resume: ResumeSaisie }
+
+/** Traduit la réponse de l'enregistrement en issue d'envoi (spec #17 R17–R20). */
+async function envoyerVitesse(
+  { s }: ContenuVitesse,
+  saisiLe: string,
+): Promise<{ issue: IssueEnvoi; heureServeur: number }> {
+  const r = await enregistrerTempsVitesse(s.grimpeurId, s.issue, s.temps, saisiLe)
+  if (r.ok) return { issue: { type: 'acceptee' }, heureServeur: r.heureServeur }
+  const issue: IssueEnvoi =
+    r.refus.nature === 'definitif'
+      ? { type: 'definitif', motif: r.refus.message }
+      : { type: r.refus.nature }
+  return { issue, heureServeur: r.heureServeur }
+}
 
 /** Délai d'affichage de la confirmation « enregistré » (spec #17 R23). */
 const DUREE_CONFIRMATION_MS = 2500
 
 /**
- * Envoi d'un résultat avec affichage IMMÉDIAT (spec #17 R22/R23, spec #10
- * R14bis) : contrôle local de la forme (R13), affichage « en attente », puis la
- * requête ; la réponse confirme ou rejette (retour à la valeur du serveur).
+ * Envoi d'un résultat (spec #17) : contrôle local de la forme (R13), entrée dans
+ * la file de l'appareil et affichage « en attente » (R12/R22), puis envoi — y
+ * compris plus tard, sans réseau au moment du clic (R15) ; la réponse confirme
+ * ou rejette (retour à la valeur du serveur + motif, R18).
  */
 type Envoi = {
   surSoumission: (grimpeurId: string) => (e: FormEvent<HTMLFormElement>) => void
@@ -75,10 +89,17 @@ function trierAlpha(a: GrimpeurVitesse, b: GrimpeurVitesse): number {
  * groupés Filles / Garçons (R12), en deux colonnes côte à côte sur grand écran
  * (R14c). Recherche par nom et filtre « à saisir » pour tenir le volume (R14b).
  */
-export function PanneauVitesse({ grimpeurs: grimpeursServeur }: { grimpeurs: GrimpeurVitesse[] }) {
-  // Résultats envoyés sans réponse encore, superposés aux données du serveur
-  // (spec #17 R22) : liste, compteurs et filtre « à saisir » en tiennent compte.
-  const [enAttente, setEnAttente] = useState<{ id: number; s: VitesseOptimiste }[]>([])
+export function PanneauVitesse({
+  grimpeurs: grimpeursServeur,
+  rencontreId,
+  heureServeur,
+}: {
+  grimpeurs: GrimpeurVitesse[]
+  /** Rencontre du juge : périmètre de la file d'attente (spec #17 R4). */
+  rencontreId: string
+  /** Heure du serveur au rendu (ms) : écart d'horloge de l'appareil (R6). */
+  heureServeur: number
+}) {
   // Résultats CONFIRMÉS (spec #10 R14, rév. 2026-10-09) : pas de relecture de
   // l'écran après une saisie ; affichés jusqu'à la prochaine lecture.
   const [resultatsConfirmes, setResultatsConfirmes] = useState<VitesseOptimiste[]>([])
@@ -87,58 +108,86 @@ export function PanneauVitesse({ grimpeurs: grimpeursServeur }: { grimpeurs: Gri
     setServeurVu(grimpeursServeur)
     setResultatsConfirmes([])
   }
-  const prochainId = useRef(0)
+  const [erreursLocales, setErreursLocales] = useState<Record<string, string>>({})
+  const [confirmes, setConfirmes] = useState<Record<string, true>>({})
+  const [accepteeLe, setAccepteeLe] = useState<Record<string, number>>({})
+  const [listeOuverte, setListeOuverte] = useState(false)
+
+  // File d'attente de l'appareil (spec #17 R12–R19, R28).
+  const fileSaisies = useFileSaisies<ContenuVitesse>({
+    perimetre: { role: 'juge', rencontreId },
+    heureServeur,
+    envoyer: (saisie, saisiLe) => envoyerVitesse(saisie.contenu, saisiLe),
+    surAcceptee: (saisie) => {
+      const id = saisie.contenu.s.grimpeurId
+      setResultatsConfirmes((c) => [...c, saisie.contenu.s])
+      setAccepteeLe((a) => ({ ...a, [id]: saisie.saisiLe }))
+      setConfirmes((c) => ({ ...c, [id]: true }))
+      setTimeout(() => setConfirmes((c) => sansCle(c, id)), DUREE_CONFIRMATION_MS)
+    },
+  })
+
+  // Données du serveur + confirmés + en attente (spec #17 R22) : liste,
+  // compteurs et filtre « à saisir » en tiennent compte (spec #10 R14bis).
   const grimpeurs = useMemo(() => {
     const confirme = resultatsConfirmes.reduce(
       (acc, s) => appliquerVitesseOptimiste(acc, s, { enAttente: false }),
       grimpeursServeur,
     )
-    return enAttente.reduce((acc, e) => appliquerVitesseOptimiste(acc, e.s), confirme)
-  }, [grimpeursServeur, resultatsConfirmes, enAttente])
-  const [messages, setMessages] = useState<Envoi['messages']>({})
-  const [confirmes, setConfirmes] = useState<Record<string, true>>({})
+    return fileSaisies.file
+      .filter((e) => e.etat === 'en_attente')
+      .sort((a, b) => a.saisiLe - b.saisiLe)
+      .reduce((acc, e) => appliquerVitesseOptimiste(acc, e.contenu.s), confirme)
+  }, [grimpeursServeur, resultatsConfirmes, fileSaisies.file])
+
+  // Message par grimpeur : refus local (R13) ou rejet du serveur non suivi d'une
+  // saisie acceptée plus récente (R18).
+  const messages = useMemo(() => {
+    const m: Envoi['messages'] = {}
+    for (const e of fileSaisies.file) {
+      const id = e.contenu.s.grimpeurId
+      if (e.etat === 'rejetee' && e.motif && e.saisiLe > (accepteeLe[id] ?? 0)) {
+        m[id] = { texte: e.motif, rejet: true }
+      }
+    }
+    for (const [id, texte] of Object.entries(erreursLocales)) m[id] = { texte, rejet: false }
+    return m
+  }, [fileSaisies.file, accepteeLe, erreursLocales])
 
   const surSoumission = (grimpeurId: string) => (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const fd = new FormData(e.currentTarget, (e.nativeEvent as SubmitEvent).submitter)
     // Contrôle local AVANT tout affichage (R13) : une saisie invalide n'est ni
-    // affichée ni envoyée.
+    // affichée ni mise en file.
     let resultat
     try {
       resultat = lireSaisieVitesse(String(fd.get('issue') ?? ''), String(fd.get('temps') ?? ''))
     } catch (err) {
       if (!(err instanceof ResultatVitesseInvalideError)) throw err
-      setMessages((m) => ({ ...m, [grimpeurId]: { texte: err.message, rejet: false } }))
+      const texte = err.message
+      setErreursLocales((m) => ({ ...m, [grimpeurId]: texte }))
       return
     }
+    setErreursLocales((m) => sansCle(m, grimpeurId))
     const s: VitesseOptimiste = {
       grimpeurId,
       issue: resultat.type,
       temps: resultat.type === 'temps' ? resultat.secondes : null,
     }
-    const id = ++prochainId.current
-    setEnAttente((l) => [...l, { id, s }])
-    setMessages((m) => sansCle(m, grimpeurId))
-    void (async () => {
-      let reponse: EtatSaisieVitesse
-      try {
-        reponse = await saisirTempsVitesse(undefined, fd)
-      } catch {
-        reponse = { erreur: 'Le résultat n’a pas pu être envoyé. Réessayez.' }
-      }
-      startTransition(() => {
-        setEnAttente((l) => l.filter((x) => x.id !== id))
-        if (!reponse?.erreur) setResultatsConfirmes((c) => [...c, s])
-      })
-      if (reponse?.erreur) {
-        const texte = reponse.erreur
-        setMessages((m) => ({ ...m, [grimpeurId]: { texte, rejet: true } }))
-        return
-      }
-      setConfirmes((c) => ({ ...c, [grimpeurId]: true }))
-      setTimeout(() => setConfirmes((c) => sansCle(c, grimpeurId)), DUREE_CONFIRMATION_MS)
-    })()
+    const g = grimpeursServeur.find((x) => x.grimpeurId === grimpeurId)
+    const valeur =
+      s.issue === 'temps' && s.temps != null
+        ? formaterTempsVitesse(s.temps)
+        : s.issue === 'chute'
+          ? 'Chute'
+          : 'Non-présentation'
+    fileSaisies.ajouter(`vitesse:${grimpeurId}`, {
+      s,
+      resume: { grimpeur: g ? `${g.prenom} ${g.nom}` : grimpeurId, cible: 'Vitesse', valeur },
+    })
   }
+
+  const nbRejetees = fileSaisies.file.filter((e) => e.etat === 'rejetee').length
 
   const [recherche, setRecherche] = useState('')
   const [filtreASaisir, setFiltreASaisir] = useState(false)
@@ -181,6 +230,22 @@ export function PanneauVitesse({ grimpeurs: grimpeursServeur }: { grimpeurs: Gri
   return (
     <ContexteEnvoi value={{ surSoumission, messages, confirmes }}>
     <div className="flex flex-col gap-5">
+      <BandeauSynchro
+        enLigne={fileSaisies.enLigne}
+        nbEnAttente={fileSaisies.nbEnAttente}
+        nbRejetees={nbRejetees}
+        sessionAbsente={fileSaisies.sessionAbsente}
+        actionSession={<span className="text-xs font-bold">Rescannez le QR code de votre couloir.</span>}
+        onVoirListe={() => setListeOuverte(true)}
+      />
+      {listeOuverte && (
+        <ListeSaisies
+          file={fileSaisies.file}
+          onAbandonner={fileSaisies.abandonner}
+          onRetirer={fileSaisies.retirerRejet}
+          onFermer={() => setListeOuverte(false)}
+        />
+      )}
       {/* Progression séparée par sexe (R14) */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <CompteurSexe titre="Femmes" couleur="#f0abfc" saisis={statF.saisis} total={statF.total} />
