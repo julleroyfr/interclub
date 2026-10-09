@@ -28,6 +28,11 @@
   utilisateur déjà connecté avec un compte permanent** : aucune session anonyme
   n'est ouverte sans action explicite (R34, revue du 2026-10-03 constat m5,
   validée le 2026-10-09).
+- **Révision** : 2026-10-09 — **invitation administrateur** (R35–R40, TODO D7,
+  validée le 2026-10-09) : l'admin génère depuis l'écran « Mapping de rôle » un
+  QR/URL **à usage unique**, **valable 15 minutes**, qui permet à une personne de
+  créer son compte permanent avec le rôle **admin**. R4 étend en conséquence son
+  exception d'attribution automatique.
 
 ## Objectif
 
@@ -84,7 +89,9 @@ alimente le modèle de données (mapping, jetons) et les policies **RLS**.
   R13). **Exception** : le rôle `coach` d'un club peut aussi être **attribué
   automatiquement** à l'inscription via une **invitation coach permanent** émise
   par l'admin (R26–R33) — l'admin garde la maîtrise puisqu'il émet et révoque
-  l'invitation.
+  l'invitation. De même, le rôle `admin` est attribué automatiquement à
+  l'inscription via une **invitation administrateur** (R35–R40, rév.
+  2026-10-09).
 - **R5.** Un compte permanent sans mapping de rôle n'a **aucun droit applicatif**
   (fail-closed) : il ne peut agir qu'après attribution d'un rôle par l'admin.
 
@@ -217,6 +224,34 @@ alimente le modèle de données (mapping, jetons) et les policies **RLS**.
   session permanente. Sans session, ou avec une session QR éphémère déjà
   ouverte, le scan ouvre la session normalement (R6).
 
+### Invitation administrateur (rév. 2026-10-09)
+
+- **R35.** **Seul l'admin** peut générer, afficher ou révoquer une **invitation
+  administrateur**, depuis l'écran **« Mapping de rôle »**. Elle est
+  matérialisée par un **QR code** et une **URL** équivalents (le QR encode
+  l'URL) et porte une **valeur** (secret) unique et non devinable.
+- **R36.** Une invitation administrateur est **valable 15 minutes** à compter de
+  sa génération et **à usage unique** : la **première inscription réussie** la
+  consomme. Une invitation **utilisée**, **expirée** ou **révoquée** n'ouvre
+  **aucune** inscription (message d'erreur) et **ne crée aucun compte**.
+- **R37.** Il existe **au plus une** invitation administrateur **valable** à un
+  instant donné : en générer une nouvelle **invalide** la précédente. L'admin
+  peut aussi la **révoquer** avant son expiration.
+- **R38.** Suivre une invitation administrateur valable mène à l'**écran
+  d'inscription** (même formulaire que R30 : e-mail, mot de passe saisi deux
+  fois). À l'issue d'une inscription réussie, le compte reçoit le rôle
+  **admin**, **sans club** (R3), et l'invitation est **consommée dans la même
+  opération** : si deux personnes utilisent la même invitation en même temps,
+  **un seul** compte est créé.
+- **R39.** La validité de l'invitation est vérifiée **à l'envoi** du formulaire,
+  pas seulement à son ouverture : un formulaire ouvert avant l'expiration et
+  envoyé après est **refusé**, sans création de compte. Un e-mail déjà associé à
+  un compte est refusé comme en R32.
+- **R40.** L'écran « Mapping de rôle » affiche l'**état** de la dernière
+  invitation administrateur : **valable** (avec le QR, l'URL et le **temps
+  restant**), **utilisée**, **expirée** ou **révoquée**, et propose d'en
+  **générer** une nouvelle.
+
 ## Scénarios
 
 ### Nominal — attribution d'un compte coach
@@ -232,6 +267,15 @@ club A (QR + URL) et qu'un futur coach la suit, alors il arrive sur l'écran
 d'inscription (R26, R30), crée son compte email + mot de passe, et se retrouve
 **coach permanent du club A** sans autre action de l'admin (R31). Une **deuxième**
 personne peut suivre la **même** invitation et créer aussi son compte (R27).
+
+### Nominal — invitation administrateur
+
+Étant donné un admin connecté, quand il génère une **invitation administrateur**
+sur l'écran « Mapping de rôle » et qu'une personne la scanne dans les 15
+minutes, alors elle crée son compte (e-mail + mot de passe saisi deux fois) et
+devient **admin** (R35, R36, R38). L'écran de l'admin affiche ensuite
+l'invitation comme **utilisée** ; la même URL n'ouvre plus d'inscription (R36,
+R40).
 
 ### Nominal — session coach temporaire
 
@@ -273,6 +317,14 @@ alors une session juge s'ouvre et permet de saisir les **résultats de vitesse**
   leurs comptes restent valides (l'invitation ne sert qu'à l'onboarding, R31/R33).
 - Inscription via une invitation active avec une **confirmation du mot de passe
   différente** → refusée avec un message, aucun compte créé (R30).
+- Invitation administrateur **expirée** (plus de 15 minutes), **déjà utilisée**
+  ou **remplacée** par une nouvelle → « invitation invalide », aucun compte créé
+  (R36, R37).
+- Formulaire d'inscription administrateur ouvert à 14 minutes, envoyé à 16 →
+  refusé, aucun compte créé (R39).
+- Deux personnes envoient en même temps le formulaire de la **même** invitation
+  administrateur → un seul compte créé ; l'autre reçoit « invitation invalide »
+  (R38).
 - Un **admin connecté** scanne un QR juge avec son téléphone → sa session admin
   est conservée ; il choisit « Aller à mon espace » ou « Me déconnecter et ouvrir
   la session QR » (R34).
@@ -363,6 +415,11 @@ sequenceDiagram
   devinable ; état **actif / révoqué** ; **au plus une** invitation active par
   club (R26–R29). **Indépendante** de toute rencontre/voie. La régénération crée
   une nouvelle valeur et révoque l'ancienne (R29).
+- **Invitation administrateur** : **valeur unique** et non devinable ; date de
+  **génération**, d'**expiration** (génération + 15 minutes) et d'**utilisation**
+  (avec le compte créé) ; état **actif / révoqué** ; **au plus une** invitation
+  active (R35–R37). La consommation et la création du mapping `admin` se font
+  dans **une seule** opération atomique (R38).
 - **RLS attendue** :
   - administration du mapping de rôle **réservée à l'admin** (R4) ;
   - génération / affichage / révocation des jetons `coach_temporaire` d'un club
@@ -373,6 +430,10 @@ sequenceDiagram
     sa valeur (résolution de l'URL) et la **création du compte + mapping** relèvent
     d'une **RPC dédiée** (droits élevés côté serveur), pas d'un accès direct
     `authenticated` (R30, R31) ;
+  - génération / affichage / révocation des **invitations administrateur**
+    **réservées à l'admin** (R35) ; résolution par valeur, consommation et
+    création du mapping `admin` par une **RPC dédiée** exécutable par le seul
+    serveur (R36, R38) ;
   - une session éphémère n'agit **que** dans son périmètre et **que** dans sa
     fenêtre de validité (R24, R25), en cohérence avec les policies de la spec #1.
 
@@ -389,7 +450,7 @@ Cette spec ne couvre pas (à traiter ailleurs) :
 - Les **transitions de phase** d'une rencontre — qui les déclenche et à quelles
   conditions (hors périmètre déjà posé par la spec #1).
 - La **gestion des comptes permanents** au-delà du mapping de rôle et de
-  l'**onboarding par invitation** (R26–R33) : réinitialisation de mot de passe,
+  l'**onboarding par invitation** (R26–R33, R35–R40) : réinitialisation de mot de passe,
   e-mails transactionnels, modification/suppression d'un compte existant.
 - L'accès **visiteur non authentifié** aux infos publiques : sans objet (pas
   d'espace public, spec #1 R8 rév. 2026-10-02).

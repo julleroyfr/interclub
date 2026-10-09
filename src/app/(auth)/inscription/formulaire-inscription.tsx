@@ -4,15 +4,33 @@ import { useActionState } from 'react'
 
 import { Bouton, ChampTexte } from '@/composants'
 import { inscrireCoach, type EtatInscription } from '@/lib/invitations/actions'
+import { inscrireAdmin } from '@/lib/invitations/actions-admin'
 
 const etatInitial: EtatInscription = undefined
 
-export function FormulaireInscription({ invitation }: { invitation: string }) {
-  const [etat, action, enCours] = useActionState(inscrireCoach, etatInitial)
+/**
+ * Formulaire d'inscription par invitation : coach permanent (spec #2 R30) ou
+ * administrateur (R38). Mêmes champs ; seule l'action serveur diffère.
+ */
+export function FormulaireInscription({
+  invitation,
+  type = 'coach',
+}: {
+  invitation: string
+  type?: 'coach' | 'admin'
+}) {
+  const [etat, action, enCours] = useActionState(
+    type === 'admin' ? inscrireAdmin : inscrireCoach,
+    etatInitial,
+  )
 
   return (
     <form action={action} className="mt-6 flex flex-col gap-4">
-      <input type="hidden" name="invitation" value={invitation} />
+      <input
+        type="hidden"
+        name={type === 'admin' ? 'invitationAdmin' : 'invitation'}
+        value={invitation}
+      />
 
       <ChampTexte
         id="email"

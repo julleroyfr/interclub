@@ -143,6 +143,15 @@ ligne de résultat créée puis supprimée dans le cas.
   [16-invitation-coach](16-invitation-coach.cahier.md) (inscription par
   QR/URL) : il passe par `service_role` et doit toujours aboutir.
 
+### CT-05b `[auto]` — Finalisation d'inscription admin refusée hors serveur   (couvre : spec #2 R36–R38, rév. 2026-10-09)
+
+- **Rôle / compte** : clé `anon` seule, puis JD-COACH-A, puis JD-ADMIN.
+- **Étapes** : appeler `POST /rest/v1/rpc/finaliser_inscription_admin` avec
+  `{"p_valeur":"00000000-0000-0000-0000-000000000000","p_utilisateur_id":"00000000-0000-0000-0000-000000000000"}`.
+- **Résultat attendu** : **refus de privilège** (`42501`) dans les trois cas,
+  même pour l'admin. Détail : cahier 30 CT-09.
+- **Automatisé** : `e2e/securite-appels-directs.spec.ts` (CT-05b).
+
 ### CT-06 `[auto]` — Fonction future fermée par défaut   (couvre : fermeture par défaut)
 
 - **Rôle / compte** : SQL Editor.
