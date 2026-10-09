@@ -188,6 +188,36 @@ test.describe('Cahier 17 — saisie des résultats voie & bloc (spec #6)', () =>
     await expect(page.getByText(/^2 \/ 3 · Équipe A1$/)).toBeVisible()
   })
 
+  test('CT-18 · bascules de vue et navigation ‹ / › sans aucune requête (R24, R25, TODO D3)', async ({
+    page,
+  }) => {
+    await commeCoach(page)
+    await page.goto(URL_ENFANT)
+    await expect(page.getByText('En direct', { exact: true })).toBeVisible({ timeout: 15_000 })
+
+    // Les données de la rencontre sont chargées une fois : basculer de vue ou de
+    // grimpeur ne doit déclencher aucune requête (hors canal temps réel).
+    const requetes: string[] = []
+    page.on('request', (r) => {
+      if (r.resourceType() !== 'websocket') requetes.push(`${r.method()} ${r.url()}`)
+    })
+
+    await page.getByRole('button', { name: 'Alphabétique' }).click()
+    await page.getByRole('button', { name: 'Par équipe' }).click()
+    await page.getByRole('button', { name: /^Ana Alpha/ }).click()
+    await page.getByRole('button', { name: 'Grimpeur suivant' }).click()
+    await page.getByRole('button', { name: 'Grimpeur suivant' }).click()
+    await page.getByRole('button', { name: 'Grimpeur précédent' }).click()
+    await page.getByRole('button', { name: '← Liste des grimpeurs' }).click()
+    await page.getByRole('button', { name: 'Alphabétique' }).click()
+    await page.getByRole('button', { name: /^Alpha Chloé/ }).click()
+    await page.getByRole('button', { name: 'Grimpeur précédent' }).click()
+    await expect(page.getByText(/^2 \/ 3 · Équipe A1$/)).toBeVisible()
+
+    await page.waitForTimeout(1_000)
+    expect(requetes).toEqual([])
+  })
+
   test('CT-04 · voies enfant du groupe + groupe à définir (R8, R9, R20)', async ({ page }) => {
     await commeCoach(page)
     await ouvrirGrimpeur(page, URL_ENFANT, 'Bob Alpha')
