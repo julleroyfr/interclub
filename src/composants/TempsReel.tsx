@@ -27,6 +27,10 @@ export type TableTempsReel =
   | 'resultat_bloc'
   | 'points_vitesse'
   | 'temps_vitesse'
+  // Écran d'engagement du coach (rév. 2026-10-09).
+  | 'pret'
+  | 'equipe'
+  | 'composition'
 
 type EtatConnexion = 'connexion' | 'connecte' | 'interrompu'
 
@@ -38,6 +42,7 @@ export function TempsReel({
   actif = true,
   ignorerMesEcritures = false,
   grimpeursAffiches,
+  infobulle = 'Les résultats se mettent à jour automatiquement',
 }: {
   tables: TableTempsReel[]
   /** Faux hors phase de live (R7) : ni abonnement ni indicateur. */
@@ -52,6 +57,8 @@ export function TempsReel({
    * concernant un autre grimpeur (autre club, autre rencontre) est ignorée.
    */
   grimpeursAffiches?: readonly string[]
+  /** Texte d'aide de l'indicateur, selon ce que l'écran affiche. */
+  infobulle?: string
 }) {
   const router = useRouter()
   const [etat, setEtat] = useState<EtatConnexion>('connexion')
@@ -164,7 +171,7 @@ export function TempsReel({
   return (
     <span
       aria-live="polite"
-      title="Les résultats se mettent à jour automatiquement"
+      title={infobulle}
       className="inline-flex items-center gap-1.5 rounded-full border border-bordure bg-white/5 px-2.5 py-0.5 text-xs font-semibold text-texte-attenue"
     >
       <Pastille variante={variante[etat]} />

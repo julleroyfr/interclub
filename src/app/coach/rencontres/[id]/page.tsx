@@ -2,7 +2,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
-import { Coquille, EnTetePage, Etiquette, variantePhase } from '@/composants'
+import { Coquille, EnTetePage, Etiquette, TempsReel, variantePhase } from '@/composants'
+import { compositionModifiableParCoach } from '@/domaine/engagement'
 import { CATEGORIES, PHASES, type Categorie, type Phase } from '@/domaine/rencontre'
 import { exigerContexteCoach } from '@/lib/auth/session'
 import { getEngagementRencontre } from '@/lib/coach/engagement'
@@ -47,9 +48,7 @@ export default async function PageEngagement({
   if (!engagement) notFound()
 
   // Édition : phases ①/② pour le permanent, ② préparation seule pour le temporaire (R16).
-  const peutEditer =
-    engagement.editable &&
-    (contexte.type === 'permanent' || engagement.phase === 'preparation')
+  const peutEditer = compositionModifiableParCoach(engagement.phase, contexte.type)
 
   return (
     <Coquille liens={liensCoach(contexte)} deconnexion={contexte.type === 'permanent'} finSession={contexte.type === 'temporaire'}>
@@ -71,6 +70,13 @@ export default async function PageEngagement({
                 Saisir / voir les résultats →
               </Link>
             )}
+            {/* Live : prêts, équipes et compositions tant que la composition est
+                modifiable (spec #11 R1/R3/R7, rév. 2026-10-09). */}
+            <TempsReel
+              tables={['pret', 'equipe', 'composition']}
+              actif={peutEditer}
+              infobulle="Les équipes et les grimpeurs prêtés se mettent à jour automatiquement"
+            />
           </div>
         </div>
 

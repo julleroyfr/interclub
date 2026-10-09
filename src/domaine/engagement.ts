@@ -5,6 +5,21 @@
 // garantis côté Supabase ; ici on valide ce qui est purement calculable.
 
 import { NIVEAUX_MOULINETTE, NIVEAUX_TETE } from './gabarit'
+import type { Phase } from './rencontre'
+
+/** Nature de la session d'un coach (spec #2 : compte permanent ou session QR). */
+export type TypeCoach = 'permanent' | 'temporaire'
+
+/**
+ * Le coach peut-il modifier l'engagement de son club (R16) ? Coach permanent en
+ * ① pré-compétition et ② préparation, coach temporaire en ② seulement ; figé pour
+ * tous dès ③ (R17). Ouvre aussi le temps réel de l'écran d'engagement (spec #11
+ * R7, rév. 2026-10-09).
+ */
+export function compositionModifiableParCoach(phase: Phase, type: TypeCoach): boolean {
+  if (phase === 'preparation') return true
+  return phase === 'pre_competition' && type === 'permanent'
+}
 
 /** Effectif maximal d'une équipe (règlement §6 ; spec #5 R15). */
 export const EFFECTIF_EQUIPE_MAX = 8

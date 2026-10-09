@@ -68,11 +68,16 @@ Tâches identifiées mais reportées, à traiter quand l'occasion se présente.
 | ID | Tâche | Origine | Notes |
 | ---- | ------- | --------- | ------- |
 | D3 | **Cache/optimisation des bascules d'écran — saisie résultats (#6)** : navigation grimpeurs ‹/› (R25) et bascule par équipe / alphabétique (R24) | demandé 2026-09-08 | Éviter de recharger les données à chaque bascule (stratégie de cache). Point technique hors règles de spec. |
-| D6 | **Temps réel des prêts sur l'écran de composition d'équipe du coach** (spec #5) : un grimpeur prêté au club pendant que le coach compose son équipe n'apparaît dans la liste déroulante qu'après rechargement de la page | demandé 2026-10-03 | Étendre le temps réel (spec #11) à l'écran d'engagement coach : table des prêts à ajouter à la publication Realtime (nouvelle migration) + composant `TempsReel` sur l'écran. Révision spec #11 (périmètre des écrans) à valider, puis tests → code → cahier 22. |
 | D7 | **Création d'un compte admin depuis l'IHM d'administration** : l'admin crée directement un nouveau compte admin (e-mail + mot de passe) | demandé 2026-10-03 | Aujourd'hui `/admin/mapping` attribue seulement le rôle `admin` à un compte **déjà existant** (spec #2 R4). Pour créer le compte, il faut la clé service, côté serveur (cf. ADR 0002). Révision spec #2 à valider (+ double saisie du mot de passe comme D5), puis tests → code → cahier. |
 
 ## ✅ Fait (archive — non rappelé)
 
+- **D6 — Temps réel de l'écran d'engagement coach** (2026-10-09) : spec #11
+  rév. (R1/R3/R6bis/R7) ; tables `pret`, `equipe`, `composition` publiées
+  (migration `202610091200_realtime_engagement`, **à appliquer à la main en
+  recette**) ; `TempsReel` sur l'écran, actif tant que la composition est
+  modifiable (`compositionModifiableParCoach`, 3 tests Vitest) ; cahier 22
+  CT-16 à CT-19 + E2E `temps-reel-engagement.spec.ts`.
 - **D5 — Double saisie du mot de passe à l'inscription coach** (2026-10-09) :
   spec #2 R30 révisée ; champ « Confirmer le mot de passe » sur `/inscription`,
   refus « Les deux mots de passe ne correspondent pas. » sans création de compte

@@ -1,5 +1,9 @@
 # Cahier de test : Realtime — mises à jour en direct (spec #11)
 
+> **Révision du 2026-10-09** (TODO D6) : écran d'**engagement du coach** —
+> CT-16 à CT-19, migration `202610091200_realtime_engagement`. Automatisés :
+> `e2e/temps-reel-engagement.spec.ts`.
+>
 > Couvre le **live** des écrans **authentifiés** : dès qu'une écriture survient
 > (`resultat_voie` / `resultat_bloc` / `temps_vitesse` / `points_vitesse`), les
 > **autres écrans ouverts** (saisie coach #6, saisie admin #9, classement #7,
@@ -8,11 +12,12 @@
 > reconnexion**. Règles dans
 > [docs/conventions/06-cahier-de-test.md](../conventions/06-cahier-de-test.md).
 
-- **Spec de référence** : `docs/specs/11-realtime.md` (R1–R12, R6bis, R8bis + « Contraintes de
+- **Spec de référence** : `docs/specs/11-realtime.md` (R1–R12, R6bis, R8bis, rév. 2026-10-09 + « Contraintes de
   données » + « Points à surveiller ») ; s'appuie sur `06` (R22/R23),
   `07` (R10/R15/R20), `01` R8 (pas d'espace public, aucune RLS `anon`), `09`, `10`.
 - **Pré-requis** :
-  - Migrations appliquées jusqu'à **`202609231000_realtime_publication`** incluse —
+  - Migrations appliquées jusqu'à **`202609231000_realtime_publication`** incluse
+    (CT-16 à CT-19 : **`202610091200_realtime_engagement`**) —
     en local : `supabase db reset` (migrations + seed).
   - **Realtime actif** (stack locale : conteneur `realtime` lancé par
     `supabase start` ; `config.toml` → section `[realtime] enabled = true`).
@@ -280,6 +285,58 @@ Routes utilisées :
   - (3) l'écran du coach A **se relit** (grimpeur affiché, autre compte) ✅
   - (4) l'écran du coach A **se relit** (vitesse et points d'un grimpeur affiché) ✅
 
+### CT-16 — Prêt créé puis révoqué pendant la composition (couvre : R1, R3 ; rév. 2026-10-09)
+
+- **Rôles** : `coach@test.local` (Club A, observateur) + `admin@test.local`
+  (écrivain), deux navigateurs.
+- **Pré-condition** : rencontre en **①** ; migration `202610091200` appliquée.
+- **Étapes** :
+  1. Coach A : ouvrir l'écran d'engagement
+     (`/coach/rencontres/33333333-3333-3333-3333-333333333333`), attendre
+     l'indicateur « En direct ».
+  2. Admin : sur `/admin/rencontres/33333333-…`, prêter **Devi Bravo** (Club B)
+     au **Club A**.
+  3. Admin : révoquer ce prêt.
+- **Résultat attendu** : (2) sans rechargement, « Devi Bravo (prêté · Club B) »
+  apparaît dans les listes « grimpeur à affecter » du coach A ; (3) il en
+  disparaît, toujours sans rechargement ✅
+
+### CT-17 — Équipe et composition modifiées par l'admin (couvre : R1, R3 ; rév. 2026-10-09)
+
+- **Rôles** : `coach@test.local` (observateur) + `admin@test.local` (écrivain).
+- **Pré-condition** : rencontre en **①**.
+- **Étapes** :
+  1. Coach A : écran d'engagement ouvert, « En direct ».
+  2. Admin : dans « Équipes & engagement (tous clubs) », créer une équipe pour le
+     Club A, puis y affecter un grimpeur libre du Club A.
+- **Résultat attendu** : l'équipe puis le grimpeur affecté apparaissent chez le
+  coach A sans rechargement ; le grimpeur n'est plus proposé à l'affectation ✅
+
+### CT-18 — Prêt à un autre club : pas de relecture (couvre : R5 ; rév. 2026-10-09)
+
+- **Rôles** : `coachb@test.local` (Club B, observateur) + `admin@test.local`.
+- **Pré-condition** : rencontre en **①** ; DevTools → **Network** (filtre `_rsc`)
+  sur la fenêtre du coach B.
+- **Étapes** : coach B sur son écran d'engagement (« En direct ») ; l'admin prête
+  Devi Bravo au **Club A**.
+- **Résultat attendu** : **aucune** relecture `?_rsc=` chez le coach B (le prêt
+  n'est pas lisible par lui, RLS `pret_select`) ✅
+- **Remarque** : la **révocation** d'un prêt (`DELETE`) peut, elle, relire l'écran
+  du coach B sans effet visible (R8) : un `DELETE` ne porte pas toujours de quoi
+  évaluer la RLS côté Realtime.
+
+### CT-19 — Composition figée : pas de canal (couvre : R7 ; rév. 2026-10-09)
+
+- **Rôle** : `coach@test.local`, puis session coach temporaire (scan
+  `JD-JETON-COACHTEMP`).
+- **Étapes** :
+  1. Rencontre en **③** : coach A ouvre l'écran d'engagement.
+  2. Rencontre en **①** : la session coach temporaire ouvre l'écran (si la
+     fenêtre du jeton le permet ; sinon vérifier en ② qu'il **y a** un canal).
+- **Résultat attendu** : (1) ni « En direct » ni « Connexion… » ; DevTools → WS :
+  aucun canal `temps-reel:composition,equipe,pret` ; (2) en ②, l'indicateur est
+  présent pour le coach temporaire ✅
+
 ## Registre d'exécution
 
 | Date | Testeur | Version/commit | Cas | Résultat | Remarque |
@@ -297,3 +354,4 @@ Routes utilisées :
 | 2026-09-25 | julleroyfr | a76fcdf | CT-11 | ✅ | |
 | 2026-09-25 | julleroyfr | a76fcdf | CT-12 | ✅ | payload = 6 Ko — relecture légère, choix confirmé |
 | 2026-09-25 | julleroyfr | 45c55e0 | CT-13 | ✅ | |
+| 2026-10-09 | Playwright e2e | develop | CT-16 → CT-19 | ✅ | `temps-reel-engagement.spec.ts` (écritures admin posées en SQL) ; migration `202610091200` appliquée en local (2 passes) |

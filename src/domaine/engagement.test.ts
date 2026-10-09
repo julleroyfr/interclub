@@ -5,6 +5,7 @@ import {
   GROUPES_DEPART,
   EngagementInvalideError,
   GroupeDepartInvalideError,
+  compositionModifiableParCoach,
   filtrerGrimpeursRecherche,
   nomEquipeParDefaut,
   normaliserNomEquipe,
@@ -256,5 +257,26 @@ describe('equipesCiblesChangement (spec #3 R41d)', () => {
 
   it('ne propose rien pour une équipe inconnue', () => {
     expect(equipesCiblesChangement(equipes, 'eq-inconnue')).toEqual([])
+  })
+})
+
+// Fenêtre d'édition de l'engagement par un coach (R16) — pilote aussi le temps
+// réel de l'écran d'engagement (spec #11 R7, rév. 2026-10-09).
+describe('spec #5 — Composition modifiable par le coach (R16)', () => {
+  it('coach permanent : modifiable en ① pré-compétition et ② préparation (R16)', () => {
+    expect(compositionModifiableParCoach('pre_competition', 'permanent')).toBe(true)
+    expect(compositionModifiableParCoach('preparation', 'permanent')).toBe(true)
+  })
+
+  it('coach temporaire : modifiable en ② préparation seulement (R16)', () => {
+    expect(compositionModifiableParCoach('pre_competition', 'temporaire')).toBe(false)
+    expect(compositionModifiableParCoach('preparation', 'temporaire')).toBe(true)
+  })
+
+  it('figée pour tous les coachs dès ③ compétition (R16/R17)', () => {
+    for (const phase of ['competition', 'cloture', 'resultats_publics'] as const) {
+      expect(compositionModifiableParCoach(phase, 'permanent')).toBe(false)
+      expect(compositionModifiableParCoach(phase, 'temporaire')).toBe(false)
+    }
   })
 })
