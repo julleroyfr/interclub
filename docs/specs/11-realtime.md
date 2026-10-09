@@ -25,6 +25,13 @@
   affiche** ; **R4** étend en conséquence l'usage admis de la charge utile au
   **grimpeur** concerné. Motif : chaque écriture d'un autre club relisait en
   entier l'écran de chaque coach ouvert, sans effet visible.
+- **Révision** : 2026-10-09 (validée le 2026-10-09) — TODO **D6** : ajout de
+  l'**écran d'engagement du coach** (spec #5) aux écrans rafraîchis en direct
+  (**R1**), tant que sa composition est **modifiable** (**R7**), avec les tables
+  `pret`, `equipe` et `composition` (**R3**) ; **R6bis** précise qu'il ne filtre
+  pas l'écho de ses propres écritures. Motif : un grimpeur prêté au club (ou une
+  modification d'équipe faite par l'admin) pendant que le coach compose son
+  équipe n'apparaissait qu'après rechargement de la page.
 - **Sources** :
   - **Spec #6 — Saisie des résultats** (`06-saisie-des-resultats.md`) : « Temps réel
     (pousser les MAJ sur les autres écrans) » noté **évolution future différée**
@@ -91,7 +98,9 @@ se **rafraîchissent d'eux-mêmes**, sans action ni rechargement de l'utilisateu
   - l'**écran de classement** consulté par un compte **authentifié** (spec #7),
   - la **saisie vitesse du juge** (spec #10),
   - le **contrôle des résultats** contre les fiches de juges, admin (spec #16,
-    rév. 2026-10-02).
+    rév. 2026-10-02) ;
+  - l'**engagement du coach** — composition des équipes de son club (spec #5,
+    rév. 2026-10-09).
 
   Il n'y a **pas d'espace public / anonyme** (spec #1 R8) : aucune ouverture
   `anon` (cf. R5).
@@ -115,7 +124,13 @@ se **rafraîchissent d'eux-mêmes**, sans action ni rechargement de l'utilisateu
     **plusieurs juges / appareils** sur une même épreuve (temps et progression) ;
   - **contrôle des résultats** (admin #16) : `resultat_voie`, `resultat_bloc` —
     les coches de contrôle sont des colonnes de ces tables : un admin voit en
-    direct ce qu'un autre valide (rév. 2026-10-02).
+    direct ce qu'un autre valide (rév. 2026-10-02) ;
+  - **engagement du coach** (#5) : **`pret`**, **`equipe`** et **`composition`**
+    — un grimpeur **prêté** au club par l'admin apparaît dans la liste des
+    grimpeurs à affecter, et une équipe ou une composition modifiée par l'admin
+    ou depuis un autre appareil du club apparaît, sans rechargement
+    (rév. 2026-10-09). La RLS existante borne les évènements aux prêts et
+    équipes **du club** du coach (R5).
 
 ### Mécanique de rafraîchissement
 
@@ -174,6 +189,10 @@ se **rafraîchissent d'eux-mêmes**, sans action ni rechargement de l'utilisateu
   Les écrans de **classement** (#7) et de **contrôle** (#16) ne sont **pas**
   concernés : ils se relisent à **toute** écriture, y compris celles du même
   compte (ex. l'admin saisit dans un onglet et suit le classement dans un autre).
+  L'écran d'**engagement** (#5) non plus *(rév. 2026-10-09)* : `pret`, `equipe`
+  et `composition` ne portent pas d'auteur ; une écriture du coach relit donc son
+  écran une seconde fois après la Server Action (coût accepté : écritures rares,
+  hors jour de compétition).
 
   **Limite assumée** : un **même compte** ouvert sur **deux appareils**, chacun
   sur un écran de saisie, ne voit pas en direct sur le second appareil les
@@ -185,7 +204,10 @@ se **rafraîchissent d'eux-mêmes**, sans action ni rechargement de l'utilisateu
 - **R7.** **Cycle de vie de l'abonnement.** Le canal est **ouvert à l'affichage** de
   l'écran concerné et **fermé à son démontage** (navigation, fermeture). Aucune
   connexion temps réel ne subsiste après avoir quitté l'écran (pas de fuite de
-  canal).
+  canal). *(Rév. 2026-10-09.)* Sur l'écran d'**engagement** (#5), le canal n'est
+  ouvert que tant que la composition est **modifiable** par le coach (spec #5
+  R16 : ① et ② pour le coach permanent, ② pour le coach temporaire) ; composition
+  figée → ni abonnement ni indicateur.
 
 - **R8.** **Bornage à la rencontre — best effort.** Un écran ne doit refléter que
   **sa** rencontre. Comme les tables sources **ne portent pas `rencontre_id`**
@@ -287,17 +309,25 @@ sequenceDiagram
   live requis ; comportement normal.
 - **Visiteur non authentifié** → **aucun** abonnement temps réel (redirigé vers
   `/connexion`, pas d'espace public).
+- **Prêt pendant la composition** *(rév. 2026-10-09)* → le coach du club A a
+  l'écran d'engagement ouvert en ① ; l'admin prête un grimpeur du club B au club
+  A : le grimpeur apparaît, badge « Prêté », dans la liste des grimpeurs à
+  affecter, sans rechargement (R1/R3). Le coach du club B, écran ouvert, ne voit
+  rien changer (RLS, R5). Révocation du prêt → le grimpeur disparaît de la liste.
+- **Composition figée** (③ et suivantes, ou coach temporaire en ①) → pas de canal
+  sur l'écran d'engagement (R7).
 
 ## Contraintes de données
 
 - **Publication Realtime.** Les tables `resultat_voie`, `resultat_bloc`,
-  `points_vitesse` et `temps_vitesse` doivent être **ajoutées à la publication
+  `points_vitesse` et `temps_vitesse` — et, depuis la rév. 2026-10-09, `pret`,
+  `equipe` et `composition` — doivent être **ajoutées à la publication
   `supabase_realtime`** pour émettre des évènements *Postgres Changes*. →
   **migration SQL versionnée**, **appliquée à la main** (recette/prod), consignée au
   JOURNAL (convention 03 §5 ; pas de CLI/Docker de push).
 - **`REPLICA IDENTITY`.** Pour que les évènements **`DELETE`** portent assez
   d'information pour l'évaluation RLS côté Realtime, positionner
-  `REPLICA IDENTITY FULL` sur ces quatre tables (sinon seule la clé primaire est
+  `REPLICA IDENTITY FULL` sur ces tables (sinon seule la clé primaire est
   diffusée, ce qui peut empêcher la diffusion d'un DELETE légitime). À valider en
   recette (cahier de test).
 - **Aucune nouvelle policy RLS.** Le realtime **réutilise** les policies `SELECT`
@@ -309,6 +339,9 @@ sequenceDiagram
   porte `rencontre_id`. → le filtrage
   *Postgres Changes* par rencontre n'est **pas** applicable au niveau base (cf. R8) ;
   la RLS et le loader (rencontre courante) suffisent.
+  Pour l'écran d'engagement *(rév. 2026-10-09)*, `pret` et `equipe` portent
+  `rencontre_id` mais pas `composition` : on garde la même approche (pas de
+  filtre par rencontre au niveau du canal, R8).
 - **Client navigateur existant.** L'abonnement s'appuie sur le client **browser**
   déjà en place (`src/lib/supabase/client.ts`, `createBrowserClient`, schéma
   `interclub`). Aucun nouveau helper d'accès données n'est requis pour la lecture
@@ -348,5 +381,8 @@ sequenceDiagram
   saisie admin.
 - Spec #16 (`16-controle-resultats-fiches-juges.md`) — R12bis : écran de
   contrôle ajouté au périmètre (rév. 2026-10-02).
+- Spec #5 (`05-espace-coach.md`) — R16/R17 (fenêtre d'édition de la
+  composition), R12/R13 (prêts) : écran d'engagement ajouté au périmètre
+  (rév. 2026-10-09).
 - Spec #1 R8 (rév. 2026-10-02) — pas d'espace public, « aucune RLS `anon` » :
   **respectée**. (Spec #8 abandonnée.)

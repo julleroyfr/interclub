@@ -10,6 +10,10 @@
   « Jetons » devient un **lien interne** de l'espace coach (R10) ; le coach
   **temporaire** gagne l'accès à son **classement en lecture**, borné à sa
   rencontre (R11). Détails et diagramme : `12-navigation-et-routing.md`.
+- **Révision** : 2026-10-09 — temps réel (TODO D6, spec #11 rév. 2026-10-09) :
+  tant que la composition est modifiable (R16), l'écran d'engagement se met à
+  jour **sans rechargement** quand un prêt (R12/R13), une équipe ou une
+  composition du club change. Aucune règle de cette spec modifiée.
 - **Révision** : 2026-09-29 — **nom d'équipe par défaut** (R10bis, règle de
   changement validée le 2026-09-29) : le champ « Nouvelle équipe » est
   pré-rempli avec « &lt;nom du club&gt; N » (N = plus grand numéro existant + 1),
