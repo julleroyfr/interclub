@@ -13,8 +13,9 @@
 - **Conséquence directe : un `push` sur `main` = mise en ligne prod.** On n'y
   arrive qu'après passage en recette et cahier de test joué.
 - **Essai Vercel (expérimental, mesure de performance)** : `vercel.json`
-  déploie `develop` et `feature/*` sur Vercel (région `dub1`, base recette
-  uniquement, `main` désactivée). Netlify reste l'hébergeur de référence. Guide :
+  déploie `develop` et `feature/*` en **Preview** Vercel (région `dub1`, base
+  recette) ; `main` → Production Vercel reste désactivée jusqu'à la bascule.
+  Netlify reste l'hébergeur de référence. Guide :
   [deploiement-vercel.md](../deploiement-vercel.md).
 
 ### Garde-fou avant commit (toute branche)
