@@ -190,6 +190,19 @@
 - **Résultat attendu** : confirmation demandée ; la saisie quitte la liste,
   l'écran revient à la valeur du serveur ; rien n'est envoyé au retour du réseau.
 
+### CT-15 `[auto]` — En ligne : bandeau seulement au-delà de 2 secondes (couvre : R24, rév. 2026-10-09)
+
+- **Rôle / compte** : `coach@test.local` sur **ordinateur**, bon réseau ; puis
+  DevTools → **Network** → limitation « Slow 3G ».
+- **Étapes** :
+  1. Bon réseau : saisir plusieurs résultats à la suite.
+  2. Limitation « Slow 3G » : saisir un résultat.
+- **Résultat attendu** : (1) **aucun bandeau** n'apparaît ; chaque saisie
+  affiche « ⏳ En attente » puis « ✓ Enregistré » sur sa ligne ; rien ne bouge
+  à l'écran ; (2) si l'envoi dépasse 2 secondes, le bandeau flottant « Envoi en
+  cours » apparaît en bas de l'écran, sans décaler le contenu, puis disparaît
+  à l'enregistrement.
+
 ## Registre d'exécution
 
 | Date | Testeur | Version/commit | Cas | Résultat | Remarque |
@@ -208,3 +221,4 @@
 | | | | CT-12 | ✅ / ❌ | |
 | | | | CT-13 | ✅ / ❌ | |
 | | | | CT-14 | ✅ / ❌ | |
+| | | | CT-15 | ✅ / ❌ | |

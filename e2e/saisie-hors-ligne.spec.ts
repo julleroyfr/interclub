@@ -172,6 +172,38 @@ test.describe('Cahier 29 — saisie hors ligne, lot 2 (spec #17)', () => {
     await expect(liste).toContainText('Aucune saisie.')
   })
 
+  test('CT-15 · en ligne : pas de bandeau pour un envoi court, bandeau au-delà de 2 s (R24)', async ({
+    page,
+  }) => {
+    purgerResultatsPilote()
+    await commeCoach(page)
+    await ouvrirBob(page)
+    const bandeau = page.getByText(/Envoi en cours/)
+
+    // Envoi normal : le bandeau n'apparaît jamais.
+    let vu = false
+    const guetteur = bandeau.waitFor({ state: 'visible', timeout: 4_000 }).then(
+      () => (vu = true),
+      () => undefined,
+    )
+    await ligneVoie(page, 'T1').getByRole('button', { name: 'Top' }).click()
+    await expect(page.getByText('⏳ En attente')).toHaveCount(0, { timeout: 10_000 })
+    await guetteur
+    expect(vu).toBe(false)
+
+    // Envoi ralenti (3,5 s) : le bandeau apparaît après 2 s, puis disparaît.
+    await page.route('**/coach/rencontres/**/resultats', async (route) => {
+      if (route.request().method() === 'POST') await new Promise((r) => setTimeout(r, 3_500))
+      await route.continue()
+    })
+    const debut = Date.now()
+    await ligneVoie(page, 'T2').getByRole('button', { name: 'Échec' }).click()
+    await expect(bandeau).toBeVisible({ timeout: 5_000 })
+    expect(Date.now() - debut).toBeGreaterThanOrEqual(1_900)
+    await expect(bandeau).toHaveCount(0, { timeout: 10_000 })
+    await page.unroute('**/coach/rencontres/**/resultats')
+  })
+
   test('CT-10 · juge hors ligne : résultat conservé puis envoyé (R12, R15, spec #10 R14bis)', async ({
     page,
     context,
