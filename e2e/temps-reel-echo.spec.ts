@@ -123,7 +123,7 @@ test.describe('Cahier 22 — écho de ses propres saisies (spec #11 R6bis)', () 
       .filter({ has: b.locator('span.min-w-9', { hasText: /^B1$/ }) })
       .getByRole('button', { name: 'Échec' })
       .click()
-    await expect(b.getByText('⏳ En attente')).toHaveCount(0, { timeout: 10_000 })
+    await expect(b.locator('[data-en-attente]')).toHaveCount(0, { timeout: 10_000 })
     await a.waitForTimeout(2_000)
     expect(relecturesA).toHaveLength(0)
 

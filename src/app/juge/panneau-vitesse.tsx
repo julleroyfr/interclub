@@ -4,7 +4,9 @@ import { createContext, type FormEvent, use, useMemo, useState } from 'react'
 
 import { BandeauSynchro } from '@/composants/saisie-hors-ligne/BandeauSynchro'
 import { ListeSaisies, type ResumeSaisie } from '@/composants/saisie-hors-ligne/ListeSaisies'
+import { indicateurCible } from '@/composants/saisie-hors-ligne/etat-cible'
 import { useFileSaisies } from '@/composants/saisie-hors-ligne/useFileSaisies'
+import { useSuiviEnvoi } from '@/composants/saisie-hors-ligne/useSuiviEnvoi'
 import type { IssueEnvoi } from '@/domaine/hors-ligne'
 import { formaterTempsVitesse, lireSaisieVitesse, ResultatVitesseInvalideError } from '@/domaine/vitesse'
 import type { GrimpeurVitesse, IssueVitesse } from '@/lib/juge/vitesse'
@@ -382,9 +384,20 @@ function GroupeSexe({
 function LigneVitesse({ grimpeur: g }: { grimpeur: GrimpeurVitesse }) {
   const { surSoumission, messages, confirmes } = useEnvoi()
   const message = messages[g.grimpeurId]
+  const suivi = useSuiviEnvoi(!!g.enAttente)
+  // État d'envoi (R23, rév. 2026-10-09) : « en attente » / « enregistré » au-delà
+  // de 2 s seulement ; « rejetée » immédiat.
+  const indicateur = indicateurCible({
+    enAttente: !!g.enAttente,
+    attenteLongue: suivi.attenteLongue,
+    enregistreApresAttente: suivi.enregistreApresAttente,
+    confirme: !!confirmes[g.grimpeurId],
+    rejete: !!message?.rejet,
+  })
 
   return (
     <li
+      data-en-attente={g.enAttente ? '' : undefined}
       className={`flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-white/5 px-4 py-2 first:border-t-0 hover:bg-surface-forte ${
         g.issue != null ? 'bg-secondaire/[0.04]' : ''
       }`}
@@ -396,18 +409,20 @@ function LigneVitesse({ grimpeur: g }: { grimpeur: GrimpeurVitesse }) {
         <div className="text-[11px] text-texte-doux">{g.clubNom}</div>
       </div>
 
-      {/* État d'envoi (R23) : icône ET texte, pas seulement une couleur. */}
-      {g.enAttente ? (
+      {/* Icône ET texte, pas seulement une couleur (R23). */}
+      {indicateur === 'attente' ? (
         <span className="text-[10.5px] font-bold uppercase tracking-wide text-texte-attenue">⏳ En attente</span>
-      ) : message?.rejet ? (
+      ) : indicateur === 'rejet' ? (
         <span className="text-[10.5px] font-bold uppercase tracking-wide text-danger">⚠ Rejetée</span>
-      ) : confirmes[g.grimpeurId] ? (
+      ) : indicateur === 'enregistre' ? (
         <span className="text-[10.5px] font-bold uppercase tracking-wide text-secondaire">✓ Enregistré</span>
       ) : null}
 
       <span
         className={`inline-flex min-w-[74px] items-center justify-center rounded-full px-2.5 py-1 text-xs font-bold tabular-nums ${classeIssue(g.issue)} ${
-          g.enAttente ? 'border border-dashed border-current bg-transparent text-secondaire' : ''
+          g.enAttente && suivi.attenteLongue
+            ? 'border border-dashed border-current bg-transparent text-secondaire'
+            : ''
         }`}
       >
         {libelleIssue(g)}

@@ -54,7 +54,7 @@ async function saisirTemps(page: Page, nomPrenom: string, valeur: string): Promi
  * recharger ou de quitter la page.
  */
 async function enregistre(page: Page): Promise<void> {
-  await expect(page.getByText('⏳ En attente')).toHaveCount(0, { timeout: 10_000 })
+  await expect(page.locator('[data-en-attente]')).toHaveCount(0, { timeout: 10_000 })
 }
 
 const compteur = (page: Page, titre: 'Femmes' | 'Hommes') =>

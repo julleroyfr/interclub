@@ -43,11 +43,12 @@
 - **Étapes** :
   1. Saisie des résultats → **Bob Alpha** → voie **T1** → **Top**.
 - **Résultat attendu** :
-  - la pastille « Top » apparaît **immédiatement**, en pointillé, avec la mention
-    **⏳ En attente** ; le compteur de voies passe aussitôt à **1/3** ;
-  - à la réponse du serveur, la pastille devient pleine et **✓ Enregistré**
-    s'affiche environ 2 s ; le score est mis à jour ;
-  - les mentions comportent une **icône et un texte** (pas seulement une couleur).
+  - la pastille « Top » apparaît **immédiatement** ; le compteur de voies passe
+    aussitôt à **1/3** ; le score est mis à jour à l'enregistrement ;
+  - bon réseau (enregistrement en moins de 2 s) : **aucune mention** n'apparaît ;
+  - réseau lent (limitation « Slow 3G ») : au-delà de 2 s, la pastille passe en
+    pointillé avec **⏳ En attente**, puis **✓ Enregistré** s'affiche environ 2 s
+    (R23, rév. 2026-10-09) ; les mentions ont une **icône et un texte**.
 
 ### CT-02 — Enchaînement rapide sans perte (couvre : R22, spec #6 R13)
 
@@ -92,9 +93,10 @@
 - **Étapes** :
   1. Saisir **8,123** pour un grimpeur, valider avec **Entrée**.
   2. Saisir une **Chute** pour un autre.
-- **Résultat attendu** : le temps « 8,123 s » s'affiche **immédiatement**
-  (pointillé, **⏳ En attente**), le compteur Femmes/Hommes et le filtre
-  « À saisir (n) » sont mis à jour sans attendre ; puis **✓ Enregistré**.
+- **Résultat attendu** : le temps « 8,123 s » s'affiche **immédiatement**, le
+  compteur Femmes/Hommes et le filtre « À saisir (n) » sont mis à jour sans
+  attendre ; « ⏳ En attente » puis « ✓ Enregistré » n'apparaissent que si
+  l'enregistrement dépasse 2 s (R23, rév. 2026-10-09).
 
 ### CT-06 — Juge : saisie invalide refusée sur l'appareil (couvre : R13)
 
@@ -190,18 +192,19 @@
 - **Résultat attendu** : confirmation demandée ; la saisie quitte la liste,
   l'écran revient à la valeur du serveur ; rien n'est envoyé au retour du réseau.
 
-### CT-15 `[auto]` — En ligne : bandeau seulement au-delà de 2 secondes (couvre : R24, rév. 2026-10-09)
+### CT-15 `[auto]` — En ligne : bandeau et mentions seulement au-delà de 2 secondes (couvre : R23, R24, rév. 2026-10-09)
 
 - **Rôle / compte** : `coach@test.local` sur **ordinateur**, bon réseau ; puis
   DevTools → **Network** → limitation « Slow 3G ».
 - **Étapes** :
   1. Bon réseau : saisir plusieurs résultats à la suite.
   2. Limitation « Slow 3G » : saisir un résultat.
-- **Résultat attendu** : (1) **aucun bandeau** n'apparaît ; chaque saisie
-  affiche « ⏳ En attente » puis « ✓ Enregistré » sur sa ligne ; rien ne bouge
-  à l'écran ; (2) si l'envoi dépasse 2 secondes, le bandeau flottant « Envoi en
-  cours » apparaît en bas de l'écran, sans décaler le contenu, puis disparaît
-  à l'enregistrement.
+- **Résultat attendu** : (1) **aucun bandeau** et **aucune mention** (« en
+  attente », « enregistré ») : seule la valeur saisie s'affiche ; rien ne bouge
+  à l'écran ; (2) si l'envoi dépasse 2 secondes, la ligne affiche « ⏳ En
+  attente » (pastille en pointillé) et le bandeau flottant « Envoi en cours »
+  apparaît en bas de l'écran, sans décaler le contenu ; à l'enregistrement, la
+  ligne affiche « ✓ Enregistré » quelques secondes et le bandeau disparaît.
 
 ## Registre d'exécution
 
