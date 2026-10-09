@@ -16,6 +16,9 @@
 - **Révision du 2026-10-09 (validée le 2026-10-09)** — constat m5 de la revue
   du 2026-10-03 : **R9** précise le cas d'un compte permanent déjà connecté qui
   ouvre `/scan?jeton=` (spec #2 R34). Cas limite ajouté.
+- **Révision du 2026-10-09 — indicateur de chargement** (demande utilisateur du
+  2026-10-09 : un clic sur un lien lent ne donnait aucun retour) : ajout de
+  **R26** (indicateur de navigation en cours). Aucune autre règle modifiée.
 - **Sources** :
   - **Décision produit du 2026-09-25** (arbitrages navigation) : entrée coach
     unique, vue classement admin dédiée, sortie de session juge, classement en
@@ -180,6 +183,23 @@ menant à une impasse (404 non intentionnel).
   Les refus d'accès gardent leur comportement (R2 : `/connexion` ; R3 : 404) : ce
   ne sont pas des erreurs techniques.
 
+### Retour visuel de navigation *(rév. 2026-10-09)*
+
+- **R26.** Après un **clic sur un lien interne** de l'application, si la page
+  cible tarde à s'afficher, un **indicateur de chargement** (spinner) apparaît,
+  sur **toutes les pages** (composant commun, mise en page racine) :
+  - il apparaît après un **court délai** (≈ 150 ms) pour ne pas clignoter sur
+    une navigation instantanée ;
+  - il disparaît dès que la **nouvelle page est affichée** (changement d'URL) ;
+  - il n'apparaît **pas** pour un lien qui ne déclenche pas de navigation dans
+    l'onglet : lien externe, nouvel onglet (`target`, Ctrl/Cmd/Maj/clic
+    milieu), téléchargement (export PDF), ancre de la même page, ou lien vers
+    la page courante ;
+  - il est **non bloquant** (la page reste utilisable, un autre clic est
+    possible) et annoncé aux technologies d'assistance (« Chargement… ») ;
+  - il se masque de lui-même au bout de **20 s** si la navigation n'aboutit
+    pas (échec réseau), pour ne pas rester affiché indéfiniment.
+
 ## Scénarios
 
 ### Nominal — entrée par rôle
@@ -213,6 +233,10 @@ menant à une impasse (404 non intentionnel).
 - Une **lecture en échec** pendant le rendu du classement (droit manquant,
   panne) → **écran d'erreur** « Une erreur est survenue » avec « Réessayer » et
   « Revenir à l'accueil », sans détail technique (R25).
+- Admin cliquant « Clubs » sur le tableau de bord alors que la page met 2 s à
+  répondre → un **spinner** apparaît après ≈ 150 ms et disparaît à l'affichage
+  de `/admin/clubs` (R26). Clic sur « Exporter en PDF » → **aucun** spinner
+  (téléchargement, R26).
 
 ## Diagramme cible
 

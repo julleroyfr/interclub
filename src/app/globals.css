@@ -75,3 +75,23 @@ body {
   animation-timing-function: linear;
   animation-iteration-count: infinite;
 }
+
+/* Barre de progression indéterminée de l'indicateur de navigation (spec #12 R26). */
+@keyframes barre-navigation {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(300%);
+  }
+}
+
+.barre-navigation {
+  animation: barre-navigation 1.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .barre-navigation {
+    animation: none;
+  }
+}

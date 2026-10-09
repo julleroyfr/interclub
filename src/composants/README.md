@@ -41,9 +41,10 @@ template **Nuit** retenu. Thème **sombre**, verre dépoli, accents cyan / lime.
 | `Etiquette` | Badge de statut : `accent` \| `succes` \| `neutre` \| `danger` |
 | `Pastille` | Point d'état lumineux |
 | `Tableau` & primitives | Tableau responsive (`overflow-x-auto`) |
+| `IndicateurNavigation` | Spinner global « Chargement… » pendant une navigation lente (spec #12 R26), monté dans la mise en page racine (Client Component) |
 
 ## Server / Client
 
 Tous les composants sont présentationnels et **sans état** : utilisables en
-Server Component. Seul `NavPrincipale` est `"use client"` (il lit `usePathname`).
+Server Component. `NavPrincipale` et `IndicateurNavigation` sont `"use client"` (ils lisent `usePathname`).
 Passez les gestionnaires d'événements depuis un Client Component parent.

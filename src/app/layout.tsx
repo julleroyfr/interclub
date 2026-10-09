@@ -1,5 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Suspense } from "react";
+
+import { IndicateurNavigation } from "@/composants/IndicateurNavigation";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -36,6 +39,10 @@ export default function RootLayout({
           injectent des attributs sur <body> (ex. cz-shortcut-listen) avant
           l'hydratation, ce qui provoque un faux mismatch. */}
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
+        {/* Spinner de navigation (spec #12 R26). Suspense : useSearchParams. */}
+        <Suspense fallback={null}>
+          <IndicateurNavigation />
+        </Suspense>
         {children}
       </body>
     </html>

@@ -6,7 +6,7 @@
 > QR juge, et navigation du coach temporaire. Règles dans
 > [docs/conventions/06-cahier-de-test.md](../conventions/06-cahier-de-test.md).
 
-- **Spec de référence** : `docs/specs/12-navigation-et-routing.md` (R1–R25) ;
+- **Spec de référence** : `docs/specs/12-navigation-et-routing.md` (R1–R26) ;
   `docs/specs/02-authentification-et-sessions-qr.md` R34 (CT-15).
   Voir aussi la cartographie `docs/navigation-enchainements.md`.
 - **Le pur est couvert par Vitest** : `src/lib/coach/navigation.test.ts`
@@ -208,6 +208,26 @@
   (session juge ouverte) ; (4) **404** : la session admin de cet appareil est
   fermée (les autres appareils de l'admin restent connectés).
 - **Automatisé** : `e2e/navigation-routing.spec.ts` (CT-15).
+
+### CT-16 `[manuel]` — Spinner pendant une navigation lente   (couvre : R26, rév. 2026-10-09)
+
+- **Rôle / compte** : `admin@test.local`.
+- **Environnement** : **recette** (latence réelle) ; en local, simuler un réseau
+  lent (DevTools → Network → « Slow 4G »).
+- **Étapes** :
+  1. Sur `/admin`, cliquer « Clubs », puis « Grimpeurs », puis « Rencontres ».
+  2. Ouvrir le classement d'une rencontre, cliquer « Exporter en PDF ».
+  3. Ctrl+clic (ou clic milieu) sur un lien du bandeau.
+  4. Sur téléphone, répéter l'étape 1.
+- **Résultat attendu** : (1) si la page tarde, une **barre** en haut et une
+  pastille « **Chargement…** » avec spinner apparaissent presque aussitôt, puis
+  disparaissent à l'affichage de la page ; aucun clignotement si la page
+  s'affiche instantanément ; (2) le PDF se télécharge, **aucun** spinner ;
+  (3) nouvel onglet, **aucun** spinner dans l'onglet courant ; (4) l'indicateur
+  est visible et ne masque pas le bandeau de façon gênante.
+- **Pur couvert par Vitest** : `src/composants/navigation-en-cours.test.ts`
+  (quels clics déclenchent l'indicateur) et
+  `src/composants/IndicateurNavigation.test.tsx` (délai, masquage, 20 s).
 
 ## Registre d'exécution
 
