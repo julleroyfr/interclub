@@ -1,8 +1,8 @@
-// Domaine pur — sessions QR éphémères (spec #2 R6–R14, R22–R25 ; ADR 0001).
+// Domaine pur — sessions QR éphémères (spec #2 R6–R14, R22–R25, R34 ; ADR 0001).
 //
 // Couvre : format de l'URL de scan encodée dans le QR (R6, ADR 0003/T5d),
-// parsing du résultat de la RPC `ouvrir_session_qr`, et redirection selon le
-// rôle. Pas d'accès Supabase ni d'I/O.
+// décision au scan selon la session déjà ouverte (R34), parsing du résultat de
+// la RPC `ouvrir_session_qr`, et redirection selon le rôle. Pas d'accès Supabase ni d'I/O.
 
 import type { NatureJeton } from './jeton-qr'
 
@@ -72,4 +72,26 @@ export function urlDeRedirection(resultat: ResultatScan): string {
     return `/coach/rencontres/${resultat.rencontreId}`
   }
   return '/juge'
+}
+
+/** Session déjà ouverte sur l'appareil au moment du scan (null : aucune). */
+export type SessionAuScan = { estAnonyme: boolean; email: string | null } | null
+
+/** Ce que fait `/scan` : ouvrir la session QR, ou laisser choisir (R34). */
+export type DecisionScan =
+  | { type: 'ouvrir' }
+  | { type: 'proposer_choix'; email: string | null }
+
+/**
+ * Décide du comportement du scan selon la session déjà ouverte (R34, revue du
+ * 2026-10-03 constat m5). Un compte permanent connecté n'est jamais remplacé
+ * sans action explicite : on lui propose de rejoindre son espace ou de se
+ * déconnecter pour ouvrir la session QR. Sans session, ou avec une session QR
+ * éphémère (anonyme), on ouvre directement (R6).
+ */
+export function decisionScan(session: SessionAuScan): DecisionScan {
+  if (session && !session.estAnonyme) {
+    return { type: 'proposer_choix', email: session.email }
+  }
+  return { type: 'ouvrir' }
 }

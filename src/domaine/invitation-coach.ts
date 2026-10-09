@@ -4,7 +4,8 @@
 // l'admin affiche (QR + URL) pour permettre à un futur coach de créer son
 // compte permanent rattaché à ce club. Ici : format de l'URL encodée dans le
 // QR (R26), validation du périmètre « un club » (R28), matrice « qui peut
-// gérer » (R29) et validation des identifiants d'inscription (R30). Pas d'accès
+// gérer » (R29) et validation des identifiants d'inscription, confirmation du
+// mot de passe comprise (R30). Pas d'accès
 // Supabase : la création du compte + mapping (R31), l'unicité active par club
 // (R28) et le refus des doublons (R32) passent par la base réelle.
 
@@ -71,12 +72,14 @@ export function peutGererInvitation(acteur: ActeurInvitation): boolean {
 /**
  * Valide et normalise les identifiants d'une inscription via invitation (R30) :
  * email non vide et bien formé, mot de passe d'au moins {@link
- * LONGUEUR_MIN_MOT_DE_PASSE} caractères. L'email est normalisé (trim + bas de
+ * LONGUEUR_MIN_MOT_DE_PASSE} caractères, saisi deux fois à l'identique
+ * (confirmation, rév. du 2026-10-09). L'email est normalisé (trim + bas de
  * casse) pour comparer sans ambiguïté au catalogue des comptes existants (R32).
  */
 export function validerInscriptionCoach(demande: {
   email: string
   motDePasse: string
+  confirmationMotDePasse: string
 }): IdentifiantsInscription {
   const email = (demande.email ?? '').trim().toLowerCase()
   if (!email) {
@@ -93,6 +96,9 @@ export function validerInscriptionCoach(demande: {
     throw new InvitationCoachInvalideError(
       `Le mot de passe doit contenir au moins ${LONGUEUR_MIN_MOT_DE_PASSE} caractères.`,
     )
+  }
+  if ((demande.confirmationMotDePasse ?? '') !== motDePasse) {
+    throw new InvitationCoachInvalideError('Les deux mots de passe ne correspondent pas.')
   }
 
   return { email, motDePasse }

@@ -89,25 +89,58 @@ describe('spec #2 — validerInscriptionCoach', () => {
       validerInscriptionCoach({
         email: '  Coach@Example.com ',
         motDePasse: 'motdepasse',
+        confirmationMotDePasse: 'motdepasse',
       }),
     ).toEqual({ email: 'coach@example.com', motDePasse: 'motdepasse' })
   })
 
   it('refuse un email vide (R30)', () => {
     expect(() =>
-      validerInscriptionCoach({ email: '  ', motDePasse: 'motdepasse' }),
+      validerInscriptionCoach({
+        email: '  ',
+        motDePasse: 'motdepasse',
+        confirmationMotDePasse: 'motdepasse',
+      }),
     ).toThrow(InvitationCoachInvalideError)
   })
 
   it('refuse un email sans @ (R30)', () => {
     expect(() =>
-      validerInscriptionCoach({ email: 'pasunemail', motDePasse: 'motdepasse' }),
+      validerInscriptionCoach({
+        email: 'pasunemail',
+        motDePasse: 'motdepasse',
+        confirmationMotDePasse: 'motdepasse',
+      }),
     ).toThrow(InvitationCoachInvalideError)
   })
 
   it('refuse un mot de passe trop court (R30)', () => {
     expect(() =>
-      validerInscriptionCoach({ email: 'coach@example.com', motDePasse: '123' }),
+      validerInscriptionCoach({
+        email: 'coach@example.com',
+        motDePasse: '123',
+        confirmationMotDePasse: '123',
+      }),
+    ).toThrow(InvitationCoachInvalideError)
+  })
+
+  it('refuse une confirmation différente du mot de passe (R30)', () => {
+    expect(() =>
+      validerInscriptionCoach({
+        email: 'coach@example.com',
+        motDePasse: 'motdepasse',
+        confirmationMotDePasse: 'motdepasze',
+      }),
+    ).toThrow('Les deux mots de passe ne correspondent pas.')
+  })
+
+  it('refuse une confirmation vide (R30)', () => {
+    expect(() =>
+      validerInscriptionCoach({
+        email: 'coach@example.com',
+        motDePasse: 'motdepasse',
+        confirmationMotDePasse: '',
+      }),
     ).toThrow(InvitationCoachInvalideError)
   })
 })

@@ -187,7 +187,7 @@ export type EtatInscription = { erreur?: string } | undefined
 /**
  * Inscription d'un coach permanent via une invitation (R30–R33). Server Action
  * publique, gardée par la **validité de l'invitation** (pas par un rôle) :
- * 1. valide les identifiants (domaine) ;
+ * 1. valide les identifiants (domaine), dont la confirmation du mot de passe ;
  * 2. vérifie l'invitation **active** — sinon aucun compte n'est créé (R30, R33) ;
  * 3. crée le compte Supabase (email + mot de passe) ; un email déjà utilisé est
  *    refusé sans doublon (R32) ;
@@ -206,6 +206,7 @@ export async function inscrireCoach(
     identifiants = validerInscriptionCoach({
       email: String(formData.get('email') ?? ''),
       motDePasse: String(formData.get('motDePasse') ?? ''),
+      confirmationMotDePasse: String(formData.get('confirmationMotDePasse') ?? ''),
     })
   } catch (e) {
     if (e instanceof InvitationCoachInvalideError) return { erreur: e.message }

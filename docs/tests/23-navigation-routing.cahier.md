@@ -6,7 +6,8 @@
 > QR juge, et navigation du coach temporaire. Règles dans
 > [docs/conventions/06-cahier-de-test.md](../conventions/06-cahier-de-test.md).
 
-- **Spec de référence** : `docs/specs/12-navigation-et-routing.md` (R1–R22).
+- **Spec de référence** : `docs/specs/12-navigation-et-routing.md` (R1–R25) ;
+  `docs/specs/02-authentification-et-sessions-qr.md` R34 (CT-15).
   Voir aussi la cartographie `docs/navigation-enchainements.md`.
 - **Le pur est couvert par Vitest** : `src/lib/coach/navigation.test.ts`
   (`liensCoach`, R10/R11). Ce cahier vérifie les **redirections**, les **404**,
@@ -189,6 +190,25 @@
   `/`) ; après rétablissement, « Réessayer » affiche le classement.
 - **Automatisé** : `e2e/ecran-erreur.spec.ts` (`npm run test:cahier:erreur`).
 
+### CT-15 `[auto]` — Scan d'un QR par un compte permanent déjà connecté   (couvre : R9, spec #2 R34 ; rév. 2026-10-09)
+
+- **Rôle / compte** : `admin@test.local`, puis JD-JETON-JUGE.
+- **Pré-condition** : rencontre pilote en **③**, jour J (fenêtre du QR juge
+  ouverte).
+- **Étapes** :
+  1. Connecté en admin, ouvrir `/scan?jeton=<JD-JETON-JUGE>` (ou scanner le QR
+     avec le téléphone déjà connecté).
+  2. Cliquer « **Aller à mon espace** ».
+  3. Rouvrir le même `/scan?jeton=…`, cliquer « **Me déconnecter et ouvrir la
+     session QR** ».
+  4. Ouvrir `/admin`.
+- **Résultat attendu** : (1) l'écran affiche « Vous êtes connecté avec le compte
+  `admin@test.local` » et les deux choix, **sans** ouvrir de session QR ; (2)
+  arrivée sur `/admin`, toujours connecté en admin ; (3) arrivée sur `/juge`
+  (session juge ouverte) ; (4) **404** : la session admin de cet appareil est
+  fermée (les autres appareils de l'admin restent connectés).
+- **Automatisé** : `e2e/navigation-routing.spec.ts` (CT-15).
+
 ## Registre d'exécution
 
 | Date | Testeur | Version/commit | Cas | Résultat | Remarque |
@@ -206,3 +226,4 @@
 | 2026-09-25 | Playwright e2e | `24ad806` | CT-11 | ✅ | Bandeaux sans « Accueil » ; liens attendus présents |
 | 2026-10-02 | Playwright e2e | develop | CT-08/09/10 | ✅ | Pré-conditions explicites (③ + jour J), état seed restauré — plus de dépendance à l'ordre |
 | 2026-10-02 | Playwright e2e | develop | CT-12 | ✅ | 375 px : aucun débordement (admin ×6 pages, coach ×3, coach temp., juge, classement ③) ; menu repliable, Échap, cibles ≥ 44 px — résidu : vrai téléphone |
+| 2026-10-09 | Playwright e2e | develop | CT-15 | ✅ | Admin connecté : choix proposé, « Aller à mon espace » sans session QR, puis déconnexion → /juge, /admin en 404 |

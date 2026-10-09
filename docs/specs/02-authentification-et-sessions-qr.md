@@ -23,6 +23,11 @@
   coach de créer son compte email + mot de passe, **automatiquement** rattaché à
   ce club. Fait entrer la **création de compte permanent** dans le périmètre
   (décision du 2026-09-04).
+- **Révision** : 2026-10-09 — **double saisie du mot de passe** à l'inscription
+  par invitation (R30, TODO D5, validée le 2026-10-09) ; **scan QR par un
+  utilisateur déjà connecté avec un compte permanent** : aucune session anonyme
+  n'est ouverte sans action explicite (R34, revue du 2026-10-03 constat m5,
+  validée le 2026-10-09).
 
 ## Objectif
 
@@ -183,7 +188,10 @@ alimente le modèle de données (mapping, jetons) et les policies **RLS**.
   valeur et **révoque** l'ancienne.
 - **R30.** Suivre une invitation **active** mène à un **écran d'inscription
   public** où la personne crée un **compte permanent email + mot de passe**
-  (spec #1 R2/R23). Suivre une invitation **révoquée ou inexistante** n'ouvre
+  (spec #1 R2/R23). Le mot de passe est saisi **deux fois** (« Mot de passe » et
+  « Confirmer le mot de passe ») : si les deux saisies **diffèrent**,
+  l'inscription est **refusée** avec un message et **aucun compte** n'est créé.
+  Suivre une invitation **révoquée ou inexistante** n'ouvre
   **aucune** inscription (message d'erreur) et **ne crée aucun compte**.
 - **R31.** À l'issue d'une inscription **réussie** via une invitation active, le
   compte se voit attribuer **automatiquement** le rôle **coach** rattaché au
@@ -197,6 +205,17 @@ alimente le modèle de données (mapping, jetons) et les policies **RLS**.
 - **R33.** Une invitation **ne confère aucun droit par elle-même** avant
   inscription : tant qu'aucun compte n'est créé, aucune session ni aucun rôle
   n'existe (fail-closed, cohérent avec R5).
+
+### Scan d'un jeton QR par un utilisateur déjà connecté
+
+- **R34.** Si un jeton QR est scanné sur un appareil où une session de **compte
+  permanent** est déjà ouverte (admin, coach ou compte sans rôle), **aucune**
+  session éphémère n'est ouverte automatiquement et la session permanente est
+  **conservée**. L'écran indique l'e-mail du compte connecté et propose deux
+  choix : **rejoindre son espace** (session inchangée) ou **se déconnecter puis
+  ouvrir la session QR** (R6). Seul ce second choix, explicite, met fin à la
+  session permanente. Sans session, ou avec une session QR éphémère déjà
+  ouverte, le scan ouvre la session normalement (R6).
 
 ## Scénarios
 
@@ -252,6 +271,11 @@ alors une session juge s'ouvre et permet de saisir les **résultats de vitesse**
   à se connecter ; aucun doublon (R32).
 - Régénérer l'invitation d'un club **ne déconnecte pas** les coachs déjà créés :
   leurs comptes restent valides (l'invitation ne sert qu'à l'onboarding, R31/R33).
+- Inscription via une invitation active avec une **confirmation du mot de passe
+  différente** → refusée avec un message, aucun compte créé (R30).
+- Un **admin connecté** scanne un QR juge avec son téléphone → sa session admin
+  est conservée ; il choisit « Aller à mon espace » ou « Me déconnecter et ouvrir
+  la session QR » (R34).
 
 ## Diagrammes
 
