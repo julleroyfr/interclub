@@ -18,6 +18,13 @@
   s'abonnait jusque-là avec la clé anonyme (session pas encore chargée), Realtime
   évaluait alors la RLS en anonyme et livrait des évènements **vidés** de leur
   contenu (« 401 Unauthorized ») — simple signal, auteur illisible.
+- **Révision** : 2026-10-09 (validée le 2026-10-09) — **R6** : sur les écrans de
+  saisie coach et juge, l'auteur voit ses écritures par la réponse de
+  l'enregistrement (spec #6 R20, spec #10 R14) ; ajout de **R8bis** : un écran de
+  saisie ne se relit que pour un évènement concernant un **grimpeur qu'il
+  affiche** ; **R4** étend en conséquence l'usage admis de la charge utile au
+  **grimpeur** concerné. Motif : chaque écriture d'un autre club relisait en
+  entier l'écran de chaque coach ouvert, sans effet visible.
 - **Sources** :
   - **Spec #6 — Saisie des résultats** (`06-saisie-des-resultats.md`) : « Temps réel
     (pousser les MAJ sur les autres écrans) » noté **évolution future différée**
@@ -117,9 +124,10 @@ se **rafraîchissent d'eux-mêmes**, sans action ni rechargement de l'utilisateu
   lecture, spec #7 R10). Le canal temps réel ne transporte qu'un **signal de
   changement**, **jamais** de données recalculées. → **aucune logique de calcul
   n'est dupliquée côté client** ; le domaine (`score.ts`, etc.) reste l'unique
-  référence. *(Rév. 2026-10-07.)* Le **seul** usage admis de la charge utile est
-  d'en lire l'**auteur** de l'écriture, pour ignorer l'écho de ses propres saisies
-  (R6bis) ; aucune valeur reçue n'est affichée.
+  référence. *(Rév. 2026-10-07, 2026-10-09.)* Les **seuls** usages admis de la
+  charge utile sont d'en lire l'**auteur** de l'écriture, pour ignorer l'écho de
+  ses propres saisies (R6bis), et le **grimpeur** concerné, pour ignorer ce qui
+  ne concerne pas l'écran (R8bis) ; aucune valeur reçue n'est affichée.
 
   **Compromis assumé (relecture vs. diff appliqué).** On **ne** met **pas** à jour
   l'écran avec la seule ligne reçue, parce qu'**une écriture ne correspond pas à une
@@ -146,6 +154,10 @@ se **rafraîchissent d'eux-mêmes**, sans action ni rechargement de l'utilisateu
   continue de se rafraîchir via le mécanisme existant (Server Action +
   `revalidatePath`). Le realtime **s'ajoute** pour les **autres** écrans ouverts ;
   il ne modifie pas le flux de saisie ni la revalidation actuelle.
+  *(Rév. 2026-10-09 — conséquence de spec #6 R20 / spec #10 R14.)* Sur
+  les écrans de **saisie coach et juge**, l'écran de l'auteur reflète ses propres
+  écritures par la **réponse de l'enregistrement**, sans relecture complète ; les
+  autres écrans (classement, contrôle, saisie admin) sont inchangés.
 
 - **R6bis.** *(Rév. 2026-10-07.)* **Écho de ses propres saisies.** Sur les **écrans
   de saisie** — saisie des résultats **coach** (#6), saisie **admin** (#9), saisie
@@ -182,6 +194,18 @@ se **rafraîchissent d'eux-mêmes**, sans action ni rechargement de l'utilisateu
   reste la frontière de sécurité** (R5), et un éventuel rafraîchissement déclenché
   par une **autre** rencontre autorisée est **sans effet visible** (le loader ne lit
   que la rencontre **courante**).
+
+- **R8bis.** *(Rév. 2026-10-09.)* **Pertinence pour l'écran.** Sur les **écrans de
+  saisie** — coach (#6), admin (#9), juge (#10) — un évènement ne déclenche une
+  relecture que si le **grimpeur** de la ligne écrite (nouvelle ou ancienne
+  version) fait partie des **grimpeurs affichés** par l'écran : grimpeurs du club
+  pour le coach, compétiteurs engagés de la rencontre pour le juge et l'admin.
+  Les évènements des autres clubs (écran coach) et des autres rencontres sont
+  ainsi ignorés. Un évènement **sans grimpeur identifiable** (ex. suppression
+  dont la charge utile ne porte que la clé) déclenche **toujours** une relecture,
+  ainsi que la **reconnexion** (R11). Les points de vitesse recalculés pour les
+  grimpeurs affichés (rangs, spec #7 R20) les concernent et déclenchent donc une
+  relecture. Les écrans de **classement** et de **contrôle** ne sont pas concernés.
 
 - **R9.** **Anti-rebond.** Les évènements **rapprochés** sont **regroupés** en un
   **seul** rafraîchissement (anti-rebond court), pour éviter une rafale de

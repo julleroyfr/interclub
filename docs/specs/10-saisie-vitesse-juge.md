@@ -17,6 +17,14 @@
   **R14bis** (affichage immédiat, états en attente / synchronisée / rejetée) ;
   « Modèle de données » : colonne `saisi_le` — voir
   [spec #17](17-saisie-hors-ligne.md).
+  **Rév. 2026-10-09 — enregistrement en un appel (validée le 2026-10-09)** :
+  **R3** — les contrôles d'une écriture sont faits **par la base,
+  dans le même appel** que l'écriture (une fonction d'enregistrement), au lieu
+  d'une revérification préalable en plusieurs lectures ; **R14** — après un
+  enregistrement, l'écran affiche le résultat renvoyé par
+  l'enregistrement, **sans relire tout l'écran** ; les écritures des autres
+  acteurs arrivent par le temps réel (spec #11). Motif : mesure en recette — 5 à
+  6 allers-retours vers la base par clic (~2 s), pour 1 indispensable.
 - **Sources** :
   - **Spec #1 — Rôles & autorisations** (`01-roles-et-autorisations.md`), vérité
     pour « qui peut faire quoi » : le **juge** est affecté par l'admin à
@@ -127,6 +135,13 @@ voie/bloc (authentifiés dès la ③, public à la ⑤ ; spec #1 R8).
   la rencontre, indépendamment de l'UI (défense en profondeur). Un appel hors
   périmètre est refusé **sans écriture**. La **RLS**
   (`peut_ecrire_temps_vitesse`) reste la **frontière ultime**.
+  *(Rév. 2026-10-09.)* Ces contrôles sont faits **par la base, dans le
+  même appel que l'écriture** : chaque saisie ou correction est **un seul appel**
+  à une fonction d'enregistrement qui vérifie la **session juge** active,
+  l'**épreuve de vitesse** de sa rencontre (R2/R3), la **phase ③** (R6), le
+  grimpeur **engagé** (R7bis) et la **forme** du résultat (R7–R9), **puis**
+  écrit. Un refus n'écrit rien et renvoie un motif traduit en message lisible
+  (R4).
 - **R4.** Une violation de contrainte en base (unicité, forme d'issue invalide,
   temps non positif, clé étrangère, refus RLS) est **traduite en message lisible**
   (jamais une erreur technique brute) (aligné spec #6 R4). Sont notamment
@@ -194,6 +209,11 @@ voie/bloc (authentifiés dès la ③, public à la ⑤ ; spec #1 R8).
   **compteur Filles** (saisis / total) **et** un **compteur Garçons** (saisis /
   total) — cohérent avec le regroupement et le classement par sexe (R12 ; aligné
   spec #6 R20).
+  *(Rév. 2026-10-09.)* Le « reflet » ne passe **plus par une relecture
+  de tout l'écran** : le résultat confirmé par l'enregistrement reste affiché, et
+  la progression est tenue à jour par l'écran, jusqu'à la prochaine lecture. Les
+  saisies des **autres** juges (et corrections admin) arrivent par le **temps
+  réel** (spec #11).
 - **R14bis.** *(Rév. 2026-10-03, spec #17.)* Une saisie est affichée **dès sa
   validation**, avant la réponse du serveur, dans l'état **en attente** ; elle
   passe **synchronisée** une fois enregistrée, ou **rejetée** en cas de refus
@@ -356,6 +376,10 @@ erDiagram
     'vitesse'`) ; à **doubler d'un `check`/trigger** si nécessaire.
   - **traçabilité de l'auteur** (aligné spec #9) : `auteur_utilisateur_id uuid
     null`, `auteur_role text null check (auteur_role in ('juge','admin'))`.
+  - **fonction d'enregistrement** (R3/R14, rév. 2026-10-09) :
+    `saisir_temps_vitesse`, exécutée **avec les droits de l'appelant** (la RLS
+    s'applique), contrôle puis écrit en une transaction ; chaque refus a un
+    **code** traduit en message lisible (R4) ;
   - **heure de saisie** (R11bis, rév. 2026-10-03) : `saisi_le timestamptz not
     null default now()` ; un trigger refuse une écriture plus ancienne que la
     ligne existante et ramène une heure future à `now()` (spec #17 « Contraintes
