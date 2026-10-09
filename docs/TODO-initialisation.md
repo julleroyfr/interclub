@@ -75,7 +75,7 @@ Tâches identifiées mais reportées, à traiter quand l'occasion se présente.
   d'une **invitation administrateur** (décision produit du 2026-10-09) — QR/URL
   à usage unique, valable 15 minutes, généré sur `/admin/mapping` (spec #2
   R35–R40). Domaine `invitation-admin` (10 tests), migration
-  `202610091300_invitation_admin` (**à appliquer à la main en recette**),
+  `202610091300_invitation_admin` (appliquée en recette le 2026-10-09),
   cahier 30 + E2E `invitation-admin.spec.ts` et cahier 28 CT-05b.
 - **D6 — Temps réel de l'écran d'engagement coach** (2026-10-09) : spec #11
   rév. (R1/R3/R6bis/R7) ; tables `pret`, `equipe`, `composition` publiées
