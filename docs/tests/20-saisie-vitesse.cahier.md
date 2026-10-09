@@ -205,6 +205,19 @@ tous (cf. `00-catalogue-jeux-de-donnees.md` § Notes).
 
 > **Automatisé** (rév. 2026-10-03) : `e2e/integrite-engagement.spec.ts` (`npm run test:cahier:integrite`).
 
+### CT-14 `[mixte]` — Un clic, un enregistrement, sans relecture de l'écran   (couvre : R3, R14, rév. 2026-10-09)
+
+- **Rôle / compte** : jeton QR juge ; DevTools → **Network**.
+- **Pré-condition** : migration `202610091000_enregistrement_saisie_un_appel`
+  appliquée ; rencontre en ③.
+- **Étapes** :
+  1. Saisir un temps pour un grimpeur ; observer le Network.
+  2. Recharger la page.
+- **Résultat attendu** : **une seule** requête par saisie, **aucune** relecture
+  `juge?_rsc=…` ; le résultat et les compteurs restent affichés ; après
+  rechargement, le résultat est **identique**. Refus (grimpeur non engagé,
+  session expirée) : message lisible, sans écriture.
+
 ## Registre d'exécution
 
 | Date | Testeur | Version/commit | Cas | Résultat | Remarque |

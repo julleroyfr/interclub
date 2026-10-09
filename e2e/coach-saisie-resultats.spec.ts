@@ -363,6 +363,35 @@ test.describe('Cahier 17 — saisie des résultats voie & bloc (spec #6)', () =>
     }
   })
 
+  test('CT-17 · score à jour sans relecture de l’écran (R20, rév. 2026-10-09)', async ({ page }) => {
+    await commeCoach(page)
+    await ouvrirGrimpeur(page, URL_ENFANT, 'Ana Alpha')
+    const score = page
+      .locator('div', { has: page.getByText('Score (voie + bloc + vitesse)', { exact: true }) })
+      .last()
+      .locator('span.font-extrabold')
+    const avant = await score.innerText()
+
+    // Aucune relecture de l'écran déclenchée après la saisie (R20, R6bis).
+    const relectures: string[] = []
+    page.on('request', (r) => {
+      if (r.method() === 'GET' && r.url().includes('/resultats') && r.url().includes('_rsc=')) {
+        relectures.push(r.url())
+      }
+    })
+    const b1 = ligne(page, 'Bloc', 'B1')
+    await b1.getByRole('button', { name: '1er essai' }).click()
+    await enregistre(page)
+    await expect(score).not.toHaveText(avant)
+    const apres = await score.innerText()
+    expect(relectures).toHaveLength(0)
+
+    // Le score affiché vaut celui d'une lecture complète.
+    await page.reload()
+    await page.getByRole('button', { name: /^Ana Alpha/ }).click()
+    await expect(score).toHaveText(apres)
+  })
+
   test('CT-15 · avant la ③ : voies et blocs annoncés, pas de « groupe à définir » (R21bis)', async ({
     page,
   }) => {

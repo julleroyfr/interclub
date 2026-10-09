@@ -30,6 +30,7 @@
     "test:t5c": "bash scripts/test-t5c.sh",
     "test:t6": "bash scripts/test-t6.sh",
     "test:resultats": "bash scripts/test-resultats.sh",
+    "test:enregistrement": "bash scripts/test-enregistrement.sh",
     "test:points-vitesse": "bash scripts/test-points-vitesse.sh",
     "test:invitation": "bash scripts/test-invitation.sh",
     "db:reset": "supabase db reset && npm run db:verifier",

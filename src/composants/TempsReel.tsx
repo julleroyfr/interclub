@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 
@@ -37,6 +37,7 @@ export function TempsReel({
   tables,
   actif = true,
   ignorerMesEcritures = false,
+  grimpeursAffiches,
 }: {
   tables: TableTempsReel[]
   /** Faux hors phase de live (R7) : ni abonnement ni indicateur. */
@@ -46,9 +47,19 @@ export function TempsReel({
    * l'utilisateur courant, déjà relues par la Server Action (R6).
    */
   ignorerMesEcritures?: boolean
+  /**
+   * Écrans de SAISIE uniquement (R8bis) : grimpeurs affichés ; une écriture
+   * concernant un autre grimpeur (autre club, autre rencontre) est ignorée.
+   */
+  grimpeursAffiches?: readonly string[]
 }) {
   const router = useRouter()
   const [etat, setEtat] = useState<EtatConnexion>('connexion')
+  // Lue à chaque évènement sans relancer l'abonnement quand la liste change.
+  const affiches = useRef<ReadonlySet<string> | undefined>(undefined)
+  useEffect(() => {
+    affiches.current = grimpeursAffiches ? new Set(grimpeursAffiches) : undefined
+  }, [grimpeursAffiches])
 
   // Clé stable (ordre indifférent) : évite de relancer l'effet à chaque rendu,
   // le tableau `tables` changeant d'identité.
@@ -74,7 +85,15 @@ export function TempsReel({
     // l'écho de ses propres saisies (R6bis).
     let utilisateurId: string | null = null
     const surEvenement = (evenement: EvenementTempsReel) => {
-      if (doitRelire(evenement, { ignorerMesEcritures, utilisateurId })) rafraichir()
+      if (
+        doitRelire(evenement, {
+          ignorerMesEcritures,
+          utilisateurId,
+          grimpeursAffiches: affiches.current,
+        })
+      ) {
+        rafraichir()
+      }
     }
 
     const canal: RealtimeChannel = supabase.channel(`temps-reel:${cleTables}`)

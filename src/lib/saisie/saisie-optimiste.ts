@@ -27,15 +27,35 @@ export function cleSaisie(s: SaisieOptimiste): string {
     : `voie:${s.grimpeurId}:${s.voieDifficulteId}`
 }
 
-/** Superpose une saisie coach en attente aux données du serveur. */
+/**
+ * Superpose une saisie coach aux données du serveur : « en attente » par défaut,
+ * ou CONFIRMÉE (`enAttente: false`) — l'écran n'étant plus relu en entier après
+ * un enregistrement (spec #6 R20, rév. 2026-10-09), la valeur confirmée reste
+ * affichée jusqu'à la prochaine lecture.
+ */
 export function appliquerSaisieOptimiste(
   saisie: SaisieRencontre,
   s: SaisieOptimiste,
+  { enAttente = true }: { enAttente?: boolean } = {},
 ): SaisieRencontre {
   return {
     ...saisie,
     grimpeurs: saisie.grimpeurs.map((g) =>
-      g.grimpeurId === s.grimpeurId ? appliquerAuGrimpeur(saisie, g, s) : g,
+      g.grimpeurId === s.grimpeurId ? appliquerAuGrimpeur(saisie, g, s, enAttente) : g,
+    ),
+  }
+}
+
+/** Applique le score renvoyé par un enregistrement au grimpeur concerné (R20). */
+export function appliquerScore(
+  saisie: SaisieRencontre,
+  grimpeurId: string,
+  { score, pointsVitesse }: { score: number; pointsVitesse: number },
+): SaisieRencontre {
+  return {
+    ...saisie,
+    grimpeurs: saisie.grimpeurs.map((g) =>
+      g.grimpeurId === grimpeurId ? { ...g, score, pointsVitesse } : g,
     ),
   }
 }
@@ -44,6 +64,7 @@ function appliquerAuGrimpeur(
   saisie: SaisieRencontre,
   g: GrimpeurSaisie,
   s: SaisieOptimiste,
+  enAttente: boolean,
 ): GrimpeurSaisie {
   let { voies, blocs } = g
 
@@ -51,7 +72,7 @@ function appliquerAuGrimpeur(
     const existante = voies.some((v) => v.voieDifficulteId === s.voieDifficulteId)
     if (existante) {
       voies = voies.map((v) =>
-        v.voieDifficulteId === s.voieDifficulteId ? { ...v, issue: s.issue, enAttente: true } : v,
+        v.voieDifficulteId === s.voieDifficulteId ? { ...v, issue: s.issue, enAttente } : v,
       )
     } else {
       // Ado : nouvelle voie choisie librement (spec #6 R11), triée comme le serveur.
@@ -65,7 +86,7 @@ function appliquerAuGrimpeur(
             cotation: v.cotation,
             typeVoie: v.typeVoie,
             issue: s.issue,
-            enAttente: true,
+            enAttente,
           },
         ].sort((a, b) => a.niveau.localeCompare(b.niveau))
       }
@@ -81,7 +102,7 @@ function appliquerAuGrimpeur(
         : null
     blocs = blocs.map((b) =>
       b.blocId === s.blocId
-        ? { ...b, issue: s.issue, palierId: s.palierId, palierLibelle: libelle, enAttente: true }
+        ? { ...b, issue: s.issue, palierId: s.palierId, palierLibelle: libelle, enAttente }
         : b,
     )
   }
@@ -110,10 +131,11 @@ export type VitesseOptimiste = {
 export function appliquerVitesseOptimiste(
   grimpeurs: GrimpeurVitesse[],
   s: VitesseOptimiste,
+  { enAttente = true }: { enAttente?: boolean } = {},
 ): GrimpeurVitesse[] {
   return grimpeurs.map((g) =>
     g.grimpeurId === s.grimpeurId
-      ? { ...g, issue: s.issue, temps: s.issue === 'temps' ? s.temps : null, enAttente: true }
+      ? { ...g, issue: s.issue, temps: s.issue === 'temps' ? s.temps : null, enAttente }
       : g,
   )
 }

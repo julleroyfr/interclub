@@ -52,3 +52,31 @@ describe('spec #11 — Écho de ses propres saisies (R6bis)', () => {
     expect(doitRelire(insert(MOI), { ignorerMesEcritures: false, utilisateurId: MOI })).toBe(true)
   })
 })
+
+describe('spec #11 — Pertinence pour l’écran (R8bis)', () => {
+  const affiches = new Set(['g-affiche'])
+  const options = { ignorerMesEcritures: true, utilisateurId: MOI, grimpeursAffiches: affiches }
+  const ecriture = (grimpeur: string | null, eventType: 'INSERT' | 'UPDATE' | 'DELETE' = 'INSERT') => ({
+    eventType,
+    new: eventType === 'DELETE' ? {} : { auteur_utilisateur_id: AUTRE, grimpeur_id: grimpeur },
+    old: eventType === 'DELETE' ? { grimpeur_id: grimpeur } : {},
+  })
+
+  it('relit une écriture concernant un grimpeur affiché', () => {
+    expect(doitRelire(ecriture('g-affiche'), options)).toBe(true)
+  })
+
+  it('ignore une écriture d’un grimpeur non affiché (autre club, autre rencontre)', () => {
+    expect(doitRelire(ecriture('g-ailleurs'), options)).toBe(false)
+  })
+
+  it('suppression : le grimpeur de l’ancienne ligne décide ; sans grimpeur, relit', () => {
+    expect(doitRelire(ecriture('g-ailleurs', 'DELETE'), options)).toBe(false)
+    expect(doitRelire(ecriture('g-affiche', 'DELETE'), options)).toBe(true)
+    expect(doitRelire({ eventType: 'DELETE', new: {}, old: { id: 'x' } }, options)).toBe(true)
+  })
+
+  it('sans liste de grimpeurs affichés (classement, contrôle), relit tout', () => {
+    expect(doitRelire(ecriture('g-ailleurs'), { ignorerMesEcritures: false, utilisateurId: MOI })).toBe(true)
+  })
+})

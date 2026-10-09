@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import type { GrimpeurSaisie, SaisieRencontre } from '@/lib/coach/resultats'
 import type { GrimpeurVitesse } from '@/lib/juge/vitesse'
 
-import { appliquerSaisieOptimiste, appliquerVitesseOptimiste } from './saisie-optimiste'
+import { appliquerSaisieOptimiste, appliquerScore, appliquerVitesseOptimiste } from './saisie-optimiste'
 
 // Spec #17 R22 / spec #6 R20bis / spec #10 R14bis : une saisie est affichée dès
 // sa validation, « en attente », et les compteurs en tiennent compte.
@@ -123,6 +123,23 @@ describe('spec #17 — Affichage immédiat d’une saisie voie/bloc (R22, spec #
       enAttente: true,
     })
     expect(premier(s).progression.blocsFaites).toBe(2)
+  })
+
+  it('saisie confirmée : même affichage, sans la marque « en attente » (spec #6 R20)', () => {
+    const s = appliquerSaisieOptimiste(
+      saisie(),
+      { type: 'voie', grimpeurId: 'g1', voieDifficulteId: 'v2', issue: 'echec' },
+      { enAttente: false },
+    )
+    expect(premier(s).voies[1]).toMatchObject({ issue: 'echec', enAttente: false })
+    expect(premier(s).progression.voiesFaites).toBe(2)
+  })
+
+  it('score renvoyé par l’enregistrement appliqué au seul grimpeur concerné (spec #6 R20)', () => {
+    const base = saisie()
+    const s = appliquerScore(base, 'g1', { score: 42, pointsVitesse: 7 })
+    expect(premier(s)).toMatchObject({ score: 42, pointsVitesse: 7 })
+    expect(s.grimpeurs[1]).toBe(base.grimpeurs[1])
   })
 
   it('ne touche ni les autres grimpeurs ni le score (calculé par le serveur)', () => {

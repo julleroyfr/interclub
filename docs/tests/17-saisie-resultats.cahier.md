@@ -252,6 +252,25 @@ Cas particuliers à préparer à la main :
 - **Message** : à l'écran, ce refus est traduit par « Un grimpeur ado réalise au
   plus 6 voies. » (même message que le contrôle préalable).
 
+### CT-17 `[mixte]` — Un clic, un enregistrement ; score sans relecture de l'écran   (couvre : R3, R20, rév. 2026-10-09)
+
+- **Rôle / compte** : `coach@test.local` ; DevTools → **Network**.
+- **Pré-condition** : migration `202610091000_enregistrement_saisie_un_appel`
+  appliquée ; rencontre en ③.
+- **Étapes** :
+  1. Ouvrir Ana Alpha ; noter le score. Saisir **B1 → 1er essai**.
+  2. Observer le Network pendant 3 s ; puis recharger la page.
+  3. Tenter une saisie hors périmètre : passer la rencontre en ④ (admin) sans
+     recharger l'écran du coach, puis saisir **B2 → Échec**.
+- **Résultat attendu** :
+  - (1) le score change **sans rechargement** ; (2) **une seule** requête
+    `resultats` (POST) par clic, **aucune** relecture `resultats?_rsc=…` ; après
+    rechargement, le score est **identique** ;
+  - (3) refus lisible « La saisie des résultats n'est ouverte qu'en phase
+    compétition. », sans écriture (base inchangée).
+- **Mesure** (recette) : noter la durée de la requête `resultats` (repère : bien
+  en dessous de la seconde).
+
 ## Registre d'exécution
 
 > **Automatisé** (rév. 2026-10-03) : CT-16 par `e2e/integrite-engagement.spec.ts`

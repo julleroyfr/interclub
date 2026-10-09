@@ -79,11 +79,22 @@ export function PanneauVitesse({ grimpeurs: grimpeursServeur }: { grimpeurs: Gri
   // Résultats envoyés sans réponse encore, superposés aux données du serveur
   // (spec #17 R22) : liste, compteurs et filtre « à saisir » en tiennent compte.
   const [enAttente, setEnAttente] = useState<{ id: number; s: VitesseOptimiste }[]>([])
+  // Résultats CONFIRMÉS (spec #10 R14, rév. 2026-10-09) : pas de relecture de
+  // l'écran après une saisie ; affichés jusqu'à la prochaine lecture.
+  const [resultatsConfirmes, setResultatsConfirmes] = useState<VitesseOptimiste[]>([])
+  const [serveurVu, setServeurVu] = useState(grimpeursServeur)
+  if (serveurVu !== grimpeursServeur) {
+    setServeurVu(grimpeursServeur)
+    setResultatsConfirmes([])
+  }
   const prochainId = useRef(0)
-  const grimpeurs = useMemo(
-    () => enAttente.reduce((acc, e) => appliquerVitesseOptimiste(acc, e.s), grimpeursServeur),
-    [grimpeursServeur, enAttente],
-  )
+  const grimpeurs = useMemo(() => {
+    const confirme = resultatsConfirmes.reduce(
+      (acc, s) => appliquerVitesseOptimiste(acc, s, { enAttente: false }),
+      grimpeursServeur,
+    )
+    return enAttente.reduce((acc, e) => appliquerVitesseOptimiste(acc, e.s), confirme)
+  }, [grimpeursServeur, resultatsConfirmes, enAttente])
   const [messages, setMessages] = useState<Envoi['messages']>({})
   const [confirmes, setConfirmes] = useState<Record<string, true>>({})
 
@@ -115,7 +126,10 @@ export function PanneauVitesse({ grimpeurs: grimpeursServeur }: { grimpeurs: Gri
       } catch {
         reponse = { erreur: 'Le résultat n’a pas pu être envoyé. Réessayez.' }
       }
-      startTransition(() => setEnAttente((l) => l.filter((x) => x.id !== id)))
+      startTransition(() => {
+        setEnAttente((l) => l.filter((x) => x.id !== id))
+        if (!reponse?.erreur) setResultatsConfirmes((c) => [...c, s])
+      })
       if (reponse?.erreur) {
         const texte = reponse.erreur
         setMessages((m) => ({ ...m, [grimpeurId]: { texte, rejet: true } }))

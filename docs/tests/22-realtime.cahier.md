@@ -8,7 +8,7 @@
 > reconnexion**. Règles dans
 > [docs/conventions/06-cahier-de-test.md](../conventions/06-cahier-de-test.md).
 
-- **Spec de référence** : `docs/specs/11-realtime.md` (R1–R12, R6bis + « Contraintes de
+- **Spec de référence** : `docs/specs/11-realtime.md` (R1–R12, R6bis, R8bis + « Contraintes de
   données » + « Points à surveiller ») ; s'appuie sur `06` (R22/R23),
   `07` (R10/R15/R20), `01` R8 (pas d'espace public, aucune RLS `anon`), `09`, `10`.
 - **Pré-requis** :
@@ -262,6 +262,23 @@ Routes utilisées :
   - (4) L'onglet **classement admin** se rafraîchit, bien que l'auteur soit le même
     compte (le classement n'ignore rien, R6bis) ; l'onglet **saisie admin** ne
     déclenche pas de relecture supplémentaire ✅
+
+### CT-15 — Une saisie d'un autre club ne relit pas l'écran du coach (couvre : R8bis, R4)
+
+- **Rôles** : `coach@test.local` (Club A, observateur) + `coachb@test.local`
+  (Club B, écrivain) + `coach2@test.local` (Club A, écrivain).
+- **Pré-condition** : rencontre en ③ ; DevTools → **Network** (filtre `_rsc`) sur
+  la fenêtre du coach A.
+- **Étapes** :
+  1. Fenêtre **Coach A** : saisie coach ouverte (Bob Alpha).
+  2. Fenêtre **Coach B** : saisir **B1 → Échec** pour **Cléo** (Club B).
+  3. Fenêtre **Coach A2** : saisir une issue pour **Ana** (Club A).
+  4. Fenêtre **Juge** : saisir un temps pour **Ana**.
+- **Résultat attendu** :
+  - (2) **aucune** relecture `resultats?_rsc=…` chez le coach A (grimpeur non
+    affiché, R8bis) ✅
+  - (3) l'écran du coach A **se relit** (grimpeur affiché, autre compte) ✅
+  - (4) l'écran du coach A **se relit** (vitesse et points d'un grimpeur affiché) ✅
 
 ## Registre d'exécution
 

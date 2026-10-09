@@ -18,8 +18,10 @@ import type {
   SaisieVoie,
   VoieOption,
 } from '@/lib/coach/resultats'
+import type { ScoreGrimpeur } from '@/lib/resultats/reponse-enregistrement'
 import {
   appliquerSaisieOptimiste,
+  appliquerScore,
   cleSaisie,
   type SaisieOptimiste,
 } from '@/lib/saisie/saisie-optimiste'
@@ -154,11 +156,29 @@ export function PanneauResultats({ saisie: saisieServeur }: { saisie: SaisieRenc
   // compteurs en tiennent compte ; chacune reste affichée jusqu'à la réponse de
   // SA requête, puis la valeur du serveur fait foi.
   const [enAttente, setEnAttente] = useState<{ id: number; s: SaisieOptimiste }[]>([])
+  // Saisies CONFIRMÉES par l'enregistrement, avec le score renvoyé (spec #6 R20,
+  // rév. 2026-10-09) : l'écran n'est plus relu en entier après une saisie ; elles
+  // restent affichées jusqu'à la prochaine lecture de l'écran (temps réel,
+  // navigation), qui les contient alors.
+  const [confirmees, setConfirmees] = useState<{ s: SaisieOptimiste; score: ScoreGrimpeur }[]>([])
+  const [serveurVu, setServeurVu] = useState(saisieServeur)
+  if (serveurVu !== saisieServeur) {
+    setServeurVu(saisieServeur)
+    setConfirmees([])
+  }
   const prochainId = useRef(0)
-  const saisie = useMemo(
-    () => enAttente.reduce((acc, e) => appliquerSaisieOptimiste(acc, e.s), saisieServeur),
-    [saisieServeur, enAttente],
-  )
+  const saisie = useMemo(() => {
+    const confirme = confirmees.reduce(
+      (acc, c) =>
+        appliquerScore(
+          appliquerSaisieOptimiste(acc, c.s, { enAttente: false }),
+          c.s.grimpeurId,
+          c.score,
+        ),
+      saisieServeur,
+    )
+    return enAttente.reduce((acc, e) => appliquerSaisieOptimiste(acc, e.s), confirme)
+  }, [saisieServeur, confirmees, enAttente])
   const [rejets, setRejets] = useState<Record<string, string>>({})
   const [confirmes, setConfirmes] = useState<Record<string, true>>({})
 
@@ -176,9 +196,14 @@ export function PanneauResultats({ saisie: saisieServeur }: { saisie: SaisieRenc
       } catch {
         reponse = { erreur: 'La saisie n’a pas pu être envoyée. Réessayez.' }
       }
-      // Retrait dans une transition : appliqué avec les données relues par
-      // l'action, sans retour visible à l'ancienne valeur.
-      startTransition(() => setEnAttente((l) => l.filter((e) => e.id !== id)))
+      // Confirmée → passe dans les saisies confirmées (avec le score), dans la
+      // même mise à jour que son retrait de l'attente : aucun retour visible à
+      // l'ancienne valeur.
+      const score = reponse?.score
+      startTransition(() => {
+        setEnAttente((l) => l.filter((e) => e.id !== id))
+        if (!reponse?.erreur && score) setConfirmees((c) => [...c, { s, score }])
+      })
       if (reponse?.erreur) {
         const motif = reponse.erreur
         setRejets((r) => ({ ...r, [cle]: motif }))
