@@ -93,7 +93,7 @@ const pastille = (l: Locator) => l.locator('span.rounded-full')
  * avant de lire la base ou de quitter la page.
  */
 async function enregistre(page: Page): Promise<void> {
-  await expect(page.getByText('⏳ En attente')).toHaveCount(0, { timeout: 10_000 })
+  await expect(page.locator('[data-en-attente]')).toHaveCount(0, { timeout: 10_000 })
 }
 
 /** Libellés des boutons d'issue d'une ligne. */

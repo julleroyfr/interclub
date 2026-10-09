@@ -94,7 +94,7 @@ test.describe('Cahier 29 — saisie hors ligne, lot 2 (spec #17)', () => {
     expect(issueEnBase(VOIE_T1, GRIMPEURS.bob)).toBe('(aucun)')
 
     await context.setOffline(false)
-    await expect(page.getByText('⏳ En attente')).toHaveCount(0, { timeout: 15_000 })
+    await expect(page.locator('[data-en-attente]')).toHaveCount(0, { timeout: 15_000 })
     expect(issueEnBase(VOIE_T1, GRIMPEURS.bob)).toBe('top')
     expect(issueEnBase(VOIE_T2, GRIMPEURS.bob)).toBe('echec')
     await expect(page.getByText(/saisies? en attente/)).toHaveCount(0)
@@ -132,7 +132,7 @@ test.describe('Cahier 29 — saisie hors ligne, lot 2 (spec #17)', () => {
     // Serveur de nouveau joignable : la file repart (retour du réseau, R15).
     await page.unroute('**/coach/rencontres/**/resultats')
     await page.evaluate(() => window.dispatchEvent(new Event('online')))
-    await expect(page.getByText('⏳ En attente')).toHaveCount(0, { timeout: 15_000 })
+    await expect(page.locator('[data-en-attente]')).toHaveCount(0, { timeout: 15_000 })
     expect(issueEnBase(VOIE_T1, GRIMPEURS.bob)).toBe('echec')
   })
 
@@ -156,7 +156,7 @@ test.describe('Cahier 29 — saisie hors ligne, lot 2 (spec #17)', () => {
     )
 
     await context.setOffline(false)
-    await expect(page.getByText('⏳ En attente')).toHaveCount(0, { timeout: 15_000 })
+    await expect(page.locator('[data-en-attente]')).toHaveCount(0, { timeout: 15_000 })
     // Refus définitif : la base garde la correction, l'écran signale le rejet.
     expect(issueEnBase(VOIE_T1, GRIMPEURS.bob)).toBe('top')
     await expect(ligneVoie(page, 'T1').getByText('⚠ Rejetée')).toBeVisible()
@@ -170,6 +170,43 @@ test.describe('Cahier 29 — saisie hors ligne, lot 2 (spec #17)', () => {
     await expect(liste).toContainText('Une saisie plus récente existe déjà.')
     await liste.getByRole('button', { name: 'Retirer de la liste' }).click()
     await expect(liste).toContainText('Aucune saisie.')
+  })
+
+  test('CT-15 · en ligne : ni bandeau ni mention pour un envoi court, au-delà de 2 s oui (R23, R24)', async ({
+    page,
+  }) => {
+    purgerResultatsPilote()
+    await commeCoach(page)
+    await ouvrirBob(page)
+    const bandeau = page.getByText(/Envoi en cours/)
+    const mentions = page.getByText(/⏳ En attente|✓ Enregistré/)
+
+    // Envoi normal : ni bandeau (R24) ni mention sur la ligne (R23).
+    const vus: string[] = []
+    const guetter = (l: typeof bandeau, nom: string) =>
+      l.first().waitFor({ state: 'visible', timeout: 4_000 }).then(
+        () => vus.push(nom),
+        () => undefined,
+      )
+    const guetteurs = Promise.all([guetter(bandeau, 'bandeau'), guetter(mentions, 'mention')])
+    await ligneVoie(page, 'T1').getByRole('button', { name: 'Top' }).click()
+    await expect(page.locator('[data-en-attente]')).toHaveCount(0, { timeout: 10_000 })
+    await guetteurs
+    expect(vus).toEqual([])
+
+    // Envoi ralenti (3,5 s) : le bandeau apparaît après 2 s, puis disparaît.
+    await page.route('**/coach/rencontres/**/resultats', async (route) => {
+      if (route.request().method() === 'POST') await new Promise((r) => setTimeout(r, 3_500))
+      await route.continue()
+    })
+    const debut = Date.now()
+    await ligneVoie(page, 'T2').getByRole('button', { name: 'Échec' }).click()
+    await expect(bandeau).toBeVisible({ timeout: 5_000 })
+    expect(Date.now() - debut).toBeGreaterThanOrEqual(1_900)
+    await expect(ligneVoie(page, 'T2').getByText('⏳ En attente')).toBeVisible()
+    await expect(ligneVoie(page, 'T2').getByText('✓ Enregistré')).toBeVisible({ timeout: 10_000 })
+    await expect(bandeau).toHaveCount(0)
+    await page.unroute('**/coach/rencontres/**/resultats')
   })
 
   test('CT-10 · juge hors ligne : résultat conservé puis envoyé (R12, R15, spec #10 R14bis)', async ({
@@ -190,7 +227,7 @@ test.describe('Cahier 29 — saisie hors ligne, lot 2 (spec #17)', () => {
     await expect(page.getByRole('status')).toContainText('Hors ligne · 1 saisie en attente')
 
     await context.setOffline(false)
-    await expect(page.getByText('⏳ En attente')).toHaveCount(0, { timeout: 15_000 })
+    await expect(page.locator('[data-en-attente]')).toHaveCount(0, { timeout: 15_000 })
     expect(
       execSql(
         `select issue || '|' || temps from interclub.temps_vitesse where grimpeur_id = '${GRIMPEURS.bob}'`,

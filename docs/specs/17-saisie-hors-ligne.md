@@ -2,7 +2,11 @@
 
 - **Statut** : validée (le 2026-10-07) — rédigée le 2026-10-03 ; points à valider
   tranchés le 2026-10-07 (déploiement pendant la ③ : perte acceptée, R21 ; retrait
-  concurrent sans trace : accepté, ressaisie si besoin)
+  concurrent sans trace : accepté, ressaisie si besoin) ; **rév. 2026-10-09
+  (validée le 2026-10-09)** : **R24** — en ligne, l'envoi en cours n'est signalé
+  par le bandeau que s'il dure **plus de 2 secondes** (un envoi normal le faisait
+  clignoter à chaque saisie) ; **R23** — même règle pour l'état affiché sur chaque
+  cible (« en attente », « enregistré »)
 - **Sources** :
   - **Maquette validée** (le 2026-10-07) : [`docs/maquettes/saisie-hors-ligne.html`](../maquettes/saisie-hors-ligne.html)
     (bandeau réseau, états des saisies, saisies non envoyées, juge sur tablette).
@@ -193,10 +197,21 @@ l'heure d'arrivée au serveur, qui départage deux écritures sur un même résu
   l'écran revient à la **valeur du serveur** pour cette cible.
 - **R23.** Chaque cible saisie montre son état — **en attente**, **synchronisée**
   ou **rejetée** — de façon distincte et lisible (pas uniquement par la couleur).
+  *(Rév. 2026-10-09.)* Les états **en attente** et **synchronisée** ne sont
+  signalés que si l'enregistrement dure **plus de 2 secondes** : la mention « en
+  attente » (et la pastille en pointillé) apparaît au-delà de 2 secondes
+  d'attente, et la mention « enregistré » n'est montrée qu'à la fin d'une telle
+  attente. Un enregistrement plus court n'affiche que la valeur saisie. L'état
+  **rejetée** est signalé **immédiatement** (R26).
 - **R24.** Un **bandeau** est affiché dès que l'appareil est **hors ligne** ou
   que la file contient au moins une saisie **en attente**. Il indique l'état du
   réseau et le **nombre de saisies en attente** (ex. *« Hors ligne · 3 saisies en
   attente »*). Il disparaît quand l'appareil est en ligne et la file vide.
+  *(Rév. 2026-10-09.)* Appareil **en ligne** : l'envoi en cours n'est signalé par
+  le bandeau que si des saisies attendent depuis **plus de 2 secondes** sans
+  interruption ; un envoi plus court ne l'affiche pas (l'état de chaque saisie
+  reste visible sur sa cible, R23). Le bandeau reste **immédiat** hors ligne, en
+  cas de session absente (R25) et de saisie rejetée (R26).
 - **R25.** En cas d'absence de session valide (R19), le bandeau l'indique et
   propose l'action attendue (rescanner le QR ou se reconnecter).
 - **R26.** Les saisies **rejetées** sont regroupées dans une **liste consultable**

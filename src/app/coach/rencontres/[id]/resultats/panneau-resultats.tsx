@@ -5,7 +5,9 @@ import { createContext, type FormEvent, use, useMemo, useState } from 'react'
 
 import { BandeauSynchro } from '@/composants/saisie-hors-ligne/BandeauSynchro'
 import { ListeSaisies, type ResumeSaisie } from '@/composants/saisie-hors-ligne/ListeSaisies'
+import { indicateurCible } from '@/composants/saisie-hors-ligne/etat-cible'
 import { useFileSaisies } from '@/composants/saisie-hors-ligne/useFileSaisies'
+import { useSuiviEnvoi } from '@/composants/saisie-hors-ligne/useSuiviEnvoi'
 import type { IssueEnvoi } from '@/domaine/hors-ligne'
 import { affichageVoiesBlocs, issuesVoieSaisissables, type IssueVoie } from '@/domaine/resultat'
 import { formaterTempsVitesse } from '@/domaine/vitesse'
@@ -79,16 +81,35 @@ async function envoyerSaisie(
   return { issue, heureServeur: r.heureServeur }
 }
 
-/** État d'envoi d'une cible (R23) : icône ET texte, pas seulement une couleur. */
-function EtatEnvoi({ cle, enAttente }: { cle: string; enAttente?: boolean }) {
+/**
+ * État d'envoi d'une cible (R23, rév. 2026-10-09) : « en attente » et
+ * « enregistré » seulement si l'enregistrement dure plus de 2 s ; « rejetée »
+ * immédiat. Icône ET texte, pas seulement une couleur.
+ */
+function EtatEnvoi({
+  cle,
+  enAttente,
+  suivi,
+}: {
+  cle: string
+  enAttente?: boolean
+  suivi: ReturnType<typeof useSuiviEnvoi>
+}) {
   const { rejets, confirmes } = useEnvoi()
-  if (enAttente) {
+  const indicateur = indicateurCible({
+    enAttente: !!enAttente,
+    attenteLongue: suivi.attenteLongue,
+    enregistreApresAttente: suivi.enregistreApresAttente,
+    confirme: !!confirmes[cle],
+    rejete: !!rejets[cle],
+  })
+  if (indicateur === 'attente') {
     return <span className="text-[10.5px] font-bold uppercase tracking-wide text-texte-attenue">⏳ En attente</span>
   }
-  if (rejets[cle]) {
+  if (indicateur === 'rejet') {
     return <span className="text-[10.5px] font-bold uppercase tracking-wide text-danger">⚠ Rejetée</span>
   }
-  if (confirmes[cle]) {
+  if (indicateur === 'enregistre') {
     return <span className="text-[10.5px] font-bold uppercase tracking-wide text-secondaire">✓ Enregistré</span>
   }
   return null
@@ -261,7 +282,7 @@ export function PanneauResultats({
 
   return (
     <ContexteEnvoi value={{ surSoumission, rejets, confirmes }}>
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 pb-20">
       <BandeauSynchro
         enLigne={fileSaisies.enLigne}
         nbEnAttente={fileSaisies.nbEnAttente}
@@ -616,18 +637,19 @@ function LigneVoie({
   const cible = { grimpeurId: grimpeur.grimpeurId, voieDifficulteId: voie.voieDifficulteId }
   const cle = cleSaisie({ type: 'voie', ...cible, issue: 'top' })
   const nomGrimpeur = `${grimpeur.prenom} ${grimpeur.nom}`
+  const suivi = useSuiviEnvoi(!!voie.enAttente)
 
   return (
-    <li className="flex flex-col gap-2 py-2">
+    <li className="flex flex-col gap-2 py-2" data-en-attente={voie.enAttente ? '' : undefined}>
       <div className="flex items-center gap-2">
         <span className="min-w-9 font-bold text-texte-fort">{voie.niveau}</span>
         <span className="text-[11px] text-texte-doux">{voie.cotation}</span>
         <span className="ml-auto flex items-center gap-2">
-          <EtatEnvoi cle={cle} enAttente={voie.enAttente} />
+          <EtatEnvoi cle={cle} enAttente={voie.enAttente} suivi={suivi} />
           {voie.issue && (
             <span
               className={`rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${classeIssue(voie.issue)} ${
-                voie.enAttente ? 'border-dashed' : ''
+                voie.enAttente && suivi.attenteLongue ? 'border-dashed' : ''
               }`}
             >
               {LIBELLE_ISSUE[voie.issue]}
@@ -832,17 +854,19 @@ function LigneBloc({
       actif ? actifClasse : 'border-bordure bg-black/20 text-texte-attenue hover:bg-surface-forte'
     }`
 
+  const suivi = useSuiviEnvoi(!!bloc.enAttente)
+
   return (
-    <li className="flex flex-col gap-2 py-2">
+    <li className="flex flex-col gap-2 py-2" data-en-attente={bloc.enAttente ? '' : undefined}>
       <div className="flex items-center gap-2">
         <span className="min-w-9 font-bold text-texte-fort">{bloc.code}</span>
         <span className="ml-auto flex items-center gap-2">
-          <EtatEnvoi cle={cle} enAttente={bloc.enAttente} />
+          <EtatEnvoi cle={cle} enAttente={bloc.enAttente} suivi={suivi} />
           {libelleCourant && (
             <span
               className={`rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${classeIssue(
                 bloc.issue === 'palier' ? 'palier' : bloc.issue,
-              )} ${bloc.enAttente ? 'border-dashed' : ''}`}
+              )} ${bloc.enAttente && suivi.attenteLongue ? 'border-dashed' : ''}`}
             >
               {libelleCourant}
             </span>
