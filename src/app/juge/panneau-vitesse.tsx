@@ -229,7 +229,7 @@ export function PanneauVitesse({
 
   return (
     <ContexteEnvoi value={{ surSoumission, messages, confirmes }}>
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-5 pb-20">
       <BandeauSynchro
         enLigne={fileSaisies.enLigne}
         nbEnAttente={fileSaisies.nbEnAttente}

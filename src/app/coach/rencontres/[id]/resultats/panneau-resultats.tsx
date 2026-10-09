@@ -261,7 +261,7 @@ export function PanneauResultats({
 
   return (
     <ContexteEnvoi value={{ surSoumission, rejets, confirmes }}>
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 pb-20">
       <BandeauSynchro
         enLigne={fileSaisies.enLigne}
         nbEnAttente={fileSaisies.nbEnAttente}

@@ -6,6 +6,8 @@ import type { ReactNode } from 'react'
  * Bandeau d'état de la file des saisies (spec #17 R24/R25) : affiché dès que
  * l'appareil est hors ligne, qu'une saisie attend, qu'une session manque ou
  * qu'une saisie a été rejetée. Icône ET texte (pas seulement une couleur, R23).
+ * FLOTTANT en bas de l'écran : son apparition (brève à chaque saisie quand le
+ * réseau est bon) ne décale jamais le contenu ni les boutons de saisie.
  */
 export function BandeauSynchro({
   enLigne,
@@ -55,6 +57,8 @@ export function BandeauSynchro({
   }
 
   return (
+    <div className="pointer-events-none fixed inset-x-0 bottom-3 z-50 flex justify-center px-4">
+    <div className="pointer-events-auto w-full max-w-xl rounded-xl bg-fond shadow-lg shadow-black/60">
     <div
       role={role}
       className={`flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border px-4 py-2.5 text-sm font-semibold ${style}`}
@@ -76,6 +80,8 @@ export function BandeauSynchro({
           Voir
         </button>
       )}
+    </div>
+    </div>
     </div>
   )
 }
