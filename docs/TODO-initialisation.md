@@ -68,10 +68,15 @@ Tâches identifiées mais reportées, à traiter quand l'occasion se présente.
 | ID | Tâche | Origine | Notes |
 | ---- | ------- | --------- | ------- |
 | D3 | **Cache/optimisation des bascules d'écran — saisie résultats (#6)** : navigation grimpeurs ‹/› (R25) et bascule par équipe / alphabétique (R24) | demandé 2026-09-08 | Éviter de recharger les données à chaque bascule (stratégie de cache). Point technique hors règles de spec. |
-| D7 | **Création d'un compte admin depuis l'IHM d'administration** : l'admin crée directement un nouveau compte admin (e-mail + mot de passe) | demandé 2026-10-03 | Aujourd'hui `/admin/mapping` attribue seulement le rôle `admin` à un compte **déjà existant** (spec #2 R4). Pour créer le compte, il faut la clé service, côté serveur (cf. ADR 0002). Révision spec #2 à valider (+ double saisie du mot de passe comme D5), puis tests → code → cahier. |
 
 ## ✅ Fait (archive — non rappelé)
 
+- **D7 — Création d'un compte admin depuis l'IHM** (2026-10-09) : sous la forme
+  d'une **invitation administrateur** (décision produit du 2026-10-09) — QR/URL
+  à usage unique, valable 15 minutes, généré sur `/admin/mapping` (spec #2
+  R35–R40). Domaine `invitation-admin` (10 tests), migration
+  `202610091300_invitation_admin` (**à appliquer à la main en recette**),
+  cahier 30 + E2E `invitation-admin.spec.ts` et cahier 28 CT-05b.
 - **D6 — Temps réel de l'écran d'engagement coach** (2026-10-09) : spec #11
   rév. (R1/R3/R6bis/R7) ; tables `pret`, `equipe`, `composition` publiées
   (migration `202610091200_realtime_engagement`, appliquée en recette le

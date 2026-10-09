@@ -180,6 +180,21 @@ test.describe('Cahier 28 — sécurité en base, appels PostgREST directs', () =
     }
   })
 
+  test('CT-05b — finalisation d’inscription admin refusée hors serveur (spec #2 R36–R38)', async ({
+    request,
+  }) => {
+    const corps = {
+      p_valeur: '00000000-0000-0000-0000-000000000000',
+      p_utilisateur_id: '00000000-0000-0000-0000-000000000000',
+    }
+    // Même un admin connecté ne l'exécute pas : seul le serveur (service_role)
+    // consomme une invitation administrateur.
+    for (const jeton of [undefined, jetonCoach, jetonAdmin]) {
+      const rep = await appelerRpc(request, 'finaliser_inscription_admin', corps, jeton)
+      await attendrePermissionRefusee(rep, 'finaliser_inscription_admin')
+    }
+  })
+
   test('CT-06 — une fonction future naît fermée (privilèges par défaut)', () => {
     // La fonction est créée par `postgres` (comme une migration) puis annulée :
     // l'exception finale fait reculer le bloc DO, aucune trace en base.

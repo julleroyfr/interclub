@@ -18,6 +18,10 @@ const GARDES = ['exigerLectureAdmin(', 'exigerLectureAdminOuCoach(', 'exigerLect
 const EXCEPTIONS: Record<string, string> = {
   resoudreInvitation: "accès par le secret de l'invitation, page d'inscription publique (spec #2 R26–R33)",
   inscrireCoach: "inscription par le secret de l'invitation, avant toute session (spec #2 R30–R33)",
+  resoudreInvitationAdmin:
+    "accès par le secret de l'invitation administrateur, page d'inscription publique (spec #2 R35–R39)",
+  inscrireAdmin:
+    "inscription par le secret de l'invitation administrateur, avant toute session (spec #2 R36–R39)",
   exportDisponible: 'autorisation par le demandeur résolu côté serveur (`peutExporter`, spec #15 R1–R5)',
   reponseExportPdf: 'autorisation par le demandeur résolu côté serveur (`peutExporter`, spec #15 R1–R5)',
 }
