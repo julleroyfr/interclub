@@ -7,6 +7,7 @@ import {
   Etiquette,
   TitreSection,
 } from '@/composants'
+import { libellePhase } from '@/domaine/rencontre'
 import { exigerUtilisateur } from '@/lib/auth/session'
 import { liensCoach } from '@/lib/coach/navigation'
 import { listerJetonsActifs, listerRencontresDuClub } from '@/lib/jetons/jetons'
@@ -14,12 +15,6 @@ import { listerJetonsActifs, listerRencontresDuClub } from '@/lib/jetons/jetons'
 import { AfficheurJeton } from '../../admin/jetons/afficheur-jeton'
 
 export const metadata: Metadata = { title: 'Mes jetons QR — Interclub' }
-
-const libellePhase: Record<string, string> = {
-  pre_competition: 'Préparation',
-  competition: 'Compétition ②',
-  resultats_publics: 'Résultats',
-}
 
 export default async function PageJetonsCoach({
   searchParams,
@@ -67,7 +62,7 @@ export default async function PageJetonsCoach({
                   <div className="flex items-center justify-between">
                     <TitreSection>{r.date}</TitreSection>
                     <Etiquette variante="neutre">
-                      {libellePhase[r.phase] ?? r.phase}
+                      {libellePhase(r.phase)}
                     </Etiquette>
                   </div>
                   <AfficheurJeton

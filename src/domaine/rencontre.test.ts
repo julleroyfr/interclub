@@ -10,6 +10,7 @@ import {
   estEligibleCategorie,
   estPhaseJourJ,
   labelSaison,
+  libellePhase,
   normaliserSaisieRencontre,
   peutEntrerEnPhase,
   phasePrecedente,
@@ -306,5 +307,19 @@ describe('peutTransiter (spec #3 R17)', () => {
 
   it('le jour J, le retour ③ → ① saute la ② : refusé (R17)', () => {
     expect(peutTransiter('competition', 'pre_competition', JOUR_J, JOUR_J)).toBe(false)
+  })
+})
+
+describe('libellePhase — libellé affiché d’une phase (spec #1 R5)', () => {
+  it('donne le libellé du cycle de vie pour chacune des cinq phases', () => {
+    expect(libellePhase('pre_competition')).toBe('Pré-compétition')
+    expect(libellePhase('preparation')).toBe('Préparation jour J')
+    expect(libellePhase('competition')).toBe('Compétition')
+    expect(libellePhase('cloture')).toBe('Clôture')
+    expect(libellePhase('resultats_publics')).toBe('Résultats publics')
+  })
+
+  it('renvoie la valeur brute d’une phase inconnue', () => {
+    expect(libellePhase('inconnue')).toBe('inconnue')
   })
 })

@@ -6,8 +6,9 @@ import {
   Coquille,
   EnTetePage,
   Etiquette,
-  TitreSection,
+  TitreSection,
 } from '@/composants'
+import { libellePhase } from '@/domaine/rencontre'
 import { liensAdmin } from '@/lib/admin/navigation'
 import { exigerAdmin } from '@/lib/auth/session'
 import {
@@ -20,12 +21,6 @@ import {
 import { AfficheurJeton } from './afficheur-jeton'
 
 export const metadata: Metadata = { title: 'Jetons QR — Interclub' }
-
-const libellePhase: Record<string, string> = {
-  pre_competition: 'Préparation',
-  competition: 'Compétition ②',
-  resultats_publics: 'Résultats',
-}
 
 export default async function PageJetonsAdmin({
   searchParams,
@@ -68,7 +63,7 @@ export default async function PageJetonsAdmin({
                         {r.clubPorteurNom ? ` · ${r.clubPorteurNom}` : ''}
                       </span>
                       <Etiquette variante="neutre">
-                        {libellePhase[r.phase] ?? r.phase}
+                        {libellePhase(r.phase)}
                       </Etiquette>
                     </Carte>
                   </Link>
