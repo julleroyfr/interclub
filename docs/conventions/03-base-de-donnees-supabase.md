@@ -118,6 +118,8 @@ Processus pour tout changement de schéma :
 5. **Consigner l'application** : dans `supabase/migrations/JOURNAL.md`
    (date + auteur + environnement) **et** via la table `interclub.version`.
 6. **Valider** via le cahier de test sur la base réelle (données, contraintes, RLS).
+7. **Archiver** une fois la migration appliquée en recette **et** en prod
+   (cf. §5.3).
 
 Règles :
 
@@ -135,6 +137,28 @@ Règles :
   2026-10-03 (`rechercher_grimpeurs`), détecté depuis par `npm run db:verifier`.
 - L'application vers recette/prod passe **exclusivement** par le SQL Editor à la
   main. Aucune commande CLI ne pousse vers le distant.
+
+### 5.3 Archivage des migrations passées en prod
+
+Une migration appliquée en recette **et** en prod (colonnes du `JOURNAL.md`
+renseignées) est déplacée dans `supabase/migrations/archive/` (`git mv`, fichier
+**inchangé**). La racine de `supabase/migrations/` ne contient donc que les
+migrations encore à appliquer quelque part.
+
+La CLI Supabase ne lit pas les sous-dossiers : pour que `supabase db reset`
+reconstruise toujours le schéma complet en local, le fichier
+`supabase/migrations/000000000000_base_archivee.sql` concatène les migrations
+archivées dans l'ordre. Il est **généré**, pour le **local uniquement**, et ne
+s'applique **jamais** en recette ni en prod.
+
+Après chaque archivage :
+
+1. `npm run db:consolider` (`scripts/consolider-archive.sh`) régénère le
+   fichier consolidé ;
+2. `npm run db:reset` vérifie que le schéma se reconstruit.
+
+Le `JOURNAL.md` reste à la racine et garde l'historique de toutes les
+migrations, archivées comprises.
 
 ## 5bis. Table de suivi `interclub.version`
 

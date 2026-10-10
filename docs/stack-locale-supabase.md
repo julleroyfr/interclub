@@ -68,7 +68,9 @@ npm run db:reset   # = supabase db reset + npm run db:verifier
 `db reset` :
 
 1. recrée une base **vierge**,
-2. rejoue **toutes** les migrations de `supabase/migrations/` dans l'ordre,
+2. rejoue **toutes** les migrations de `supabase/migrations/` dans l'ordre (les
+   migrations archivées via le fichier généré `000000000000_base_archivee.sql`,
+   cf. [convention 03 §5.3](conventions/03-base-de-donnees-supabase.md)),
 3. charge les seeds branchés dans `config.toml` (`[db.seed]`), s'il y en a.
 
 Si une migration n'est pas rejouable (dépendance manquante, ordre, SQL non
