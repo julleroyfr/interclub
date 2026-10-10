@@ -8,7 +8,7 @@ Plan de traitement des constats de
 Statuts : ✅ fait · 🔄 en cours · ⏳ en attente (à faire) · ❓ décision requise ·
 🚫 bloqué (dépendance non levée) · ⏸ reporté
 
-Dernière mise à jour : 2026-10-09.
+Dernière mise à jour : 2026-10-10.
 
 ## Principes
 
@@ -55,7 +55,7 @@ flowchart TD
 
 | Lot | Constats | Vagues avant → cible | Branche | Statut |
 | --- | --- | --- | --- | --- |
-| 0 | — | — | `feature/perf-mesure` | ⏳ |
+| 0 | — | — | `feature/perf-mesure` | ✅ |
 | 1 | P1, P12, J1 | classement 8 → 2 | `feature/perf-classement` | ⏳ |
 | 2 | P2, P3, J2 | contrôle 8 → 2 ; coche 6 → 3 | `feature/perf-controle` | ⏳ |
 | 3 | P5, P6 | engagement 5 → 2 ; actions −1 | `feature/perf-engagement-coach` | ⏳ |
@@ -65,20 +65,43 @@ flowchart TD
 | 7 | A1–A5 | 3–5 → 2 | `feature/rpc-ecritures-atomiques` | ⏳ |
 | 8 | T1 | −1 sur **toutes** les requêtes | — | ⏸ reportée |
 
-## Lot 0 — Mesure de référence — ⏳
+## Lot 0 — Mesure de référence — ✅
 
 Rendre le nombre d'appels et de vagues **observable** : c'est ce qui permettra
 de vérifier chaque lot.
 
-- [ ] ⏳ Traçage optionnel des appels Supabase côté serveur : `fetch` personnalisé
-  (`global.fetch`) dans `createClient` et `createAdminClient`, activé par une
-  variable d'environnement (`SUPABASE_TRACE=1`). Il journalise la méthode, la
-  table ou la RPC, l'heure de début et la durée. Inactif par défaut, jamais en
-  production.
-- [ ] ⏳ Relever la référence en local (`npm run dev`, base au seed) pour chaque
-  écran et action marqués P/J dans l'analyse. Les résultats sont consignés dans
-  la section « Mesures » ci-dessous.
-- [ ] ⏳ Typecheck, lint, `lint:md`.
+- [x] ✅ Traçage optionnel des appels Supabase côté serveur
+  (`src/lib/supabase/trace.ts`, testé dans `trace.test.ts`) : `fetch`
+  personnalisé (`global.fetch`) dans `createClient` et `createAdminClient`,
+  activé par `SUPABASE_TRACE=1`. Une ligne par appel (séquence, vague, rang,
+  décalage, durée, statut, table ou RPC), puis un résumé par séquence. Inactif
+  par défaut, jamais en production (`NODE_ENV=production`).
+- [x] ✅ Référence relevée en local le 2026-10-10 (base au seed) : voir
+  « Mesures » ci-dessous.
+- [x] ✅ Typecheck, lint, Vitest, `lint:md`.
+
+### Mode opératoire
+
+1. Base locale au seed, puis `SUPABASE_TRACE=1 npm run dev` (un seul `next dev`
+   par dossier : arrêter celui qui tourne).
+2. Se connecter, attendre 1 s, puis ouvrir **un seul écran à la fois**, en
+   laissant au moins 1 s entre deux écrans. Mesurer la **deuxième** visite (la
+   première peut inclure la compilation de la route).
+3. Lire les lignes `[supabase]` du terminal :
+
+   ```text
+   [supabase] #13 v2 a2 +7ms 6ms 200 GET rencontre
+   [supabase] #13 terminée : 8 vagues, 16 appels, 113 ms
+   ```
+
+   `#13` est la séquence (une requête), `v2` la vague, `a2` le rang de l'appel.
+
+Limites de l'heuristique : une vague est un ensemble d'appels lancés pendant que
+d'autres sont en vol. Deux chaînes indépendantes lancées en parallèle (par
+exemple les deux catégories du gabarit) peuvent donc se chevaucher et compter
+moins de vagues que leur chemin critique. Une Server Action compte l'action, le
+re-rendu (`revalidatePath`) et, le cas échéant, le rafraîchissement déclenché
+par le temps réel, dans une même séquence ou dans la suivante.
 
 ## Lot 1 — Classement (P1, P12, J1) — ⏳
 
@@ -225,22 +248,43 @@ fenêtre sur les loaders `service_role`, dont la seule garde est côté Next
 
 ## Mesures
 
-À remplir au lot 0, puis après chaque lot (base locale au seed ; vagues / appels).
+Relevées après chaque lot sur la base locale au seed, en vagues / appels, vague 0
+(`compte`) comprise. La référence a été mesurée le 2026-10-10 avec le traceur du
+lot 0 ; l'estimation tirée de la lecture du code figure entre parenthèses.
 
 | Écran ou action | Référence | Après | Lot |
 | --- | --- | --- | --- |
-| Classement admin | 8 / ~15 | | 1 |
-| Classement coach | 8 / ~15 | | 1 |
-| Affichage | 7 / ~13 | | 1 |
-| PDF classement | 8 / ~15 | | 1 |
-| Contrôle | 8 / ~14 + N | | 2 |
-| `basculerControle` | 6 / 6 | | 2 |
-| Engagement coach | 5 / 8 | | 3 |
-| `ajouterGrimpeurEquipe` | 5 / 8 | | 3 |
-| Tableau de bord de rencontre (④/⑤) | 7 / ~28 | | 4 |
-| `changerPhaseRencontre` ③ → ④ | ≤ 10 | | 5 |
-| `/coach/jetons` | 3 / 2 + N | | 6 |
-| `/admin/gabarit` | 4 / ~11 | | 6 |
+| Classement admin | 8 / 16 (8 / ~15) | | 1 |
+| Classement coach | 8 / 17 (8 / ~15) | | 1 |
+| Affichage | 7 / 14 (7 / ~13) | | 1 |
+| PDF classement admin (⑤) | 9 / 17 (8 / ~15) | | 1 |
+| PDF classement coach (⑤) | 10 / 20 (8 / ~15) | | 1 |
+| Contrôle (④), 0 auteur · 1 auteur | 6 / 11 · 8 / 14 (8 / ~14 + N) | | 2 |
+| `basculerControle` : action · + re-rendu · + écho temps réel | 6 / 6 · 14 / 16 · 22 / 32 | | 2 |
+| Engagement coach | 4 / 8 (5 / 8) | | 3 |
+| `ajouterGrimpeurEquipe` : action · + re-rendu · + écho temps réel | 5 / 8 · 9 / 17 · 13 / 25 | | 3 |
+| Tableau de bord de rencontre ①–③ · ④/⑤ | 2 / 18 · 3 / 27 (3 · 7 / ~28) | | 4 |
+| `changerPhaseRencontre` ③ → ④ : action · + re-rendu | 9 / 11 · 13 / 39 (≤ 10) | | 5 |
+| `/coach/jetons` (2 rencontres) | 3 / 4 (3 / 2 + N) | | 6 |
+| `/admin/gabarit` | 2–3 / 13 (4 / ~11) | | 6 |
+| `/admin/rencontres/[id]/resultats` | 3 / 12 (3 / ~12) | | 6 |
+| `/admin/jetons?rencontre=` | 3 / 5 (3 / 5) | | 6 |
+| `/admin` · `/coach` | 2 / 5 · 2 / 5 | | — |
 
-Les valeurs de référence sont **estimées à la lecture du code** ; le lot 0 les
-remplace par des mesures.
+Points relevés par la mesure :
+
+- **Écho temps réel** : après `basculerControle` et `ajouterGrimpeurEquipe`,
+  l'écran de l'auteur est rendu **deux fois**. Le premier rendu vient du
+  `revalidatePath` de l'action, le second du `router.refresh()` de `TempsReel`
+  sur l'évènement que l'auteur vient lui-même de provoquer. Le coût du loader
+  est donc payé deux fois par clic. `TempsReel` sait déjà ignorer l'écho de ses
+  propres écritures (`ignorerMesEcritures`, spec #11 R6bis), mais seulement sur
+  les écrans de saisie. L'étendre au contrôle et à l'engagement **change la
+  spec #11** : décision à prendre (validation explicite) avant les lots 2 et 3.
+- Le PDF coûte **1 à 2 vagues de plus** que l'écran de classement (P12) : 9 et
+  10 vagues au lieu de 8.
+- Le tableau de bord ④/⑤ ne fait que **3 vagues**, mais **27 appels** : P4 porte
+  surtout sur le volume d'appels, pas sur les vagues.
+- Les durées locales (5 à 50 ms par appel) ne sont pas représentatives. En
+  recette, chaque vague coûte 150 à 1000 ms (Ohio ↔ Dublin) ; c'est le nombre de
+  vagues qui compte.

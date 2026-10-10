@@ -1,6 +1,8 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
+import { fetchSupabase } from './trace'
+
 export async function createClient() {
   const cookieStore = await cookies()
 
@@ -11,6 +13,8 @@ export async function createClient() {
       // Le métier vit dans le schéma `interclub` (convention 03 §2bis) : on le
       // prend comme schéma par défaut pour `.from(...)` / `.rpc(...)`.
       db: { schema: 'interclub' },
+      // Traçage des appels, hors production (`SUPABASE_TRACE=1`, cf. `trace.ts`).
+      global: { fetch: fetchSupabase() },
       cookies: {
         getAll() {
           return cookieStore.getAll()
