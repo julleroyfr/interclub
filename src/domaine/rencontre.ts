@@ -23,6 +23,11 @@ export const PHASES = [
 
 export type Phase = (typeof PHASES)[number]['value']
 
+/** Libellé affiché d'une phase ; une valeur inconnue est rendue telle quelle. */
+export function libellePhase(phase: string): string {
+  return PHASES.find((p) => p.value === phase)?.label ?? phase
+}
+
 /** Saisie invalide d'une rencontre (date, club porteur ou catégorie). */
 export class SaisieRencontreInvalideError extends Error {
   constructor(message: string) {
