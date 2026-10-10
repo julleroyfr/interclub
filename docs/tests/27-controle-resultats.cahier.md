@@ -348,6 +348,18 @@ Devi, B1/B2 manquants).
   cases redeviennent modifiables ; l'action du tableau de bord redevient
   « Contrôler les résultats (fiches juges) » avec la même progression.
 
+### CT-21 — Contrôle au-delà de 1000 résultats `[auto]` (couvre : R4, R5, R6)
+
+- **Pré-condition** : rencontre enfant en **④ clôture** ; une équipe « Équipe
+  Contrôle » (Club B) de **80 grimpeuses**, chacune avec un résultat sur les
+  **14 voies** : **1120 résultats de voie**, au-delà du plafond de 1000 lignes
+  par lecture de l'API (constat J2, revue du 2026-10-09).
+- **Étapes** : ouvrir `/admin/rencontres/33333333-…-3333/controle`.
+- **Résultat attendu** : chaque voie affiche une progression **0/80** dans la
+  colonne « Voies et blocs ». Une progression inférieure signale des résultats
+  manquants (lecture tronquée).
+- **Exécution automatique** : `e2e/controle-volume.spec.ts`.
+
 ## Registre d'exécution
 
 | Date | Testeur | Version/commit | Cas | Résultat | Remarque |

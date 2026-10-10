@@ -57,9 +57,9 @@ flowchart TD
 | --- | --- | --- | --- | --- |
 | 0 | — | — | `feature/perf-mesure` | ✅ |
 | 1 | P1, P12, J1 | classement 8 → 2 | `feature/perf-classement` | ✅ |
-| 2 | P2, P3, J2 | contrôle 8 → 2 ; coche 6 → 3 | `feature/perf-controle` | ⏳ |
+| 2 | P2, P3, J2 | contrôle 8 → 2 ; coche 6 → 3 | `feature/perf-controle` | ✅ |
 | 3 | P5, P6 | engagement 5 → 2 ; actions −1 | `feature/perf-engagement-coach` | ⏳ |
-| 4 | P4 | 7 → 2–3 (④/⑤) | `feature/perf-tdb-rencontre` | 🚫 (lot 2) |
+| 4 | P4 | 7 → 2–3 (④/⑤) | `feature/perf-tdb-rencontre` | ⏳ |
 | 5 | P7, J3 | ≤ 10 → 2 (RPC) | `feature/perf-cloture` | ⏳ |
 | 6 | P8–P11, P13–P15, J4, J5 | −1 vague par écran ou action | `feature/perf-petits-gains` | ⏳ |
 | 7 | A1–A5 | 3–5 → 2 | `feature/rpc-ecritures-atomiques` | ⏳ |
@@ -136,23 +136,28 @@ Fichiers : `src/lib/classement/classement.ts`,
   Dans un route handler, `cache()` ne s'applique pas : `compte` y est relu par
   la garde du classement (vague de plus, à reprendre si le lot 8 est mené).
 
-## Lot 2 — Contrôle (P2, P3, J2) — ⏳
+## Lot 2 — Contrôle (P2, P3, J2) — ✅
 
 Fichiers : `src/lib/admin/controle.ts`, `src/lib/admin/controle-actions.ts`.
 
-- [ ] ⏳ **Rouge (J2)** : même jeu de plus de 1000 résultats → l'écran de
-  contrôle liste tous les résultats et la progression est juste.
-- [ ] ⏳ `getControleRencontre` en une vague (même découpage que le lot 1),
-  pagination des résultats et des compositions, `verifierLecture` sur toutes les
-  lectures (dont `grimpeur`).
-- [ ] ⏳ Auteurs du contrôle : remplacer les N `auth.admin.getUserById` par un
-  seul appel (`listUsers`, comme `chargerContexteMapping`), lancé dans la même
-  vague que le reste.
-- [ ] ⏳ P3 : dans `basculerControle`, **une seule lecture embarquée**
-  `resultat → voie/bloc → epreuve → rencontre(phase)`, sur le modèle de
-  `chargerContexteVoie` / `chargerContexteBloc`.
-- [ ] ⏳ Vert : test J2 + E2E `admin-controle` (cahier 27).
-- [ ] ⏳ Mesure après : contrôle ≤ 2 vagues, coche ≤ 3.
+- [x] ✅ **Rouge (J2)** : `e2e/controle-volume.spec.ts` (cahier 27 CT-21), 1120
+  résultats de voie. Sur l'ancien code, les voies affichaient **0/71 ou 0/72 au
+  lieu de 0/80** (exactement 1000 lignes lues).
+- [x] ✅ `getControleRencontre` en une vague : jointures `!inner` sur la
+  rencontre, grimpeur et club embarqués dans les résultats, club d'accueil
+  embarqué dans les compositions, résultats et compositions paginés. Toutes
+  les lectures passent par `verifierLecture` (l'ancienne lecture `grimpeur`
+  n'était pas vérifiée).
+- [x] ✅ Auteurs du contrôle : **écart au plan**. `listUsers` n'est pas
+  retenu, parce qu'il liste aussi les utilisateurs anonymes des sessions QR.
+  Ces comptes ne sont jamais purgés et dépasseraient une page de 1000 au fil
+  des saisons. Les `getUserById` (un par auteur distinct, quelques admins)
+  restent, lancés en parallèle dans **une seule vague** après les données.
+  Contrôle = 2 vagues sans coche, 3 avec.
+- [x] ✅ P3 : `basculerControle` lit la phase en **une lecture embarquée**
+  `resultat → voie/bloc → epreuve → rencontre(phase)`.
+- [x] ✅ Vert : J2, E2E `admin-controle` (cahier 27), suite E2E complète.
+- [x] ✅ Mesure après : contrôle 2 vagues (3 avec auteurs), coche 3.
 
 ## Lot 3 — Engagement coach (P5, P6) — ⏳
 
@@ -267,8 +272,8 @@ lot 0 ; l'estimation tirée de la lecture du code figure entre parenthèses.
 | Affichage | 7 / 14 (7 / ~13) | 2 / 11 | 1 |
 | PDF classement admin (⑤) | 9 / 17 (8 / ~15) | 3 / 14 | 1 |
 | PDF classement coach (⑤) | 10 / 20 (8 / ~15) | 3 / 17 | 1 |
-| Contrôle (④), 0 auteur · 1 auteur | 6 / 11 · 8 / 14 (8 / ~14 + N) | | 2 |
-| `basculerControle` : action · + re-rendu · + écho temps réel | 6 / 6 · 14 / 16 · 22 / 32 | | 2 |
+| Contrôle (④), 0 auteur · 1 auteur | 6 / 11 · 8 / 14 (8 / ~14 + N) | 2 / 8 · 3 / 9 | 2 |
+| `basculerControle` : action · + re-rendu · + écho temps réel | 6 / 6 · 14 / 16 · 22 / 32 | 3 / 3 · 6 / 12 · non observé | 2 |
 | Engagement coach | 4 / 8 (5 / 8) | | 3 |
 | `ajouterGrimpeurEquipe` : action · + re-rendu · + écho temps réel | 5 / 8 · 9 / 17 · 13 / 25 | | 3 |
 | Tableau de bord de rencontre ①–③ · ④/⑤ | 2 / 18 · 3 / 27 (3 · 7 / ~28) | | 4 |

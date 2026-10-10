@@ -13,6 +13,7 @@ import { type IssueBloc, type IssueVoie } from '@/domaine/resultat'
 import { exigerLectureAdmin } from '@/lib/auth/garde-lecture'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { verifierLecture } from '@/lib/supabase/lecture'
+import { lireToutesLesPages } from '@/lib/supabase/pagination'
 import { createClient } from '@/lib/supabase/server'
 
 // Assemblage de l'écran de CONTRÔLE des résultats contre les fiches de juges
@@ -46,6 +47,14 @@ export type ControleRencontre = {
   supports: SupportControle[]
 }
 
+/** Ligne brute d'une lecture PostgREST. */
+type Ligne = Record<string, unknown>
+
+/** Relation embarquée (objet, ou tableau selon l'inférence de PostgREST). */
+function embarque(valeur: unknown): Ligne | null {
+  return ((Array.isArray(valeur) ? valeur[0] : valeur) as Ligne | null | undefined) ?? null
+}
+
 type LigneBrute = {
   id: string
   grimpeurId: string
@@ -66,76 +75,108 @@ export async function getControleRencontre(
   await exigerLectureAdmin('contrôle des résultats')
   const supabase = await createClient()
 
-  const rencontre = verifierLecture(
-    await supabase
+  // UNE vague (lot 2 du plan « appels Supabase ») : chaque table est filtrée sur
+  // la rencontre par jointure `!inner`, grimpeurs et clubs sont embarqués, et
+  // les lectures qui peuvent dépasser le plafond de l'API (1000 lignes) sont
+  // paginées — sinon des résultats manqueraient sans erreur (constat J2).
+  type Reponse = { data: Ligne[] | null; error: { message: string; code?: string } | null }
+  const pagine = (requete: (debut: number, fin: number) => unknown, quoi: string) =>
+    lireToutesLesPages((debut, fin) => requete(debut, fin) as PromiseLike<Reponse>, quoi)
+  /** Grimpeur embarqué : nom, prénom et club d'origine (R6). */
+  const GRIMPEUR = 'grimpeur:grimpeur_id(nom, prenom, club_id, club:club_id(nom))'
+
+  const [rencRes, voiesRes, blocsRes, paliersRes, compos, rvLignes, rbLignes] = await Promise.all([
+    supabase
       .from('rencontre')
       .select('id, date_rencontre, categorie, phase')
       .eq('id', rencontreId)
       .maybeSingle(),
-    'de la rencontre',
-  )
+    supabase
+      .from('voie_difficulte')
+      .select('id, niveau, cotation, ordre, epreuve!inner(rencontre_id)')
+      .eq('epreuve.rencontre_id', rencontreId)
+      .order('ordre'),
+    supabase
+      .from('bloc')
+      .select('id, code, ordre, epreuve!inner(rencontre_id)')
+      .eq('epreuve.rencontre_id', rencontreId)
+      .order('ordre'),
+    supabase
+      .from('bloc_palier')
+      .select('id, libelle, bloc!inner(epreuve!inner(rencontre_id))')
+      .eq('bloc.epreuve.rencontre_id', rencontreId),
+    // Équipe d'accueil (club et son nom) de chaque grimpeur composé (R6).
+    pagine(
+      (debut, fin) =>
+        supabase
+          .from('composition')
+          .select('grimpeur_id, equipe_id, equipe:equipe_id(club_id, club:club_id(nom))')
+          .eq('rencontre_id', rencontreId)
+          .order('equipe_id')
+          .order('grimpeur_id')
+          .range(debut, fin),
+      'des compositions',
+    ),
+    pagine(
+      (debut, fin) =>
+        supabase
+          .from('resultat_voie')
+          .select(
+            `id, voie_difficulte_id, grimpeur_id, issue, controle_le, controle_par, ${GRIMPEUR}, voie_difficulte!inner(epreuve!inner(rencontre_id))`,
+          )
+          .eq('voie_difficulte.epreuve.rencontre_id', rencontreId)
+          .order('id')
+          .range(debut, fin),
+      'des résultats de voie',
+    ),
+    pagine(
+      (debut, fin) =>
+        supabase
+          .from('resultat_bloc')
+          .select(
+            `id, bloc_id, grimpeur_id, issue, palier_id, controle_le, controle_par, ${GRIMPEUR}, bloc!inner(epreuve!inner(rencontre_id))`,
+          )
+          .eq('bloc.epreuve.rencontre_id', rencontreId)
+          .order('id')
+          .range(debut, fin),
+      'des résultats de bloc',
+    ),
+  ])
+
+  const rencontre = verifierLecture(rencRes, 'de la rencontre')
   if (!rencontre) return null
   const phase = rencontre.phase as Phase
   const mode = modeControle(phase)
   if (!mode) return null
 
-  const epreuves = verifierLecture(
-    await supabase
-      .from('epreuve')
-      .select('id, type')
-      .eq('rencontre_id', rencontreId),
-    'des épreuves',
-  )
-  const epreuveVoie = (epreuves ?? []).find((e) => e.type === 'voie')?.id as string | undefined
-  const epreuveBloc = (epreuves ?? []).find((e) => e.type === 'bloc')?.id as string | undefined
-
-  const vide = Promise.resolve({ data: [] as Record<string, unknown>[], error: null })
-  const [voiesRes, blocsRes] = await Promise.all([
-    epreuveVoie
-      ? supabase
-          .from('voie_difficulte')
-          .select('id, niveau, cotation, ordre')
-          .eq('epreuve_id', epreuveVoie)
-          .order('ordre')
-      : vide,
-    epreuveBloc
-      ? supabase.from('bloc').select('id, code, ordre').eq('epreuve_id', epreuveBloc).order('ordre')
-      : vide,
-  ])
   const voies = verifierLecture(voiesRes, 'des voies') ?? []
   const blocs = verifierLecture(blocsRes, 'des blocs') ?? []
-  const voieIds = voies.map((v) => v.id as string)
-  const blocIds = blocs.map((b) => b.id as string)
-
-  const [rvRes, rbRes, paliersRes, composRes, equipesRes] = await Promise.all([
-    voieIds.length
-      ? supabase
-          .from('resultat_voie')
-          .select('id, voie_difficulte_id, grimpeur_id, issue, controle_le, controle_par')
-          .in('voie_difficulte_id', voieIds)
-      : vide,
-    blocIds.length
-      ? supabase
-          .from('resultat_bloc')
-          .select('id, bloc_id, grimpeur_id, issue, palier_id, controle_le, controle_par')
-          .in('bloc_id', blocIds)
-      : vide,
-    blocIds.length
-      ? supabase.from('bloc_palier').select('id, libelle').in('bloc_id', blocIds)
-      : vide,
-    supabase.from('composition').select('grimpeur_id, equipe_id').eq('rencontre_id', rencontreId),
-    supabase.from('equipe').select('id, club_id').eq('rencontre_id', rencontreId),
-  ])
-
   const libellePalier = new Map<string, string>()
   for (const p of verifierLecture(paliersRes, 'des paliers') ?? []) libellePalier.set(p.id as string, p.libelle as string)
+
+  // Grimpeurs (embarqués dans les résultats) et noms de clubs.
+  const nomClub = new Map<string, string>()
+  const infoGrimpeur = new Map<string, { nom: string; prenom: string; clubId: string }>()
+  const retenirGrimpeur = (r: Ligne) => {
+    const g = embarque(r.grimpeur)
+    if (!g) return
+    const clubId = g.club_id as string
+    const nom = embarque(g.club)?.nom
+    if (typeof nom === 'string') nomClub.set(clubId, nom)
+    infoGrimpeur.set(r.grimpeur_id as string, {
+      nom: g.nom as string,
+      prenom: g.prenom as string,
+      clubId,
+    })
+  }
 
   const parSupport = new Map<string, LigneBrute[]>()
   const ajouter = (supportId: string, l: LigneBrute) => {
     if (!parSupport.has(supportId)) parSupport.set(supportId, [])
     parSupport.get(supportId)!.push(l)
   }
-  for (const r of verifierLecture(rvRes, 'des résultats de voie') ?? []) {
+  for (const r of rvLignes) {
+    retenirGrimpeur(r)
     ajouter(r.voie_difficulte_id as string, {
       id: r.id as string,
       grimpeurId: r.grimpeur_id as string,
@@ -144,7 +185,8 @@ export async function getControleRencontre(
       controlePar: (r.controle_par as string | null) ?? null,
     })
   }
-  for (const r of verifierLecture(rbRes, 'des résultats de bloc') ?? []) {
+  for (const r of rbLignes) {
+    retenirGrimpeur(r)
     const palierId = (r.palier_id as string | null) ?? null
     ajouter(r.bloc_id as string, {
       id: r.id as string,
@@ -158,39 +200,19 @@ export async function getControleRencontre(
     })
   }
 
-  // Grimpeurs concernés + club d'accueil (équipe de la composition, R6).
-  const toutes = [...parSupport.values()].flat()
-  const grimpeurIds = [...new Set(toutes.map((l) => l.grimpeurId))]
-  const clubDeLEquipe = new Map<string, string>()
-  for (const e of verifierLecture(equipesRes, 'des équipes') ?? []) clubDeLEquipe.set(e.id as string, e.club_id as string)
+  // Club d'accueil (équipe de la composition, R6).
   const clubEquipe = new Map<string, string>()
-  for (const c of verifierLecture(composRes, 'des compositions') ?? []) {
-    const clubId = clubDeLEquipe.get(c.equipe_id as string)
-    if (clubId) clubEquipe.set(c.grimpeur_id as string, clubId)
-  }
-  const { data: grimpeurs } = grimpeurIds.length
-    ? await supabase.from('grimpeur').select('id, nom, prenom, club_id').in('id', grimpeurIds)
-    : { data: [] as Record<string, unknown>[] }
-  const infoGrimpeur = new Map<string, { nom: string; prenom: string; clubId: string }>()
-  for (const g of grimpeurs ?? []) {
-    infoGrimpeur.set(g.id as string, {
-      nom: g.nom as string,
-      prenom: g.prenom as string,
-      clubId: g.club_id as string,
-    })
-  }
-  const clubIds = [
-    ...new Set([...infoGrimpeur.values()].map((g) => g.clubId).concat([...clubEquipe.values()])),
-  ]
-  const nomClub = new Map<string, string>()
-  if (clubIds.length) {
-    const clubs = verifierLecture(
-      await supabase.from('club').select('id, nom').in('id', clubIds),
-      'des clubs',
-    )
-    for (const c of clubs ?? []) nomClub.set(c.id as string, c.nom as string)
+  for (const c of compos) {
+    const equipe = embarque(c.equipe)
+    if (!equipe) continue
+    const clubId = equipe.club_id as string
+    const nom = embarque(equipe.club)?.nom
+    if (typeof nom === 'string') nomClub.set(clubId, nom)
+    clubEquipe.set(c.grimpeur_id as string, clubId)
   }
 
+  // Auteurs des coches : une seule vague, quel que soit leur nombre (R11).
+  const toutes = [...parSupport.values()].flat()
   const auteurs = avecAuteurs
     ? await chargerAuteurs(toutes.map((l) => l.controlePar))
     : new Map<string, string>()
@@ -240,7 +262,10 @@ export async function getControleRencontre(
 
 /**
  * Résout le nom court (R11) des admins auteurs de coche via `auth.admin` — les
- * comptes n'ont pas de nom, seul l'email est connu. Peu d'auteurs distincts.
+ * comptes n'ont pas de nom, seul l'email est connu. Peu d'auteurs distincts,
+ * tous lus en parallèle (une vague). `listUsers` n'est pas utilisé : il liste
+ * aussi les utilisateurs anonymes des sessions QR, jamais purgés, et finirait
+ * par dépasser une page.
  */
 async function chargerAuteurs(ids: (string | null)[]): Promise<Map<string, string>> {
   const distincts = [...new Set(ids.filter((id): id is string => !!id))]

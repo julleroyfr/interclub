@@ -16,6 +16,11 @@ import { createClient } from '@/lib/supabase/server'
 
 export type EtatControle = { erreur?: string } | undefined
 
+/** Relation embarquée (objet, ou tableau selon l'inférence de PostgREST). */
+function embarque(valeur: unknown): Record<string, unknown> | null {
+  return ((Array.isArray(valeur) ? valeur[0] : valeur) as Record<string, unknown> | null | undefined) ?? null
+}
+
 /** Pose (`coche = true`) ou retire la coche de contrôle d'un résultat (R10). */
 export async function basculerControle(
   type: 'voie' | 'bloc',
@@ -33,49 +38,21 @@ export async function basculerControle(
   const supabase = await createClient()
   const table = type === 'voie' ? 'resultat_voie' : 'resultat_bloc'
   const colonneSupport = type === 'voie' ? 'voie_difficulte_id' : 'bloc_id'
-  const tableSupport = type === 'voie' ? 'voie_difficulte' : 'bloc'
 
-  // Phase de la rencontre du résultat : résultat → voie/bloc → épreuve → rencontre.
+  // Phase de la rencontre du résultat, en UNE lecture embarquée :
+  // résultat → voie/bloc → épreuve → rencontre (lot 2 du plan « appels Supabase »).
   const resultat = verifierLecture(
     await supabase
       .from(table)
-      .select(colonneSupport)
+      .select(`support:${colonneSupport}(epreuve:epreuve_id(rencontre_id, rencontre:rencontre_id(phase)))`)
       .eq('id', resultatId)
       .maybeSingle(),
     'du résultat',
   )
-  const supportId = (resultat as Record<string, unknown> | null)?.[colonneSupport] as
-    | string
-    | undefined
-  if (!supportId) return { erreur: 'Résultat introuvable.' }
-  const support = verifierLecture(
-    await supabase
-      .from(tableSupport)
-      .select('epreuve_id')
-      .eq('id', supportId)
-      .maybeSingle(),
-    type === 'voie' ? 'de la voie' : 'du bloc',
-  )
-  const epreuve = support
-    ? verifierLecture(
-        await supabase
-          .from('epreuve')
-          .select('rencontre_id')
-          .eq('id', support.epreuve_id as string)
-          .maybeSingle(),
-        "de l'épreuve",
-      )
-    : null
+  const epreuve = embarque(embarque((resultat as Record<string, unknown> | null)?.support)?.epreuve)
   const rencontreId = epreuve?.rencontre_id as string | undefined
   if (!rencontreId) return { erreur: 'Résultat introuvable.' }
-  const rencontre = verifierLecture(
-    await supabase
-      .from('rencontre')
-      .select('phase')
-      .eq('id', rencontreId)
-      .maybeSingle(),
-    'de la rencontre',
-  )
+  const rencontre = embarque(epreuve?.rencontre)
   if (!rencontre || !peutCocher(rencontre.phase as Phase)) {
     return {
       erreur:
