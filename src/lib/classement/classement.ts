@@ -19,6 +19,7 @@ import { formaterTempsVitesse } from '@/domaine/vitesse'
 import { exigerLectureAdminOuCoach } from '@/lib/auth/garde-lecture'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { verifierLecture } from '@/lib/supabase/lecture'
+import { lireToutesLesPages } from '@/lib/supabase/pagination'
 
 // Assemblage du classement d'une rencontre (spec #7). Le calcul (score de voie/bloc,
 // agrégations, rangs, séparation par sexe) est fait par le domaine pur
@@ -124,6 +125,15 @@ export type ClassementRencontre = {
   clubs: LigneClub[]
 }
 
+/** Ligne brute d'une lecture PostgREST. */
+type Ligne = Record<string, unknown>
+
+/** Nom d'une relation embarquée `club:club_id(nom)` (objet, ou tableau selon l'inférence). */
+function nomEmbarque(club: unknown): string | null {
+  const c = (Array.isArray(club) ? club[0] : club) as { nom?: string } | null | undefined
+  return c?.nom ?? null
+}
+
 const individuelVide = (): ClassementIndividuel => ({ filles: [], garcons: [] })
 
 /**
@@ -139,14 +149,94 @@ export async function getClassementRencontre(
   await exigerLectureAdminOuCoach('classement de la rencontre')
   const admin = createAdminClient()
 
-  const rencontre = verifierLecture(
-    await admin
-      .from('rencontre')
-      .select('id, date_rencontre, categorie, phase')
-      .eq('id', rencontreId)
-      .maybeSingle(),
-    'de la rencontre',
-  )
+  // UNE vague (lot 1 du plan « appels Supabase ») : chaque table est filtrée sur
+  // la rencontre par jointure `!inner`, les noms (grimpeur, club) sont embarqués,
+  // et les lectures qui peuvent dépasser le plafond de l'API (1000 lignes) sont
+  // paginées — sinon le classement serait faux sans erreur (constat J1).
+  type Reponse = { data: Ligne[] | null; error: { message: string; code?: string } | null }
+  const pagine = (requete: (debut: number, fin: number) => unknown, quoi: string) =>
+    lireToutesLesPages((debut, fin) => requete(debut, fin) as PromiseLike<Reponse>, quoi)
+
+  const [rencRes, voiesRes, blocsRes, paliersRes, equipesRes, compos, rvLignes, rbLignes, pvLignes, tvLignes] =
+    await Promise.all([
+      admin
+        .from('rencontre')
+        .select('id, date_rencontre, categorie, phase')
+        .eq('id', rencontreId)
+        .maybeSingle(),
+      admin
+        .from('voie_difficulte')
+        .select(
+          'id, niveau, cotation, ordre, points, points_prise_valorisee, points_zone1, points_zone2, epreuve!inner(rencontre_id)',
+        )
+        .eq('epreuve.rencontre_id', rencontreId)
+        .order('ordre'),
+      admin
+        .from('bloc')
+        .select('id, code, ordre, epreuve!inner(rencontre_id)')
+        .eq('epreuve.rencontre_id', rencontreId)
+        .order('ordre'),
+      admin
+        .from('bloc_palier')
+        .select('id, points, libelle, bloc!inner(epreuve!inner(rencontre_id))')
+        .eq('bloc.epreuve.rencontre_id', rencontreId),
+      admin.from('equipe').select('id, nom, club_id, club:club_id(nom)').eq('rencontre_id', rencontreId),
+      pagine(
+        (debut, fin) =>
+          admin
+            .from('composition')
+            .select('equipe_id, grimpeur_id, grimpeur:grimpeur_id(nom, prenom, sexe, club_id, club:club_id(nom))')
+            .eq('rencontre_id', rencontreId)
+            .order('equipe_id')
+            .order('grimpeur_id')
+            .range(debut, fin),
+        'des compositions',
+      ),
+      pagine(
+        (debut, fin) =>
+          admin
+            .from('resultat_voie')
+            .select('id, voie_difficulte_id, grimpeur_id, issue, voie_difficulte!inner(epreuve!inner(rencontre_id))')
+            .eq('voie_difficulte.epreuve.rencontre_id', rencontreId)
+            .order('id')
+            .range(debut, fin),
+        'des résultats de voie',
+      ),
+      pagine(
+        (debut, fin) =>
+          admin
+            .from('resultat_bloc')
+            .select('id, bloc_id, grimpeur_id, issue, palier_id, bloc!inner(epreuve!inner(rencontre_id))')
+            .eq('bloc.epreuve.rencontre_id', rencontreId)
+            .order('id')
+            .range(debut, fin),
+        'des résultats de bloc',
+      ),
+      // VITESSE : points matérialisés (points_vitesse, R20) + forme saisie
+      // (temps_vitesse, pour le libellé R13).
+      pagine(
+        (debut, fin) =>
+          admin
+            .from('points_vitesse')
+            .select('grimpeur_id, rang, points, epreuve!inner(rencontre_id)')
+            .eq('epreuve.rencontre_id', rencontreId)
+            .order('grimpeur_id')
+            .range(debut, fin),
+        'des points de vitesse',
+      ),
+      pagine(
+        (debut, fin) =>
+          admin
+            .from('temps_vitesse')
+            .select('grimpeur_id, issue, temps, epreuve!inner(rencontre_id)')
+            .eq('epreuve.rencontre_id', rencontreId)
+            .order('grimpeur_id')
+            .range(debut, fin),
+        'des temps de vitesse',
+      ),
+    ])
+
+  const rencontre = verifierLecture(rencRes, 'de la rencontre')
   if (!rencontre) return null
 
   const categorie = rencontre.categorie as Categorie
@@ -164,36 +254,9 @@ export async function getClassementRencontre(
     return { ...base, individuel: individuelVide(), equipes: [], clubs: [] }
   }
 
-  // Épreuves voie / bloc de la rencontre.
-  const epreuves = verifierLecture(
-    await admin.from('epreuve').select('id, type').eq('rencontre_id', rencontreId),
-    'des épreuves',
-  )
-  const epreuveVoie = (epreuves ?? []).find((e) => e.type === 'voie')?.id as string | undefined
-  const epreuveBloc = (epreuves ?? []).find((e) => e.type === 'bloc')?.id as string | undefined
-  const epreuveVitesse = (epreuves ?? []).find((e) => e.type === 'vitesse')?.id as
-    | string
-    | undefined
-
-  // Structure (barème + libellés) des voies et blocs, et équipes (tous clubs).
-  const vide = Promise.resolve({ data: [] as Record<string, unknown>[], error: null })
-  const [voiesRes, blocsRes, equipesRes] = await Promise.all([
-    epreuveVoie
-      ? admin
-          .from('voie_difficulte')
-          .select(
-            'id, niveau, cotation, type_voie, points, points_prise_valorisee, points_zone1, points_zone2',
-          )
-          .eq('epreuve_id', epreuveVoie)
-      : vide,
-    epreuveBloc
-      ? admin.from('bloc').select('id, code, ordre').eq('epreuve_id', epreuveBloc).order('ordre')
-      : vide,
-    admin.from('equipe').select('id, nom, club_id').eq('rencontre_id', rencontreId),
-  ])
-
+  // Structure (barème + libellés) des voies et blocs.
   const baremeParVoie = new Map<string, BaremeVoie>()
-  const metaVoie = new Map<string, { niveau: string; cotation: string | null }>()
+  const metaVoie = new Map<string, { niveau: string; cotation: string | null; ordre: number }>()
   for (const v of verifierLecture(voiesRes, 'des voies') ?? []) {
     const id = v.id as string
     baremeParVoie.set(id, {
@@ -205,53 +268,22 @@ export async function getClassementRencontre(
     metaVoie.set(id, {
       niveau: v.niveau as string,
       cotation: (v.cotation as string | null) ?? null,
+      ordre: (v.ordre as number) ?? 0,
     })
   }
-  const voieIds = [...baremeParVoie.keys()]
-  const codeBloc = new Map<string, string>()
-  for (const b of verifierLecture(blocsRes, 'des blocs') ?? []) codeBloc.set(b.id as string, b.code as string)
-  const blocIds = [...codeBloc.keys()]
-  const equipes = (verifierLecture(equipesRes, 'des équipes') ?? []).map((e) => ({
-    equipeId: e.id as string,
-    equipeNom: e.nom as string,
-    clubId: e.club_id as string,
-  }))
-  const equipeIds = equipes.map((e) => e.equipeId)
+  const metaBloc = new Map<string, { code: string; ordre: number }>()
+  for (const b of verifierLecture(blocsRes, 'des blocs') ?? []) {
+    metaBloc.set(b.id as string, { code: b.code as string, ordre: (b.ordre as number) ?? 0 })
+  }
 
-  // Paliers, résultats voie/bloc, compositions, et VITESSE : points matérialisés
-  // (points_vitesse, R20) + forme saisie (temps_vitesse, pour le libellé R13).
-  const [paliersRes, rvRes, rbRes, composRes, pvRes, tvRes] = await Promise.all([
-    blocIds.length
-      ? admin.from('bloc_palier').select('id, points, libelle').in('bloc_id', blocIds)
-      : vide,
-    voieIds.length
-      ? admin
-          .from('resultat_voie')
-          .select('voie_difficulte_id, grimpeur_id, issue')
-          .in('voie_difficulte_id', voieIds)
-      : vide,
-    blocIds.length
-      ? admin
-          .from('resultat_bloc')
-          .select('bloc_id, grimpeur_id, issue, palier_id')
-          .in('bloc_id', blocIds)
-      : vide,
-    equipeIds.length
-      ? admin.from('composition').select('equipe_id, grimpeur_id').in('equipe_id', equipeIds)
-      : vide,
-    epreuveVitesse
-      ? admin
-          .from('points_vitesse')
-          .select('grimpeur_id, rang, points')
-          .eq('epreuve_id', epreuveVitesse)
-      : vide,
-    epreuveVitesse
-      ? admin
-          .from('temps_vitesse')
-          .select('grimpeur_id, issue, temps')
-          .eq('epreuve_id', epreuveVitesse)
-      : vide,
-  ])
+  // Noms des clubs (porteurs d'équipes + clubs d'origine des grimpeurs), embarqués.
+  const nomClub = new Map<string, string>()
+  const equipes = (verifierLecture(equipesRes, 'des équipes') ?? []).map((e) => {
+    const clubId = e.club_id as string
+    const nom = nomEmbarque(e.club)
+    if (nom != null) nomClub.set(clubId, nom)
+    return { equipeId: e.id as string, equipeNom: e.nom as string, clubId }
+  })
 
   const pointsParPalier = new Map<string, number>()
   const libellePalier = new Map<string, string>()
@@ -262,23 +294,24 @@ export async function getClassementRencontre(
 
   // Vitesse : points + rang matérialisés (R20) et forme saisie (libellé R13).
   const pointsVitesseDe = new Map<string, { points: number; rang: number | null }>()
-  for (const p of verifierLecture(pvRes, 'des points de vitesse') ?? []) {
+  for (const p of pvLignes) {
     pointsVitesseDe.set(p.grimpeur_id as string, {
       points: (p.points as number) ?? 0,
       rang: (p.rang as number | null) ?? null,
     })
   }
   const formeVitesseDe = new Map<string, { issue: string; temps: number | null }>()
-  for (const t of verifierLecture(tvRes, 'des temps de vitesse') ?? []) {
+  for (const t of tvLignes) {
     formeVitesseDe.set(t.grimpeur_id as string, {
       issue: t.issue as string,
       temps: (t.temps as number | null) ?? null,
     })
   }
 
-  // Décomposition (voie + bloc) par grimpeur — R13, et sous-totaux (R1/R2).
-  const decompVoie = new Map<string, LigneVoieDecomp[]>()
-  for (const r of verifierLecture(rvRes, 'des résultats de voie') ?? []) {
+  // Décomposition (voie + bloc) par grimpeur — R13, et sous-totaux (R1/R2),
+  // dans l'ordre des voies et des blocs de la rencontre.
+  const decompVoie = new Map<string, (LigneVoieDecomp & { ordre: number })[]>()
+  for (const r of rvLignes) {
     const voieId = r.voie_difficulte_id as string
     const bareme = baremeParVoie.get(voieId)
     if (!bareme) continue
@@ -291,10 +324,11 @@ export async function getClassementRencontre(
       cotation: meta?.cotation ?? null,
       issue,
       points: scoreVoie(issue, bareme),
+      ordre: meta?.ordre ?? 0,
     })
   }
-  const decompBloc = new Map<string, LigneBlocDecomp[]>()
-  for (const r of verifierLecture(rbRes, 'des résultats de bloc') ?? []) {
+  const decompBloc = new Map<string, (LigneBlocDecomp & { ordre: number })[]>()
+  for (const r of rbLignes) {
     const gid = r.grimpeur_id as string
     const issue = r.issue as IssueBloc
     const palierId = (r.palier_id as string | null) ?? null
@@ -305,12 +339,14 @@ export async function getClassementRencontre(
         : issue === 'echec'
           ? 'Échec'
           : 'NP'
+    const meta = metaBloc.get(r.bloc_id as string)
     if (!decompBloc.has(gid)) decompBloc.set(gid, [])
-    decompBloc.get(gid)!.push({ code: codeBloc.get(r.bloc_id as string) ?? '?', issue, issueLibelle, points })
+    decompBloc.get(gid)!.push({ code: meta?.code ?? '?', issue, issueLibelle, points, ordre: meta?.ordre ?? 0 })
   }
 
-  // Grimpeurs engagés (composés) — dédupliqués — et leur équipe d'accueil.
-  const compositions = (verifierLecture(composRes, 'des compositions') ?? []).map((c) => ({
+  // Grimpeurs engagés (composés) — dédupliqués — leur équipe d'accueil et leur
+  // fiche (nom, sexe, club d'origine), embarquée dans la composition.
+  const compositions = compos.map((c) => ({
     equipeId: c.equipe_id as string,
     grimpeurId: c.grimpeur_id as string,
   }))
@@ -323,42 +359,32 @@ export async function getClassementRencontre(
   }
   const grimpeurIds = [...new Set(compositions.map((c) => c.grimpeurId))]
 
-  const grimpeursRes = grimpeurIds.length
-    ? await admin.from('grimpeur').select('id, nom, prenom, sexe, club_id').in('id', grimpeurIds)
-    : { data: [] as Record<string, unknown>[], error: null }
   const infoGrimpeur = new Map<
     string,
     { nom: string; prenom: string; sexe: Sexe; clubId: string }
   >()
-  for (const g of verifierLecture(grimpeursRes, 'des grimpeurs') ?? []) {
-    infoGrimpeur.set(g.id as string, {
+  for (const c of compos) {
+    const g = (Array.isArray(c.grimpeur) ? c.grimpeur[0] : c.grimpeur) as Ligne | null | undefined
+    if (!g) continue
+    const clubId = g.club_id as string
+    const nom = nomEmbarque(g.club)
+    if (nom != null) nomClub.set(clubId, nom)
+    infoGrimpeur.set(c.grimpeur_id as string, {
       nom: g.nom as string,
       prenom: g.prenom as string,
       sexe: g.sexe as Sexe,
-      clubId: g.club_id as string,
+      clubId,
     })
-  }
-
-  // Noms des clubs (porteurs d'équipes + clubs d'origine des grimpeurs).
-  const clubIds = [
-    ...new Set([
-      ...equipes.map((e) => e.clubId),
-      ...[...infoGrimpeur.values()].map((g) => g.clubId),
-    ]),
-  ]
-  const nomClub = new Map<string, string>()
-  if (clubIds.length) {
-    const clubs = verifierLecture(
-      await admin.from('club').select('id, nom').in('id', clubIds),
-      'des clubs',
-    )
-    for (const c of clubs ?? []) nomClub.set(c.id as string, c.nom as string)
   }
 
   // Décomposition + score par grimpeur (R3/R4).
   const decompositionDe = (gid: string): Decomposition => {
-    const voies = decompVoie.get(gid) ?? []
-    const blocs = decompBloc.get(gid) ?? []
+    const voies = (decompVoie.get(gid) ?? [])
+      .sort((a, b) => a.ordre - b.ordre)
+      .map((v): LigneVoieDecomp => ({ libelle: v.libelle, cotation: v.cotation, issue: v.issue, points: v.points }))
+    const blocs = (decompBloc.get(gid) ?? [])
+      .sort((a, b) => a.ordre - b.ordre)
+      .map((b): LigneBlocDecomp => ({ code: b.code, issue: b.issue, issueLibelle: b.issueLibelle, points: b.points }))
     const totalVoie = voies.reduce((s, v) => s + v.points, 0)
     const totalBloc = blocs.reduce((s, b) => s + b.points, 0)
     const pv = pointsVitesseDe.get(gid)

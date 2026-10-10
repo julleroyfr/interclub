@@ -64,6 +64,13 @@ PDF (R13).
 
 ## Cas de test
 
+> **Exécution automatique** : `e2e/export-pdf.spec.ts` rejoue la part machine
+> de CT-01 (nom du fichier téléchargé), CT-04 (bouton et PDF pour les deux
+> coachs), CT-05, CT-06 et CT-07 (bouton absent, URL directe en **404**).
+> **Résidus manuels** : rendu du PDF et identité des documents (CT-02, CT-03,
+> CT-04 étape 3, CT-08 → CT-10), cible tactile du bouton, session coach
+> temporaire (CT-07 cas 4).
+
 ### CT-01 — Export par l'admin : bouton et téléchargement (couvre R3, R7, R8, R9)
 
 - **Rôle** : JD-ADMIN.

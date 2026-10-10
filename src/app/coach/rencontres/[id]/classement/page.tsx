@@ -44,15 +44,18 @@ export default async function PageClassement({
   const { id } = await params
   if (contexte.type === 'temporaire' && contexte.rencontreId !== id) notFound()
 
-  const classement = await getClassementRencontre(id)
+  // Export PDF : ⑤ et club du coach permanent engagé (spec #15 R1/R4/R5/R7) —
+  // lu en parallèle du classement (une vague de moins).
+  const [classement, exportPdf] = await Promise.all([
+    getClassementRencontre(id),
+    exportDisponible(
+      id,
+      contexte.type === 'permanent'
+        ? { role: 'coach_permanent', clubId: contexte.clubId }
+        : { role: 'coach_temporaire' },
+    ),
+  ])
   if (!classement) notFound()
-  // Export PDF : ⑤ et club du coach permanent engagé (spec #15 R1/R4/R5/R7).
-  const exportPdf = await exportDisponible(
-    id,
-    contexte.type === 'permanent'
-      ? { role: 'coach_permanent', clubId: contexte.clubId }
-      : { role: 'coach_temporaire' },
-  )
 
   return (
     <Coquille liens={liensCoach(contexte)} deconnexion={contexte.type === 'permanent'} finSession={contexte.type === 'temporaire'}>

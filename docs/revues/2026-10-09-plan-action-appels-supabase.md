@@ -56,7 +56,7 @@ flowchart TD
 | Lot | Constats | Vagues avant → cible | Branche | Statut |
 | --- | --- | --- | --- | --- |
 | 0 | — | — | `feature/perf-mesure` | ✅ |
-| 1 | P1, P12, J1 | classement 8 → 2 | `feature/perf-classement` | ⏳ |
+| 1 | P1, P12, J1 | classement 8 → 2 | `feature/perf-classement` | ✅ |
 | 2 | P2, P3, J2 | contrôle 8 → 2 ; coche 6 → 3 | `feature/perf-controle` | ⏳ |
 | 3 | P5, P6 | engagement 5 → 2 ; actions −1 | `feature/perf-engagement-coach` | ⏳ |
 | 4 | P4 | 7 → 2–3 (④/⑤) | `feature/perf-tdb-rencontre` | 🚫 (lot 2) |
@@ -103,30 +103,38 @@ moins de vagues que leur chemin critique. Une Server Action compte l'action, le
 re-rendu (`revalidatePath`) et, le cas échéant, le rafraîchissement déclenché
 par le temps réel, dans une même séquence ou dans la suivante.
 
-## Lot 1 — Classement (P1, P12, J1) — ⏳
+## Lot 1 — Classement (P1, P12, J1) — ✅
 
 Fichiers : `src/lib/classement/classement.ts`,
 `src/lib/export/export-classement.ts`.
 
-- [ ] ⏳ **Rouge (J1)** : E2E (ou script SQL de stack locale) qui crée une
-  rencontre avec plus de 1000 résultats (voie + bloc). Il vérifie que le
-  classement compte **tous** les grimpeurs et les bons totaux. Il doit échouer
-  sur le code actuel.
-- [ ] ⏳ Réécrire `getClassementRencontre` en **une vague** : rencontre,
+- [x] ✅ **Rouge (J1)** : `e2e/classement-volume.spec.ts` (cahier 18 CT-14) pose
+  80 grimpeuses × 14 voies = 1120 résultats de voie. Sur l'ancien code,
+  l'équipe affichait **7476 pts au lieu de 8400** : 120 résultats ignorés sans
+  erreur.
+- [x] ✅ Réécrire `getClassementRencontre` en **une vague** : rencontre,
   épreuves, voies et blocs via `epreuve!inner(rencontre_id)`, paliers via
   `bloc!inner(epreuve!inner(...))`, équipes avec `club:club_id(nom)`,
   compositions (paginées) avec `grimpeur:grimpeur_id(nom, prenom, sexe, club_id, club:club_id(nom))`,
   `resultat_voie` / `resultat_bloc` (paginés, filtrés par jointure sur la
   rencontre), `points_vitesse` / `temps_vitesse` (filtrés par jointure sur
   l'épreuve).
-- [ ] ⏳ Garder la sortie **à l'identique** (types `ClassementRencontre`,
-  décomposition R13, phases R10/R11) ; la phase est connue dans la même vague.
-- [ ] ⏳ P12 : `exportDisponible` / `reponseExportPdf` ne relisent plus la
-  rencontre en série. Ils la lisent en parallèle du classement, ou la déduisent
-  des données qu'il charge déjà (phase, clubs engagés).
-- [ ] ⏳ Vert : test J1 + `npm run test:cahier:classement`,
-  `test:cahier:vitesse`, E2E PDF et affichage.
-- [ ] ⏳ Mesure après (lot 0) : classement ≤ 2 vagues.
+- [x] ✅ Sortie inchangée (types `ClassementRencontre`, décomposition R13,
+  phases R10/R11) ; la phase est connue dans la même vague. Seul ajustement :
+  la décomposition est désormais **triée par ordre des voies et des blocs**.
+  Elle suivait auparavant l'ordre, non garanti, renvoyé par la base, et la spec
+  ne fixe pas d'ordre.
+- [x] ✅ P12 : les écrans de classement lisent `exportDisponible` en parallèle du
+  classement. `reponseExportPdf` lance la lecture du classement en parallèle de
+  la vérification d'accès, et ne l'utilise que si l'accès est accordé (refus →
+  404, rien n'est lu pour un anonyme). Les cas d'accès du cahier 26 sont
+  automatisés : `e2e/export-pdf.spec.ts`.
+- [x] ✅ Vert : J1, `test:cahier:classement`, `test:cahier:vitesse`,
+  `navigation-routing`, export PDF (cahier 26) ; suite E2E complète
+  (169 tests, chromium, en série) et Vitest.
+- [x] ✅ Mesure après : classement et affichage **2 vagues**, PDF **3 vagues**.
+  Dans un route handler, `cache()` ne s'applique pas : `compte` y est relu par
+  la garde du classement (vague de plus, à reprendre si le lot 8 est mené).
 
 ## Lot 2 — Contrôle (P2, P3, J2) — ⏳
 
@@ -254,11 +262,11 @@ lot 0 ; l'estimation tirée de la lecture du code figure entre parenthèses.
 
 | Écran ou action | Référence | Après | Lot |
 | --- | --- | --- | --- |
-| Classement admin | 8 / 16 (8 / ~15) | | 1 |
-| Classement coach | 8 / 17 (8 / ~15) | | 1 |
-| Affichage | 7 / 14 (7 / ~13) | | 1 |
-| PDF classement admin (⑤) | 9 / 17 (8 / ~15) | | 1 |
-| PDF classement coach (⑤) | 10 / 20 (8 / ~15) | | 1 |
+| Classement admin | 8 / 16 (8 / ~15) | 2 / 13 | 1 |
+| Classement coach | 8 / 17 (8 / ~15) | 2 / 14 | 1 |
+| Affichage | 7 / 14 (7 / ~13) | 2 / 11 | 1 |
+| PDF classement admin (⑤) | 9 / 17 (8 / ~15) | 3 / 14 | 1 |
+| PDF classement coach (⑤) | 10 / 20 (8 / ~15) | 3 / 17 | 1 |
 | Contrôle (④), 0 auteur · 1 auteur | 6 / 11 · 8 / 14 (8 / ~14 + N) | | 2 |
 | `basculerControle` : action · + re-rendu · + écho temps réel | 6 / 6 · 14 / 16 · 22 / 32 | | 2 |
 | Engagement coach | 4 / 8 (5 / 8) | | 3 |

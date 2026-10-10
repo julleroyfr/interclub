@@ -43,10 +43,13 @@ export default async function PageClassementAdmin({
   await exigerAdmin()
 
   const { id } = await params
-  const classement = await getClassementRencontre(id)
+  // Export PDF : rencontre officielle (⑤) uniquement (spec #15 R1/R3/R7) — lu
+  // en parallèle du classement (une vague de moins).
+  const [classement, exportPdf] = await Promise.all([
+    getClassementRencontre(id),
+    exportDisponible(id, { role: 'admin' }),
+  ])
   if (!classement) notFound()
-  // Export PDF : rencontre officielle (⑤) uniquement (spec #15 R1/R3/R7).
-  const exportPdf = await exportDisponible(id, { role: 'admin' })
 
   return (
     <Coquille liens={liensAdmin()} largeur="large" deconnexion>
