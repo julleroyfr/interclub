@@ -67,7 +67,8 @@ T1 = 5 / pv 3, T2 = 6 / pv 3, T3 = 7 / pv 4 ; B1 : 1er = 4, 2e = 3 ; B2 : 1er = 
 
 > **Exécution automatique** : `e2e/classement.spec.ts` (`npm run
 > test:cahier:classement`) rejoue CT-01 → CT-13 (résultats posés en SQL ; la
-> saisie IHM relève du cahier 17). **Résidus manuels** : couleurs des pastilles
+> saisie IHM relève du cahier 17) ; `e2e/classement-volume.spec.ts` rejoue
+> CT-14. **Résidus manuels** : couleurs des pastilles
 > et des rangs, liseré « mon club », défilement de la pagination sur téléphone.
 
 ### CT-01 — Accès & visibilité dès la ③ (couvre R11, R12)
@@ -272,6 +273,23 @@ T1 = 5 / pv 3, T2 = 6 / pv 3, T3 = 7 / pv 4 ; B1 : 1er = 4, 2e = 3 ; B2 : 1er = 
   - (négatif) En phase **① / ②** (avant la ③), le lien classement n'apparaît pas
     sur le tableau de bord ; l'URL directe renvoie un classement **vide/masqué**
     (R11, cohérent avec la vue coach).
+
+### CT-14 — Classement au-delà de 1000 résultats (couvre R3, R5, R6) `[auto]`
+
+- **Rôle** : **admin** (JD-ADMIN).
+- **Pré-condition** : rencontre enfant en **③ compétition** ; une équipe
+  « Équipe Volume » (Club B) de **80 grimpeuses**, chacune avec **Top** sur les
+  **14 voies** de la rencontre (barème 1 à 14 pts, soit 105 pts chacune) :
+  **1120 résultats de voie**, au-delà du plafond de 1000 lignes par lecture de
+  l'API (constat J1, revue du 2026-10-09).
+- **Étapes** :
+  1. Ouvrir `/admin/rencontres/33333333-…-3333/classement`, onglet **Par équipe**.
+  2. Onglet **Par club**.
+- **Résultat attendu** : « Équipe Volume » compte **80 grimpeur(s)** et
+  **8400 pts** (80 × 105) ; **Club B** affiche **8400 pts**. Un total inférieur
+  signale des résultats ignorés (lecture tronquée).
+- **Nettoyage** : supprimer résultats, compositions, équipe et grimpeuses du jeu
+  (fait par le test automatique).
 
 ## Registre d'exécution
 

@@ -16,8 +16,10 @@ import { rendrePdf } from './rendu-pdf'
 // Point d'accès serveur de l'export PDF des classements officiels (spec #15).
 // Seul écart au « pas d'API custom » : Supabase ne produit pas de PDF. Le point
 // d'accès est joignable par URL directe, donc rôle / club engagé / phase ⑤
-// (R1–R5) sont revérifiés ICI, avant toute lecture du classement — le bouton
-// masqué n'est pas une protection.
+// (R1–R5) sont revérifiés ICI, avant de produire quoi que ce soit — le bouton
+// masqué n'est pas une protection. Le classement est lu EN PARALLÈLE de cette
+// vérification (une vague de moins, lot 1 du plan « appels Supabase ») et n'est
+// utilisé que si elle passe.
 
 /** Demandeur côté espace admin : l'admin, sinon personne (R3/R5). */
 export async function demandeurAdmin(): Promise<DemandeurExport> {
@@ -74,10 +76,16 @@ const introuvable = () => new Response('Introuvable', { status: 404 })
  * droit (R1–R5).
  */
 export async function reponseExportPdf(rencontreId: string, demandeur: DemandeurExport): Promise<Response> {
+  // Un anonyme n'a jamais droit à l'export (R5) : rien n'est lu pour lui.
+  const lectureClassement = demandeur.role === 'anonyme' ? null : getClassementRencontre(rencontreId)
   const etat = await lireEtatRencontre(rencontreId)
-  if (!etat || !peutExporter(demandeur, etat)) return introuvable()
+  if (!etat || !peutExporter(demandeur, etat)) {
+    // Refusé : le classement lu en parallèle est ignoré, son issue aussi.
+    lectureClassement?.catch(() => {})
+    return introuvable()
+  }
 
-  const classement = await getClassementRencontre(rencontreId)
+  const classement = await lectureClassement
   if (!classement) return introuvable()
 
   const document = construireDocumentExport(
