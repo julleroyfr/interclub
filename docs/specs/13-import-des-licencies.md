@@ -234,7 +234,9 @@ créés et mis à jour (R18).
 - **Suppression / désactivation** des grimpeurs absents du fichier (un licencié
   retiré de l'export n'est **pas** supprimé par l'import).
 - **Fusion / rapprochement** de grimpeurs sans licence ou sur des critères autres
-  que la licence (nom + date de naissance, etc.).
+  que la licence (nom + date de naissance, etc.) — couvert, pour le format CSV
+  sans licence du club de Marsas, par la spec **#18**
+  (`18-import-csv-sans-licence-marsas.md`).
 - Détermination de la **catégorie** (matin/après-midi) d'un grimpeur (spec #1 R34).
 - Historisation ou journal des imports au-delà du compte-rendu affiché.
 - Mapping manuel structure → club (choix d'un club cible différent du nom de la

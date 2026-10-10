@@ -34,6 +34,7 @@
     "test:heure-saisie": "bash scripts/test-heure-saisie.sh",
     "test:points-vitesse": "bash scripts/test-points-vitesse.sh",
     "test:invitation": "bash scripts/test-invitation.sh",
+    "test:import-csv": "bash scripts/test-import-csv.sh",
     "db:reset": "supabase db reset && npm run db:verifier",
     "db:verifier": "bash scripts/verifier-schema.sh"
   },

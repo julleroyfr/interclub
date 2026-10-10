@@ -161,6 +161,11 @@ saisie, les flux CRUD, et les règles de suppression (dépendances / cascade).
 - **R21b.** Le numéro de licence est **obligatoire** : entier strictement
   positif, **unique** parmi tous les grimpeurs. Contrainte SQL :
   `licence integer not null check (licence > 0) unique`.
+- **R21c.** La plage `[2 000 000 000, 2 147 483 647]` est **réservée** aux
+  licences **générées** par l'import CSV sans licence (spec #18 R14). La saisie
+  unitaire **refuse** un numéro dans cette plage, sauf à **conserver** la licence
+  générée déjà portée par le grimpeur modifié. Remplacer une licence générée par
+  un vrai numéro est autorisé. (Source : décision produit 2026-10-10, spec #18.)
 - **R22.** Nom et prénom sont obligatoires, d'au plus **100** caractères
   (normalisés, R4).
 - **R23.** L'année de naissance est un **entier à 4 chiffres** compris entre
@@ -173,7 +178,8 @@ saisie, les flux CRUD, et les règles de suppression (dépendances / cascade).
   **résultats** et **temps de vitesse**. La confirmation **signale** cette
   cascade lorsque le grimpeur a des engagements.
 - **R26.** La liste affiche, pour chaque grimpeur, son identité, son club, son
-  année de naissance, son **numéro de licence** (si renseigné) et son **nombre
+  année de naissance, son **numéro de licence** (suivi de la mention
+  **« générée »** pour une licence de la plage réservée, R21c) et son **nombre
   d'engagements** (compositions). Elle est **triée par nom de famille** (puis
   prénom), propose un **champ de recherche** filtrant par **nom et prénom**
   (insensible à la casse et aux accents, multi-termes dans n'importe quel ordre),
@@ -532,7 +538,8 @@ année à 4 chiffres valide, alors le grimpeur est ajouté au roster de ce club
   (`*_admin`) ; écriture du `grimpeur` ouverte à l'admin **ou** au coach du club
   (`grimpeur_*`), cet écran n'exposant que le volet admin (R20).
 - Bornes de saisie : `club.nom` ≤ 100 ; `grimpeur.nom`/`prenom` ≤ 100 ;
-  `annee_naissance` ∈ [1900, 2100] ; `licence` entier > 0, obligatoire, unique (R21b).
+  `annee_naissance` ∈ [1900, 2100] ; `licence` entier > 0, obligatoire, unique (R21b) ; plage ≥ 2 000 000 000
+  réservée aux licences générées (R21c, colonne dérivée `licence_generee`).
 - La **saison** d'une rencontre est une valeur **calculée** à partir de la date
   (spec #1 R37) — pas de colonne `saison` en base.
 - **Entités gabarit** (schéma à créer par migration) :

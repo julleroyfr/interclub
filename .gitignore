@@ -52,3 +52,6 @@ supabase/.branches/
 next-env.d.ts
 
 .vercel
+
+# données réelles club de Marsas (listing sans licence + copie corrigée)
+/docs/listing marsas*.csv

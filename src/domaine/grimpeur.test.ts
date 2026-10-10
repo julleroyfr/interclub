@@ -4,7 +4,10 @@ import {
   ANNEE_NAISSANCE_MAX,
   ANNEE_NAISSANCE_MIN,
   GrimpeurInvalideError,
+  LICENCE_GENEREE_MIN,
+  LICENCE_MAX,
   NOM_GRIMPEUR_MAX,
+  estLicenceGeneree,
   normaliserSaisieGrimpeur,
 } from './grimpeur'
 
@@ -158,5 +161,57 @@ describe("spec #1 — Saisie d'un grimpeur (R18)", () => {
         anneeNaissance: String(ANNEE_NAISSANCE_MAX),
       }).anneeNaissance,
     ).toBe(ANNEE_NAISSANCE_MAX)
+  })
+})
+
+describe('spec #3 — licence générée, plage réservée (R21c ; spec #18 R14–R15)', () => {
+  const valide = {
+    nom: 'Aita',
+    prenom: 'Hugo',
+    anneeNaissance: '2012',
+    sexe: 'H',
+    licence: '123456',
+  }
+
+  it('la plage réservée est [2 000 000 000, 2 147 483 647] (spec #18 R14)', () => {
+    expect(LICENCE_GENEREE_MIN).toBe(2_000_000_000)
+    expect(LICENCE_MAX).toBe(2_147_483_647)
+  })
+
+  it('une licence est générée si et seulement si elle est dans la plage (spec #18 R15)', () => {
+    expect(estLicenceGeneree(1_999_999_999)).toBe(false)
+    expect(estLicenceGeneree(123456)).toBe(false)
+    expect(estLicenceGeneree(2_000_000_000)).toBe(true)
+    expect(estLicenceGeneree(2_147_483_647)).toBe(true)
+  })
+
+  it('la saisie refuse une licence de la plage réservée (R21c)', () => {
+    expect(() => normaliserSaisieGrimpeur({ ...valide, licence: '2000000000' })).toThrow(
+      /réservé/,
+    )
+  })
+
+  it('la saisie accepte de conserver la licence générée déjà portée (R21c)', () => {
+    expect(
+      normaliserSaisieGrimpeur({ ...valide, licence: '2000000005' }, 2_000_000_005).licence,
+    ).toBe(2_000_000_005)
+  })
+
+  it('la saisie refuse une AUTRE licence de la plage, même pour un grimpeur à licence générée (R21c)', () => {
+    expect(() =>
+      normaliserSaisieGrimpeur({ ...valide, licence: '2000000006' }, 2_000_000_005),
+    ).toThrow(GrimpeurInvalideError)
+  })
+
+  it('remplacer une licence générée par un vrai numéro est autorisé (R21c)', () => {
+    expect(
+      normaliserSaisieGrimpeur({ ...valide, licence: '654321' }, 2_000_000_005).licence,
+    ).toBe(654321)
+  })
+
+  it('refuse une licence au-delà de l’entier SQL maximal (R21b)', () => {
+    expect(() => normaliserSaisieGrimpeur({ ...valide, licence: '2147483648' })).toThrow(
+      GrimpeurInvalideError,
+    )
   })
 })

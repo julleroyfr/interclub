@@ -3,7 +3,11 @@
 import { useActionState, useId, useState } from 'react'
 
 import { Bouton, ChampSelect, ChampTexte } from '@/composants'
-import { ANNEE_NAISSANCE_MAX, ANNEE_NAISSANCE_MIN } from '@/domaine/grimpeur'
+import {
+  ANNEE_NAISSANCE_MAX,
+  ANNEE_NAISSANCE_MIN,
+  estLicenceGeneree,
+} from '@/domaine/grimpeur'
 import { modifierGrimpeur, supprimerGrimpeur } from '@/lib/grimpeurs/actions'
 import type {
   EtatGrimpeur,
@@ -156,7 +160,14 @@ function LigneGrimpeur({
             <p className="mt-1 text-xs text-texte-doux">
               {grimpeur.clubNom} · né(e) en {grimpeur.anneeNaissance} ·{' '}
               {grimpeur.sexe === 'F' ? 'Femme' : 'Homme'} · licence{' '}
-              {grimpeur.licence} · {grimpeur.nbEngagements} engagement(s)
+              {grimpeur.licence}
+              {/* Licence de la plage réservée (spec #3 R21c/R26). */}
+              {estLicenceGeneree(grimpeur.licence) && (
+                <span className="ml-1 rounded-full border border-attention/30 bg-attention/10 px-2 py-0.5 text-[10px] font-semibold text-attention">
+                  générée
+                </span>
+              )}{' '}
+              · {grimpeur.nbEngagements} engagement(s)
             </p>
           </div>
 

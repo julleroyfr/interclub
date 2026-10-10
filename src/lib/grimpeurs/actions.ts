@@ -44,14 +44,19 @@ function messageErreur(code: string | undefined, contexte: Contexte): string {
     : "L'enregistrement a échoué. Réessayez."
 }
 
-function lireSaisie(formData: FormData) {
-  return normaliserSaisieGrimpeur({
+// `licenceActuelle` : licence générée que la modification peut conserver
+// (spec #3 R21c) ; absente à la création.
+function lireSaisie(formData: FormData, licenceActuelle?: number) {
+  return normaliserSaisieGrimpeur(
+    {
     nom: String(formData.get('nom') ?? ''),
     prenom: String(formData.get('prenom') ?? ''),
     anneeNaissance: String(formData.get('anneeNaissance') ?? ''),
     sexe: String(formData.get('sexe') ?? ''),
     licence: String(formData.get('licence') ?? ''),
-  })
+    },
+    licenceActuelle,
+  )
 }
 
 export async function creerGrimpeur(
@@ -100,15 +105,24 @@ export async function modifierGrimpeur(
   const clubId = String(formData.get('clubId') ?? '')
   if (!clubId) return { erreur: 'Le club est obligatoire.' }
 
+  const supabase = await createClient()
+  // Licence actuelle lue en base (pas depuis le formulaire) : seule une licence
+  // générée déjà portée peut être conservée (spec #3 R21c).
+  const { data: actuel } = await supabase
+    .from('grimpeur')
+    .select('licence')
+    .eq('id', id)
+    .maybeSingle()
+  if (!actuel) return { erreur: 'Grimpeur introuvable.' }
+
   let saisie
   try {
-    saisie = lireSaisie(formData)
+    saisie = lireSaisie(formData, actuel.licence as number)
   } catch (e) {
     if (e instanceof GrimpeurInvalideError) return { erreur: e.message }
     throw e
   }
 
-  const supabase = await createClient()
   const { error } = await supabase
     .from('grimpeur')
     .update({
