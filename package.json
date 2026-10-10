@@ -36,7 +36,8 @@
     "test:invitation": "bash scripts/test-invitation.sh",
     "test:import-csv": "bash scripts/test-import-csv.sh",
     "db:reset": "supabase db reset && npm run db:verifier",
-    "db:verifier": "bash scripts/verifier-schema.sh"
+    "db:verifier": "bash scripts/verifier-schema.sh",
+    "doc:captures": "playwright test --config scripts/captures/playwright.config.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",
