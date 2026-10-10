@@ -57,4 +57,26 @@ test.describe('Écran admin — équipes tous clubs (R10)', () => {
     await equipeB2.getByRole('button', { name: /Supprimer l.équipe B2/ }).click()
     await expect(carteB.getByRole('heading', { name: 'B2' })).toHaveCount(0)
   })
+
+  test('« Changer d’équipe » reste dans la carte d’équipe sur grand écran (conv. 08)', async ({
+    page,
+  }) => {
+    // À 1280 px, la carte d'équipe est étroite (colonne du tableau de bord) :
+    // le formulaire ne doit pas déborder de la carte (régression 2026-10-10).
+    await page.setViewportSize({ width: 1280, height: 800 })
+    await commeAdmin(page)
+    await page.goto(`/admin/rencontres/${RENCONTRE_PILOTE}`)
+    const clubA = carteClub(page, 'Club A')
+    await clubA.locator('summary').first().click()
+
+    const equipeA1 = clubA.locator('[data-equipe="Équipe A1"]')
+    const bouton = equipeA1.getByRole('button', { name: /Changer d.équipe/ }).first()
+    await expect(bouton).toBeVisible()
+
+    const carte = await equipeA1.boundingBox()
+    const boite = await bouton.boundingBox()
+    expect(carte).not.toBeNull()
+    expect(boite).not.toBeNull()
+    expect(boite!.x + boite!.width).toBeLessThanOrEqual(carte!.x + carte!.width)
+  })
 })
