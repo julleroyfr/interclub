@@ -58,7 +58,7 @@ flowchart TD
 | 0 | — | — | `feature/perf-mesure` | ✅ |
 | 1 | P1, P12, J1 | classement 8 → 2 | `feature/perf-classement` | ✅ |
 | 2 | P2, P3, J2 | contrôle 8 → 2 ; coche 6 → 3 | `feature/perf-controle` | ✅ |
-| 3 | P5, P6 | engagement 5 → 2 ; actions −1 | `feature/perf-engagement-coach` | ⏳ |
+| 3 | P5, P6 | engagement 5 → 2 ; actions −1 | `feature/perf-engagement-coach` | ✅ |
 | 4 | P4 | 7 → 2–3 (④/⑤) | `feature/perf-tdb-rencontre` | ⏳ |
 | 5 | P7, J3 | ≤ 10 → 2 (RPC) | `feature/perf-cloture` | ⏳ |
 | 6 | P8–P11, P13–P15, J4, J5 | −1 vague par écran ou action | `feature/perf-petits-gains` | ⏳ |
@@ -159,27 +159,31 @@ Fichiers : `src/lib/admin/controle.ts`, `src/lib/admin/controle-actions.ts`.
 - [x] ✅ Vert : J2, E2E `admin-controle` (cahier 27), suite E2E complète.
 - [x] ✅ Mesure après : contrôle 2 vagues (3 avec auteurs), coche 3.
 
-## Lot 3 — Engagement coach (P5, P6) — ⏳
+## Lot 3 — Engagement coach (P5, P6) — ✅
 
 Fichiers : `src/lib/coach/engagement.ts`, `src/lib/coach/actions.ts`.
 
-- [ ] ⏳ `getEngagementRencontre` : la rencontre embarque son club porteur
-  (`club:club_porteur_id(nom)`) ; les compositions embarquent le grimpeur et son
-  club ; les prêts embarquent le club d'origine. Plus de 3ᵉ ni de 4ᵉ vague.
-  Cible : contexte + 1 vague.
-  - Variante à évaluer : lire la rencontre dans la même vague que le reste
-    (le filtre ne dépend que de `rencontreId` et `clubId`), puis renvoyer
-    `null` si elle est absente.
-- [ ] ⏳ Actions : fusionner `equipeDuClub` et `chargerRencontre` en une lecture
-  `equipe` + `rencontre:rencontre_id(phase, date_rencontre, categorie)`
-  (−1 vague sur chaque action).
-- [ ] ⏳ `ajouterGrimpeurEquipe` : lancer les 4 contrôles en parallèle de la
-  lecture équipe + rencontre lorsqu'ils n'en dépendent pas.
-- [ ] ⏳ Vert : `npm run test:cahier:coach`, `test:cahier:integrite`, E2E
-  `temps-reel-engagement`.
-- [ ] ⏳ Mesure après.
+- [x] ✅ `getEngagementRencontre` en **une vague**, variante retenue : la
+  rencontre est lue avec le reste (avec son club porteur embarqué) et la
+  fonction renvoie `null` si elle est absente. Les compositions embarquent le
+  grimpeur et son club, les prêts le club d'origine. Toutes les lectures
+  passent par `verifierLecture`.
+- [x] ✅ Actions : `equipeDuClub` lit l'équipe **et** sa rencontre en une
+  lecture (`rencontre:rencontre_id(phase, categorie, date_rencontre)`), soit
+  une vague de moins sur renommer, supprimer, ajouter, retirer et groupe de
+  départ.
+- [x] ✅ `ajouterGrimpeurEquipe` : les contrôles (grimpeur, membres, engagés,
+  prêt) partent dans la même vague que l'équipe. Engagés et prêt sont lus pour
+  la rencontre du formulaire ; si elle diffère de celle de l'équipe (appel
+  forgé), l'action répond « Équipe introuvable. ». Ces quatre lectures n'étaient
+  pas vérifiées : elles passent désormais par `verifierLecture`.
+- [x] ✅ Vert : `coach-engagement`, `integrite-engagement`,
+  `temps-reel-engagement`, `securite-appels-directs`, `admin-prets`,
+  `admin-equipes`, puis suite E2E complète et Vitest.
+- [x] ✅ Mesure après : engagement 2 vagues ; ajout 3 ; retrait 3. Avec le
+  re-rendu et l'écho temps réel, un clic d'ajout passe de 13 à 7 vagues.
 
-## Lot 4 — Tableau de bord de rencontre admin (P4) — 🚫 (dépend du lot 2)
+## Lot 4 — Tableau de bord de rencontre admin (P4) — ⏳
 
 Fichier : `src/app/admin/rencontres/[id]/page.tsx` et ses loaders.
 
@@ -274,8 +278,8 @@ lot 0 ; l'estimation tirée de la lecture du code figure entre parenthèses.
 | PDF classement coach (⑤) | 10 / 20 (8 / ~15) | 3 / 17 | 1 |
 | Contrôle (④), 0 auteur · 1 auteur | 6 / 11 · 8 / 14 (8 / ~14 + N) | 2 / 8 · 3 / 9 | 2 |
 | `basculerControle` : action · + re-rendu · + écho temps réel | 6 / 6 · 14 / 16 · 22 / 32 | 3 / 3 · 6 / 12 · non observé | 2 |
-| Engagement coach | 4 / 8 (5 / 8) | | 3 |
-| `ajouterGrimpeurEquipe` : action · + re-rendu · + écho temps réel | 5 / 8 · 9 / 17 · 13 / 25 | | 3 |
+| Engagement coach | 4 / 8 (5 / 8) | 2 / 7 | 3 |
+| `ajouterGrimpeurEquipe` : action · + re-rendu · + écho temps réel | 5 / 8 · 9 / 17 · 13 / 25 | 3 / 8 · 5 / 15 · 7 / 22 | 3 |
 | Tableau de bord de rencontre ①–③ · ④/⑤ | 2 / 18 · 3 / 27 (3 · 7 / ~28) | | 4 |
 | `changerPhaseRencontre` ③ → ④ : action · + re-rendu | 9 / 11 · 13 / 39 (≤ 10) | | 5 |
 | `/coach/jetons` (2 rencontres) | 3 / 4 (3 / 2 + N) | | 6 |

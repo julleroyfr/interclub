@@ -126,20 +126,22 @@ export async function getEngagementRencontre(
 ): Promise<EngagementRencontre | null> {
   const supabase = await createClient()
 
-  const { data: rencontre, error: errR } = await supabase
-    .from('rencontre')
-    .select('id, date_rencontre, categorie, phase, club_porteur_id')
-    .eq('id', rencontreId)
-    .maybeSingle()
-  if (errR) throw errR
-  if (!rencontre) return null
-
-  const [clubRes, equipesRes, rosterRes, pretsRes] = await Promise.all([
-    // Club porteur (en-tête) + club engagé (nom d'équipe par défaut, R10bis).
-    supabase.from('club').select('id, nom').in('id', [rencontre.club_porteur_id as string, clubId]),
+  // UNE vague (lot 3 du plan « appels Supabase ») : la rencontre est lue avec le
+  // reste (le filtre ne dépend que de `rencontreId` et `clubId`) ; noms des
+  // clubs et fiches des grimpeurs composés ou prêtés sont embarqués.
+  const [rencRes, clubRes, equipesRes, rosterRes, pretsRes] = await Promise.all([
+    supabase
+      .from('rencontre')
+      .select('id, date_rencontre, categorie, phase, club_porteur_id, club:club_porteur_id(nom)')
+      .eq('id', rencontreId)
+      .maybeSingle(),
+    // Club engagé (nom d'équipe par défaut, R10bis).
+    supabase.from('club').select('id, nom').eq('id', clubId).maybeSingle(),
     supabase
       .from('equipe')
-      .select('id, nom, composition(grimpeur_id, groupe_depart)')
+      .select(
+        'id, nom, composition(grimpeur_id, groupe_depart, grimpeur:grimpeur_id(id, nom, prenom, club_id, club:club_id(nom)))',
+      )
       .eq('rencontre_id', rencontreId)
       .eq('club_id', clubId)
       .order('nom'),
@@ -153,43 +155,32 @@ export async function getEngagementRencontre(
     // roster comme des grimpeurs du club, avec badge « prêté · club d'origine ».
     supabase
       .from('pret')
-      .select('grimpeur:grimpeur_id(id, nom, prenom, club_id, annee_naissance)')
+      .select('grimpeur:grimpeur_id(id, nom, prenom, club_id, annee_naissance, club:club_id(nom))')
       .eq('rencontre_id', rencontreId)
       .eq('club_accueil_id', clubId),
   ])
-  if (equipesRes.error) throw equipesRes.error
-  if (rosterRes.error) throw rosterRes.error
-  if (pretsRes.error) throw pretsRes.error
+  const rencontre = verifierLecture(rencRes, 'de la rencontre')
+  if (!rencontre) return null
 
-  const equipes = (equipesRes.data ?? []).map((e) => ({
-    id: e.id as string,
-    nom: e.nom as string,
-    composition: (
-      (e.composition as { grimpeur_id: string; groupe_depart: string | null }[] | null) ?? []
-    ).map((c) => ({ grimpeurId: c.grimpeur_id, groupeDepart: c.groupe_depart ?? null })),
-  }))
-
-  // Grimpeurs prêtés (aplatis depuis la relation pret → grimpeur ; l'embed peut
-  // être typé objet ou tableau selon l'inférence).
-  const pretes: GrimpeurLu[] = (pretsRes.data ?? [])
-    .map((p) => {
-      const g = p.grimpeur as unknown
-      return (Array.isArray(g) ? g[0] : g) as Record<string, unknown> | null | undefined
-    })
-    .filter((g): g is Record<string, unknown> => g != null)
-    .map(versGrimpeurLu)
+  // Noms des clubs : porteur + club engagé, puis clubs d'origine (embarqués).
+  const nomClub = new Map<string, string>()
+  const retenirClub = (id: unknown, club: unknown) => {
+    const nom = embarque(club)?.nom
+    if (typeof id === 'string' && typeof nom === 'string') nomClub.set(id, nom)
+  }
+  retenirClub(rencontre.club_porteur_id, rencontre.club)
+  const clubEngage = verifierLecture(clubRes, 'du club')
+  if (clubEngage) nomClub.set(clubEngage.id as string, clubEngage.nom as string)
 
   // Grimpeurs référencés dans les compositions (dont d'éventuels prêtés d'un
-  // autre club) → une seule lecture pour nom/prénom/club d'origine.
-  const idsCompo = new Set<string>()
-  for (const e of equipes) for (const c of e.composition) idsCompo.add(c.grimpeurId)
+  // autre club) : nom, prénom et club d'origine, embarqués.
   const grimpeursCompo = new Map<string, Omit<GrimpeurLu, 'anneeNaissance'>>()
-  if (idsCompo.size > 0) {
-    const lus = verifierLecture(
-      await supabase.from('grimpeur').select('id, nom, prenom, club_id').in('id', [...idsCompo]),
-      'des grimpeurs composés',
-    )
-    for (const g of lus ?? []) {
+  const equipes = (verifierLecture(equipesRes, 'des équipes') ?? []).map((e) => {
+    const compos = (e.composition as Record<string, unknown>[] | null) ?? []
+    for (const c of compos) {
+      const g = embarque(c.grimpeur)
+      if (!g) continue
+      retenirClub(g.club_id, g.club)
       grimpeursCompo.set(g.id as string, {
         id: g.id as string,
         nom: g.nom as string,
@@ -197,24 +188,25 @@ export async function getEngagementRencontre(
         clubId: g.club_id as string,
       })
     }
-  }
+    return {
+      id: e.id as string,
+      nom: e.nom as string,
+      composition: compos.map((c) => ({
+        grimpeurId: c.grimpeur_id as string,
+        groupeDepart: (c.groupe_depart as string | null) ?? null,
+      })),
+    }
+  })
 
-  // Noms des clubs : porteur + club engagé, puis clubs d'origine des prêtés.
-  const nomClub = new Map<string, string>()
-  for (const c of verifierLecture(clubRes, 'des clubs') ?? []) {
-    nomClub.set(c.id as string, c.nom as string)
-  }
-  const clubIdsPrete = [
-    ...[...grimpeursCompo.values()].map((g) => g.clubId),
-    ...pretes.map((g) => g.clubId),
-  ].filter((id) => id !== clubId)
-  if (clubIdsPrete.length > 0) {
-    const clubs = verifierLecture(
-      await supabase.from('club').select('id, nom').in('id', clubIdsPrete),
-      'des clubs',
-    )
-    for (const c of clubs ?? []) nomClub.set(c.id as string, c.nom as string)
-  }
+  // Grimpeurs prêtés (aplatis depuis la relation pret → grimpeur).
+  const pretes: GrimpeurLu[] = (verifierLecture(pretsRes, 'des prêts') ?? [])
+    .map((p) => embarque(p.grimpeur))
+    .filter((g): g is Record<string, unknown> => g != null)
+    .map((g) => {
+      retenirClub(g.club_id, g.club)
+      return versGrimpeurLu(g)
+    })
+  const roster = verifierLecture(rosterRes, 'du roster') ?? []
 
   return assemblerEngagementClub(
     {
@@ -228,11 +220,16 @@ export async function getEngagementRencontre(
       nomClub,
       equipes,
       grimpeursCompo,
-      rosterClub: (rosterRes.data ?? []).map((g) => versGrimpeurLu({ ...g, club_id: clubId })),
+      rosterClub: roster.map((g) => versGrimpeurLu({ ...g, club_id: clubId })),
       pretes,
     },
     clubId,
   )
+}
+
+/** Relation embarquée (objet, ou tableau selon l'inférence de PostgREST). */
+function embarque(valeur: unknown): Record<string, unknown> | null {
+  return ((Array.isArray(valeur) ? valeur[0] : valeur) as Record<string, unknown> | null | undefined) ?? null
 }
 
 /** Ligne `grimpeur` lue en base → grimpeur de l'assemblage. */

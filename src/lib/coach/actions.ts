@@ -69,7 +69,7 @@ function refuserSiHorsPerimetreTemp(
 async function chargerRencontre(
   supabase: Client,
   rencontreId: string,
-): Promise<{ phase: Phase; categorie: Categorie; dateRencontre: string } | null> {
+): Promise<RencontreLue | null> {
   const data = verifierLecture(
     await supabase
       .from('rencontre')
@@ -106,22 +106,40 @@ function refuserSiPasEditable(phase: Phase): EtatEngagement | null {
   return null
 }
 
-/** Vérifie qu'une équipe appartient bien au club du coach (défense en profondeur). */
+/** Rencontre lue pour le gating d'une écriture (phase R16, catégorie R19). */
+type RencontreLue = { phase: Phase; categorie: Categorie; dateRencontre: string }
+
+/**
+ * Vérifie qu'une équipe appartient bien au club du coach (défense en
+ * profondeur) et lit sa rencontre dans la MÊME lecture (lot 3 du plan « appels
+ * Supabase »). `rencontre` est `null` si elle est introuvable.
+ */
 async function equipeDuClub(
   supabase: Client,
   equipeId: string,
   clubId: string,
-): Promise<{ rencontreId: string } | null> {
+): Promise<{ rencontreId: string; rencontre: RencontreLue | null } | null> {
   const data = verifierLecture(
     await supabase
       .from('equipe')
-      .select('rencontre_id, club_id')
+      .select('rencontre_id, club_id, rencontre:rencontre_id(phase, categorie, date_rencontre)')
       .eq('id', equipeId)
       .maybeSingle(),
     "de l'équipe",
   )
   if (!data || (data.club_id as string) !== clubId) return null
-  return { rencontreId: data.rencontre_id as string }
+  const brut = data.rencontre as unknown
+  const r = (Array.isArray(brut) ? brut[0] : brut) as Record<string, unknown> | null | undefined
+  return {
+    rencontreId: data.rencontre_id as string,
+    rencontre: r
+      ? {
+          phase: r.phase as Phase,
+          categorie: r.categorie as Categorie,
+          dateRencontre: r.date_rencontre as string,
+        }
+      : null,
+  }
 }
 
 /** Crée une équipe du club pour une rencontre (R10). */
@@ -182,7 +200,7 @@ export async function renommerEquipe(
   const supabase = await createClient()
   const appartenance = await equipeDuClub(supabase, equipeId, coach.clubId)
   if (!appartenance) return { erreur: 'Équipe introuvable.' }
-  const rencontre = await chargerRencontre(supabase, appartenance.rencontreId)
+  const { rencontre } = appartenance
   if (!rencontre) return { erreur: 'Rencontre introuvable.' }
   const refus = refuserSiPasEditable(rencontre.phase)
   if (refus) return refus
@@ -217,7 +235,7 @@ export async function supprimerEquipe(
   const supabase = await createClient()
   const appartenance = await equipeDuClub(supabase, equipeId, coach.clubId)
   if (!appartenance) return { erreur: 'Équipe introuvable.' }
-  const rencontre = await chargerRencontre(supabase, appartenance.rencontreId)
+  const { rencontre } = appartenance
   if (!rencontre) return { erreur: 'Rencontre introuvable.' }
   const refus = refuserSiPasEditable(rencontre.phase)
   if (refus) return refus
@@ -269,9 +287,27 @@ export async function ajouterGrimpeurEquipe(
   if (!grimpeurId) return { erreur: 'Sélectionnez un grimpeur.' }
 
   const supabase = await createClient()
-  const appartenance = await equipeDuClub(supabase, equipeId, coach.clubId)
-  if (!appartenance) return { erreur: 'Équipe introuvable.' }
-  const rencontre = await chargerRencontre(supabase, appartenance.rencontreId)
+  // UNE vague : équipe + rencontre, et les contrôles d'ajout (lot 3 du plan
+  // « appels Supabase »). Engagés et prêt sont lus pour la rencontre annoncée
+  // par le formulaire, qui doit être celle de l'équipe (vérifié ci-dessous).
+  const [appartenance, grimpeurRes, membresRes, engagesRes, pretRes] = await Promise.all([
+    equipeDuClub(supabase, equipeId, coach.clubId),
+    supabase.from('grimpeur').select('club_id, annee_naissance').eq('id', grimpeurId).maybeSingle(),
+    supabase.from('composition').select('grimpeur_id').eq('equipe_id', equipeId),
+    supabase.from('composition').select('grimpeur_id').eq('rencontre_id', rencontreId),
+    // Prêt actif de ce grimpeur au club du coach pour cette rencontre (R13/R36).
+    supabase
+      .from('pret')
+      .select('grimpeur_id')
+      .eq('rencontre_id', rencontreId)
+      .eq('grimpeur_id', grimpeurId)
+      .eq('club_accueil_id', coach.clubId)
+      .maybeSingle(),
+  ])
+  if (!appartenance || appartenance.rencontreId !== rencontreId) {
+    return { erreur: 'Équipe introuvable.' }
+  }
+  const { rencontre } = appartenance
   if (!rencontre) return { erreur: 'Rencontre introuvable.' }
   const refus = refuserSiPasEditable(rencontre.phase)
   if (refus) return refus
@@ -290,20 +326,10 @@ export async function ajouterGrimpeurEquipe(
     throw e
   }
 
-  const [{ data: grimpeur }, { data: membres }, { data: engages }, { data: pret }] =
-    await Promise.all([
-      supabase.from('grimpeur').select('club_id, annee_naissance').eq('id', grimpeurId).maybeSingle(),
-      supabase.from('composition').select('grimpeur_id').eq('equipe_id', equipeId),
-      supabase.from('composition').select('grimpeur_id').eq('rencontre_id', appartenance.rencontreId),
-      // Prêt actif de ce grimpeur au club du coach pour cette rencontre (R13/R36).
-      supabase
-        .from('pret')
-        .select('grimpeur_id')
-        .eq('rencontre_id', appartenance.rencontreId)
-        .eq('grimpeur_id', grimpeurId)
-        .eq('club_accueil_id', coach.clubId)
-        .maybeSingle(),
-    ])
+  const grimpeur = verifierLecture(grimpeurRes, 'du grimpeur')
+  const membres = verifierLecture(membresRes, "des membres de l'équipe")
+  const engages = verifierLecture(engagesRes, 'des engagés de la rencontre')
+  const pret = verifierLecture(pretRes, 'du prêt')
   if (!grimpeur) {
     return { erreur: "Ce grimpeur n'appartient ni à votre club ni à vos prêts." }
   }
@@ -365,7 +391,7 @@ export async function retirerGrimpeurEquipe(
   const supabase = await createClient()
   const appartenance = await equipeDuClub(supabase, equipeId, coach.clubId)
   if (!appartenance) return { erreur: 'Équipe introuvable.' }
-  const rencontre = await chargerRencontre(supabase, appartenance.rencontreId)
+  const { rencontre } = appartenance
   if (!rencontre) return { erreur: 'Rencontre introuvable.' }
   const refus = refuserSiPasEditable(rencontre.phase)
   if (refus) return refus
@@ -402,7 +428,7 @@ export async function definirGroupeDepart(
   const supabase = await createClient()
   const appartenance = await equipeDuClub(supabase, equipeId, coach.clubId)
   if (!appartenance) return { erreur: 'Équipe introuvable.' }
-  const rencontre = await chargerRencontre(supabase, appartenance.rencontreId)
+  const { rencontre } = appartenance
   if (!rencontre) return { erreur: 'Rencontre introuvable.' }
   const refus = refuserSiPasEditable(rencontre.phase)
   if (refus) return refus
