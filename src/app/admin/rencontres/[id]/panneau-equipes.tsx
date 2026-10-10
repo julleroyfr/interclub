@@ -287,11 +287,14 @@ function FormChangerEquipe({
   const idCible = useId()
 
   return (
-    <form action={action} className="flex w-full flex-col gap-2 sm:flex-row sm:items-center">
+    // Retour à la ligne selon la place réelle (la carte d'équipe est étroite dans
+    // la colonne du tableau de bord, même sur grand écran) plutôt que selon la
+    // largeur de la fenêtre : le bouton ne déborde jamais de la carte.
+    <form action={action} className="flex w-full flex-wrap items-center gap-2">
       <input type="hidden" name="rencontreId" value={rencontreId} />
       <input type="hidden" name="equipeId" value={equipeId} />
       <input type="hidden" name="grimpeurId" value={membre.grimpeurId} />
-      <label htmlFor={idCible} className="text-xs text-texte-attenue sm:shrink-0">
+      <label htmlFor={idCible} className="basis-full text-xs text-texte-attenue">
         Changer {membre.prenom} {membre.nom} d’équipe
       </label>
       <select
@@ -299,7 +302,7 @@ function FormChangerEquipe({
         name="equipeCibleId"
         required
         defaultValue=""
-        className="h-11 w-full rounded-lg border border-bordure bg-black/30 px-3 text-base text-texte-fort [color-scheme:dark] focus:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent/20 sm:w-auto sm:text-sm"
+        className="h-11 min-w-0 flex-1 basis-40 rounded-lg border border-bordure bg-black/30 px-3 text-base text-texte-fort [color-scheme:dark] focus:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent/20 sm:text-sm"
       >
         <option value="" disabled className="bg-fond text-texte">
           Équipe de destination…
@@ -311,11 +314,11 @@ function FormChangerEquipe({
           </option>
         ))}
       </select>
-      <Bouton type="submit" taille="sm" variante="secondaire" disabled={enCours} className="h-11">
+      <Bouton type="submit" taille="sm" variante="secondaire" disabled={enCours} className="h-11 shrink-0">
         Changer d’équipe
       </Bouton>
       {etat?.erreur && (
-        <p role="alert" className="text-xs text-danger">
+        <p role="alert" className="basis-full text-xs text-danger">
           {etat.erreur}
         </p>
       )}
