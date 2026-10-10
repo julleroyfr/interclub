@@ -2,6 +2,8 @@ import 'server-only'
 
 import { createClient } from '@supabase/supabase-js'
 
+import { fetchSupabase } from './trace'
+
 /**
  * Client Supabase à privilèges **service_role** — réservé au serveur.
  *
@@ -30,5 +32,7 @@ export function createAdminClient() {
     db: { schema: 'interclub' },
     // Client sans session : aucun cookie, aucun refresh, pas de persistance.
     auth: { autoRefreshToken: false, persistSession: false },
+    // Traçage des appels, hors production (`SUPABASE_TRACE=1`, cf. `trace.ts`).
+    global: { fetch: fetchSupabase() },
   })
 }
