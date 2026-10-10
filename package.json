@@ -37,7 +37,8 @@
     "test:import-csv": "bash scripts/test-import-csv.sh",
     "db:reset": "supabase db reset && npm run db:verifier",
     "db:verifier": "bash scripts/verifier-schema.sh",
-    "doc:captures": "playwright test --config scripts/captures/playwright.config.ts"
+    "doc:captures": "playwright test --config scripts/captures/playwright.config.ts",
+    "doc:pdf": "node scripts/guides/generer-pdf.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",
@@ -66,6 +67,7 @@
     "eslint-config-next": "16.2.10",
     "jsdom": "^29.1.1",
     "markdownlint-cli2": "^0.23.0",
+    "marked": "^18.1.0",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.1.10"

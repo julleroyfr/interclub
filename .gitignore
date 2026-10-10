@@ -55,3 +55,6 @@ next-env.d.ts
 
 # données réelles club de Marsas (listing sans licence + copie corrigée)
 /docs/listing marsas*.csv
+
+# PDF des guides utilisateur : générés à la demande (npm run doc:pdf), distribués hors dépôt.
+docs/guides/**/*.pdf
