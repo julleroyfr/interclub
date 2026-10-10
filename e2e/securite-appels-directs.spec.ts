@@ -387,10 +387,16 @@ test.describe('Cahier 28 — sécurité en base, appels PostgREST directs', () =
       COMPTES.sansMapping.mdp,
     )
 
+    // Lecture idempotente, donc relançable : en suite complète, une réponse déjà
+    // envoyée par Kong (200, journalisée) n'est parfois jamais reçue côté client
+    // et bloquait la suite 15 min (2026-10-10). Délai court explicite + 1 relance.
     const nbLignes = async (jeton: string, table: string) => {
-      const rep = await request.get(`${url}/rest/v1/${table}?select=id`, {
-        headers: entetes(jeton),
-      })
+      const lire = () =>
+        request.get(`${url}/rest/v1/${table}?select=id`, {
+          headers: entetes(jeton),
+          timeout: 10_000,
+        })
+      const rep = await lire().catch(lire)
       expect(rep.ok()).toBe(true)
       return ((await rep.json()) as unknown[]).length
     }
