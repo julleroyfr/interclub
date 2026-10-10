@@ -8,6 +8,7 @@ import {
   filtrerLignes,
   progression,
   progressionGlobale,
+  progressionDeComptes,
   nomCourtAuteur,
   type LigneControle,
 } from './controle'
@@ -183,6 +184,44 @@ describe('spec #16 — progression globale de la rencontre (R3)', () => {
 
   it('rencontre sans aucune ligne : 0/0 (R3)', () => {
     expect(progressionGlobale([])).toEqual({ controlees: 0, total: 0, complet: false })
+  })
+})
+
+describe('spec #16 — progression globale depuis des comptages (R3)', () => {
+  // Le tableau de bord n'a besoin que des nombres (lot 4 du plan « appels
+  // Supabase ») : il compte les résultats par table au lieu de les lire.
+  it('additionne les comptages des voies et des blocs (R3)', () => {
+    expect(
+      progressionDeComptes([
+        { controlees: 2, total: 5 },
+        { controlees: 1, total: 4 },
+      ]),
+    ).toEqual({ controlees: 3, total: 9, complet: false })
+  })
+
+  it('complet quand tout est contrôlé (R3)', () => {
+    expect(
+      progressionDeComptes([
+        { controlees: 5, total: 5 },
+        { controlees: 0, total: 0 },
+      ]),
+    ).toEqual({ controlees: 5, total: 5, complet: true })
+  })
+
+  it('aucun résultat : 0/0, jamais « complet » (R3)', () => {
+    expect(progressionDeComptes([])).toEqual({ controlees: 0, total: 0, complet: false })
+  })
+
+  it('donne la même progression que les lignes (R3)', () => {
+    const lignes = [
+      [ligne({ nom: 'A', prenom: 'a', ...cochee }), ligne({ nom: 'B', prenom: 'b' })],
+      [ligne({ nom: 'C', prenom: 'c', ...cochee })],
+    ]
+    const comptes = lignes.map((l) => ({
+      controlees: l.filter((x) => x.controleLe !== null).length,
+      total: l.length,
+    }))
+    expect(progressionDeComptes(comptes)).toEqual(progressionGlobale(lignes))
   })
 })
 

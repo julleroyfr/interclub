@@ -3,6 +3,7 @@ import 'server-only'
 import { anneeSaison, type Categorie } from '@/domaine/rencontre'
 import { exigerLectureAdmin } from '@/lib/auth/garde-lecture'
 import { lireGrimpeursEligibles } from '@/lib/grimpeurs/eligibles'
+import { lireClubsAdmin, lirePretsAdmin, lireRencontreAdmin } from '@/lib/rencontres/lectures-admin'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { verifierLecture } from '@/lib/supabase/lecture'
 
@@ -41,22 +42,18 @@ export async function chargerPretsRencontre(
   await exigerLectureAdmin('prêts de la rencontre')
   const admin = createAdminClient()
 
-  const [rencRes, clubsRes, pretsRes, compoRes] = await Promise.all([
-    admin.from('rencontre').select('categorie, date_rencontre').eq('id', rencontreId).maybeSingle(),
-    admin.from('club').select('id, nom').order('nom'),
-    // Le grimpeur de chaque prêt est embarqué : son nom ne dépend pas de la
-    // lecture (filtrée par catégorie) des grimpeurs prêtables ci-dessous.
-    admin
-      .from('pret')
-      .select('rencontre_id, grimpeur_id, club_accueil_id, grimpeur:grimpeur_id(nom, prenom, club_id)')
-      .eq('rencontre_id', rencontreId),
+  // Rencontre, clubs et prêts : lectures partagées avec les autres panneaux du
+  // tableau de bord (mémoïsées sur le rendu, lot 4 du plan « appels Supabase »).
+  // Le grimpeur de chaque prêt est embarqué : son nom ne dépend pas de la
+  // lecture (filtrée par catégorie) des grimpeurs prêtables ci-dessous.
+  const [rencontre, clubsLus, pretsLus, compoRes] = await Promise.all([
+    lireRencontreAdmin(rencontreId),
+    lireClubsAdmin(),
+    lirePretsAdmin(rencontreId),
     // Grimpeurs déjà engagés (toutes équipes) dans cette rencontre : indisponibles
     // au prêt (un grimpeur ne joue que pour une équipe/rencontre, R14).
     admin.from('composition').select('grimpeur_id').eq('rencontre_id', rencontreId),
   ])
-  const rencontre = verifierLecture(rencRes, 'de la rencontre')
-  const clubsLus = verifierLecture(clubsRes, 'des clubs') ?? []
-  const pretsLus = verifierLecture(pretsRes, 'des prêts') ?? []
   const composLues = verifierLecture(compoRes, 'des compositions') ?? []
 
   // Catégorie de la rencontre : on ne propose au prêt que les grimpeurs éligibles

@@ -4,6 +4,8 @@ import {
   libelleIssueBloc,
   libelleIssueVoie,
   modeControle,
+  progressionDeComptes,
+  type Progression,
   nomCourtAuteur,
   trierLignes,
   type LigneControle,
@@ -11,6 +13,7 @@ import {
 import { type Categorie, type Phase } from '@/domaine/rencontre'
 import { type IssueBloc, type IssueVoie } from '@/domaine/resultat'
 import { exigerLectureAdmin } from '@/lib/auth/garde-lecture'
+import { lireRencontreAdmin } from '@/lib/rencontres/lectures-admin'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { verifierLecture } from '@/lib/supabase/lecture'
 import { lireToutesLesPages } from '@/lib/supabase/pagination'
@@ -70,7 +73,6 @@ type LigneBrute = {
  */
 export async function getControleRencontre(
   rencontreId: string,
-  { avecAuteurs = true }: { avecAuteurs?: boolean } = {},
 ): Promise<ControleRencontre | null> {
   await exigerLectureAdmin('contrôle des résultats')
   const supabase = await createClient()
@@ -213,9 +215,7 @@ export async function getControleRencontre(
 
   // Auteurs des coches : une seule vague, quel que soit leur nombre (R11).
   const toutes = [...parSupport.values()].flat()
-  const auteurs = avecAuteurs
-    ? await chargerAuteurs(toutes.map((l) => l.controlePar))
-    : new Map<string, string>()
+  const auteurs = await chargerAuteurs(toutes.map((l) => l.controlePar))
 
   const versLigne = (l: LigneBrute): LigneControle => {
     const g = infoGrimpeur.get(l.grimpeurId)
@@ -257,6 +257,60 @@ export async function getControleRencontre(
     phase,
     mode,
     supports,
+  }
+}
+
+/** Progression du contrôle affichée sur le tableau de bord (R3). */
+export type ProgressionControle = {
+  /** `controle` en ④, `lecture` en ⑤ (R2). */
+  mode: 'controle' | 'lecture'
+  progression: Progression
+}
+
+/**
+ * Progression du contrôle d'une rencontre pour le tableau de bord (R3), sans
+ * lire les résultats : quatre COMPTAGES (total et contrôlés, voies et blocs),
+ * lancés une fois la phase connue (lot 4 du plan « appels Supabase »).
+ * Renvoie `null` si la rencontre est introuvable ou hors ④/⑤ (R2).
+ */
+export async function getProgressionControle(
+  rencontreId: string,
+): Promise<ProgressionControle | null> {
+  await exigerLectureAdmin('progression du contrôle')
+  const rencontre = await lireRencontreAdmin(rencontreId)
+  if (!rencontre) return null
+  const mode = modeControle(rencontre.phase as Phase)
+  if (!mode) return null
+
+  const supabase = await createClient()
+  const compter = async (
+    table: 'resultat_voie' | 'resultat_bloc',
+    controlees: boolean,
+  ): Promise<number> => {
+    const [jointure, filtre] =
+      table === 'resultat_voie'
+        ? ['voie_difficulte!inner(epreuve!inner(rencontre_id))', 'voie_difficulte.epreuve.rencontre_id']
+        : ['bloc!inner(epreuve!inner(rencontre_id))', 'bloc.epreuve.rencontre_id']
+    const requete = supabase
+      .from(table)
+      .select(`id, ${jointure}`, { count: 'exact', head: true })
+      .eq(filtre, rencontreId)
+    const reponse = await (controlees ? requete.not('controle_le', 'is', null) : requete)
+    verifierLecture(reponse, 'du comptage des résultats')
+    return reponse.count ?? 0
+  }
+  const [totalVoie, controleesVoie, totalBloc, controleesBloc] = await Promise.all([
+    compter('resultat_voie', false),
+    compter('resultat_voie', true),
+    compter('resultat_bloc', false),
+    compter('resultat_bloc', true),
+  ])
+  return {
+    mode,
+    progression: progressionDeComptes([
+      { controlees: controleesVoie, total: totalVoie },
+      { controlees: controleesBloc, total: totalBloc },
+    ]),
   }
 }
 

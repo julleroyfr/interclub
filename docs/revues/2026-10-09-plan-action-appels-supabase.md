@@ -59,7 +59,7 @@ flowchart TD
 | 1 | P1, P12, J1 | classement 8 → 2 | `feature/perf-classement` | ✅ |
 | 2 | P2, P3, J2 | contrôle 8 → 2 ; coche 6 → 3 | `feature/perf-controle` | ✅ |
 | 3 | P5, P6 | engagement 5 → 2 ; actions −1 | `feature/perf-engagement-coach` | ✅ |
-| 4 | P4 | 7 → 2–3 (④/⑤) | `feature/perf-tdb-rencontre` | ⏳ |
+| 4 | P4 | 7 → 2–3 (④/⑤) | `feature/perf-tdb-rencontre` | ✅ |
 | 5 | P7, J3 | ≤ 10 → 2 (RPC) | `feature/perf-cloture` | ⏳ |
 | 6 | P8–P11, P13–P15, J4, J5 | −1 vague par écran ou action | `feature/perf-petits-gains` | ⏳ |
 | 7 | A1–A5 | 3–5 → 2 | `feature/rpc-ecritures-atomiques` | ⏳ |
@@ -183,19 +183,27 @@ Fichiers : `src/lib/coach/engagement.ts`, `src/lib/coach/actions.ts`.
 - [x] ✅ Mesure après : engagement 2 vagues ; ajout 3 ; retrait 3. Avec le
   re-rendu et l'écho temps réel, un clic d'ajout passe de 13 à 7 vagues.
 
-## Lot 4 — Tableau de bord de rencontre admin (P4) — ⏳
+## Lot 4 — Tableau de bord de rencontre admin (P4) — ✅
 
 Fichier : `src/app/admin/rencontres/[id]/page.tsx` et ses loaders.
 
-- [ ] ⏳ Remplacer l'appel à `getControleRencontre` par une lecture légère de
-  **progression** : nombre de résultats contrôlés sur total, par support. Le
-  domaine (`progressionGlobale`) reste inchangé.
-- [ ] ⏳ Partager les lectures communes (rencontre, liste des clubs) entre
-  `getStructureRencontre`, `chargerPretsRencontre` et
-  `chargerEngagementTousClubs`, via des lecteurs mis en `cache()` comme
-  `lireGrimpeursEligibles`.
-- [ ] ⏳ Vert : E2E `admin-equipes`, `admin-prets`, `pilotage-phase`.
-- [ ] ⏳ Mesure après : ④/⑤ ≤ 3 vagues.
+- [x] ✅ `getControleRencontre` remplacé par `getProgressionControle` : quatre
+  **comptages** (`count: 'exact', head: true`, total et contrôlés, voies et
+  blocs), lancés seulement en ④/⑤. Le domaine gagne `progressionDeComptes`,
+  testé en Vitest et aligné sur `progressionGlobale` (R3). La progression ne
+  peut plus être tronquée : vérifié au-delà de 1000 résultats
+  (`e2e/controle-volume.spec.ts`). L'option `avecAuteurs` de
+  `getControleRencontre`, devenue inutile, est retirée.
+- [x] ✅ Lectures communes partagées via `cache()` dans
+  `src/lib/rencontres/lectures-admin.ts` : rencontre (structure, prêts,
+  équipes, contrôle), catalogue des clubs (prêts, équipes), prêts (prêts,
+  équipes).
+- [x] ✅ Vert : `admin-equipes`, `admin-prets`, `pilotage-phase`,
+  `admin-controle`, `navigation-routing`, `integrite-engagement`, puis suite
+  E2E complète et Vitest.
+- [x] ✅ Mesure après : ①–③ 2 vagues / 13 appels (au lieu de 18) ; ④/⑤ 2
+  vagues mesurées / 17 appels (au lieu de 27). Le chemin critique reste
+  compte → rencontre → comptages et grimpeurs éligibles.
 
 ## Lot 5 — Clôture (P7, J3) — ⏳
 
@@ -280,7 +288,7 @@ lot 0 ; l'estimation tirée de la lecture du code figure entre parenthèses.
 | `basculerControle` : action · + re-rendu · + écho temps réel | 6 / 6 · 14 / 16 · 22 / 32 | 3 / 3 · 6 / 12 · non observé | 2 |
 | Engagement coach | 4 / 8 (5 / 8) | 2 / 7 | 3 |
 | `ajouterGrimpeurEquipe` : action · + re-rendu · + écho temps réel | 5 / 8 · 9 / 17 · 13 / 25 | 3 / 8 · 5 / 15 · 7 / 22 | 3 |
-| Tableau de bord de rencontre ①–③ · ④/⑤ | 2 / 18 · 3 / 27 (3 · 7 / ~28) | | 4 |
+| Tableau de bord de rencontre ①–③ · ④/⑤ | 2 / 18 · 3 / 27 (3 · 7 / ~28) | 2 / 13 · 2 / 17 | 4 |
 | `changerPhaseRencontre` ③ → ④ : action · + re-rendu | 9 / 11 · 13 / 39 (≤ 10) | | 5 |
 | `/coach/jetons` (2 rencontres) | 3 / 4 (3 / 2 + N) | | 6 |
 | `/admin/gabarit` | 2–3 / 13 (4 / ~11) | | 6 |

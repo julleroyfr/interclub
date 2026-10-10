@@ -9,7 +9,7 @@ import {
 } from '@/lib/coach/assemblage-engagement'
 import { versGrimpeurLu } from '@/lib/coach/engagement'
 import { lireGrimpeursEligibles } from '@/lib/grimpeurs/eligibles'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { lireClubsAdmin, lirePretsAdmin, lireRencontreAdmin } from '@/lib/rencontres/lectures-admin'
 import { verifierLecture } from '@/lib/supabase/lecture'
 import { createClient } from '@/lib/supabase/server'
 
@@ -30,18 +30,15 @@ export async function chargerEngagementTousClubs(
   rencontreId: string,
 ): Promise<EngagementClub[]> {
   await exigerLectureAdmin('engagement de tous les clubs')
-  const admin = createAdminClient()
   const supabase = await createClient()
 
-  // Vague 1 : tout ce qui ne dépend que de la rencontre. Vague 2 : le roster,
-  // qui dépend de sa catégorie (lecture partagée avec le panneau Prêts).
-  const [clubsRes, rencRes, equipesRes, pretsRes] = await Promise.all([
-    admin.from('club').select('id, nom').order('nom'),
-    supabase
-      .from('rencontre')
-      .select('id, date_rencontre, categorie, phase, club_porteur_id')
-      .eq('id', rencontreId)
-      .maybeSingle(),
+  // Vague 1 : tout ce qui ne dépend que de la rencontre (clubs, rencontre et
+  // prêts partagés avec les autres panneaux, lot 4 du plan « appels
+  // Supabase »). Vague 2 : le roster, qui dépend de sa catégorie (lecture
+  // partagée avec le panneau Prêts).
+  const [clubs, rencontre, equipesRes, pretsLus] = await Promise.all([
+    lireClubsAdmin(),
+    lireRencontreAdmin(rencontreId),
     supabase
       .from('equipe')
       .select(
@@ -49,13 +46,8 @@ export async function chargerEngagementTousClubs(
       )
       .eq('rencontre_id', rencontreId)
       .order('nom'),
-    supabase
-      .from('pret')
-      .select('club_accueil_id, grimpeur:grimpeur_id(id, nom, prenom, club_id, annee_naissance)')
-      .eq('rencontre_id', rencontreId),
+    lirePretsAdmin(rencontreId),
   ])
-  const clubs = verifierLecture(clubsRes, 'des clubs') ?? []
-  const rencontre = verifierLecture(rencRes, 'de la rencontre')
   if (!rencontre) return []
 
   const categorie = rencontre.categorie as Categorie
@@ -64,7 +56,6 @@ export async function chargerEngagementTousClubs(
     anneeSaison(rencontre.date_rencontre as string),
   )
   const equipesLues = verifierLecture(equipesRes, 'des équipes') ?? []
-  const pretsLus = verifierLecture(pretsRes, 'des prêts') ?? []
 
   const nomClub = new Map<string, string>(clubs.map((c) => [c.id as string, c.nom as string]))
 

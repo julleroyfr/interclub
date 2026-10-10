@@ -130,6 +130,20 @@ export function progressionGlobale(supports: readonly (readonly LigneControle[])
   return progression(supports.flat())
 }
 
+/** Comptage des résultats contrôlés sur un ensemble (une table, un support…). */
+export type Comptage = { controlees: number; total: number }
+
+/**
+ * Progression globale depuis des comptages (R3) — même règle que
+ * `progressionGlobale`, sans avoir à lire les lignes : `0/0` n'est jamais
+ * « complet ».
+ */
+export function progressionDeComptes(comptages: readonly Comptage[]): Progression {
+  const controlees = comptages.reduce((n, c) => n + c.controlees, 0)
+  const total = comptages.reduce((n, c) => n + c.total, 0)
+  return { controlees, total, complet: total > 0 && controlees === total }
+}
+
 /**
  * Nom court de l'admin auteur d'une coche, affiché sur la ligne (R11) : partie
  * de l'email avant « @ » (les comptes n'ont pas de nom). `null` si inconnu.

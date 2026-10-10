@@ -2,6 +2,7 @@ import 'server-only'
 
 import type { TypeEpreuve, TypeVoie } from '@/domaine/gabarit'
 import type { Categorie, Phase } from '@/domaine/rencontre'
+import { lireRencontreAdmin } from '@/lib/rencontres/lectures-admin'
 import { createClient } from '@/lib/supabase/server'
 
 // Lecture de la structure d'une rencontre (épreuves + voies/blocs/vitesse) pour
@@ -91,7 +92,7 @@ export async function getStructureRencontre(id: string): Promise<StructureRencon
   // une jointure (épreuve, bloc), sans attendre les identifiants des épreuves.
   // Chaque aller-retour vers la base compte (écran rechargé après chaque action).
   const [
-    { data: rencontre, error: errR },
+    rencontre,
     { data: epreuves, error: errE },
     { data: voies, error: errV },
     { data: blocs, error: errB },
@@ -99,11 +100,9 @@ export async function getStructureRencontre(id: string): Promise<StructureRencon
     { data: vitesses, error: errVV },
     { data: echelons, error: errEch },
   ] = await Promise.all([
-    supabase
-      .from('rencontre')
-      .select('id, date_rencontre, categorie, phase, club_porteur_id, club:club_porteur_id(nom)')
-      .eq('id', id)
-      .maybeSingle(),
+    // Partagée avec les autres panneaux du tableau de bord (lot 4 du plan
+    // « appels Supabase »).
+    lireRencontreAdmin(id),
     supabase
       .from('epreuve')
       .select('id, type, points_chute, points_non_presentation')
@@ -140,7 +139,6 @@ export async function getStructureRencontre(id: string): Promise<StructureRencon
   ])
   // Ne jamais avaler une erreur d'accès (ex. grant/RLS manquant) : elle
   // masquerait la structure derrière un « 0 » trompeur.
-  if (errR) throw errR
   if (!rencontre) return null
   if (errE) throw errE
   if (errV) throw errV
