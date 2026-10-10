@@ -57,6 +57,10 @@ function ligneVoie(page: Page, code: string): Locator {
 
 const pastille = (l: Locator) => l.locator('span.rounded-full')
 
+// Région `status` portant un texte donné : la page en compte plusieurs (bandeau
+// de connexion, et la région toujours montée du spinner de navigation, spec #12 R26).
+const statut = (page: Page, texte: string) => page.getByRole('status').filter({ hasText: texte })
+
 test.describe('Cahier 29 — saisie hors ligne, lot 2 (spec #17)', () => {
   test.describe.configure({ mode: 'serial' })
 
@@ -90,7 +94,7 @@ test.describe('Cahier 29 — saisie hors ligne, lot 2 (spec #17)', () => {
 
     await expect(pastille(ligneVoie(page, 'T1'))).toHaveText('Top')
     await expect(page.getByText('⏳ En attente')).toHaveCount(2)
-    await expect(page.getByRole('status')).toContainText('Hors ligne · 2 saisies en attente')
+    await expect(statut(page, 'Hors ligne')).toContainText('Hors ligne · 2 saisies en attente')
     expect(issueEnBase(VOIE_T1, GRIMPEURS.bob)).toBe('(aucun)')
 
     await context.setOffline(false)
@@ -224,7 +228,7 @@ test.describe('Cahier 29 — saisie hors ligne, lot 2 (spec #17)', () => {
     await page.getByLabel('Temps de Alpha Bob').press('Enter')
     await expect(ligne.locator('span.rounded-full')).toHaveText('8,500 s')
     await expect(ligne.getByText('⏳ En attente')).toBeVisible()
-    await expect(page.getByRole('status')).toContainText('Hors ligne · 1 saisie en attente')
+    await expect(statut(page, 'Hors ligne')).toContainText('Hors ligne · 1 saisie en attente')
 
     await context.setOffline(false)
     await expect(page.locator('[data-en-attente]')).toHaveCount(0, { timeout: 15_000 })

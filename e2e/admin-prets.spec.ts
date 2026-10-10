@@ -45,7 +45,7 @@ test.describe('Écran admin — prêts de grimpeurs (R35)', () => {
     await formPret.locator('select[name="clubAccueilId"]').selectOption({ label: 'Club A' })
     await formPret.getByRole('button', { name: /Créer le prêt/ }).click()
 
-    await expect(page.getByRole('status')).toHaveText(/Prêt créé/)
+    await expect(page.getByRole('status').filter({ hasText: /Prêt créé/ })).toBeVisible()
     const ligne = page.locator('tr', { hasText: 'Devi Bravo' })
     await expect(ligne).toBeVisible()
 
