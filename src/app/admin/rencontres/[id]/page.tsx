@@ -3,9 +3,8 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 import { Carte, Coquille, EnTetePage } from '@/composants'
-import { progressionGlobale } from '@/domaine/controle'
 import { anneeSaison, CATEGORIES, labelSaison, type Categorie } from '@/domaine/rencontre'
-import { getControleRencontre } from '@/lib/admin/controle'
+import { getProgressionControle } from '@/lib/admin/controle'
 import { chargerEngagementTousClubs } from '@/lib/admin/engagement'
 import { liensAdmin } from '@/lib/admin/navigation'
 import { exigerAdmin } from '@/lib/auth/session'
@@ -52,8 +51,9 @@ export default async function PageTableauDeBordRencontre({
     getStructureRencontre(id),
     chargerPretsRencontre(id),
     chargerEngagementTousClubs(id),
-    // Contrôle des résultats (spec #16) : ④ contrôle, ⑤ lecture seule (R2/R3).
-    getControleRencontre(id, { avecAuteurs: false }),
+    // Contrôle des résultats (spec #16) : ④ contrôle, ⑤ lecture seule (R2/R3) —
+    // seulement la progression (comptages), pas les résultats eux-mêmes.
+    getProgressionControle(id),
   ])
   if (!structure) notFound()
 
@@ -66,9 +66,7 @@ export default async function PageTableauDeBordRencontre({
     structure.voiesVitesse.length
   const nbPrets = prets.length
 
-  const progressionControle = controle
-    ? progressionGlobale(controle.supports.map((s) => s.lignes))
-    : null
+  const progressionControle = controle?.progression ?? null
 
   return (
     <Coquille liens={liensAdmin()} largeur="large" deconnexion>

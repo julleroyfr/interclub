@@ -85,4 +85,24 @@ test.describe('Contrôle au-delà de 1000 résultats (spec #16, J2)', () => {
       .map((texte) => texte.match(/\d+\/\d+/)?.[0])
     expect(progressions).toEqual(Array(nbVoies).fill(`0/${NB_GRIMPEUSES}`))
   })
+
+  test('le tableau de bord compte tous les résultats (R3)', async ({ page }) => {
+    const total = Number(
+      execSql(
+        `select (select count(*) from interclub.resultat_voie rv
+                   join interclub.voie_difficulte v on v.id = rv.voie_difficulte_id
+                   join interclub.epreuve e on e.id = v.epreuve_id
+                  where e.rencontre_id = '${RENCONTRE_PILOTE}')
+              + (select count(*) from interclub.resultat_bloc rb
+                   join interclub.bloc b on b.id = rb.bloc_id
+                   join interclub.epreuve e on e.id = b.epreuve_id
+                  where e.rencontre_id = '${RENCONTRE_PILOTE}');`,
+      ),
+    )
+    expect(total).toBeGreaterThan(1000)
+
+    await commeAdmin(page)
+    await page.goto(`/admin/rencontres/${RENCONTRE_PILOTE}`)
+    await expect(page.getByText(`0/${total} lignes contrôlées`)).toBeVisible()
+  })
 })
