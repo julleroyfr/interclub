@@ -2,10 +2,5 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
   "buildCommand": "npm run build",
-  "regions": ["dub1"],
-  "git": {
-    "deploymentEnabled": {
-      "main": false
-    }
-  }
+  "regions": ["dub1"]
 }
