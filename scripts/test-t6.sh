@@ -52,12 +52,11 @@ grant execute on function pg_temp.essai(text, boolean, text) to authenticated;
 
 -- ---- Fixtures (superuser, RLS contournée) -------------------------------
 -- Le jeu de test (seed 01) fournit déjà : épreuves voie (…801)/vitesse (…803),
--- grimpeurs gA1 (a…a1) et gB2 (b…b2, libre), équipes A1 (…6666)/A2 (…6602),
--- compositions gA1∈A1. On n'ajoute que ce qui ne peut être seedé :
---   1. le PRÊT posé par l'admin (gB2 club B ∈ équipe A1 club A) — état initial R36 ;
---   2. deux utilisateurs anonymes + leurs sessions QR (créées au scan en vrai).
-insert into interclub.composition (equipe_id, grimpeur_id) values
-  ('66666666-6666-6666-6666-666666666666','b0000000-0000-0000-0000-0000000000b2'); -- gB2 prêté par l'admin
+-- grimpeurs gA1 (a…a1) et gB2 (b…b2), équipes A1 (…6666)/A2 (…6602),
+-- compositions gA1∈A1 et gB2 (club B) ∈ A2 (club A) = le PRÊT, état initial
+-- R36 (un grimpeur = une équipe par rencontre, R14 : pas de 2ᵉ composition).
+-- On n'ajoute que ce qui ne peut être seedé : deux utilisateurs anonymes +
+-- leurs sessions QR (créées au scan en vrai).
 insert into auth.users (instance_id,id,aud,role,is_anonymous,created_at,updated_at) values
   ('00000000-0000-0000-0000-000000000000','d0000000-0000-0000-0000-0000000000c7','authenticated','authenticated',true,now(),now()),
   ('00000000-0000-0000-0000-000000000000','e0000000-0000-0000-0000-0000000000c8','authenticated','authenticated',true,now(),now());
