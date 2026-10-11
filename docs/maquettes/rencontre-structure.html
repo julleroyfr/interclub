@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Maquettes — Configuration structure de rencontre (R36)</title>
+<style>
+  :root {
+    --fond: #020617;
+    --surface: rgba(255, 255, 255, 0.04);
+    --surface-forte: rgba(255, 255, 255, 0.08);
+    --bordure: rgba(255, 255, 255, 0.12);
+    --accent: #22d3ee;
+    --accent-doux: #67e8f9;
+    --secondaire: #bef264;
+    --danger: #fb7185;
+    --texte-fort: #ffffff;
+    --texte: #e2e8f0;
+    --texte-attenue: #94a3b8;
+    --texte-doux: #64748b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--fond);
+    color: var(--texte);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.4;
+    padding: 24px 16px 80px;
+  }
+  h1 { color: var(--texte-fort); font-size: 20px; text-align: center; }
+  .intro { text-align: center; color: var(--texte-attenue); max-width: 560px; margin: 0 auto 32px; font-size: 14px; }
+  .grille {
+    display: flex; flex-wrap: wrap; gap: 28px; justify-content: center; align-items: flex-start;
+  }
+  .colonne { width: 340px; max-width: 100%; }
+  .colonne > .titre-option {
+    color: var(--accent); font-size: 13px; text-transform: uppercase; letter-spacing: .08em;
+    font-weight: 700; margin: 0 0 4px;
+  }
+  .colonne > .desc-option { color: var(--texte-doux); font-size: 12.5px; margin: 0 0 12px; min-height: 34px; }
+
+  /* --- cadre "téléphone" --- */
+  .tel {
+    border: 1px solid var(--bordure); border-radius: 22px; overflow: hidden;
+    background: linear-gradient(180deg, rgba(34,211,238,0.06), rgba(2,6,23,0) 220px), var(--fond);
+    box-shadow: 0 12px 40px rgba(0,0,0,.5);
+  }
+  .barre-haut {
+    padding: 12px 16px 14px; border-bottom: 1px solid var(--bordure);
+  }
+  .lien-retour { color: var(--texte-attenue); font-size: 12.5px; }
+  .titre-rencontre { color: var(--texte-fort); font-weight: 600; font-size: 15px; margin-top: 6px; }
+  .meta { color: var(--texte-attenue); font-size: 12.5px; margin-top: 2px; }
+  .badge-phase {
+    display: inline-flex; align-items: center; gap: 6px; margin-top: 8px;
+    background: rgba(190,242,100,.12); color: var(--secondaire);
+    border: 1px solid rgba(190,242,100,.3); border-radius: 999px;
+    padding: 3px 10px; font-size: 11.5px; font-weight: 600;
+  }
+  .badge-phase.verrou { background: rgba(148,163,184,.12); color: var(--texte-attenue); border-color: var(--bordure); }
+
+  .corps { padding: 14px; }
+
+  /* cartes d'épreuve */
+  .carte {
+    background: var(--surface); border: 1px solid var(--bordure);
+    border-radius: 14px; padding: 12px 14px; margin-bottom: 12px;
+  }
+  .carte-entete { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .carte-titre { color: var(--texte-fort); font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+  .compte { color: var(--texte-doux); font-size: 11.5px; font-weight: 600; }
+
+  ul.liste { list-style: none; margin: 0; padding: 0; }
+  ul.liste li {
+    display: flex; align-items: baseline; gap: 8px; padding: 6px 8px; border-radius: 8px; font-size: 13px;
+  }
+  ul.liste li + li { border-top: 1px solid rgba(255,255,255,.05); }
+  ul.liste li:hover { background: var(--surface-forte); }
+  .niv { color: var(--accent-doux); font-weight: 700; width: 34px; }
+  .cot { color: var(--texte-fort); width: 40px; }
+  .pts { color: var(--texte-attenue); font-size: 12px; }
+  .sec { color: var(--texte-doux); font-size: 11.5px; }
+
+  /* formulaire d'ajout inline */
+  .form-ajout {
+    margin-top: 10px; border: 1px dashed var(--bordure); border-radius: 12px; padding: 12px;
+    background: rgba(34,211,238,0.03);
+  }
+  .form-ajout .lbl { color: var(--accent); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; display:block; }
+  .ligne-champs { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+  .champ { flex: 1 1 auto; }
+  .champ label { display:block; color: var(--texte-doux); font-size: 10.5px; margin-bottom: 3px; }
+  input, select {
+    width: 100%; background: rgba(0,0,0,.3); color: var(--texte-fort);
+    border: 1px solid var(--bordure); border-radius: 8px; padding: 7px 9px; font-size: 13px;
+    color-scheme: dark;
+  }
+  input::placeholder { color: var(--texte-doux); }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    border-radius: 9px; padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer;
+    border: 1px solid transparent; width: 100%;
+  }
+  .btn-primaire { background: var(--accent); color: #04222a; }
+  .btn-fantome { background: transparent; color: var(--accent); border-color: rgba(34,211,238,.35); }
+  .btn-fantome:hover { background: var(--surface-forte); }
+  .btn-ligne { width: auto; }
+
+  /* onglets */
+  .onglets { display: flex; gap: 4px; padding: 4px; background: rgba(0,0,0,.25); border-radius: 12px; margin-bottom: 14px; }
+  .onglet { flex: 1; text-align: center; padding: 8px 6px; border-radius: 9px; font-size: 12.5px; color: var(--texte-attenue); font-weight: 600; }
+  .onglet.actif { background: var(--surface-forte); color: var(--texte-fort); }
+
+  /* modale */
+  .fausse-modale {
+    margin-top: 12px; border: 1px solid rgba(34,211,238,.35); border-radius: 14px;
+    background: #05141c; padding: 14px; box-shadow: 0 -4px 30px rgba(0,0,0,.4);
+  }
+  .modale-entete { display:flex; justify-content: space-between; align-items:center; margin-bottom: 10px; }
+  .modale-entete .t { color: var(--texte-fort); font-weight: 700; font-size: 14px; }
+  .modale-entete .x { color: var(--texte-doux); }
+  .actions-modale { display:flex; gap: 8px; margin-top: 4px; }
+
+  .note-lecture { color: var(--texte-attenue); font-size: 12px; background: rgba(148,163,184,.08); border:1px solid var(--bordure); border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; }
+  .vide { color: var(--texte-doux); font-size: 12.5px; font-style: italic; padding: 6px 8px; }
+
+  .legende { max-width: 900px; margin: 40px auto 0; color: var(--texte-attenue); font-size: 13px; }
+  .legende h2 { color: var(--texte-fort); font-size: 15px; }
+  .legende li { margin-bottom: 6px; }
+</style>
+</head>
+<body>
+  <h1>Configuration de la structure d'une rencontre — R36</h1>
+  <p class="intro">Trois dispositions candidates pour l'écran <code>/admin/rencontres/[id]</code>.
+  Rencontre exemple : <strong>Ado</strong>, phase pré-compétition (édition autorisée). Mobile-first.</p>
+
+  <div class="grille">
+
+    <!-- ===================== OPTION A ===================== -->
+    <section class="colonne">
+      <p class="titre-option">Option A — Cartes empilées</p>
+      <p class="desc-option">Une carte par épreuve, liste + formulaire d'ajout intégré. Tout visible en un défilement.</p>
+      <div class="tel">
+        <div class="barre-haut">
+          <div class="lien-retour">← Rencontres</div>
+          <div class="titre-rencontre">12 oct. 2025 — CAF Bègles</div>
+          <div class="meta">Catégorie ado</div>
+          <div class="badge-phase">● Pré-compétition — édition possible</div>
+        </div>
+        <div class="corps">
+
+          <div class="carte">
+            <div class="carte-entete"><span class="carte-titre">Voies de difficulté</span><span class="compte">10</span></div>
+            <ul class="liste">
+              <li><span class="niv">T1</span><span class="cot">4c</span><span class="pts">voie 4 · Z1 1 · Z2 2</span></li>
+              <li><span class="niv">T2</span><span class="cot">6a</span><span class="pts">voie 6 · Z1 3 · Z2 4</span></li>
+              <li><span class="niv">T3</span><span class="cot">6b</span><span class="pts">voie 8 · Z1 5 · Z2 6</span></li>
+            </ul>
+            <div class="form-ajout">
+              <span class="lbl">Ajouter une voie</span>
+              <div class="ligne-champs">
+                <div class="champ"><label>Niveau</label><select><option>T1</option><option>T2</option></select></div>
+                <div class="champ"><label>Type</label><select><option>Tête</option></select></div>
+                <div class="champ"><label>Cotation</label><input placeholder="6a+"></div>
+              </div>
+              <div class="ligne-champs">
+                <div class="champ"><label>Points voie</label><input placeholder="6"></div>
+                <div class="champ"><label>Zone 1</label><input placeholder="3"></div>
+                <div class="champ"><label>Zone 2</label><input placeholder="4"></div>
+              </div>
+              <button class="btn btn-primaire">Ajouter</button>
+            </div>
+          </div>
+
+          <div class="carte">
+            <div class="carte-entete"><span class="carte-titre">Blocs</span><span class="compte">2</span></div>
+            <ul class="liste">
+              <li><span class="niv">B1</span><span class="sec">Zone 10 · Bloc complet 30</span></li>
+              <li><span class="niv">B2</span><span class="sec">Z1 20 · Z2 40 · complet 60</span></li>
+            </ul>
+            <div class="form-ajout">
+              <span class="lbl">Ajouter un bloc</span>
+              <div class="ligne-champs">
+                <div class="champ"><label>Code</label><input placeholder="B3"></div>
+              </div>
+              <button class="btn btn-primaire">Ajouter</button>
+            </div>
+          </div>
+
+          <div class="carte">
+            <div class="carte-entete"><span class="carte-titre">Vitesse</span><span class="compte">2</span></div>
+            <ul class="liste">
+              <li><span class="niv">1</span><span class="cot" style="width:auto">Filles</span></li>
+              <li><span class="niv">2</span><span class="cot" style="width:auto">Garçons</span></li>
+            </ul>
+            <div class="form-ajout">
+              <span class="lbl">Ajouter une voie de vitesse</span>
+              <div class="ligne-champs">
+                <div class="champ"><label>Libellé</label><input placeholder="Mixte"></div>
+              </div>
+              <button class="btn btn-primaire">Ajouter</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== OPTION B ===================== -->
+    <section class="colonne">
+      <p class="titre-option">Option B — Onglets par type</p>
+      <p class="desc-option">En-tête + onglets Voies / Blocs / Vitesse. Un seul type affiché à la fois, moins de défilement.</p>
+      <div class="tel">
+        <div class="barre-haut">
+          <div class="lien-retour">← Rencontres</div>
+          <div class="titre-rencontre">12 oct. 2025 — CAF Bègles</div>
+          <div class="meta">Catégorie ado</div>
+          <div class="badge-phase">● Pré-compétition — édition possible</div>
+        </div>
+        <div class="corps">
+          <div class="onglets">
+            <div class="onglet actif">Voies · 10</div>
+            <div class="onglet">Blocs · 2</div>
+            <div class="onglet">Vitesse · 2</div>
+          </div>
+
+          <ul class="liste">
+            <li><span class="niv">T1</span><span class="cot">4c</span><span class="pts">voie 4 · Z1 1 · Z2 2</span></li>
+            <li><span class="niv">T2</span><span class="cot">6a</span><span class="pts">voie 6 · Z1 3 · Z2 4</span></li>
+            <li><span class="niv">T3</span><span class="cot">6b</span><span class="pts">voie 8 · Z1 5 · Z2 6</span></li>
+            <li><span class="niv">T4</span><span class="cot">6c</span><span class="pts">voie 10 · Z1 7 · Z2 8</span></li>
+          </ul>
+
+          <div class="form-ajout">
+            <span class="lbl">Ajouter une voie</span>
+            <div class="ligne-champs">
+              <div class="champ"><label>Niveau</label><select><option>T5</option></select></div>
+              <div class="champ"><label>Type</label><select><option>Tête</option></select></div>
+              <div class="champ"><label>Cotation</label><input placeholder="7a"></div>
+            </div>
+            <div class="ligne-champs">
+              <div class="champ"><label>Points voie</label><input placeholder="12"></div>
+              <div class="champ"><label>Zone 1</label><input placeholder="9"></div>
+              <div class="champ"><label>Zone 2</label><input placeholder="10"></div>
+            </div>
+            <button class="btn btn-primaire">Ajouter</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== OPTION C ===================== -->
+    <section class="colonne">
+      <p class="titre-option">Option C — Listes épurées + modale</p>
+      <p class="desc-option">Au repos : seulement les listes et un bouton « Ajouter ». Le formulaire s'ouvre en panneau focus.</p>
+      <div class="tel">
+        <div class="barre-haut">
+          <div class="lien-retour">← Rencontres</div>
+          <div class="titre-rencontre">12 oct. 2025 — CAF Bègles</div>
+          <div class="meta">Catégorie ado</div>
+          <div class="badge-phase">● Pré-compétition — édition possible</div>
+        </div>
+        <div class="corps">
+
+          <div class="carte">
+            <div class="carte-entete"><span class="carte-titre">Voies de difficulté</span><span class="compte">10</span></div>
+            <ul class="liste">
+              <li><span class="niv">T1</span><span class="cot">4c</span><span class="pts">voie 4 · Z1 1 · Z2 2</span></li>
+              <li><span class="niv">T2</span><span class="cot">6a</span><span class="pts">voie 6 · Z1 3 · Z2 4</span></li>
+              <li class="sec">… 8 autres</li>
+            </ul>
+            <button class="btn btn-fantome btn-ligne" style="margin-top:8px">+ Ajouter une voie</button>
+          </div>
+
+          <div class="carte">
+            <div class="carte-entete"><span class="carte-titre">Blocs</span><span class="compte">2</span></div>
+            <ul class="liste">
+              <li><span class="niv">B1</span><span class="sec">2 paliers</span></li>
+              <li><span class="niv">B2</span><span class="sec">3 paliers</span></li>
+            </ul>
+            <button class="btn btn-fantome btn-ligne" style="margin-top:8px">+ Ajouter un bloc</button>
+          </div>
+
+          <!-- panneau focus ouvert -->
+          <div class="fausse-modale">
+            <div class="modale-entete"><span class="t">Ajouter une voie</span><span class="x">✕</span></div>
+            <div class="ligne-champs">
+              <div class="champ"><label>Niveau</label><select><option>T5</option></select></div>
+              <div class="champ"><label>Type</label><select><option>Tête</option></select></div>
+            </div>
+            <div class="ligne-champs">
+              <div class="champ"><label>Cotation</label><input placeholder="7a"></div>
+            </div>
+            <div class="ligne-champs">
+              <div class="champ"><label>Points voie</label><input placeholder="12"></div>
+              <div class="champ"><label>Zone 1</label><input placeholder="9"></div>
+              <div class="champ"><label>Zone 2</label><input placeholder="10"></div>
+            </div>
+            <div class="actions-modale">
+              <button class="btn btn-fantome">Annuler</button>
+              <button class="btn btn-primaire">Ajouter</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- variantes d'état -->
+  <div class="grille" style="margin-top:44px">
+    <section class="colonne">
+      <p class="titre-option" style="color:var(--texte-attenue)">Variante — hors pré-compétition (lecture seule)</p>
+      <p class="desc-option">Phases compétition / résultats : structure figée (R36), aucun formulaire.</p>
+      <div class="tel">
+        <div class="barre-haut">
+          <div class="lien-retour">← Rencontres</div>
+          <div class="titre-rencontre">12 oct. 2025 — CAF Bègles</div>
+          <div class="meta">Catégorie ado</div>
+          <div class="badge-phase verrou">🔒 Compétition — structure verrouillée</div>
+        </div>
+        <div class="corps">
+          <div class="note-lecture">La structure ne peut être modifiée qu'en phase pré-compétition (R36). Revenez en pré-compétition pour l'éditer.</div>
+          <div class="carte">
+            <div class="carte-entete"><span class="carte-titre">Voies de difficulté</span><span class="compte">10</span></div>
+            <ul class="liste">
+              <li><span class="niv">T1</span><span class="cot">4c</span><span class="pts">voie 4 · Z1 1 · Z2 2</span></li>
+              <li><span class="niv">T2</span><span class="cot">6a</span><span class="pts">voie 6 · Z1 3 · Z2 4</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="colonne">
+      <p class="titre-option" style="color:var(--texte-attenue)">Variante — rencontre sans format (R35)</p>
+      <p class="desc-option">Gabarit vide à la création : l'admin ajoute d'abord une épreuve.</p>
+      <div class="tel">
+        <div class="barre-haut">
+          <div class="lien-retour">← Rencontres</div>
+          <div class="titre-rencontre">12 oct. 2025 — CAF Bègles</div>
+          <div class="meta">Catégorie ado</div>
+          <div class="badge-phase">● Pré-compétition — édition possible</div>
+        </div>
+        <div class="corps">
+          <div class="vide">Aucune épreuve pour cette rencontre. Ajoutez-en une pour commencer.</div>
+          <div class="form-ajout">
+            <span class="lbl">Ajouter une épreuve</span>
+            <div class="ligne-champs">
+              <div class="champ"><label>Type</label><select><option>Voie de difficulté</option><option>Bloc</option><option>Vitesse</option></select></div>
+            </div>
+            <button class="btn btn-primaire">Ajouter l'épreuve</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="legende">
+    <h2>Notes de spec (à valider)</h2>
+    <ul>
+      <li><strong>Périmètre</strong> : ajout uniquement (voies/blocs/vitesse + épreuve si R35). Édition & suppression restent hors périmètre — pas de bouton modifier/supprimer sur les lignes.</li>
+      <li><strong>Phase</strong> : formulaires visibles uniquement en pré-compétition ; sinon écran en lecture seule (variante ci-dessus).</li>
+      <li><strong>Champs points</strong> conditionnels à la catégorie (R38) : prise valorisée = tête enfant ; Zone 1/2 = ado. La maquette montre le cas ado.</li>
+      <li><strong>Accès</strong> : lien « Configurer » à ajouter sur chaque ligne de la liste des rencontres (section Écran Rencontres, R13–R19).</li>
+    </ul>
+  </div>
+
+</body>
+</html>

@@ -12,6 +12,9 @@
 
 # testing
 /coverage
+/test-results
+/playwright-report
+/playwright/.cache
 
 # next.js
 /.next/
@@ -36,8 +39,22 @@ yarn-error.log*
 # vercel
 .vercel
 
+# données réelles licenciés (FFME/FFCAM) — ne jamais versionner
+/docs/reglement/Licenci*.xlsx
+
+# supabase — stack locale (Docker). On versionne config.toml, migrations, seed ;
+# on ignore les fichiers temporaires/générés de la stack locale.
+supabase/.temp/
+supabase/.branches/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
 
 .vercel
+
+# données réelles club de Marsas (listing sans licence + copie corrigée)
+/docs/listing marsas*.csv
+
+# PDF des guides utilisateur : générés à la demande (npm run doc:pdf), distribués hors dépôt.
+docs/guides/**/*.pdf

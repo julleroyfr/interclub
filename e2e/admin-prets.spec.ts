@@ -1,0 +1,100 @@
+import type { Page } from '@playwright/test'
+
+import { expect, test } from './helpers/fixtures'
+import { commeAdmin, commeCoach } from './helpers/auth'
+import { RENCONTRE_PILOTE } from './helpers/donnees'
+import { execSql, poserPhase, reinitialiserEngagement } from './helpers/sql'
+
+/**
+ * Écran admin de gestion des prêts (spec #1 R35). Vérifie le parcours complet :
+ * l'admin crée un prêt via l'IHM → le coach d'accueil voit le grimpeur dans son
+ * roster (spec #5 R12/R13) → révocation.
+ *
+ * Série + un seul worker (mute la même rencontre en base).
+ */
+test.describe('Écran admin — prêts de grimpeurs (R35)', () => {
+  test.describe.configure({ mode: 'serial' })
+
+  test.beforeEach(() => {
+    reinitialiserEngagement() // nettoie prêts + compositions surnuméraires
+    poserPhase('pre_competition')
+  })
+
+  const rosterContient = async (page: Page, texte: string) => {
+    await page.goto(`/coach/rencontres/${RENCONTRE_PILOTE}`)
+    const options = await page
+      .locator('select[name="grimpeurId"] option')
+      .allInnerTexts()
+    return options.some((o) => o.includes(texte))
+  }
+
+  test('admin crée un prêt → le coach voit le prêté au roster → révocation', async ({
+    page,
+    browser,
+  }) => {
+    await commeAdmin(page)
+    // Point d'entrée : la page de la rencontre (rencontre implicite).
+    await page.goto(`/admin/rencontres/${RENCONTRE_PILOTE}`)
+
+    // Créer le prêt : club d'origine → recherche → grimpeur → club d'accueil.
+    // Scopé au formulaire de prêt (la page porte aussi le panneau « Équipes »).
+    const formPret = page.locator('form', { has: page.getByLabel('Club du grimpeur') })
+    await formPret.getByLabel('Club du grimpeur').selectOption({ label: 'Club B' })
+    await formPret.getByLabel(/Rechercher un grimpeur/).fill('Devi')
+    await formPret.locator('select[name="grimpeurId"]').selectOption({ label: 'Devi Bravo' })
+    await formPret.locator('select[name="clubAccueilId"]').selectOption({ label: 'Club A' })
+    await formPret.getByRole('button', { name: /Créer le prêt/ }).click()
+
+    await expect(page.getByRole('status').filter({ hasText: /Prêt créé/ })).toBeVisible()
+    const ligne = page.locator('tr', { hasText: 'Devi Bravo' })
+    await expect(ligne).toBeVisible()
+
+    // Côté coach (autre contexte) : Devi apparaît au roster (badge prêté).
+    const ctxCoach = await browser.newContext()
+    const pageCoach = await ctxCoach.newPage()
+    await commeCoach(pageCoach)
+    expect(await rosterContient(pageCoach, 'Devi Bravo (prêté · Club B)')).toBe(true)
+    await ctxCoach.close()
+
+    // Révoquer le prêt → la ligne disparaît.
+    await ligne.getByRole('button', { name: /Révoquer/ }).click()
+    await expect(page.locator('tr', { hasText: 'Devi Bravo' })).toHaveCount(0)
+  })
+
+  test('accueil exclut le club d’origine + filtre catégorie (enfant) du roster', async ({
+    page,
+  }) => {
+    // Un grimpeur ADO du Club B (né en 2000) ne doit PAS être proposé pour une
+    // rencontre ENFANT (R34). Inséré puis nettoyé.
+    const ADO = 'b0000000-0000-0000-0000-0000000000b9'
+    execSql(
+      `insert into interclub.grimpeur (id, club_id, nom, prenom, annee_naissance, sexe, licence) values ('${ADO}','22222222-2222-2222-2222-222222222222','Bravo','Grand',2000,'H',9999009) on conflict (id) do nothing;`,
+    )
+    try {
+      await commeAdmin(page)
+      await page.goto(`/admin/rencontres/${RENCONTRE_PILOTE}`)
+
+      // Club d'origine = Club B : Club B est exclu des clubs d'accueil.
+      const formPret = page.locator('form', { has: page.getByLabel('Club du grimpeur') })
+      await formPret.getByLabel('Club du grimpeur').selectOption({ label: 'Club B' })
+      const accueil = await formPret
+        .locator('select[name="clubAccueilId"] option')
+        .allInnerTexts()
+      expect(accueil).toContain('Club A')
+      expect(accueil).not.toContain('Club B')
+
+      // Filtre par club + catégorie + disponibilité : Devi (enfant, Club B, libre)
+      // proposé ; Ana (Club A), Grand Bravo (ado) et Cléo (déjà engagée en B1, R14)
+      // absents.
+      const options = await formPret
+        .locator('select[name="grimpeurId"] option')
+        .allInnerTexts()
+      expect(options).toContain('Devi Bravo')
+      expect(options.join(' ')).not.toContain('Ana Alpha')
+      expect(options.join(' ')).not.toContain('Grand Bravo')
+      expect(options.join(' ')).not.toContain('Cléo Bravo')
+    } finally {
+      execSql(`delete from interclub.grimpeur where id='${ADO}';`)
+    }
+  })
+})

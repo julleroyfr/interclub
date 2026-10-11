@@ -1,12 +1,11 @@
 {
-  "buildCommand": "npm run build",
-  "devCommand": "npm run dev",
-  "installCommand": "npm install",
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
-  "outputDirectory": ".next",
-  "env": {
-    "NEXT_PUBLIC_SUPABASE_URL": "",
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "",
-    "SUPABASE_SERVICE_ROLE_KEY": ""
+  "buildCommand": "npm run build",
+  "regions": ["dub1"],
+  "git": {
+    "deploymentEnabled": {
+      "main": false
+    }
   }
 }

@@ -1,0 +1,98 @@
+import type { Metadata } from 'next'
+import Link from 'next/link'
+import { notFound } from 'next/navigation'
+
+import { Coquille, EnTetePage, Etiquette, LienExportPdf, TempsReel, variantePhase } from '@/composants'
+import { CATEGORIES, PHASES, phaseEnDirect, type Categorie, type Phase } from '@/domaine/rencontre'
+import { liensAdmin } from '@/lib/admin/navigation'
+import { exigerAdmin } from '@/lib/auth/session'
+import { getClassementRencontre } from '@/lib/classement/classement'
+import { exportDisponible } from '@/lib/export/export-classement'
+
+import { PanneauClassement } from '@/app/coach/rencontres/[id]/classement/panneau-classement'
+
+export const metadata: Metadata = { title: 'Classement (admin) — Interclub' }
+
+const labelPhase = (v: Phase) => PHASES.find((p) => p.value === v)?.label ?? v
+const labelCategorie = (v: Categorie) =>
+  CATEGORIES.find((c) => c.value === v)?.labelCourt ?? v
+
+function formaterDate(iso: string): string {
+  const [a, m, j] = iso.split('-')
+  if (!a || !m || !j) return iso
+  return new Date(Date.UTC(Number(a), Number(m) - 1, Number(j))).toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  })
+}
+
+/**
+ * Vue classement côté admin (spec #12 R14/R15). Réservée au rôle admin (404
+ * sinon, comme les autres écrans admin) : elle remplace le lien qui renvoyait
+ * l'admin dans l'espace coach (bug B1 → 404). Périmètre tous clubs, sans « mon
+ * club » (`monClubId=null`). Réutilise le loader et le panneau de la spec #7
+ * (aucune donnée nouvelle). La RLS reste la frontière ultime.
+ */
+export default async function PageClassementAdmin({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
+  await exigerAdmin()
+
+  const { id } = await params
+  // Export PDF : rencontre officielle (⑤) uniquement (spec #15 R1/R3/R7) — lu
+  // en parallèle du classement (une vague de moins).
+  const [classement, exportPdf] = await Promise.all([
+    getClassementRencontre(id),
+    exportDisponible(id, { role: 'admin' }),
+  ])
+  if (!classement) notFound()
+
+  return (
+    <Coquille liens={liensAdmin()} largeur="large" deconnexion>
+      <div className="flex flex-col gap-6">
+        <div>
+          <EnTetePage
+            titre={`${formaterDate(classement.dateRencontre)} — Classement`}
+            sousTitre={`Catégorie ${labelCategorie(classement.categorie)} · administrateur · tous clubs`}
+          />
+          <div className="mt-2 flex flex-wrap items-center gap-3">
+            <Etiquette variante={variantePhase[classement.phase]}>
+              {labelPhase(classement.phase)}
+            </Etiquette>
+            <span
+              className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-bold ${
+                classement.officiel
+                  ? 'border-secondaire/30 bg-secondaire/10 text-secondaire'
+                  : 'border-bordure bg-white/5 text-texte-attenue'
+              }`}
+            >
+              {classement.officiel ? '✓ Officiel' : '● Non officiel'}
+            </span>
+            <Link
+              href={`/admin/rencontres/${id}`}
+              className="text-sm font-semibold text-accent-doux underline-offset-2 hover:underline"
+            >
+              ← Tableau de bord
+            </Link>
+            {/* Live : le classement bouge quand un coach/juge saisit (spec #11 R1/R3). */}
+            <TempsReel
+              tables={['resultat_voie', 'resultat_bloc', 'points_vitesse']}
+              actif={phaseEnDirect(classement.phase)}
+            />
+          </div>
+          {exportPdf && (
+            <div className="mt-3">
+              <LienExportPdf href={`/admin/rencontres/${id}/classement/pdf`} />
+            </div>
+          )}
+        </div>
+
+        <PanneauClassement classement={classement} monClubId={null} />
+      </div>
+    </Coquille>
+  )
+}

@@ -1,0 +1,578 @@
+import type { Page } from '@playwright/test'
+
+import { expect, test } from './helpers/fixtures'
+import { infosApi } from './helpers/api'
+import {
+  commeAdmin,
+  commeCoach,
+  commeCoachTemporaire,
+  commeSansMapping,
+} from './helpers/auth'
+import {
+  CLUB_A,
+  COMPTES,
+  EQUIPES,
+  GRIMPEURS,
+  JETON,
+  POOL_LIBRES,
+  RENCONTRE_PILOTE,
+} from './helpers/donnees'
+import {
+  compterSessionsQr,
+  execSql,
+  nettoyerSessionsQr,
+  poserDate,
+  poserPhase,
+  reinitialiserEngagement,
+} from './helpers/sql'
+
+const URL_RENCONTRE = `/coach/rencontres/${RENCONTRE_PILOTE}`
+
+/** Carte (li) d'une équipe, repérée par son titre exact. */
+const carteEquipe = (page: Page, nom: string) =>
+  page.locator('li', {
+    has: page.getByRole('heading', { name: nom, exact: true }),
+  })
+
+/** Crée une équipe via le formulaire « Nouvelle équipe ». */
+async function creerEquipe(page: Page, nom: string) {
+  await page.getByLabel('Nouvelle équipe').fill(nom)
+  await page.getByRole('button', { name: /Créer l.équipe/ }).click()
+  await expect(page.getByRole('heading', { name: nom, exact: true })).toBeVisible()
+}
+
+/** Ajoute un grimpeur (par libellé) à une équipe donnée, groupe optionnel. */
+async function ajouterGrimpeur(
+  page: Page,
+  equipe: string,
+  labelGrimpeur: string,
+  groupe?: string,
+) {
+  const carte = carteEquipe(page, equipe)
+  await carte.locator('select[name="grimpeurId"]').selectOption({ label: labelGrimpeur })
+  if (groupe) {
+    await carte
+      .getByLabel('Groupe de départ (optionnel)')
+      .selectOption({ label: `Groupe ${groupe}` })
+  }
+  await carte.getByRole('button', { name: /Ajouter à l.équipe/ }).click()
+  // Confirmer via la LIGNE de composition (li). La composition affiche le NOM
+  // seul ; le libellé du roster peut porter un suffixe « (prêté · club) ».
+  const nomAffiche = labelGrimpeur.replace(/\s*\(prêté.*\)\s*$/, '')
+  await expect(carte.locator('li', { hasText: nomAffiche })).toBeVisible()
+}
+
+/**
+ * Exécution automatisée des cas `[auto]` du cahier
+ * docs/tests/13-espace-coach.cahier.md (pilote de l'ADR 0004).
+ *
+ * Pré-requis : stack Supabase LOCALE up (`supabase start` + seed 01) et app dev
+ * sur le port 3011. Ce fichier NE couvre PAS les résidus `[manuel]` (CT-05 :
+ * couleur du badge « Prêté ») — ceux-là restent au testeur humain.
+ *
+ * Chaque `test` cite son `CT-xx` et les règles `Rn` couvertes, comme le cahier.
+ */
+
+test.describe('Cahier 13 — Espace coach : engagement', () => {
+  // Ces tests mutent TOUS la même rencontre pilote en base : ils doivent
+  // s'exécuter en série (un seul worker, un seul profil). Cf. `test:cahier:coach`
+  // (--project=chromium --workers=1).
+  test.describe.configure({ mode: 'serial' })
+
+  // Baseline garantie avant chaque test : A1 = {Ana, Bob}, A2 vide, B1 = {Cléo},
+  // aucune équipe surnuméraire, date seed (CT-06 la déplace) — idempotence, y
+  // compris après un test échoué.
+  test.beforeEach(() => {
+    reinitialiserEngagement()
+    poserDate('2026-09-19')
+  })
+
+  test('CT-01 — Accueil coach : liste, badge de phase, effectif, lien (R6, R7, R8)', async ({
+    page,
+  }) => {
+    // Pré-condition : phase pré-compétition (cahier CT-01).
+    poserPhase('pre_competition')
+
+    await commeCoach(page)
+    await page.goto('/coach')
+
+    // La carte de la rencontre pilote (enfant) : date + club porteur, badge de
+    // phase, effectif du club, et lien vers l'écran d'engagement. On cible la
+    // catégorie car le seed expose aussi une rencontre ADO Club A du même jour.
+    const carte = page.getByRole('link', {
+      name: /Enfant.*19 septembre 2026/,
+    })
+    await expect(carte).toBeVisible()
+    await expect(carte).toContainText('Club A')
+    await expect(carte).toContainText(/pré-compétition/i)
+    await expect(carte).toContainText('2 équipe(s) · 2 grimpeur(s)')
+    await expect(carte).toHaveAttribute(
+      'href',
+      `/coach/rencontres/${RENCONTRE_PILOTE}`,
+    )
+  })
+
+  test('CT-01 (négatif) — /coach interdit hors coach : 404 / connexion (garde)', async ({
+    page,
+    browser,
+  }) => {
+    // Compte sans mapping → 404.
+    await commeSansMapping(page)
+    const reponseSansRole = await page.goto('/coach')
+    expect(reponseSansRole?.status()).toBe(404)
+
+    // Visiteur non connecté (contexte vierge) → redirection /connexion
+    // (spec #12 R2 : refus par absence de session).
+    const contexteAnonyme = await browser.newContext()
+    const pageAnonyme = await contexteAnonyme.newPage()
+    await pageAnonyme.goto('/coach')
+    await expect(pageAnonyme).toHaveURL(/\/connexion/)
+    await contexteAnonyme.close()
+  })
+
+  test('CT-14 — En compétition, la carte d’accueil mène à la saisie (R7)', async ({
+    page,
+  }) => {
+    // Exception R7 : en ③, la ligne pointe directement vers l'écran de saisie.
+    poserPhase('competition')
+
+    await commeCoach(page)
+    await page.goto('/coach')
+
+    // Carte enfant (le seed expose aussi une rencontre ADO Club A du même jour).
+    const carte = page.getByRole('link', { name: /Enfant.*19 septembre 2026/ })
+    await expect(carte).toBeVisible()
+    await expect(carte).toHaveAttribute(
+      'href',
+      `/coach/rencontres/${RENCONTRE_PILOTE}/resultats`,
+    )
+  })
+
+  test('CT-15 — Coach temporaire : nav bornée à sa rencontre, pas de « Mes rencontres » (R8bis)', async ({
+    page,
+  }) => {
+    nettoyerSessionsQr()
+    // Session temp valable le jour J (préparation ou compétition).
+    poserPhase('preparation')
+    poserDate('today')
+
+    await commeCoachTemporaire(page)
+    await page.goto('/coach')
+
+    // Pas de lien liste « Mes rencontres » ; un lien direct « Ma rencontre ».
+    await expect(page.getByRole('link', { name: 'Mes rencontres' })).toHaveCount(0)
+    const maRencontre = page.getByRole('link', { name: 'Ma rencontre' })
+    await expect(maRencontre).toHaveAttribute(
+      'href',
+      `/coach/rencontres/${RENCONTRE_PILOTE}`,
+    )
+    // Le lien s'ouvre sans 404.
+    const reponse = await page.goto(`/coach/rencontres/${RENCONTRE_PILOTE}`)
+    expect(reponse?.status()).toBe(200)
+  })
+
+  test('CT-02 — Créer une équipe et composer (R9, R10, R11, R12, R15)', async ({
+    page,
+  }) => {
+    poserPhase('pre_competition')
+    await commeCoach(page)
+    await page.goto(URL_RENCONTRE)
+
+    // Créer A3 puis y ajouter un grimpeur libre du pool.
+    await creerEquipe(page, 'A3')
+    await ajouterGrimpeur(page, 'A3', POOL_LIBRES[0].label) // Chloé Alpha
+
+    const carteA3 = carteEquipe(page, 'A3')
+    await expect(carteA3.locator('li', { hasText: 'Chloé Alpha' })).toBeVisible()
+
+    // Le roster ne propose pas les grimpeurs déjà engagés (Ana/Bob en A1, R14).
+    const options = await carteA3.locator('select[name="grimpeurId"] option').allInnerTexts()
+    expect(options).not.toContain('Ana Alpha')
+    expect(options).not.toContain('Bob Alpha')
+
+    // Recréer « A3 » (même nom) → refusé, nom unique par rencontre (R10).
+    await page.getByLabel('Nouvelle équipe').fill('A3')
+    await page.getByRole('button', { name: /Créer l.équipe/ }).click()
+    await expect(page.getByText('Une équipe « A3 » existe déjà.')).toBeVisible()
+  })
+
+  test('CT-03 — Groupe de départ, rencontre enfant (R19, R20, R21)', async ({
+    page,
+  }) => {
+    poserPhase('pre_competition')
+    await commeCoach(page)
+    await page.goto(URL_RENCONTRE)
+
+    // Le formulaire d'ajout de A2 (vide) porte le sélecteur de groupe (enfant).
+    const carteA2 = carteEquipe(page, 'Équipe A2')
+    const selectGroupe = carteA2.getByLabel('Groupe de départ (optionnel)')
+
+    // R19 : la liste des groupes s'arrête à T8 (ni T9 ni T10).
+    const groupes = await selectGroupe.locator('option').allInnerTexts()
+    expect(groupes).toContain('Groupe T8')
+    expect(groupes).not.toContain('Groupe T9')
+    expect(groupes).not.toContain('Groupe T10')
+
+    // R20 : choisir M2 affiche l'indice « M2 · M3 · M4 » (3 voies croissantes).
+    await selectGroupe.selectOption({ label: 'Groupe M2' })
+    await expect(carteA2.getByText('M2 · M3 · M4')).toBeVisible()
+
+    // R21 : après ajout avec le groupe M2, la ligne du membre reflète M2.
+    await ajouterGrimpeur(page, 'Équipe A2', POOL_LIBRES[2].label, 'M2') // Emma
+    const ligneEmma = carteA2.locator('li', { hasText: 'Emma Alpha' })
+    await expect(ligneEmma.locator('select[name="groupeDepart"]')).toHaveValue('M2')
+  })
+
+  test('CT-04 — Refus double engagement + plafond 8 (R14, R15)', async ({ page }) => {
+    poserPhase('pre_competition')
+    await commeCoach(page)
+    await page.goto(URL_RENCONTRE)
+
+    // R14 : le roster de A2 ne propose ni Ana ni Bob (déjà engagés en A1).
+    const carteA2 = carteEquipe(page, 'Équipe A2')
+    const rosterA2 = await carteA2.locator('select[name="grimpeurId"] option').allInnerTexts()
+    expect(rosterA2).not.toContain('Ana Alpha')
+    expect(rosterA2).not.toContain('Bob Alpha')
+
+    // R15 : remplir une équipe à 8/8 avec le pool libre, puis constater le plafond.
+    await creerEquipe(page, 'PLEIN')
+    for (const g of POOL_LIBRES) {
+      await ajouterGrimpeur(page, 'PLEIN', g.label)
+    }
+    const cartePlein = carteEquipe(page, 'PLEIN')
+    await expect(
+      cartePlein.getByText(/Équipe complète — plafond de 8 atteint/),
+    ).toBeVisible()
+    // Le formulaire d'ajout a disparu (aucun 9ᵉ possible).
+    await expect(cartePlein.locator('select[name="grimpeurId"]')).toHaveCount(0)
+  })
+  // CT-05 est `[mixte]` : le cœur (roster, badge « prêté », affectation, groupe,
+  // retrait, persistance) est auto ; la couleur violette du badge reste `[manuel]`.
+  // Dépend des migrations 202609020900 (R13 lecture, R36 retrait/groupe) et
+  // 202609021000 (prêt persistant : roster + ré-affectation).
+  test('CT-05 — Grimpeur prêté : prêt admin persistant, gestion coach (R12, R13, R21, R35, R36)', async ({
+    page,
+  }) => {
+    poserPhase('pre_competition')
+    await commeCoach(page)
+    await page.goto(URL_RENCONTRE)
+
+    const carteA2 = carteEquipe(page, 'Équipe A2')
+    const DEVI = 'Devi Bravo (prêté · Club B)'
+
+    // R13 : sans prêt, un grimpeur d'un autre club n'est pas au roster.
+    let roster = await carteA2.locator('select[name="grimpeurId"] option').allInnerTexts()
+    expect(roster.join(' ')).not.toContain('Devi')
+
+    // R35 : l'admin crée le PRÊT (réservé à l'admin ; simulé en base).
+    execSql(
+      `insert into interclub.pret (rencontre_id, grimpeur_id, club_accueil_id) values ('${RENCONTRE_PILOTE}','${GRIMPEURS.devi}','${CLUB_A}') on conflict do nothing;`,
+    )
+    await page.reload()
+
+    // R12/R13 : le prêté apparaît dans le roster (badge « prêté · Club B »).
+    roster = await carteA2.locator('select[name="grimpeurId"] option').allInnerTexts()
+    expect(roster).toContain(DEVI)
+
+    // R13/R36 : le coach affecte le prêté à A2 (nom + badge « Prêté · Club B »).
+    await ajouterGrimpeur(page, 'Équipe A2', DEVI)
+    const ligneDevi = carteA2.locator('li', { hasText: 'Devi Bravo' })
+    await expect(ligneDevi.getByText(/Prêté · Club B/)).toBeVisible()
+
+    // R21 : le groupe de départ du prêté persiste.
+    await ligneDevi.locator('select[name="groupeDepart"]').selectOption({ label: 'Groupe M2' })
+    await ligneDevi.getByRole('button', { name: 'OK' }).click()
+    await expect(ligneDevi.locator('select[name="groupeDepart"]')).toHaveValue('M2')
+    // La valeur du select est vraie côté client avant la réponse serveur : on
+    // attend la persistance réelle avant l'action suivante (sinon course).
+    await expect
+      .poll(() =>
+        execSql(
+          `select groupe_depart from interclub.composition
+            where equipe_id = '${EQUIPES.A2}' and grimpeur_id = '${GRIMPEURS.devi}';`,
+        ),
+      )
+      .toBe('M2')
+
+    // R36 (persistance) : le retrait le renvoie au roster ; il reste ré-affectable.
+    await ligneDevi.getByRole('button', { name: 'Retirer Devi Bravo' }).click()
+    await expect(carteA2.locator('li', { hasText: 'Devi Bravo' })).toHaveCount(0)
+    roster = await carteA2.locator('select[name="grimpeurId"] option').allInnerTexts()
+    expect(roster).toContain(DEVI)
+
+    // Ré-affectation à une autre équipe (A1) — sans intervention admin.
+    await ajouterGrimpeur(page, 'Équipe A1', DEVI)
+    await expect(
+      carteEquipe(page, 'Équipe A1').locator('li', { hasText: 'Devi Bravo' }),
+    ).toBeVisible()
+  })
+
+  test('Filtre catégorie : un grimpeur hors tranche d’âge n’est pas au roster (R34)', async ({
+    page,
+  }) => {
+    poserPhase('pre_competition')
+    // Grimpeur Club A ADO (né en 2000) : hors tranche d'âge d'une rencontre enfant.
+    const ADO = 'a0000000-0000-0000-0000-0000000000af'
+    execSql(
+      `insert into interclub.grimpeur (id, club_id, nom, prenom, annee_naissance, sexe, licence) values ('${ADO}','${CLUB_A}','Alpha','Vieux',2000,'H',9999008) on conflict (id) do nothing;`,
+    )
+    try {
+      await commeCoach(page)
+      await page.goto(URL_RENCONTRE)
+      const carteA2 = carteEquipe(page, 'Équipe A2')
+      const opts = await carteA2.locator('select[name="grimpeurId"] option').allInnerTexts()
+      expect(opts.join(' ')).toContain('Chloé Alpha') // enfant : proposé
+      expect(opts.join(' ')).not.toContain('Vieux Alpha') // ado : filtré (R34)
+    } finally {
+      execSql(`delete from interclub.grimpeur where id='${ADO}';`)
+    }
+  })
+
+  test('CT-06 — Garde-fou date : préparation ET compétition jour J (spec #1 R5)', async ({
+    page,
+  }) => {
+    const phaseEnBase = () =>
+      execSql(`select phase from interclub.rencontre where id='${RENCONTRE_PILOTE}';`)
+
+    poserPhase('pre_competition')
+    poserDate('2026-09-19') // ≠ aujourd'hui
+
+    await commeAdmin(page)
+    await page.goto('/admin')
+
+    // Le dashboard liste TOUTES les rencontres (le seed expose aussi une ADO
+    // Club A) : on borne les contrôles à la carte du pilote — le <li> qui
+    // contient le lien vers son détail.
+    const cartePilote = page.locator('li', {
+      has: page.locator(`a[href="/admin/rencontres/${RENCONTRE_PILOTE}"]`),
+    })
+
+    // Hors jour J, le bouton d'entrée en préparation est désactivé (R5).
+    const boutonPrepa = cartePilote.getByRole('button', { name: /Préparation jour J/ })
+    await expect(boutonPrepa).toBeDisabled()
+
+    // Le jour J, il s'active et l'entrée en préparation est acceptée.
+    poserDate('today')
+    await page.reload()
+    await expect(boutonPrepa).toBeEnabled()
+    await boutonPrepa.click()
+
+    // Une fois en préparation, la « suivante » devient Compétition : le bouton
+    // d'entrée en préparation disparaît. On attend cette transition avant de lire.
+    await expect(boutonPrepa).toHaveCount(0)
+    await expect(cartePilote.getByRole('button', { name: /Compétition →/ })).toBeVisible()
+    expect(phaseEnBase()).toBe('preparation')
+
+    // Compétition = jour J aussi (R5, rév. 2026-09-02) : en préparation HORS jour
+    // J, « Compétition → » est désactivé.
+    poserPhase('preparation')
+    poserDate('2026-09-19')
+    await page.reload()
+    await expect(cartePilote.getByRole('button', { name: /Compétition →/ })).toBeDisabled()
+
+    // Retour arrière depuis la compétition HORS jour J → pré-compétition (saute la
+    // préparation jour-J) : le bouton de retour cible « Pré-compétition ».
+    poserPhase('competition')
+    await page.reload()
+    const retour = cartePilote.getByRole('button', { name: /← Pré-compétition/ })
+    await expect(retour).toBeVisible()
+    await retour.click()
+    await expect(cartePilote.getByRole('button', { name: /← Pré-compétition/ })).toHaveCount(0)
+    expect(phaseEnBase()).toBe('pre_competition')
+  })
+  test('CT-07 — Ouverture session QR coach temporaire en préparation (spec #2 R12)', async ({
+    page,
+    browser,
+  }) => {
+    nettoyerSessionsQr()
+    // État réel « jour J » : préparation n'existe que le jour de la rencontre (R5).
+    poserPhase('preparation')
+    poserDate('today')
+
+    // Navigateur anonyme (contexte vierge) : scan du QR coach temporaire.
+    await page.goto(`/scan?jeton=${JETON.coachTemp}`)
+    // Session ouverte → redirection DIRECTE vers sa rencontre (spec #5 R8bis ;
+    // fenêtre coach temp = préparation + compétition, R12), pas vers la liste.
+    await page.waitForURL(`**/coach/rencontres/${RENCONTRE_PILOTE}`)
+    // Le titre inclut le club porteur (la date = aujourd'hui via poserDate).
+    await expect(page.getByRole('heading', { name: /Club A/ })).toBeVisible()
+    expect(compterSessionsQr()).toBeGreaterThanOrEqual(1)
+
+    // Négatif : le QR juge n'est PAS ouvert en préparation (fenêtre juge =
+    // compétition seule) — contexte anonyme distinct.
+    const ctxJuge = await browser.newContext()
+    const pageJuge = await ctxJuge.newPage()
+    await pageJuge.goto(`/scan?jeton=${JETON.juge}`)
+    await expect(pageJuge.getByText(/n.est pas encore ouvert/)).toBeVisible()
+    await expect(pageJuge).toHaveURL(/\/scan/)
+    await ctxJuge.close()
+  })
+  test('CT-08 — Coach temporaire édite en préparation (R16 ; spec #1 R6, R27)', async ({
+    page,
+  }) => {
+    nettoyerSessionsQr()
+    poserPhase('preparation')
+    poserDate('today') // jour J (R5)
+    await commeCoachTemporaire(page)
+
+    // Mêmes droits que le permanent le jour J : créer une équipe, composer,
+    // fixer un groupe de départ (R16 ; spec #1 R27).
+    await page.goto(URL_RENCONTRE)
+    await creerEquipe(page, 'TMP')
+    await ajouterGrimpeur(page, 'TMP', 'Chloé Alpha', 'M2')
+    const ligne = carteEquipe(page, 'TMP').locator('li', { hasText: 'Chloé Alpha' })
+    await expect(ligne.locator('select[name="groupeDepart"]')).toHaveValue('M2')
+
+    // Négatif : le coach temporaire n'accède pas à /coach/jetons (permanent seul).
+    const resp = await page.goto('/coach/jetons')
+    expect(resp?.status()).toBe(404)
+  })
+  test('CT-09 — Coach temporaire borné à SA rencontre (spec #1 R27)', async ({
+    page,
+  }) => {
+    nettoyerSessionsQr()
+    poserPhase('preparation')
+    poserDate('today') // jour J (R5)
+    // 2ᵉ rencontre Club A (même saison) — hors du périmètre de la session temp.
+    const R2 = '33333333-3333-3333-3333-333333333334'
+    execSql(
+      `insert into interclub.rencontre (id, club_porteur_id, date_rencontre, categorie, phase) values ('${R2}','${CLUB_A}','2026-10-10','enfant','pre_competition') on conflict (id) do nothing;`,
+    )
+    try {
+      await commeCoachTemporaire(page)
+      // L'autre rencontre : 404 (session bornée à celle du jeton).
+      const resp2 = await page.goto(`/coach/rencontres/${R2}`)
+      expect(resp2?.status()).toBe(404)
+      // Sur /coach, seule SA rencontre est atteignable : tous les liens vers une
+      // rencontre (carte + nav « Ma rencontre », R8bis) pointent vers la sienne,
+      // aucune AUTRE rencontre n'est listée.
+      await page.goto('/coach')
+      await expect(
+        page.locator(`a[href="/coach/rencontres/${RENCONTRE_PILOTE}"]`).first(),
+      ).toBeVisible()
+      const liensRencontre = page.locator('a[href^="/coach/rencontres/"]')
+      const n = await liensRencontre.count()
+      expect(n).toBeGreaterThanOrEqual(1)
+      for (let i = 0; i < n; i++) {
+        await expect(liensRencontre.nth(i)).toHaveAttribute(
+          'href',
+          new RegExp(`/coach/rencontres/${RENCONTRE_PILOTE}`),
+        )
+      }
+    } finally {
+      execSql(`delete from interclub.rencontre where id='${R2}';`)
+    }
+  })
+
+  test('CT-10 — Gel de l’engagement en compétition (R16, R17)', async ({
+    page,
+    browser,
+    request,
+  }) => {
+    nettoyerSessionsQr()
+    poserPhase('competition')
+    poserDate('today') // compétition = jour J (R5, rév. 2026-09-02)
+
+    // Permanent : composition figée, aucun formulaire d'édition (R17). Le badge
+    // ne libelle que la phase — aucune mention « lecture seule ».
+    await commeCoach(page)
+    await page.goto(URL_RENCONTRE)
+    await expect(
+      page.getByText(/consultable mais ne peut plus être modifiée/),
+    ).toBeVisible()
+    await expect(page.getByText(/lecture seule/)).toHaveCount(0)
+    await expect(page.getByLabel('Nouvelle équipe')).toHaveCount(0)
+
+    // Temporaire (fenêtre couvre la compétition) : composition figée aussi.
+    const ctxTmp = await browser.newContext()
+    const pageTmp = await ctxTmp.newPage()
+    await commeCoachTemporaire(pageTmp)
+    await pageTmp.goto(URL_RENCONTRE)
+    await expect(pageTmp.getByLabel('Nouvelle équipe')).toHaveCount(0)
+    await ctxTmp.close()
+
+    // RLS : une écriture du coach permanent sur composition est refusée (gel, R16).
+    const { url, anon } = infosApi()
+    const login = await request.post(`${url}/auth/v1/token?grant_type=password`, {
+      headers: { apikey: anon, 'Content-Type': 'application/json' },
+      data: { email: COMPTES.coach.email, password: COMPTES.coach.mdp },
+    })
+    const token = (await login.json()).access_token
+    const insert = await request.post(`${url}/rest/v1/composition`, {
+      headers: {
+        apikey: anon,
+        Authorization: `Bearer ${token}`,
+        'Content-Profile': 'interclub',
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal',
+      },
+      data: { equipe_id: EQUIPES.A2, grimpeur_id: POOL_LIBRES[0].id },
+    })
+    expect([401, 403]).toContain(insert.status())
+  })
+
+  test('CT-11 — Gel dès la pré-compétition pour le coach temp (R16 ; spec #1 R28)', async ({
+    page,
+  }) => {
+    nettoyerSessionsQr()
+    poserPhase('pre_competition')
+    // Le jeton coach temp n'est pas ouvert avant le jour J (fenêtre = préparation
+    // + compétition) : le scan est refusé.
+    await page.goto(`/scan?jeton=${JETON.coachTemp}`)
+    await expect(page.getByText(/n.est pas encore ouvert/)).toBeVisible()
+    await expect(page).toHaveURL(/\/scan/)
+  })
+  test('CT-12 — Composition figée : rencontre terminée (R17)', async ({ page }) => {
+    await commeCoach(page)
+
+    for (const [phase, label] of [
+      ['cloture', 'Clôture'],
+      ['resultats_publics', 'Résultats publics'],
+    ] as const) {
+      poserPhase(phase)
+      await page.goto(URL_RENCONTRE)
+
+      // Badge = phase seule (aucune mention « lecture seule »), note R17, aucun
+      // formulaire d'édition.
+      await expect(page.getByText(label, { exact: true })).toBeVisible()
+      await expect(page.getByText(/lecture seule/)).toHaveCount(0)
+      await expect(page.getByText(/consultable mais ne peut plus être modifiée/)).toBeVisible()
+      await expect(page.getByLabel('Nouvelle équipe')).toHaveCount(0)
+      await expect(page.getByRole('button', { name: /Ajouter à l.équipe/ })).toHaveCount(0)
+    }
+  })
+
+  test('CT-13 — Périmètre inter-club interdit (R2 ; spec #1 R16)', async ({
+    page,
+    request,
+  }) => {
+    poserPhase('pre_competition')
+    await commeCoach(page) // coach Club A
+    await page.goto(URL_RENCONTRE)
+
+    // Seules les équipes du Club A sont visibles ; B1 (Club B) est absente.
+    await expect(page.getByRole('heading', { name: 'Équipe A1' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Équipe A2' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Équipe B1' })).toHaveCount(0)
+
+    // RLS : une écriture du coach A sur une équipe du Club B est refusée (R2).
+    const { url, anon } = infosApi()
+    const login = await request.post(`${url}/auth/v1/token?grant_type=password`, {
+      headers: { apikey: anon, 'Content-Type': 'application/json' },
+      data: { email: COMPTES.coach.email, password: COMPTES.coach.mdp },
+    })
+    const token = (await login.json()).access_token
+    const insert = await request.post(`${url}/rest/v1/composition`, {
+      headers: {
+        apikey: anon,
+        Authorization: `Bearer ${token}`,
+        'Content-Profile': 'interclub',
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal',
+      },
+      // équipe B1 (Club B) + Devi (Club B) : hors périmètre du coach A.
+      data: { equipe_id: EQUIPES.B1, grimpeur_id: GRIMPEURS.devi },
+    })
+    expect([401, 403]).toContain(insert.status())
+  })
+})

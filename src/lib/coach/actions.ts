@@ -1,0 +1,459 @@
+'use server'
+
+import { revalidatePath } from 'next/cache'
+
+import {
+  anneeSaison,
+  estEligibleCategorie,
+  type Categorie,
+  type Phase,
+} from '@/domaine/rencontre'
+import {
+  EngagementInvalideError,
+  GROUPES_DEPART,
+  normaliserNomEquipe,
+  verifierAjoutComposition,
+} from '@/domaine/engagement'
+import { type ContexteCoach, getContexteCoach } from '@/lib/auth/session'
+import { verifierLecture } from '@/lib/supabase/lecture'
+import { createClient } from '@/lib/supabase/server'
+
+/** Client Supabase du projet (schéma `interclub`). */
+type Client = Awaited<ReturnType<typeof createClient>>
+
+// Écriture de l'engagement d'un club en rencontre (spec #5 « Espace Coach ») :
+// CRUD équipes (R10), composition (R12/R13/R14/R15) et groupe de départ (R19).
+// Chaque action revérifie le contexte coach et le gating de phase (R16), la RLS
+// T6 restant la frontière ultime. Deux acteurs (spec #1 R6/R27) : coach
+// PERMANENT (rattaché à un club, phases ①/②, toutes ses rencontres) et coach
+// TEMPORAIRE (session QR du jour J, borné à SA rencontre, phase ② préparation).
+
+export type EtatEngagement = { erreur?: string; succes?: string } | undefined
+
+/** Vérifie le contexte coach et renvoie son club + contexte, ou un état d'erreur. */
+async function exigerCoachClub(): Promise<
+  { clubId: string; contexte: ContexteCoach } | { erreur: string }
+> {
+  const contexte = await getContexteCoach()
+  if (!contexte) {
+    return { erreur: 'Action réservée à un coach (compte rattaché à un club ou session QR active).' }
+  }
+  return { clubId: contexte.clubId, contexte }
+}
+
+/**
+ * Borne l'écriture d'un coach temporaire à SA rencontre et à la phase ②
+ * préparation (spec #5 R16 ; la RLS `est_coach_temp_engagement` reste la garantie
+ * ultime). Sans effet pour un coach permanent. Renvoie un état d'erreur, ou
+ * `null` si l'écriture est permise pour ce contexte.
+ */
+function refuserSiHorsPerimetreTemp(
+  contexte: ContexteCoach,
+  rencontreId: string,
+  phase: Phase,
+): EtatEngagement | null {
+  if (contexte.type !== 'temporaire') return null
+  if (contexte.rencontreId !== rencontreId) {
+    return { erreur: 'Votre session QR ne couvre pas cette rencontre.' }
+  }
+  if (phase !== 'preparation') {
+    return {
+      erreur:
+        "Un coach temporaire ne peut éditer l'engagement que le jour J, en préparation.",
+    }
+  }
+  return null
+}
+
+/** Charge la phase, la catégorie et la date d'une rencontre. */
+async function chargerRencontre(
+  supabase: Client,
+  rencontreId: string,
+): Promise<RencontreLue | null> {
+  const data = verifierLecture(
+    await supabase
+      .from('rencontre')
+      .select('phase, categorie, date_rencontre')
+      .eq('id', rencontreId)
+      .maybeSingle(),
+    'de la rencontre',
+  )
+  if (!data) return null
+  return {
+    phase: data.phase as Phase,
+    categorie: data.categorie as Categorie,
+    dateRencontre: data.date_rencontre as string,
+  }
+}
+
+/** Phases où l'engagement est éditable par un coach (R16) : pré-compétition + préparation. */
+function estEditable(phase: Phase): boolean {
+  return phase === 'pre_competition' || phase === 'preparation'
+}
+
+/**
+ * Refuse l'édition hors des phases d'engagement (pré-compétition, préparation) :
+ * l'engagement est figé dès la compétition (R16). Renvoie un état d'erreur, ou
+ * `null` si l'édition est permise.
+ */
+function refuserSiPasEditable(phase: Phase): EtatEngagement | null {
+  if (!estEditable(phase)) {
+    return {
+      erreur:
+        "L'engagement n'est modifiable qu'avant le lancement de la compétition (pré-compétition ou préparation) ; il est ensuite figé (seul l'admin peut corriger).",
+    }
+  }
+  return null
+}
+
+/** Rencontre lue pour le gating d'une écriture (phase R16, catégorie R19). */
+type RencontreLue = { phase: Phase; categorie: Categorie; dateRencontre: string }
+
+/**
+ * Vérifie qu'une équipe appartient bien au club du coach (défense en
+ * profondeur) et lit sa rencontre dans la MÊME lecture (lot 3 du plan « appels
+ * Supabase »). `rencontre` est `null` si elle est introuvable.
+ */
+async function equipeDuClub(
+  supabase: Client,
+  equipeId: string,
+  clubId: string,
+): Promise<{ rencontreId: string; rencontre: RencontreLue | null } | null> {
+  const data = verifierLecture(
+    await supabase
+      .from('equipe')
+      .select('rencontre_id, club_id, rencontre:rencontre_id(phase, categorie, date_rencontre)')
+      .eq('id', equipeId)
+      .maybeSingle(),
+    "de l'équipe",
+  )
+  if (!data || (data.club_id as string) !== clubId) return null
+  const brut = data.rencontre as unknown
+  const r = (Array.isArray(brut) ? brut[0] : brut) as Record<string, unknown> | null | undefined
+  return {
+    rencontreId: data.rencontre_id as string,
+    rencontre: r
+      ? {
+          phase: r.phase as Phase,
+          categorie: r.categorie as Categorie,
+          dateRencontre: r.date_rencontre as string,
+        }
+      : null,
+  }
+}
+
+/** Crée une équipe du club pour une rencontre (R10). */
+export async function creerEquipe(
+  _etat: EtatEngagement,
+  formData: FormData,
+): Promise<EtatEngagement> {
+  const coach = await exigerCoachClub()
+  if ('erreur' in coach) return coach
+
+  const rencontreId = String(formData.get('rencontreId') ?? '')
+  let nom: string
+  try {
+    nom = normaliserNomEquipe(String(formData.get('nom') ?? ''))
+  } catch (e) {
+    if (e instanceof EngagementInvalideError) return { erreur: e.message }
+    throw e
+  }
+
+  const supabase = await createClient()
+  const rencontre = await chargerRencontre(supabase, rencontreId)
+  if (!rencontre) return { erreur: 'Rencontre introuvable.' }
+  const refus = refuserSiPasEditable(rencontre.phase)
+  if (refus) return refus
+  const horsPerimetre = refuserSiHorsPerimetreTemp(coach.contexte, rencontreId, rencontre.phase)
+  if (horsPerimetre) return horsPerimetre
+
+  const { error } = await supabase
+    .from('equipe')
+    .insert({ rencontre_id: rencontreId, club_id: coach.clubId, nom })
+  if (error) {
+    if (error.code === '23505') return { erreur: `Une équipe « ${nom} » existe déjà.` }
+    return { erreur: "La création a échoué. Réessayez." }
+  }
+
+  revalidatePath(`/coach/rencontres/${rencontreId}`)
+  return { succes: 'Équipe créée.' }
+}
+
+/** Renomme une équipe du club (R10). */
+export async function renommerEquipe(
+  _etat: EtatEngagement,
+  formData: FormData,
+): Promise<EtatEngagement> {
+  const coach = await exigerCoachClub()
+  if ('erreur' in coach) return coach
+
+  const equipeId = String(formData.get('equipeId') ?? '')
+  const rencontreId = String(formData.get('rencontreId') ?? '')
+  let nom: string
+  try {
+    nom = normaliserNomEquipe(String(formData.get('nom') ?? ''))
+  } catch (e) {
+    if (e instanceof EngagementInvalideError) return { erreur: e.message }
+    throw e
+  }
+
+  const supabase = await createClient()
+  const appartenance = await equipeDuClub(supabase, equipeId, coach.clubId)
+  if (!appartenance) return { erreur: 'Équipe introuvable.' }
+  const { rencontre } = appartenance
+  if (!rencontre) return { erreur: 'Rencontre introuvable.' }
+  const refus = refuserSiPasEditable(rencontre.phase)
+  if (refus) return refus
+  const horsPerimetre = refuserSiHorsPerimetreTemp(
+    coach.contexte,
+    appartenance.rencontreId,
+    rencontre.phase,
+  )
+  if (horsPerimetre) return horsPerimetre
+
+  const { error } = await supabase.from('equipe').update({ nom }).eq('id', equipeId)
+  if (error) {
+    if (error.code === '23505') return { erreur: `Une équipe « ${nom} » existe déjà.` }
+    return { erreur: 'Le renommage a échoué. Réessayez.' }
+  }
+
+  revalidatePath(`/coach/rencontres/${rencontreId}`)
+  return { succes: 'Équipe renommée.' }
+}
+
+/** Supprime une équipe du club (R10). */
+export async function supprimerEquipe(
+  _etat: EtatEngagement,
+  formData: FormData,
+): Promise<EtatEngagement> {
+  const coach = await exigerCoachClub()
+  if ('erreur' in coach) return coach
+
+  const equipeId = String(formData.get('equipeId') ?? '')
+  const rencontreId = String(formData.get('rencontreId') ?? '')
+
+  const supabase = await createClient()
+  const appartenance = await equipeDuClub(supabase, equipeId, coach.clubId)
+  if (!appartenance) return { erreur: 'Équipe introuvable.' }
+  const { rencontre } = appartenance
+  if (!rencontre) return { erreur: 'Rencontre introuvable.' }
+  const refus = refuserSiPasEditable(rencontre.phase)
+  if (refus) return refus
+  const horsPerimetre = refuserSiHorsPerimetreTemp(
+    coach.contexte,
+    appartenance.rencontreId,
+    rencontre.phase,
+  )
+  if (horsPerimetre) return horsPerimetre
+
+  const { error } = await supabase.from('equipe').delete().eq('id', equipeId)
+  if (error) return { erreur: 'La suppression a échoué. Réessayez.' }
+
+  revalidatePath(`/coach/rencontres/${rencontreId}`)
+  return { succes: 'Équipe supprimée.' }
+}
+
+/** Valide un groupe de départ saisi ; chaîne vide → null (R19). */
+function lireGroupeDepart(
+  formData: FormData,
+  categorie: Categorie,
+): string | null {
+  const brut = String(formData.get('groupeDepart') ?? '').trim()
+  if (brut === '') return null
+  if (categorie !== 'enfant') {
+    throw new EngagementInvalideError(
+      'Le groupe de départ ne concerne que les rencontres enfant.',
+    )
+  }
+  if (!(GROUPES_DEPART as readonly string[]).includes(brut)) {
+    throw new EngagementInvalideError(
+      `Groupe de départ invalide : « ${brut} ». Valeurs : ${GROUPES_DEPART.join(', ')}.`,
+    )
+  }
+  return brut
+}
+
+/** Ajoute un grimpeur du club à une équipe (R12/R13/R14/R15), groupe optionnel (R19). */
+export async function ajouterGrimpeurEquipe(
+  _etat: EtatEngagement,
+  formData: FormData,
+): Promise<EtatEngagement> {
+  const coach = await exigerCoachClub()
+  if ('erreur' in coach) return coach
+
+  const equipeId = String(formData.get('equipeId') ?? '')
+  const grimpeurId = String(formData.get('grimpeurId') ?? '')
+  const rencontreId = String(formData.get('rencontreId') ?? '')
+  if (!grimpeurId) return { erreur: 'Sélectionnez un grimpeur.' }
+
+  const supabase = await createClient()
+  // UNE vague : équipe + rencontre, et les contrôles d'ajout (lot 3 du plan
+  // « appels Supabase »). Engagés et prêt sont lus pour la rencontre annoncée
+  // par le formulaire, qui doit être celle de l'équipe (vérifié ci-dessous).
+  const [appartenance, grimpeurRes, membresRes, engagesRes, pretRes] = await Promise.all([
+    equipeDuClub(supabase, equipeId, coach.clubId),
+    supabase.from('grimpeur').select('club_id, annee_naissance').eq('id', grimpeurId).maybeSingle(),
+    supabase.from('composition').select('grimpeur_id').eq('equipe_id', equipeId),
+    supabase.from('composition').select('grimpeur_id').eq('rencontre_id', rencontreId),
+    // Prêt actif de ce grimpeur au club du coach pour cette rencontre (R13/R36).
+    supabase
+      .from('pret')
+      .select('grimpeur_id')
+      .eq('rencontre_id', rencontreId)
+      .eq('grimpeur_id', grimpeurId)
+      .eq('club_accueil_id', coach.clubId)
+      .maybeSingle(),
+  ])
+  if (!appartenance || appartenance.rencontreId !== rencontreId) {
+    return { erreur: 'Équipe introuvable.' }
+  }
+  const { rencontre } = appartenance
+  if (!rencontre) return { erreur: 'Rencontre introuvable.' }
+  const refus = refuserSiPasEditable(rencontre.phase)
+  if (refus) return refus
+  const horsPerimetre = refuserSiHorsPerimetreTemp(
+    coach.contexte,
+    appartenance.rencontreId,
+    rencontre.phase,
+  )
+  if (horsPerimetre) return horsPerimetre
+
+  let groupeDepart: string | null
+  try {
+    groupeDepart = lireGroupeDepart(formData, rencontre.categorie)
+  } catch (e) {
+    if (e instanceof EngagementInvalideError) return { erreur: e.message }
+    throw e
+  }
+
+  const grimpeur = verifierLecture(grimpeurRes, 'du grimpeur')
+  const membres = verifierLecture(membresRes, "des membres de l'équipe")
+  const engages = verifierLecture(engagesRes, 'des engagés de la rencontre')
+  const pret = verifierLecture(pretRes, 'du prêt')
+  if (!grimpeur) {
+    return { erreur: "Ce grimpeur n'appartient ni à votre club ni à vos prêts." }
+  }
+
+  // Éligibilité à la catégorie de la rencontre (tranche d'âge, spec #1 R34).
+  if (
+    !estEligibleCategorie(
+      grimpeur.annee_naissance as number,
+      rencontre.categorie,
+      anneeSaison(rencontre.dateRencontre),
+    )
+  ) {
+    return {
+      erreur:
+        "Ce grimpeur n'est pas dans la tranche d'âge de la rencontre (catégorie).",
+    }
+  }
+
+  try {
+    verifierAjoutComposition({
+      grimpeurId,
+      grimpeurClubId: grimpeur.club_id as string,
+      equipeClubId: coach.clubId,
+      estPrete: !!pret,
+      membresActuels: (membres ?? []).map((m) => m.grimpeur_id as string),
+      dejaEngagesRencontre: (engages ?? []).map((e) => e.grimpeur_id as string),
+    })
+  } catch (e) {
+    if (e instanceof EngagementInvalideError) return { erreur: e.message }
+    throw e
+  }
+
+  const { error } = await supabase
+    .from('composition')
+    .insert({ equipe_id: equipeId, grimpeur_id: grimpeurId, groupe_depart: groupeDepart })
+  if (error) {
+    if (error.code === '23505') {
+      return { erreur: 'Ce grimpeur est déjà engagé dans cette rencontre.' }
+    }
+    return { erreur: "L'ajout a échoué. Réessayez." }
+  }
+
+  revalidatePath(`/coach/rencontres/${rencontreId}`)
+  return { succes: 'Grimpeur ajouté.' }
+}
+
+/** Retire un grimpeur d'une équipe du club (R12 ; un prêté est retirable, R13/R36). */
+export async function retirerGrimpeurEquipe(
+  _etat: EtatEngagement,
+  formData: FormData,
+): Promise<EtatEngagement> {
+  const coach = await exigerCoachClub()
+  if ('erreur' in coach) return coach
+
+  const equipeId = String(formData.get('equipeId') ?? '')
+  const grimpeurId = String(formData.get('grimpeurId') ?? '')
+  const rencontreId = String(formData.get('rencontreId') ?? '')
+
+  const supabase = await createClient()
+  const appartenance = await equipeDuClub(supabase, equipeId, coach.clubId)
+  if (!appartenance) return { erreur: 'Équipe introuvable.' }
+  const { rencontre } = appartenance
+  if (!rencontre) return { erreur: 'Rencontre introuvable.' }
+  const refus = refuserSiPasEditable(rencontre.phase)
+  if (refus) return refus
+  const horsPerimetre = refuserSiHorsPerimetreTemp(
+    coach.contexte,
+    appartenance.rencontreId,
+    rencontre.phase,
+  )
+  if (horsPerimetre) return horsPerimetre
+
+  const { error } = await supabase
+    .from('composition')
+    .delete()
+    .eq('equipe_id', equipeId)
+    .eq('grimpeur_id', grimpeurId)
+  if (error) return { erreur: 'Le retrait a échoué. Réessayez.' }
+
+  revalidatePath(`/coach/rencontres/${rencontreId}`)
+  return { succes: 'Grimpeur retiré.' }
+}
+
+/** Fixe (ou efface) le groupe de départ d'un grimpeur engagé (R19). */
+export async function definirGroupeDepart(
+  _etat: EtatEngagement,
+  formData: FormData,
+): Promise<EtatEngagement> {
+  const coach = await exigerCoachClub()
+  if ('erreur' in coach) return coach
+
+  const equipeId = String(formData.get('equipeId') ?? '')
+  const grimpeurId = String(formData.get('grimpeurId') ?? '')
+  const rencontreId = String(formData.get('rencontreId') ?? '')
+
+  const supabase = await createClient()
+  const appartenance = await equipeDuClub(supabase, equipeId, coach.clubId)
+  if (!appartenance) return { erreur: 'Équipe introuvable.' }
+  const { rencontre } = appartenance
+  if (!rencontre) return { erreur: 'Rencontre introuvable.' }
+  const refus = refuserSiPasEditable(rencontre.phase)
+  if (refus) return refus
+  const horsPerimetre = refuserSiHorsPerimetreTemp(
+    coach.contexte,
+    appartenance.rencontreId,
+    rencontre.phase,
+  )
+  if (horsPerimetre) return horsPerimetre
+
+  let groupeDepart: string | null
+  try {
+    groupeDepart = lireGroupeDepart(formData, rencontre.categorie)
+  } catch (e) {
+    if (e instanceof EngagementInvalideError) return { erreur: e.message }
+    throw e
+  }
+
+  const { error } = await supabase
+    .from('composition')
+    .update({ groupe_depart: groupeDepart })
+    .eq('equipe_id', equipeId)
+    .eq('grimpeur_id', grimpeurId)
+  if (error) return { erreur: 'La mise à jour a échoué. Réessayez.' }
+
+  revalidatePath(`/coach/rencontres/${rencontreId}`)
+  return { succes: groupeDepart ? 'Groupe de départ enregistré.' : 'Groupe de départ effacé.' }
+}

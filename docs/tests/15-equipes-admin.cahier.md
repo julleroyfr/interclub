@@ -1,0 +1,114 @@
+# Cahier de test : Équipes & engagement (admin, tous clubs) — spec #1 R10/R6
+
+> Couvre le panneau **« Équipes & engagement (tous clubs) »** de
+> `/admin/rencontres/[id]` : l'admin crée / compose / corrige les équipes de
+> **n'importe quel club**, **en toute phase** (R6 : « seul l'admin peut corriger »
+> une fois l'engagement gelé). Les invariants d'engagement restent (R14 double,
+> R15 plafond, R34 catégorie).
+> Marquage `[auto]`/`[manuel]` : cf. [convention 06 §3.1](../conventions/06-cahier-de-test.md).
+> Automatisé : `e2e/admin-equipes.spec.ts` ; CT-06/CT-07 :
+> `e2e/integrite-engagement.spec.ts` (`npm run test:cahier:integrite`).
+
+- **Spec de référence** : `docs/specs/01-roles-et-autorisations.md` (R6, R10, R14,
+  R15, R34) ; `docs/specs/05-espace-coach.md` (R12) ;
+  `docs/specs/03-ecrans-de-parametrage-admin.md` (R41d, rév. 2026-10-03) ;
+  `docs/specs/10-saisie-vitesse-juge.md` (R18bis).
+- **Pré-requis** : migrations à jour ; seed 01 ; app dev port 3011.
+- **Environnement** : local (stack Docker) — version/commit : `______`
+
+## Jeu de données initial
+
+Seed `01` : rencontre pilote `3333…` (Club A, enfant) ; équipes A1 (Ana, Bob),
+A2 (vide) — Club A ; B1 (Cléo) — Club B ; Devi Bravo (Club B) libre.
+
+## Cas de test
+
+### CT-01 `[auto]` — Accès admin + panneau tous clubs   (couvre : R10 ; garde)
+
+- **Étapes** : ouvrir `/admin/rencontres/33333333-…` en `coach@test.local`, puis
+  non connecté ; puis en `admin@test.local`.
+- **Résultat attendu** : **404** pour coach et non connecté ; en admin, le panneau
+  **« Équipes & engagement (tous clubs) »** liste **Club A** (A1, A2) **et Club B**
+  (B1), **regroupés par club** en blocs **repliables** portant un résumé
+  **« N équipe(s) · M grimpeur(s) »** ; chaque bloc a un formulaire « Nouvelle
+  équipe ». (Utile quand une compétition compte une dizaine d'équipes.)
+
+### CT-02 `[auto]` — CRUD d'une équipe d'un autre club, en compétition   (couvre : R6, R10 ; nominal)
+
+- **Pré-condition** : phase **`competition`** (les coachs sont gelés).
+- **Rôle / compte** : `admin@test.local`.
+- **Étapes** :
+  1. Dans le bloc **Club B**, créer une équipe **« B2 »**.
+  2. Ajouter **Devi Bravo** (libre, Club B) à B2.
+  3. Retirer Devi, puis supprimer l'équipe B2.
+- **Résultat attendu** : toutes les opérations sont **acceptées** malgré la phase
+  compétition (l'admin corrige en toute phase, R6). L'effectif et la liste se
+  mettent à jour ; B2 disparaît après suppression.
+
+### CT-03 `[manuel]` — Invariants d'engagement conservés   (couvre : R14, R15, R34 ; cas limite)
+
+- **Étapes** (admin, panneau équipes) :
+  1. Ajouter à une équipe un grimpeur **déjà engagé** dans la rencontre.
+  2. Ajouter un **9ᵉ** grimpeur à une équipe complète.
+  3. Ajouter un grimpeur **hors tranche d'âge** (ado sur rencontre enfant).
+- **Résultat attendu** : chaque tentative est **refusée** avec le message
+  correspondant (R14 double engagement ; R15 plafond de 8 ; R34 catégorie).
+  L'admin lève seulement la restriction **inter-club** (R35/R10) — il peut engager
+  un grimpeur d'un autre club — mais pas ces invariants.
+
+### CT-04 `[auto]` — Nom d'équipe par défaut par club   (couvre : spec #3 R41c ; spec #5 R10bis)
+
+- **Rôle / compte** : `admin@test.local`.
+- **Étapes** : déplier les blocs **Club A** et **Club B** ; lire chaque champ
+  « Nouvelle équipe » ; dans le bloc Club B, créer sans modifier, puis relire.
+- **Résultat attendu** : le bloc Club A propose « **Club A 1** », le bloc Club B
+  « **Club B 1** » (équipes A1/A2/B1 hors motif) ; après création, le bloc Club B
+  propose « **Club B 2** ». Nettoyage : supprimer « Club B 1 ».
+
+### CT-05 `[auto]` — Recherche nom/prénom à l'ajout d'un grimpeur   (couvre : spec #3 R41c ; spec #5 R12bis)
+
+- **Rôle / compte** : `admin@test.local`.
+- **Étapes** : bloc **Club A**, formulaire d'ajout de l'équipe **A2** ; saisir
+  « felix », puis « alpha chl », puis « zzz ».
+- **Résultat attendu** : mêmes filtrages que le cahier 13 CT-17 (Félix Alpha
+  seul et présélectionné ; Chloé Alpha seule ; « zzz » → compteur 0, ajout
+  bloqué).
+
+### CT-06 `[auto]` — Changement d'équipe dans le club d'affectation, résultats conservés   (couvre : spec #3 R41d ; spec #10 R18bis)
+
+- **Rôle / compte** : `admin@test.local`.
+- **Pré-condition** : rencontre pilote en **③ compétition** ; **Ana** (A1,
+  groupe M2) a un **temps de vitesse** (posé en SQL : 9,500 s).
+- **Étapes** : bloc **Club A**, ligne **Ana Alpha** de l'équipe A1 : ouvrir
+  « Changer Ana Alpha d'équipe » ; relever les équipes proposées ; choisir **A2**
+  puis « Changer d'équipe ».
+- **Résultat attendu** :
+  - seule **A2** est proposée (ni A1, ni **B1** d'un autre club) ;
+  - Ana apparaît dans **A2** et plus dans A1 ; son **groupe de départ M2** est
+    conservé ;
+  - son **temps de vitesse** (9,500 s) et ses **points de vitesse** sont
+    **conservés** (aucune purge : ce n'est pas un retrait).
+
+### CT-07 `[auto]` — Changement hors club refusé ; club à une seule équipe   (couvre : spec #3 R41d)
+
+- **Rôle / compte** : `admin@test.local` (jeton d'API pour l'étape 2).
+- **Étapes** :
+  1. Bloc **Club B** (une seule équipe, B1) : ligne **Cléo Bravo**.
+  2. Appel direct : `PATCH …/composition?equipe_id=eq.<A1>&grimpeur_id=eq.<Ana>`
+     avec `{"equipe_id": "<B1>"}` (équipe d'un autre club).
+- **Résultat attendu** :
+  1. **aucun** contrôle « Changer d'équipe » pour Cléo (son club n'a qu'une
+     équipe) ;
+  2. **refus** de la base (`changement_equipe_hors_club`) ; Ana reste dans A1.
+
+## Registre d'exécution
+
+| Date | Testeur | Version/commit | Cas | Marque | Résultat | Remarque |
+|------|---------|----------------|-----|--------|----------|----------|
+| | | | CT-01 | auto | ✅ / ❌ | accès + panneau |
+| | | | CT-02 | auto | ✅ / ❌ | CRUD autre club en compétition |
+| | | | CT-03 | manuel | ✅ / ❌ | invariants R14/R15/R34 |
+| | | | CT-04 | auto | ✅ / ❌ | nom d'équipe par défaut (R10bis) |
+| | | | CT-06 | auto | ✅ / ❌ | changement d'équipe, résultats conservés (R41d) |
+| | | | CT-07 | auto | ✅ / ❌ | hors club refusé, club à une équipe (R41d) |
+| | | | CT-05 | auto | ✅ / ❌ | recherche à l'ajout (R12bis) |

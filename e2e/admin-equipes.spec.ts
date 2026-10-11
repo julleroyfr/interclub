@@ -1,0 +1,82 @@
+import type { Locator, Page } from '@playwright/test'
+
+import { expect, test } from './helpers/fixtures'
+import { commeAdmin } from './helpers/auth'
+import { RENCONTRE_PILOTE } from './helpers/donnees'
+import { poserPhase, reinitialiserEngagement } from './helpers/sql'
+
+/**
+ * Écran admin — CRUD des équipes/compositions de TOUS les clubs (spec #1 R10),
+ * en toute phase (R6 : l'admin corrige même quand les coachs sont gelés).
+ * Série + un seul worker (mute la même rencontre en base).
+ */
+test.describe('Écran admin — équipes tous clubs (R10)', () => {
+  test.describe.configure({ mode: 'serial' })
+
+  test.beforeEach(() => {
+    reinitialiserEngagement()
+  })
+
+  // Section repliable d'un club, repérée par son attribut data-club.
+  const carteClub = (page: Page, nom: string): Locator =>
+    page.locator(`details[data-club="${nom}"]`)
+
+  test('CRUD d’une équipe d’un autre club, en compétition (R6/R10)', async ({
+    page,
+  }) => {
+    // En compétition les coachs sont gelés ; l'admin, non.
+    poserPhase('competition')
+    await commeAdmin(page)
+    await page.goto(`/admin/rencontres/${RENCONTRE_PILOTE}`)
+
+    // Le panneau liste les équipes de tous les clubs.
+    await expect(
+      page.getByRole('heading', { name: 'Équipes & engagement (tous clubs)' }),
+    ).toBeVisible()
+    const carteB = carteClub(page, 'Club B')
+    // Blocs repliés par défaut (spec #3 R41c) : déplier le Club B au clic.
+    await carteB.locator('summary').first().click()
+    await expect(carteB.getByRole('heading', { name: 'Équipe B1' })).toBeVisible()
+
+    // Créer une équipe « B2 » pour le Club B (en compétition).
+    await carteB.getByLabel('Nouvelle équipe').fill('B2')
+    await carteB.getByRole('button', { name: /Créer/ }).click()
+    await expect(carteB.getByRole('heading', { name: 'B2' })).toBeVisible()
+
+    // Ajouter Devi (libre, Club B) à B2.
+    const equipeB2 = carteB.locator('[data-equipe="B2"]')
+    await equipeB2.locator('select[name="grimpeurId"]').selectOption({ label: 'Devi Bravo' })
+    await equipeB2.getByRole('button', { name: /Ajouter/ }).click()
+    await expect(equipeB2.locator('li', { hasText: 'Devi Bravo' })).toBeVisible()
+
+    // Retirer Devi.
+    await equipeB2.getByRole('button', { name: 'Retirer Devi Bravo' }).click()
+    await expect(equipeB2.locator('li', { hasText: 'Devi Bravo' })).toHaveCount(0)
+
+    // Supprimer l'équipe B2.
+    await equipeB2.getByRole('button', { name: /Supprimer l.équipe B2/ }).click()
+    await expect(carteB.getByRole('heading', { name: 'B2' })).toHaveCount(0)
+  })
+
+  test('« Changer d’équipe » reste dans la carte d’équipe sur grand écran (conv. 08)', async ({
+    page,
+  }) => {
+    // À 1280 px, la carte d'équipe est étroite (colonne du tableau de bord) :
+    // le formulaire ne doit pas déborder de la carte (régression 2026-10-10).
+    await page.setViewportSize({ width: 1280, height: 800 })
+    await commeAdmin(page)
+    await page.goto(`/admin/rencontres/${RENCONTRE_PILOTE}`)
+    const clubA = carteClub(page, 'Club A')
+    await clubA.locator('summary').first().click()
+
+    const equipeA1 = clubA.locator('[data-equipe="Équipe A1"]')
+    const bouton = equipeA1.getByRole('button', { name: /Changer d.équipe/ }).first()
+    await expect(bouton).toBeVisible()
+
+    const carte = await equipeA1.boundingBox()
+    const boite = await bouton.boundingBox()
+    expect(carte).not.toBeNull()
+    expect(boite).not.toBeNull()
+    expect(boite!.x + boite!.width).toBeLessThanOrEqual(carte!.x + carte!.width)
+  })
+})

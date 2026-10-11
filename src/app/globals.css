@@ -1,26 +1,97 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/*
+ * Design system « Nuit » — tokens sémantiques du thème sombre.
+ * Génèrent les utilitaires Tailwind (bg-*, text-*, border-*, ring-*).
+ * Toujours passer par ces tokens plutôt que par des couleurs brutes.
+ */
+@theme {
+  /* Fonds & surfaces (verre) */
+  --color-fond: #020617; /* base de l'application */
+  --color-surface: rgba(255, 255, 255, 0.04); /* carte en verre */
+  --color-surface-forte: rgba(255, 255, 255, 0.08); /* survol / actif */
+  --color-bordure: rgba(255, 255, 255, 0.12);
+
+  /* Accents */
+  --color-accent: #22d3ee; /* cyan — action primaire, focus */
+  --color-accent-doux: #67e8f9;
+  --color-secondaire: #bef264; /* lime — succès, mise en avant */
+  --color-danger: #fb7185; /* rose — chute, erreur, destructif */
+  --color-prete: #c084fc; /* violet — grimpeur prêté (spec #5 R13) */
+  --color-prepa: #fb923c; /* orange — préparation « jour J » (phase ②) */
+  --color-attention: #fbbf24; /* ambre — clôture / vérification en cours */
+  --color-admin: #f472b6; /* rose — actions administrateur (spec #9) */
+
+  /* Texte */
+  --color-texte-fort: #ffffff;
+  --color-texte: #e2e8f0; /* corps */
+  --color-texte-attenue: #94a3b8; /* légendes */
+  --color-texte-doux: #64748b; /* placeholders, méta */
+}
+
+/*
+ * Base sombre par défaut : toute l'application est sur le thème « Nuit ».
+ * Les écrans peuvent réhausser le fond (voiles d'aurore) via `bg-fond` +
+ * dégradés locaux (cf. Coquille).
+ */
+body {
+  background: var(--color-fond);
+  color: var(--color-texte);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/*
+ * Écran d'affichage secondaire (spec #14) : défilement automatique en boucle du
+ * classement. Pause en tête/pied de course pour la lisibilité, translation sur
+ * la distance mesurée côté client (`--distance-defilement`). Désactivé en JS si
+ * `prefers-reduced-motion: reduce` (aucune règle CSS n'est donc nécessaire ici
+ * pour ce cas — cf. `ecran-defilant.tsx`).
+ */
+@keyframes defilement-classement {
+  0%,
+  4% {
+    transform: translateY(0);
+  }
+  96%,
+  100% {
+    transform: translateY(calc(-1 * var(--distance-defilement, 0px)));
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/*
+ * Nom + timing posés ici (et non en JS) : un optimiseur CSS (Lightning CSS /
+ * Turbopack) qui ne voit `defilement-classement` référencé qu'en style inline
+ * JS le considère « inutilisé » et supprime le `@keyframes` du bundle — la
+ * classe ci-dessous le rend visible depuis la feuille de style elle-même. Seule
+ * la durée (variable selon le nombre de lignes) reste posée en inline JS.
+ */
+.defilement-auto {
+  animation-name: defilement-classement;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+/* Barre de progression indéterminée de l'indicateur de navigation (spec #12 R26). */
+@keyframes barre-navigation {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(300%);
+  }
+}
+
+.barre-navigation {
+  animation: barre-navigation 1.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .barre-navigation {
+    animation: none;
+  }
 }

@@ -1,0 +1,592 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Maquettes — Saisie hors ligne (spec #17)</title>
+<style>
+  :root {
+    --fond: #020617;
+    --surface: rgba(255, 255, 255, 0.04);
+    --surface-forte: rgba(255, 255, 255, 0.08);
+    --bordure: rgba(255, 255, 255, 0.12);
+    --accent: #22d3ee;
+    --accent-doux: #67e8f9;
+    --secondaire: #bef264;
+    --danger: #fb7185;
+    --alerte: #fbbf24;
+    --filles: #f0abfc;
+    --garcons: #93c5fd;
+    --texte-fort: #ffffff;
+    --texte: #e2e8f0;
+    --texte-attenue: #94a3b8;
+    --texte-doux: #64748b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--fond);
+    color: var(--texte);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.4;
+    padding: 24px 16px 80px;
+  }
+  h1 { color: var(--texte-fort); font-size: 20px; text-align: center; }
+  .intro { text-align: center; color: var(--texte-attenue); max-width: 700px; margin: 0 auto 32px; font-size: 14px; }
+  .grille { display: flex; flex-wrap: wrap; gap: 28px; justify-content: center; align-items: flex-start; }
+  .colonne { width: 340px; max-width: 100%; }
+  .colonne.large { width: 720px; }
+  .titre-option {
+    color: var(--accent); font-size: 13px; text-transform: uppercase; letter-spacing: .08em;
+    font-weight: 700; margin: 0 0 4px;
+  }
+  .desc-option { color: var(--texte-doux); font-size: 12.5px; margin: 0 0 12px; min-height: 34px; }
+
+  /* --- cadre "téléphone" --- */
+  .tel {
+    border: 1px solid var(--bordure); border-radius: 22px; overflow: hidden; position: relative;
+    background: linear-gradient(180deg, rgba(34,211,238,0.06), rgba(2,6,23,0) 220px), var(--fond);
+    box-shadow: 0 12px 40px rgba(0,0,0,.5);
+  }
+  .tel.tablette { border-radius: 16px; }
+  .barre-haut { padding: 12px 16px 14px; border-bottom: 1px solid var(--bordure); }
+  .lien-retour { color: var(--texte-attenue); font-size: 12.5px; }
+  .titre-ecran { color: var(--texte-fort); font-weight: 600; font-size: 15px; margin-top: 6px; }
+  .meta { color: var(--texte-attenue); font-size: 12.5px; margin-top: 2px; }
+  .badge-phase {
+    display: inline-flex; align-items: center; gap: 6px; margin-top: 8px;
+    background: rgba(34,211,238,.12); color: var(--accent-doux);
+    border: 1px solid rgba(34,211,238,.3); border-radius: 999px;
+    padding: 3px 10px; font-size: 11.5px; font-weight: 600;
+  }
+  .corps { padding: 14px; }
+
+  /* --- bandeau réseau / file (R24/R25) --- */
+  .bandeau {
+    display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+    font-size: 12.5px; font-weight: 600; border-bottom: 1px solid var(--bordure);
+  }
+  .bandeau .ic { font-size: 15px; line-height: 1; }
+  .bandeau .txt { flex: 1; min-width: 0; }
+  .bandeau .sous { display: block; font-weight: 500; font-size: 11.5px; opacity: .85; margin-top: 1px; }
+  .bandeau button {
+    background: rgba(0,0,0,.3); color: inherit; border: 1px solid currentColor;
+    border-radius: 8px; padding: 8px 10px; min-height: 36px; font-size: 11.5px; font-weight: 700; cursor: pointer; white-space: nowrap;
+  }
+  .bandeau.hors-ligne { background: rgba(148,163,184,.14); color: var(--texte-fort); }
+  .bandeau.envoi { background: rgba(34,211,238,.12); color: var(--accent-doux); }
+  .bandeau.session { background: rgba(251,191,36,.13); color: var(--alerte); }
+  .bandeau.rejet { background: rgba(251,113,133,.11); color: var(--danger); }
+
+  /* --- cartes / lignes de saisie --- */
+  .carte { background: var(--surface); border: 1px solid var(--bordure); border-radius: 14px; padding: 12px 14px; margin-bottom: 12px; }
+  .carte-entete { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; gap: 8px; }
+  .epreuve-titre { color: var(--accent); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+  .prog { font-size: 11px; font-weight: 700; color: var(--texte-attenue); }
+  .prog .n { color: var(--texte-fort); }
+  .prog .att { color: var(--texte-doux); font-weight: 600; }
+  .saisie { display: flex; align-items: center; gap: 8px; padding: 9px 8px; border-radius: 8px; flex-wrap: wrap; }
+  .saisie + .saisie { border-top: 1px solid rgba(255,255,255,.05); }
+  .voie-id { color: var(--texte-fort); font-weight: 700; font-size: 13px; min-width: 34px; }
+  .cotation { color: var(--texte-doux); font-size: 11px; }
+  .pousse { margin-left: auto; }
+
+  .issue {
+    display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700;
+    border-radius: 999px; padding: 2px 10px; border: 1px solid transparent; white-space: nowrap;
+  }
+  .issue.top     { color: #04222a; background: var(--secondaire); }
+  .issue.partiel { color: var(--accent-doux); background: rgba(34,211,238,.12); border-color: rgba(34,211,238,.32); }
+  .issue.echec   { color: var(--danger); background: rgba(251,113,133,.10); border-color: rgba(251,113,133,.3); }
+  .issue.vide    { color: var(--texte-doux); border-style: dashed; border-color: var(--bordure); font-weight: 600; }
+  .issue.temps   { color: #04222a; background: var(--secondaire); font-variant-numeric: tabular-nums; }
+  .issue.chute   { color: var(--danger); background: rgba(251,113,133,.10); border-color: rgba(251,113,133,.3); }
+
+  /* une saisie en attente : pastille en pointillé + mention textuelle (R22/R23) */
+  .issue.en-attente { background: transparent; border: 1px dashed currentColor; }
+  .issue.top.en-attente, .issue.temps.en-attente { color: var(--secondaire); }
+
+  /* --- état de synchronisation (R23) : icône + texte, pas que la couleur --- */
+  .etat {
+    display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .04em; white-space: nowrap;
+  }
+  .etat.attente { color: var(--texte-attenue); }
+  .etat.sync { color: var(--secondaire); }
+  .etat.rejet { color: var(--danger); }
+  .motif {
+    flex-basis: 100%; color: var(--danger); font-size: 11.5px;
+    background: rgba(251,113,133,.08); border: 1px solid rgba(251,113,133,.25);
+    border-radius: 8px; padding: 6px 9px; margin-top: 2px;
+  }
+
+  /* --- sélecteur segmenté --- */
+  .seg { display: flex; flex-wrap: wrap; gap: 5px; flex-basis: 100%; margin-top: 4px; }
+  .seg button {
+    background: rgba(0,0,0,.28); color: var(--texte-attenue); border: 1px solid var(--bordure);
+    border-radius: 8px; padding: 9px 11px; min-height: 40px; font-size: 12px; font-weight: 600; cursor: pointer;
+  }
+  .seg button.sel-top { background: var(--secondaire); color: #04222a; border-color: var(--secondaire); }
+
+  /* --- liste des saisies (R26/R27) --- */
+  .tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+  .tabs button {
+    flex: 1; background: rgba(0,0,0,.28); color: var(--texte-attenue);
+    border: 1px solid var(--bordure); border-radius: 9px; padding: 9px 8px; min-height: 40px;
+    font-size: 12px; font-weight: 600; cursor: pointer;
+  }
+  .tabs button.actif { background: var(--accent); color: #04222a; border-color: var(--accent); }
+  .item { border: 1px solid var(--bordure); border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; background: var(--surface); }
+  .item.rejete { border-color: rgba(251,113,133,.35); }
+  .item-tete { display: flex; align-items: center; gap: 8px; }
+  .item-qui { color: var(--texte-fort); font-weight: 600; font-size: 13px; }
+  .item-cible { color: var(--texte-attenue); font-size: 12px; margin-top: 3px; }
+  .item-heure { color: var(--texte-doux); font-size: 11px; margin-top: 2px; }
+  .item-actions { margin-top: 8px; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    border-radius: 9px; padding: 9px 14px; min-height: 40px; font-size: 12.5px; font-weight: 600; cursor: pointer;
+    border: 1px solid transparent; width: 100%;
+  }
+  .btn-fantome { background: transparent; color: var(--accent); border-color: rgba(34,211,238,.35); }
+  .btn-danger { background: transparent; color: var(--danger); border-color: rgba(251,113,133,.4); }
+  .btn-primaire { background: var(--accent); color: #04222a; }
+  .lien-liste {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    margin-bottom: 12px; padding: 10px 12px; border-radius: 12px; font-size: 12.5px; font-weight: 600;
+    border: 1px solid var(--bordure); background: rgba(255,255,255,.03); color: var(--texte); text-decoration: none;
+  }
+  .lien-liste .chev { color: var(--texte-doux); font-size: 18px; }
+  .compte { display: inline-flex; gap: 6px; }
+  .compte .c { border-radius: 999px; padding: 1px 8px; font-size: 11px; font-weight: 700; border: 1px solid var(--bordure); }
+  .compte .c.r { color: var(--danger); border-color: rgba(251,113,133,.4); }
+
+  /* --- boîte de confirmation --- */
+  .voile { position: absolute; inset: 0; background: rgba(2,6,23,.72); display: flex; align-items: center; justify-content: center; padding: 18px; }
+  .voile.bas { top: auto; height: 210px; align-items: flex-end; padding: 0; background: linear-gradient(180deg, rgba(2,6,23,0), rgba(2,6,23,.85) 30%); }
+  .voile.bas .dialogue { border-radius: 14px 14px 0 0; }
+  .dialogue { background: #0b1222; border: 1px solid var(--bordure); border-radius: 14px; padding: 16px; width: 100%; }
+  .dialogue h3 { color: var(--texte-fort); font-size: 14.5px; margin: 0 0 6px; }
+  .dialogue p { color: var(--texte-attenue); font-size: 12.5px; margin: 0 0 14px; }
+  .dialogue .actions { display: flex; flex-direction: column; gap: 8px; }
+  .dialogue.natif { background: #e5e7eb; color: #111827; border-color: #9ca3af; border-radius: 8px; }
+  .dialogue.natif h3 { color: #111827; }
+  .dialogue.natif p { color: #374151; }
+  .dialogue.natif .btns { display: flex; justify-content: flex-end; gap: 8px; }
+  .dialogue.natif button { border-radius: 6px; padding: 7px 14px; font-size: 12.5px; border: 1px solid #9ca3af; background: #fff; color: #111827; cursor: pointer; }
+  .dialogue.natif button.p { background: #2563eb; border-color: #2563eb; color: #fff; }
+
+  /* --- juge (tablette) --- */
+  .entete-juge { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--bordure); flex-wrap: wrap; }
+  .compteurs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px 16px 0; }
+  .compteur { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--bordure); border-radius: 12px; padding: 9px 12px; font-size: 12px; }
+  .compteur .pastille { width: 9px; height: 9px; border-radius: 999px; }
+  .compteur.filles .pastille { background: var(--filles); }
+  .compteur.garcons .pastille { background: var(--garcons); }
+  .compteur .val { color: var(--texte-fort); font-weight: 800; font-size: 15px; margin-left: auto; }
+  .compteur .sur { color: var(--texte-doux); }
+  .compteur .dont { flex-basis: 100%; color: var(--texte-doux); font-size: 10.5px; }
+  .compteur { flex-wrap: wrap; }
+  .groupe { margin: 12px 16px 16px; background: var(--surface); border: 1px solid var(--bordure); border-radius: 14px; overflow: hidden; }
+  .groupe-titre { padding: 10px 16px; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; color: var(--filles); border-bottom: 1px solid var(--bordure); background: #0a1424; }
+  .ligne {
+    display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 10px;
+    padding: 9px 16px; border-top: 1px solid rgba(255,255,255,.05);
+  }
+  .ligne:first-of-type { border-top: 0; }
+  .ligne .nom { color: var(--texte-fort); font-size: 13.5px; font-weight: 600; }
+  .ligne .club { color: var(--texte-doux); font-size: 11px; }
+  .ligne .droite { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
+  .ligne.rejetee { background: rgba(251,113,133,.05); }
+  .ligne .motif { grid-column: 1 / -1; }
+  .saisie-v { display: inline-flex; align-items: center; gap: 5px; }
+  .saisie-v input {
+    width: 92px; background: rgba(0,0,0,.3); color: var(--texte-fort);
+    border: 1px solid var(--bordure); border-radius: 8px; padding: 8px 9px;
+    font-size: 16px; text-align: right; font-variant-numeric: tabular-nums; color-scheme: dark;
+  }
+  .btn-mini { border-radius: 8px; padding: 8px 10px; font-size: 12px; font-weight: 700; border: 1px solid var(--bordure); background: rgba(0,0,0,.28); color: var(--texte-attenue); cursor: pointer; }
+  .btn-mini.ok { background: var(--accent); color: #04222a; border-color: var(--accent); }
+  @media (max-width: 560px) {
+    .ligne { grid-template-columns: 1fr; }
+    .ligne .droite { justify-content: flex-start; flex-wrap: wrap; }
+    .compteurs { grid-template-columns: 1fr; }
+  }
+
+  .legende { max-width: 940px; margin: 44px auto 0; color: var(--texte-attenue); font-size: 13px; }
+  .legende h2 { color: var(--texte-fort); font-size: 15px; margin-bottom: 6px; }
+  .legende h3 { color: var(--accent-doux); font-size: 13px; margin: 16px 0 4px; }
+  .legende li { margin-bottom: 6px; }
+  .legende code { background: var(--surface-forte); padding: 1px 5px; border-radius: 5px; color: var(--texte-fort); font-size: 12px; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .tourne { display: inline-block; animation: tourne 1.4s linear infinite; }
+    @keyframes tourne { to { transform: rotate(360deg); } }
+  }
+</style>
+</head>
+<body>
+  <h1>Saisie hors ligne — maquettes (spec #17)</h1>
+  <p class="intro">En salle, le réseau coupe souvent. Le <strong>coach</strong> (voie, bloc) et le
+  <strong>juge</strong> (vitesse) continuent à saisir : chaque saisie s'affiche aussitôt
+  <strong>en attente</strong>, est conservée sur l'appareil, puis <strong>envoyée automatiquement</strong>
+  au retour du réseau. Uniquement en <strong>③ compétition</strong>, pour une rencontre.
+  Ces maquettes complètent celles de la saisie coach (<code>saisie-resultats.html</code>) et juge
+  (<code>vitesse.html</code>) : seuls les éléments ajoutés sont montrés. Design « Nuit », mobile-first.
+  Exemple : <strong>coach du club A « CAF Bègles »</strong>.</p>
+
+  <div class="grille">
+
+    <!-- ============ 1 · HORS LIGNE — SAISIES EN ATTENTE ============ -->
+    <section class="colonne">
+      <p class="titre-option">1 · Hors ligne, saisies en attente</p>
+      <p class="desc-option">Le réseau coupe : la saisie continue, s'affiche aussitôt et attend le réseau.</p>
+      <div class="tel">
+        <div class="bandeau hors-ligne" role="status">
+          <span class="ic" aria-hidden="true">⦸</span>
+          <span class="txt">Hors ligne · 2 saisies en attente
+            <span class="sous">Elles seront envoyées dès le retour du réseau.</span></span>
+        </div>
+        <div class="barre-haut">
+          <div class="lien-retour">← Grimpeurs</div>
+          <div class="titre-ecran">Léa Martin</div>
+          <div class="meta">enfant · Groupe M2 → M2 · M3 · M4</div>
+          <div class="badge-phase">● Compétition — saisie</div>
+        </div>
+        <div class="corps">
+          <a class="lien-liste" href="#ecran-4">
+            <span>Saisies non envoyées <span class="compte"><span class="c">2 en attente</span></span></span>
+            <span class="chev">›</span>
+          </a>
+          <div class="carte">
+            <div class="carte-entete">
+              <span class="epreuve-titre">Voie de difficulté</span>
+              <span class="prog"><span class="n">3</span>/3 <span class="att">· dont 1 en attente</span></span>
+            </div>
+            <div class="saisie">
+              <span class="voie-id">M2</span><span class="cotation">5a</span>
+              <span class="issue top pousse">✓ Top</span>
+            </div>
+            <div class="saisie">
+              <span class="voie-id">M3</span><span class="cotation">5b</span>
+              <span class="issue partiel pousse">Prise valorisée</span>
+            </div>
+            <div class="saisie">
+              <span class="voie-id">M4</span><span class="cotation">5c</span>
+              <span class="etat attente pousse">⏳ En attente</span>
+              <span class="issue echec en-attente">Échec</span>
+            </div>
+          </div>
+          <div class="carte">
+            <div class="carte-entete">
+              <span class="epreuve-titre">Bloc</span>
+              <span class="prog"><span class="n">2</span>/2 <span class="att">· dont 1 en attente</span></span>
+            </div>
+            <div class="saisie">
+              <span class="voie-id">B1</span>
+              <span class="etat attente pousse">⏳ En attente</span>
+              <span class="issue top en-attente">1er essai</span>
+            </div>
+            <div class="saisie"><span class="voie-id">B2</span><span class="issue echec pousse">Échec</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 2 · RETOUR DU RÉSEAU — SYNCHRONISATION ============ -->
+    <section class="colonne">
+      <p class="titre-option">2 · Retour du réseau</p>
+      <p class="desc-option">Envoi automatique, sans action du coach. Une fois tout envoyé, le bandeau disparaît.</p>
+      <div class="tel">
+        <div class="bandeau envoi" role="status">
+          <span class="ic tourne" aria-hidden="true">↻</span>
+          <span class="txt">Envoi en cours · 1 saisie en attente</span>
+        </div>
+        <div class="barre-haut">
+          <div class="lien-retour">← Grimpeurs</div>
+          <div class="titre-ecran">Léa Martin</div>
+          <div class="badge-phase">● Compétition — saisie</div>
+        </div>
+        <div class="corps">
+          <div class="carte">
+            <div class="carte-entete">
+              <span class="epreuve-titre">Voie de difficulté</span>
+              <span class="prog"><span class="n">3</span>/3</span>
+            </div>
+            <div class="saisie">
+              <span class="voie-id">M4</span><span class="cotation">5c</span>
+              <span class="etat sync pousse">✓ Envoyé</span>
+              <span class="issue echec">Échec</span>
+            </div>
+          </div>
+          <div class="carte">
+            <div class="carte-entete">
+              <span class="epreuve-titre">Bloc</span>
+              <span class="prog"><span class="n">2</span>/2 <span class="att">· dont 1 en attente</span></span>
+            </div>
+            <div class="saisie">
+              <span class="voie-id">B1</span>
+              <span class="etat attente pousse"><span class="tourne" aria-hidden="true">↻</span> Envoi…</span>
+              <span class="issue top en-attente">1er essai</span>
+            </div>
+          </div>
+          <div class="carte">
+            <div class="carte-entete"><span class="epreuve-titre">Correction hors ligne (R14)</span></div>
+            <div class="saisie">
+              <span class="voie-id">M3</span>
+              <span class="etat attente pousse">⏳ En attente</span>
+              <span class="issue top en-attente">Top</span>
+              <div class="seg" aria-label="Issue M3">
+                <button class="sel-top">Top</button><button>Prise valorisée</button><button>Échec</button>
+              </div>
+            </div>
+            <div class="item-heure" style="padding:0 8px">« Échec » puis « Top » saisis hors ligne : seul « Top » sera envoyé.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 3 · SESSION EXPIRÉE ============ -->
+    <section class="colonne">
+      <p class="titre-option">3 · Session expirée ou révoquée</p>
+      <p class="desc-option">Les saisies sont gardées. Elles repartent après un nouveau scan du QR (même club, même rencontre).</p>
+      <div class="tel">
+        <div class="bandeau session" role="alert">
+          <span class="ic" aria-hidden="true">⚠</span>
+          <span class="txt">Session expirée · 3 saisies en attente
+            <span class="sous">Rescannez le QR code de votre club pour les envoyer.</span></span>
+          <button>Scanner</button>
+        </div>
+        <div class="barre-haut">
+          <div class="lien-retour">← Grimpeurs</div>
+          <div class="titre-ecran">Grimpeurs — CAF Bègles</div>
+          <div class="meta">Coach temporaire · session QR</div>
+        </div>
+        <div class="corps">
+          <a class="lien-liste" href="#ecran-4">
+            <span>Saisies non envoyées <span class="compte"><span class="c">3 en attente</span></span></span>
+            <span class="chev">›</span>
+          </a>
+          <div class="carte">
+            <div class="saisie"><span class="item-qui">Léa Martin</span><span class="etat attente pousse">⏳ 2 en attente</span></div>
+            <div class="saisie"><span class="item-qui">Hugo Petit</span><span class="etat attente pousse">⏳ 1 en attente</span></div>
+            <div class="saisie"><span class="item-qui">Inès Roux</span><span class="etat sync pousse">✓ à jour</span></div>
+          </div>
+          <div class="item-heure">Coach permanent : le bandeau propose « Se reconnecter » au lieu de « Scanner ».</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 4 · LISTE DES SAISIES NON ENVOYÉES ============ -->
+    <section class="colonne" id="ecran-4">
+      <p class="titre-option">4 · Saisies non envoyées</p>
+      <p class="desc-option">En attente : consultables, abandon possible. Rejetées : motif, à transmettre à l'organisateur.</p>
+      <div class="tel">
+        <div class="barre-haut">
+          <div class="lien-retour">← Saisie</div>
+          <div class="titre-ecran">Saisies non envoyées</div>
+          <div class="meta">Rencontre du 12 oct. · CAF Bègles</div>
+        </div>
+        <div class="corps">
+          <div class="tabs" role="tablist">
+            <button class="actif" role="tab" aria-selected="true">Rejetées (2)</button>
+            <button role="tab" aria-selected="false">En attente (1)</button>
+          </div>
+
+          <div class="item rejete">
+            <div class="item-tete">
+              <span class="item-qui">Léa Martin</span>
+              <span class="etat rejet pousse">⚠ Rejetée</span>
+            </div>
+            <div class="item-cible">Voie M4 · <span class="issue echec">Échec</span></div>
+            <div class="item-heure">Saisie à 10:00</div>
+            <div class="motif">Une saisie plus récente existe déjà.</div>
+            <div class="item-actions"><button class="btn btn-fantome">Retirer de la liste</button></div>
+          </div>
+
+          <div class="item rejete">
+            <div class="item-tete">
+              <span class="item-qui">Hugo Petit</span>
+              <span class="etat rejet pousse">⚠ Rejetée</span>
+            </div>
+            <div class="item-cible">Bloc B2 · <span class="issue top">Zone 2</span></div>
+            <div class="item-heure">Saisie à 11:52</div>
+            <div class="motif">La compétition est clôturée : cette saisie n'a pas été enregistrée. Signalez-la à l'organisateur.</div>
+            <div class="item-actions"><button class="btn btn-fantome">Retirer de la liste</button></div>
+          </div>
+
+          <p class="item-heure">Onglet « En attente » : mêmes informations, sans motif, avec un bouton
+            <strong>Abandonner</strong> (confirmation, écran 5).</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 5 · REJET SUR L'ÉCRAN + ABANDON ============ -->
+    <section class="colonne">
+      <p class="titre-option">5 · Rejet et abandon</p>
+      <p class="desc-option">Une saisie rejetée laisse la valeur du serveur. Abandonner une saisie en attente demande confirmation.</p>
+      <div class="tel">
+        <div class="bandeau rejet" role="alert">
+          <span class="ic" aria-hidden="true">⚠</span>
+          <span class="txt">1 saisie rejetée</span>
+          <button>Voir</button>
+        </div>
+        <div class="barre-haut">
+          <div class="lien-retour">← Grimpeurs</div>
+          <div class="titre-ecran">Léa Martin</div>
+          <div class="badge-phase">● Compétition — saisie</div>
+        </div>
+        <div class="corps">
+          <div class="carte">
+            <div class="carte-entete"><span class="epreuve-titre">Voie de difficulté</span><span class="prog"><span class="n">3</span>/3</span></div>
+            <div class="saisie">
+              <span class="voie-id">M4</span><span class="cotation">5c</span>
+              <span class="etat rejet pousse">⚠ Rejetée</span>
+              <span class="issue top">✓ Top</span>
+              <div class="motif">Votre saisie « Échec » (10:00) n'a pas été enregistrée : une saisie plus récente existe déjà (« Top »).</div>
+            </div>
+          </div>
+        </div>
+        <div class="corps" style="min-height:200px"></div>
+        <div class="voile bas">
+          <div class="dialogue" role="dialog" aria-labelledby="t-abandon">
+            <h3 id="t-abandon">Abandonner cette saisie ?</h3>
+            <p>Hugo Petit · Voie T6 · Zone 1 (11:40). Elle ne sera jamais envoyée.</p>
+            <div class="actions">
+              <button class="btn btn-danger">Abandonner la saisie</button>
+              <button class="btn btn-fantome">Garder</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 6 · QUITTER AVEC DES SAISIES EN ATTENTE ============ -->
+    <section class="colonne">
+      <p class="titre-option">6 · Quitter ou recharger</p>
+      <p class="desc-option">Boîte de confirmation du navigateur (texte imposé par le navigateur). Les saisies restent sur l'appareil.</p>
+      <div class="tel">
+        <div class="bandeau hors-ligne" role="status">
+          <span class="ic" aria-hidden="true">⦸</span>
+          <span class="txt">Hors ligne · 4 saisies en attente</span>
+        </div>
+        <div class="barre-haut">
+          <div class="titre-ecran">Grimpeurs — CAF Bègles</div>
+        </div>
+        <div class="corps" style="min-height:300px"></div>
+        <div class="voile">
+          <div class="dialogue natif" role="dialog" aria-labelledby="t-quitter">
+            <h3 id="t-quitter">Quitter le site ?</h3>
+            <p>Les modifications que vous avez apportées pourront ne pas être enregistrées.</p>
+            <div class="btns"><button class="p">Quitter</button><button>Annuler</button></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 7 · JUGE — HORS LIGNE (TABLETTE) ============ -->
+    <section class="colonne large">
+      <p class="titre-option">7 · Juge de vitesse hors ligne (tablette)</p>
+      <p class="desc-option">Même bandeau et mêmes états, sur l'écran dense du juge. Les compteurs et le filtre « à saisir » comptent les saisies en attente.</p>
+      <div class="tel tablette">
+        <div class="bandeau hors-ligne" role="status">
+          <span class="ic" aria-hidden="true">⦸</span>
+          <span class="txt">Hors ligne · 3 saisies en attente
+            <span class="sous">Elles seront envoyées dès le retour du réseau.</span></span>
+          <button>Voir</button>
+        </div>
+        <div class="entete-juge">
+          <div>
+            <div class="titre-ecran" style="margin:0">⚡ Vitesse — Vertical Mérignac · 12 oct.</div>
+            <div class="meta">Épreuve de vitesse · couloir 2</div>
+          </div>
+          <span class="badge-phase" style="margin:0">● ③ Compétition</span>
+        </div>
+        <div class="compteurs">
+          <div class="compteur filles"><span class="pastille"></span>Filles<span class="val">33</span><span class="sur">/ 52</span><span class="dont">dont 2 en attente</span></div>
+          <div class="compteur garcons"><span class="pastille"></span>Garçons<span class="val">31</span><span class="sur">/ 52</span><span class="dont">dont 1 en attente</span></div>
+        </div>
+        <section class="groupe">
+          <header class="groupe-titre">Filles</header>
+          <div class="ligne">
+            <div><div class="nom">Dumas Sofia</div><div class="club">Grimpe Pessac</div></div>
+            <div class="droite"><span class="etat attente">⏳ En attente</span><span class="issue temps en-attente">8,912 s</span></div>
+            <div class="saisie-v"><input type="text" inputmode="decimal" value="8.912" aria-label="Temps Sofia Dumas" /><button class="btn-mini ok">OK</button><button class="btn-mini">Chute</button><button class="btn-mini">Abs.</button></div>
+          </div>
+          <div class="ligne">
+            <div><div class="nom">Faure Lina</div><div class="club">CAF Bègles</div></div>
+            <div class="droite"><span class="etat attente">⏳ En attente</span><span class="issue chute en-attente">Chute</span></div>
+            <div class="saisie-v"><input type="text" inputmode="decimal" placeholder="0.000" aria-label="Temps Lina Faure" /><button class="btn-mini ok">OK</button><button class="btn-mini">Chute</button><button class="btn-mini">Abs.</button></div>
+          </div>
+          <div class="ligne">
+            <div><div class="nom">Girard Manon</div><div class="club">Grimpe Pessac</div></div>
+            <div class="droite"><span class="etat sync">✓ Envoyé</span><span class="issue temps">9,340 s</span></div>
+            <div class="saisie-v"><input type="text" inputmode="decimal" value="9.340" aria-label="Temps Manon Girard" /><button class="btn-mini ok">OK</button><button class="btn-mini">Chute</button><button class="btn-mini">Abs.</button></div>
+          </div>
+          <div class="ligne rejetee">
+            <div><div class="nom">Henry Zoé</div><div class="club">Vertical Mérignac</div></div>
+            <div class="droite"><span class="etat rejet">⚠ Rejetée</span><span class="issue temps">10,105 s</span></div>
+            <div class="saisie-v"><input type="text" inputmode="decimal" value="10.105" aria-label="Temps Zoé Henry" /><button class="btn-mini ok">OK</button><button class="btn-mini">Chute</button><button class="btn-mini">Abs.</button></div>
+            <div class="motif">Votre saisie « 10,210 s » (10:14) n'a pas été enregistrée : une saisie plus récente existe déjà.</div>
+          </div>
+        </section>
+      </div>
+    </section>
+
+  </div>
+
+  <div class="legende">
+    <h2>Correspondance maquettes → règles (spec #17)</h2>
+    <h3>États d'une saisie (R23) — toujours une icône et un texte, pas seulement une couleur</h3>
+    <ul>
+      <li><span class="etat attente">⏳ En attente</span> + pastille en <strong>pointillé</strong> : conservée sur l'appareil, pas encore acceptée.</li>
+      <li><span class="etat sync">✓ Envoyé</span> : acceptée par le serveur ; la mention s'efface ensuite, la pastille redevient pleine (valeur du serveur).</li>
+      <li><span class="etat rejet">⚠ Rejetée</span> + motif : la valeur affichée est celle du serveur (R22).</li>
+    </ul>
+    <h3>Écran 1 — Hors ligne</h3>
+    <ul>
+      <li><strong>R12/R22</strong> — la saisie passe par la file et s'affiche aussitôt, <strong>en attente</strong>.</li>
+      <li><strong>R24</strong> — bandeau « Hors ligne · n saisies en attente ».</li>
+      <li><strong>spec #6 R20bis</strong> — les compteurs de progression comptent les saisies en attente (« dont 1 en attente »).</li>
+      <li><strong>R27</strong> — accès à la liste des saisies non envoyées.</li>
+    </ul>
+    <h3>Écran 2 — Retour du réseau</h3>
+    <ul>
+      <li><strong>R15/R16/R17</strong> — envoi automatique, dans l'ordre de saisie ; chaque saisie acceptée passe « Envoyé ».</li>
+      <li><strong>R14</strong> — deux saisies hors ligne sur la même voie : seule la dernière est envoyée.</li>
+      <li><strong>R24</strong> — le bandeau disparaît quand la file est vide et l'appareil en ligne.</li>
+    </ul>
+    <h3>Écran 3 — Session expirée</h3>
+    <ul>
+      <li><strong>R19/R25</strong> — saisies gardées en attente ; bandeau avec l'action attendue (<em>Scanner</em> pour une session QR, <em>Se reconnecter</em> pour un coach permanent).</li>
+      <li><strong>R4</strong> — seule une session du même club et de la même rencontre rejoue la file.</li>
+    </ul>
+    <h3>Écran 4 — Saisies non envoyées</h3>
+    <ul>
+      <li><strong>R26</strong> — rejetées : grimpeur, cible, valeur, heure de saisie, motif ; restent jusqu'à « Retirer de la liste ».</li>
+      <li><strong>R18/R20</strong> — motifs lisibles : saisie plus récente (<strong>R9</strong>), compétition clôturée.</li>
+      <li><strong>R27</strong> — en attente : mêmes informations, sans motif, avec <strong>Abandonner</strong>.</li>
+    </ul>
+    <h3>Écran 5 — Rejet et abandon</h3>
+    <ul>
+      <li><strong>R9/R22</strong> — saisie plus ancienne qu'une correction admin : rejetée, l'écran montre la valeur du serveur (« Top »).</li>
+      <li><strong>R27</strong> — l'abandon d'une saisie en attente demande confirmation.</li>
+    </ul>
+    <h3>Écran 6 — Quitter</h3>
+    <ul>
+      <li><strong>R28</strong> — confirmation du navigateur si des saisies sont en attente (texte non personnalisable) ; les saisies restent sur l'appareil.</li>
+    </ul>
+    <h3>Écran 7 — Juge</h3>
+    <ul>
+      <li><strong>R1/R22–R24</strong> — mêmes bandeau et états sur l'écran dense du juge (spec #10 R14b/R14c).</li>
+      <li><strong>spec #10 R14bis</strong> — compteurs Filles / Garçons et filtre « à saisir » tiennent compte des saisies en attente.</li>
+      <li><strong>R13</strong> — le contrôle de forme (temps &gt; 0, chute, absence) reste immédiat : une saisie invalide n'entre pas dans la file (non montré, identique à l'écran actuel).</li>
+    </ul>
+    <h3>Non montré (hors périmètre)</h3>
+    <ul>
+      <li><strong>R5</strong> — ouverture ou rechargement de l'écran sans réseau (évolution future).</li>
+      <li><strong>R21</strong> — mise à jour de l'application pendant la ③ : pas de déploiement, perte acceptée sinon.</li>
+    </ul>
+  </div>
+</body>
+</html>

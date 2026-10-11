@@ -1,0 +1,562 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Maquettes — Classement (spec #7)</title>
+<style>
+  :root {
+    --fond: #020617;
+    --surface: rgba(255, 255, 255, 0.04);
+    --surface-forte: rgba(255, 255, 255, 0.08);
+    --bordure: rgba(255, 255, 255, 0.12);
+    --accent: #22d3ee;
+    --accent-doux: #67e8f9;
+    --secondaire: #bef264;
+    --prete: #c084fc;
+    --danger: #fb7185;
+    --or: #fbbf24;
+    --texte-fort: #ffffff;
+    --texte: #e2e8f0;
+    --texte-attenue: #94a3b8;
+    --texte-doux: #64748b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--fond);
+    color: var(--texte);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.4;
+    padding: 24px 16px 80px;
+  }
+  h1 { color: var(--texte-fort); font-size: 20px; text-align: center; }
+  .intro { text-align: center; color: var(--texte-attenue); max-width: 680px; margin: 0 auto 32px; font-size: 14px; }
+  .grille { display: flex; flex-wrap: wrap; gap: 28px; justify-content: center; align-items: flex-start; }
+  .colonne { width: 340px; max-width: 100%; }
+  .colonne > .titre-option {
+    color: var(--accent); font-size: 13px; text-transform: uppercase; letter-spacing: .08em;
+    font-weight: 700; margin: 0 0 4px;
+  }
+  .colonne > .desc-option { color: var(--texte-doux); font-size: 12.5px; margin: 0 0 12px; min-height: 34px; }
+
+  /* --- cadre "téléphone" --- */
+  .tel {
+    border: 1px solid var(--bordure); border-radius: 22px; overflow: hidden;
+    background: linear-gradient(180deg, rgba(34,211,238,0.06), rgba(2,6,23,0) 220px), var(--fond);
+    box-shadow: 0 12px 40px rgba(0,0,0,.5);
+  }
+  .barre-haut { padding: 12px 16px 14px; border-bottom: 1px solid var(--bordure); }
+  .lien-retour { color: var(--texte-attenue); font-size: 12.5px; }
+  .titre-ecran { color: var(--texte-fort); font-weight: 600; font-size: 16px; margin-top: 6px; }
+  .titre-rencontre { color: var(--texte-fort); font-weight: 600; font-size: 15px; margin-top: 6px; }
+  .meta { color: var(--texte-attenue); font-size: 12.5px; margin-top: 2px; }
+  .sous { color: var(--texte-doux); font-size: 12px; margin-top: 2px; }
+
+  .badge-phase {
+    display: inline-flex; align-items: center; gap: 6px; margin-top: 8px;
+    background: rgba(190,242,100,.12); color: var(--secondaire);
+    border: 1px solid rgba(190,242,100,.3); border-radius: 999px;
+    padding: 3px 10px; font-size: 11.5px; font-weight: 600;
+  }
+  .badge-phase.comp { background: rgba(34,211,238,.12); color: var(--accent-doux); border-color: rgba(34,211,238,.3); }
+  .badge-phase.public { background: rgba(190,242,100,.12); color: var(--secondaire); border-color: rgba(190,242,100,.3); }
+
+  .corps { padding: 14px; }
+
+  /* bandeaux d'état */
+  .officiel { display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:700; border-radius:999px; padding:2px 10px; }
+  .officiel.non { color: var(--texte-attenue); background: rgba(148,163,184,.12); border:1px solid var(--bordure); }
+  .officiel.oui { color: var(--secondaire); background: rgba(190,242,100,.12); border:1px solid rgba(190,242,100,.3); }
+  .note-etat { color: var(--texte-attenue); font-size: 12px; background: rgba(148,163,184,.08); border:1px solid var(--bordure); border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; }
+  .note-etat.live { color: var(--accent-doux); background: rgba(34,211,238,.07); border-color: rgba(34,211,238,.25); }
+  .note-etat.fige { color: var(--secondaire); background: rgba(190,242,100,.07); border-color: rgba(190,242,100,.25); }
+
+  /* bascule de vue (individuel / équipe / club) */
+  .tabs { display: flex; gap: 6px; margin-top: 10px; }
+  .tabs button {
+    flex: 1; background: rgba(0,0,0,.28); color: var(--texte-attenue);
+    border: 1px solid var(--bordure); border-radius: 9px; padding: 7px 6px;
+    font-size: 12px; font-weight: 600; cursor: pointer;
+  }
+  .tabs button.actif { background: var(--accent); color: #04222a; border-color: var(--accent); }
+
+  /* --- table de classement --- */
+  table.clsmt { width:100%; border-collapse: collapse; font-size: 13px; }
+  table.clsmt th { color: var(--texte-doux); font-weight:600; text-align:left; font-size:10.5px; text-transform:uppercase; letter-spacing:.04em; padding:4px 6px; }
+  table.clsmt th.pts { text-align:right; }
+  table.clsmt td { padding:9px 6px; border-top:1px solid rgba(255,255,255,.06); color: var(--texte); vertical-align: top; }
+  table.clsmt tr:hover td { background: var(--surface-forte); }
+  td.rang { color: var(--texte-doux); font-weight:800; width:30px; text-align:center; font-size: 14px; }
+  td.rang.podium1 { color: var(--or); }
+  td.rang.podium2 { color: #cbd5e1; }
+  td.rang.podium3 { color: #d8a06a; }
+  td.nom { color: var(--texte-fort); font-weight:600; }
+  td.nom .club { color: var(--texte-doux); font-weight:500; font-size:11.5px; display:block; margin-top:1px; }
+  td.nom .eqs { color: var(--texte-doux); font-weight:500; font-size:11.5px; display:block; margin-top:1px; }
+  td.pts { text-align:right; color: var(--secondaire); font-weight:800; white-space:nowrap; }
+  td.pts .u { font-size:9.5px; color: var(--texte-doux); font-weight:700; margin-left:2px; }
+  td.pts .decomp { display:block; color: var(--texte-doux); font-weight:600; font-size:10px; margin-top:2px; }
+  td.chev { color: var(--texte-doux); width: 16px; text-align:right; }
+
+  .exaequo { display:inline-flex; align-items:center; font-size:9.5px; font-weight:700; color: var(--accent-doux);
+    background: rgba(34,211,238,.10); border:1px solid rgba(34,211,238,.28); border-radius:999px; padding:0 6px; margin-left:6px; }
+  .badge-prete {
+    display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700;
+    color: var(--prete); background: rgba(192,132,252,.12); border: 1px solid rgba(192,132,252,.35);
+    border-radius: 999px; padding: 0 7px; text-transform: uppercase; letter-spacing: .04em; margin-left:6px;
+  }
+  .tag-eq {
+    display: inline-flex; align-items: center; font-size: 10px; font-weight: 700;
+    color: var(--accent-doux); background: rgba(34,211,238,.10);
+    border: 1px solid rgba(34,211,238,.28); border-radius: 999px; padding: 0 7px; margin-left:6px;
+  }
+
+  /* --- recherche + filtres (longue liste) --- */
+  .rech {
+    width: 100%; background: rgba(0,0,0,.3); color: var(--texte-fort);
+    border: 1px solid var(--bordure); border-radius: 10px; padding: 9px 11px; font-size: 13px;
+    color-scheme: dark; margin-bottom: 8px;
+  }
+  .rech::placeholder { color: var(--texte-doux); }
+  .filtres { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+  .filtre {
+    background: rgba(0,0,0,.28); color: var(--texte-attenue); border: 1px solid var(--bordure);
+    border-radius: 999px; padding: 4px 11px; font-size: 11.5px; font-weight: 600; cursor: pointer;
+  }
+  .filtre.actif { background: rgba(34,211,238,.16); color: var(--accent-doux); border-color: rgba(34,211,238,.5); }
+  .compte { color: var(--texte-doux); font-size: 11px; font-weight: 600; margin: 2px 2px 8px; }
+  .compte b { color: var(--texte-fort); }
+
+  /* --- pagination bas de liste (façon moteur de recherche) --- */
+  .pagination { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px; margin: 10px 0 2px; }
+  .pagination a, .pagination span.gap {
+    min-width: 30px; height: 30px; padding: 0 8px; display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 8px; font-size: 12.5px; font-weight: 700; color: var(--accent-doux);
+    background: rgba(0,0,0,.28); border: 1px solid var(--bordure); cursor: pointer;
+  }
+  .pagination a.actif { background: var(--accent); color: #04222a; border-color: var(--accent); }
+  .pagination a.fleche { color: var(--texte-attenue); font-weight: 800; }
+  .pagination span.gap { border: none; background: none; color: var(--texte-doux); cursor: default; min-width: 18px; }
+  .pagination a:hover:not(.actif) { background: var(--surface-forte); }
+  .page-info { text-align: center; color: var(--texte-doux); font-size: 11px; margin-top: 6px; }
+  tr.mien td { background: rgba(34,211,238,.06); }
+  tr.mien td.nom { box-shadow: inset 3px 0 0 var(--accent); padding-left: 9px; }
+
+  .carte { background: var(--surface); border: 1px solid var(--bordure); border-radius: 14px; padding: 12px 14px; margin-bottom: 12px; }
+  .carte-entete { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; gap: 8px; }
+  .carte-titre { color: var(--texte-fort); font-size: 13px; font-weight: 700; }
+  .carte-sous { color: var(--texte-doux); font-size: 11.5px; margin-top: 8px; }
+
+  /* --- décomposition d'un score (R13) --- */
+  .fiche-tete { display:flex; align-items:center; gap:10px; margin-bottom: 4px; }
+  .fiche-nom { color: var(--texte-fort); font-weight:700; font-size:16px; }
+  .fiche-total { display:flex; align-items:baseline; justify-content:space-between; gap:8px;
+    background: rgba(190,242,100,.06); border:1px solid rgba(190,242,100,.22); border-radius:12px; padding:12px 14px; margin:6px 0 12px; }
+  .fiche-total .lbl { color: var(--texte-attenue); font-size:12px; font-weight:600; }
+  .fiche-total .val { color: var(--secondaire); font-weight:800; font-size:22px; }
+  .fiche-total .val .u { font-size:11px; color: var(--texte-doux); font-weight:700; }
+
+  .sec-titre { color: var(--accent); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing:.06em; margin: 12px 0 6px; display:flex; justify-content:space-between; }
+  .sec-titre .sstotal { color: var(--secondaire); font-weight:800; }
+  .ligne { display:flex; align-items:center; gap:8px; padding:7px 4px; font-size:13px; }
+  .ligne + .ligne { border-top:1px solid rgba(255,255,255,.05); }
+  .ligne .voie-id { color: var(--texte-fort); font-weight:700; min-width:34px; }
+  .ligne .cotation { color: var(--texte-doux); font-size:11px; }
+  .ligne .pts-l { margin-left:auto; color: var(--secondaire); font-weight:700; }
+  .ligne .pts-l.zero { color: var(--texte-doux); font-weight:600; }
+  .issue {
+    display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 700;
+    border-radius: 999px; padding: 1px 9px; border: 1px solid transparent; white-space: nowrap;
+  }
+  .issue.top     { color: #04222a; background: var(--secondaire); }
+  .issue.partiel { color: var(--accent-doux); background: rgba(34,211,238,.12); border-color: rgba(34,211,238,.32); }
+  .issue.echec   { color: var(--danger); background: rgba(251,113,133,.10); border-color: rgba(251,113,133,.3); }
+  .issue.np      { color: var(--texte-attenue); background: rgba(148,163,184,.12); border-color: var(--bordure); }
+
+  .vit-note { color: var(--texte-doux); font-size:11px; font-style:italic; background: rgba(34,211,238,.05);
+    border:1px dashed rgba(34,211,238,.25); border-radius:10px; padding:8px 10px; margin-top:10px; }
+
+  .legende { max-width: 940px; margin: 44px auto 0; color: var(--texte-attenue); font-size: 13px; }
+  .legende h2 { color: var(--texte-fort); font-size: 15px; margin-bottom: 6px; }
+  .legende h3 { color: var(--accent-doux); font-size: 13px; margin: 16px 0 4px; }
+  .legende li { margin-bottom: 6px; }
+  .legende code { background: var(--surface-forte); padding: 1px 5px; border-radius: 5px; color: var(--texte-fort); font-size: 12px; }
+</style>
+</head>
+<body>
+  <h1>Classement — maquettes (spec #7)</h1>
+  <p class="intro">Le classement d'une rencontre est <strong>calculé au fil de l'eau</strong> à partir des résultats saisis
+  (spec #6) et du barème stocké (spec #3). Trois vues — <strong>individuel</strong>, <strong>par équipe</strong>,
+  <strong>par club</strong> — triées par score décroissant, ex æquo au même rang (R8). L'<strong>individuel est séparé
+  par sexe</strong> (Filles / Garçons, R8b) ; équipe et club restent mixtes. <strong>Non officiel</strong> tant que
+  la rencontre n'est pas en ⑤ (R10). La <strong>vitesse n'entre pas encore</strong> dans le score (R14).
+  Consultable dès la ③ par tout compte authentifié, tous clubs (R11). Design « Nuit », mobile-first.</p>
+
+  <div class="grille">
+
+    <!-- ============ 1 · CLASSEMENT INDIVIDUEL ============ -->
+    <section class="colonne">
+      <p class="titre-option">1 · Classement individuel (R8/R12)</p>
+      <p class="desc-option">Grimpeurs triés par score décroissant. Rang, nom + club d'origine, score (Σ voies + Σ blocs). Ex æquo partagés (R8/R9).</p>
+      <div class="tel">
+        <div class="barre-haut">
+          <div class="lien-retour">← Rencontre</div>
+          <div class="titre-rencontre">11 oct. 2025 — CAF Bègles</div>
+          <div class="meta">Catégorie enfant · Classement</div>
+          <div class="badge-phase comp">● Compétition — au fil de l'eau</div>
+          <div class="tabs">
+            <button class="actif">Individuel</button>
+            <button>Par équipe</button>
+            <button>Par club</button>
+          </div>
+        </div>
+        <div class="corps">
+          <div class="note-etat live">Recalculé à chaque saisie — <strong>non officiel</strong> jusqu'à la publication (⑤).
+          Individuel <strong>séparé par sexe</strong> (R8b) ; la vitesse n'entre pas encore dans le score (R14).</div>
+
+          <div class="tabs" style="margin-top:0;margin-bottom:12px">
+            <button class="actif">Filles</button>
+            <button>Garçons</button>
+          </div>
+
+          <input class="rech" type="search" placeholder="🔍 Rechercher un nom…" />
+          <div class="filtres">
+            <button class="filtre actif">Tous les clubs</button>
+            <button class="filtre">Mon club</button>
+            <button class="filtre">Par équipe ▾</button>
+          </div>
+          <div class="compte"><b>48</b> grimpeuses · <b>3</b> de mon club en évidence</div>
+
+          <div class="carte" style="padding:8px 10px">
+            <table class="clsmt">
+              <thead><tr><th>#</th><th>Grimpeuse</th><th class="pts">Score</th><th></th></tr></thead>
+              <tbody>
+                <tr class="mien">
+                  <td class="rang podium1">1</td>
+                  <td class="nom">Léa Martin <span class="tag-eq">A1</span><span class="club">CAF Bègles</span></td>
+                  <td class="pts">28<span class="u">pts</span><span class="decomp">voie 20 · bloc 8</span></td>
+                  <td class="chev">›</td>
+                </tr>
+                <tr>
+                  <td class="rang podium2">2</td>
+                  <td class="nom">Jade Lopez <span class="club">ASPTT Talence</span></td>
+                  <td class="pts">27<span class="u">pts</span></td><td class="chev">›</td>
+                </tr>
+                <tr>
+                  <td class="rang podium3">3</td>
+                  <td class="nom">Chloé Perez <span class="club">Stade Bordelais</span></td>
+                  <td class="pts">26<span class="u">pts</span></td><td class="chev">›</td>
+                </tr>
+                <tr>
+                  <td class="rang">4</td>
+                  <td class="nom">Anna Vidal <span class="club">ASPTT Talence</span></td>
+                  <td class="pts">25<span class="u">pts</span></td><td class="chev">›</td>
+                </tr>
+                <tr>
+                  <td class="rang">5</td>
+                  <td class="nom">Manon Faure <span class="club">US Cenon</span></td>
+                  <td class="pts">24<span class="u">pts</span></td><td class="chev">›</td>
+                </tr>
+                <tr class="mien">
+                  <td class="rang">6</td>
+                  <td class="nom">Sarah Nguyen <span class="tag-eq">A1</span><span class="club">CAF Bègles</span></td>
+                  <td class="pts">23<span class="u">pts</span></td><td class="chev">›</td>
+                </tr>
+                <tr>
+                  <td class="rang">7</td>
+                  <td class="nom">Louna Robert <span class="club">Stade Bordelais</span></td>
+                  <td class="pts">22<span class="u">pts</span></td><td class="chev">›</td>
+                </tr>
+                <tr>
+                  <td class="rang">8</td>
+                  <td class="nom">Inès Moreau <span class="club">US Cenon</span></td>
+                  <td class="pts">21<span class="u">pts</span></td><td class="chev">›</td>
+                </tr>
+                <tr>
+                  <td class="rang">9</td>
+                  <td class="nom">Zoé Blanc <span class="club">ASPTT Talence</span></td>
+                  <td class="pts">20<span class="u">pts</span></td><td class="chev">›</td>
+                </tr>
+                <tr>
+                  <td class="rang">10</td>
+                  <td class="nom">Camille Roy <span class="club">Stade Bordelais</span></td>
+                  <td class="pts">18<span class="u">pts</span></td><td class="chev">›</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="pagination">
+              <a class="fleche" aria-disabled="true">‹ Préc.</a>
+              <a class="actif">1</a>
+              <a>2</a>
+              <a>3</a>
+              <a>4</a>
+              <span class="gap">…</span>
+              <a>5</a>
+              <a class="fleche">Suiv. ›</a>
+            </div>
+            <div class="page-info">Page 1 sur 5 · grimpeuses 1–10 sur 48</div>
+          </div>
+          <div class="carte-sous" style="margin-top:-4px">Liste <strong>complète paginée</strong> (48 grimpeuses) :
+            navigation par <strong>pages en bas</strong> (façon moteur de recherche), la page défile normalement — pas de
+            barre de défilement interne (R12b). <strong>Mon club en évidence</strong> (liseré cyan) ; recherche + filtres
+            (tous / mon club / équipe). Rangs propres à ce classement (R8b) ; le <span class="badge-prete">Prêté</span>
+            figure sous son <strong>club d'origine</strong> (R7). Touchez une ligne → décomposition (R13).</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 2 · CLASSEMENT PAR ÉQUIPE ============ -->
+    <section class="colonne">
+      <p class="titre-option">2 · Classement par équipe (R5/R8)</p>
+      <p class="desc-option">Score d'équipe = somme des scores individuels de ses membres, prêtés inclus dans l'équipe d'accueil (R5/R7).</p>
+      <div class="tel">
+        <div class="barre-haut">
+          <div class="lien-retour">← Rencontre</div>
+          <div class="titre-rencontre">11 oct. 2025 — CAF Bègles</div>
+          <div class="meta">Catégorie enfant · Classement</div>
+          <div class="badge-phase comp">● Compétition — au fil de l'eau</div>
+          <div class="tabs">
+            <button>Individuel</button>
+            <button class="actif">Par équipe</button>
+            <button>Par club</button>
+          </div>
+        </div>
+        <div class="corps">
+          <div class="note-etat live">Somme des scores individuels des membres de chaque équipe (R5). Un grimpeur
+          <span class="badge-prete">Prêté</span> compte pour son <strong>équipe d'accueil</strong> (R7).</div>
+
+          <div class="carte">
+            <div class="carte-entete">
+              <span class="carte-titre">Par équipe — tous clubs</span>
+              <span class="officiel non">● Non officiel</span>
+            </div>
+            <table class="clsmt">
+              <thead><tr><th>#</th><th>Équipe</th><th class="pts">Score</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td class="rang podium1">1</td>
+                  <td class="nom">Équipe A1 <span class="eqs">CAF Bègles · 2 grimpeurs</span></td>
+                  <td class="pts">35<span class="u">pts</span></td>
+                </tr>
+                <tr>
+                  <td class="rang podium2">2</td>
+                  <td class="nom">Équipe C1 <span class="eqs">ASPTT Talence · 3 grimpeurs</span></td>
+                  <td class="pts">31<span class="u">pts</span></td>
+                </tr>
+                <tr>
+                  <td class="rang podium3">3</td>
+                  <td class="nom">Équipe A2 <span class="eqs">CAF Bègles · 2 grimpeurs (dont 1 prêté)</span></td>
+                  <td class="pts">20<span class="u">pts</span></td>
+                </tr>
+                <tr>
+                  <td class="rang">4</td>
+                  <td class="nom">Équipe B1 <span class="eqs">Stade Bordelais · 3 grimpeurs</span></td>
+                  <td class="pts">20<span class="u">pts</span> <span class="exaequo">ex æquo</span></td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="carte-sous">A2 et B1 à égalité → même rang serait affiché si les scores étaient identiques (R8) ;
+              ici A2 précède B1 à l'affichage par ordre déterministe (R9).</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 3 · CLASSEMENT PAR CLUB ============ -->
+    <section class="colonne">
+      <p class="titre-option">3 · Classement par club (R6/R8)</p>
+      <p class="desc-option">Score de club = somme des scores de toutes ses équipes engagées (R6). Ex æquo au même rang (R8).</p>
+      <div class="tel">
+        <div class="barre-haut">
+          <div class="lien-retour">← Rencontre</div>
+          <div class="titre-rencontre">11 oct. 2025 — CAF Bègles</div>
+          <div class="meta">Catégorie enfant · Classement</div>
+          <div class="badge-phase comp">● Compétition — au fil de l'eau</div>
+          <div class="tabs">
+            <button>Individuel</button>
+            <button>Par équipe</button>
+            <button class="actif">Par club</button>
+          </div>
+        </div>
+        <div class="corps">
+          <div class="note-etat live">Somme des scores de toutes les équipes du club (R6). Le grimpeur prêté
+          compte pour le <strong>club d'accueil</strong> via son équipe d'accueil (R7).</div>
+
+          <div class="carte">
+            <div class="carte-entete">
+              <span class="carte-titre">Par club</span>
+              <span class="officiel non">● Non officiel</span>
+            </div>
+            <table class="clsmt">
+              <thead><tr><th>#</th><th>Club</th><th class="pts">Score</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td class="rang podium1">1</td>
+                  <td class="nom">CAF Bègles <span class="eqs">A1 (35) + A2 (20)</span></td>
+                  <td class="pts">55<span class="u">pts</span></td>
+                </tr>
+                <tr>
+                  <td class="rang podium2">2</td>
+                  <td class="nom">ASPTT Talence <span class="eqs">C1 (31)</span></td>
+                  <td class="pts">31<span class="u">pts</span></td>
+                </tr>
+                <tr>
+                  <td class="rang podium3">3</td>
+                  <td class="nom">Stade Bordelais <span class="eqs">B1 (20) — hors Hugo Blanc, prêté à A2</span></td>
+                  <td class="pts">20<span class="u">pts</span></td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="carte-sous">Hugo Blanc (Stade Bordelais) est prêté à l'équipe A2 : ses points comptent pour
+              <strong>CAF Bègles</strong> (accueil) au classement club/équipe, mais restent siens en individuel sous son club d'origine (R7).</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 4 · DÉCOMPOSITION D'UN SCORE (R13) ============ -->
+    <section class="colonne">
+      <p class="titre-option">4 · Décomposition d'un score (R13)</p>
+      <p class="desc-option">Depuis l'individuel : détail voie par voie et bloc par bloc, avec les points de chaque issue (R1/R2).</p>
+      <div class="tel">
+        <div class="barre-haut">
+          <div class="lien-retour">← Classement individuel</div>
+          <div class="titre-rencontre">Léa Martin</div>
+          <div class="meta">enfant · Groupe M2 → M2 · M3 · M4 · CAF Bègles (A1)</div>
+          <div class="badge-phase comp">● Compétition — au fil de l'eau</div>
+        </div>
+        <div class="corps">
+          <div class="fiche-total">
+            <div>
+              <div class="lbl">Score individuel</div>
+              <div class="sous">rang 1 · non officiel (R10)</div>
+            </div>
+            <div class="val">28 <span class="u">pts</span></div>
+          </div>
+
+          <div class="sec-titre"><span>Voies</span><span class="sstotal">20 pts</span></div>
+          <div class="carte" style="margin-top:0">
+            <div class="ligne"><span class="voie-id">M2</span><span class="cotation">5a</span>
+              <span class="issue top">✓ Top</span><span class="pts-l">12</span></div>
+            <div class="ligne"><span class="voie-id">M3</span><span class="cotation">5b</span>
+              <span class="issue partiel">Prise valorisée</span><span class="pts-l">8</span></div>
+            <div class="ligne"><span class="voie-id">M4</span><span class="cotation">5c</span>
+              <span class="issue echec">Échec</span><span class="pts-l zero">0</span></div>
+          </div>
+
+          <div class="sec-titre"><span>Blocs</span><span class="sstotal">8 pts</span></div>
+          <div class="carte" style="margin-top:0">
+            <div class="ligne"><span class="voie-id">B1</span>
+              <span class="issue top">1er essai</span><span class="pts-l">8</span></div>
+            <div class="ligne"><span class="voie-id">B2</span>
+              <span class="issue echec">Échec</span><span class="pts-l zero">0</span></div>
+          </div>
+
+          <div class="vit-note">⚡ Vitesse : 7,82 s — <strong>hors score</strong> pour l'instant (R14). Son intégration
+            (points par rang, classements filles/garçons) fera l'objet d'une révision.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 5 · CLASSEMENT OFFICIEL (⑤) ============ -->
+    <section class="colonne">
+      <p class="titre-option">5 · Officialisé en ⑤ (R10)</p>
+      <p class="desc-option">Après publication, le même classement bascule « Officiel » — figé (mécanique de phase, spec #1).</p>
+      <div class="tel">
+        <div class="barre-haut">
+          <div class="lien-retour">← Rencontre</div>
+          <div class="titre-rencontre">11 oct. 2025 — CAF Bègles</div>
+          <div class="meta">Catégorie enfant · Classement</div>
+          <div class="badge-phase public">● Résultats publics — officiel</div>
+          <div class="tabs">
+            <button class="actif">Individuel</button>
+            <button>Par équipe</button>
+            <button>Par club</button>
+          </div>
+        </div>
+        <div class="corps">
+          <div class="note-etat fige">Rencontre publiée (⑤) : classement <strong>officiel et figé</strong> (R10).
+          Le figement relève de la phase (spec #1) — le calcul reste identique.</div>
+
+          <div class="tabs" style="margin-top:0;margin-bottom:12px">
+            <button class="actif">Filles</button>
+            <button>Garçons</button>
+          </div>
+
+          <div class="carte">
+            <div class="carte-entete">
+              <span class="carte-titre">Individuel — Filles · officiel</span>
+              <span class="officiel oui">✓ Officiel</span>
+            </div>
+            <table class="clsmt">
+              <thead><tr><th>#</th><th>Grimpeuse</th><th class="pts">Score</th></tr></thead>
+              <tbody>
+                <tr><td class="rang podium1">1</td><td class="nom">Léa Martin <span class="club">CAF Bègles</span></td><td class="pts">28<span class="u">pts</span></td></tr>
+                <tr><td class="rang podium2">2</td><td class="nom">Jade Lopez <span class="club">ASPTT Talence</span></td><td class="pts">22<span class="u">pts</span></td></tr>
+                <tr><td class="rang">3</td><td class="nom">Emma Roux <span class="club">CAF Bègles</span></td><td class="pts">1<span class="u">pts</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="carte">
+            <div class="carte-entete">
+              <span class="carte-titre">Individuel — Garçons · officiel</span>
+              <span class="officiel oui">✓ Officiel</span>
+            </div>
+            <table class="clsmt">
+              <thead><tr><th>#</th><th>Grimpeur</th><th class="pts">Score</th></tr></thead>
+              <tbody>
+                <tr><td class="rang podium1">1</td><td class="nom">Noé Garnier <span class="club">ASPTT Talence</span></td><td class="pts">24<span class="u">pts</span></td></tr>
+                <tr><td class="rang podium2">2</td><td class="nom">Hugo Blanc <span class="club">Stade Bordelais</span></td><td class="pts">19<span class="u">pts</span></td></tr>
+                <tr><td class="rang">3</td><td class="nom">Tom Dubois <span class="club">CAF Bègles</span></td><td class="pts">7<span class="u">pts</span></td></tr>
+              </tbody>
+            </table>
+            <div class="carte-sous">Aucune saisie n'est plus possible : les scores ne bougent plus.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <div class="legende">
+    <h2>Correspondance maquettes → règles (spec #7)</h2>
+    <h3>Écran 1 — Classement individuel</h3>
+    <ul>
+      <li><strong>R1–R3</strong> — score individuel = Σ scores de voie + Σ scores de bloc ; la colonne « voie · bloc » trace la décomposition.</li>
+      <li><strong>R8/R9</strong> — tri par score décroissant, ex æquo au même rang (saut de rang), ordre d'affichage déterministe par nom.</li>
+      <li><strong>R8b</strong> — individuel <strong>séparé par sexe</strong> : deux classements <strong>Filles / Garçons</strong>, rangs repartant de 1 (bascule d'onglet). Équipe/club restent mixtes. Prérequis : champ <code>grimpeur.sexe</code>.</li>
+      <li><strong>R12b</strong> — <strong>longue liste (≈ 50/sexe)</strong> : liste <strong>complète paginée</strong> — navigation par <strong>pages en bas</strong> (‹ Préc · 1 2 3 … · Suiv ›, façon moteur de recherche), la page défile normalement (pas de barre interne) —, <strong>recherche par nom</strong>, <strong>filtres</strong> (tous / mon club / équipe), <strong>mon club en évidence</strong> (liseré) et <strong>compteur</strong>.</li>
+      <li><strong>R7</strong> — le grimpeur <span class="badge-prete">Prêté</span> est classé en individuel sous son <strong>club d'origine</strong>.</li>
+      <li><strong>R11/R12</strong> — visible dès la ③ pour tout compte authentifié, tous clubs ; trois vues (onglets).</li>
+      <li><strong>R10</strong> — bandeau <span class="officiel non">Non officiel</span> tant que la rencontre n'est pas en ⑤.</li>
+    </ul>
+    <h3>Écran 2 — Par équipe</h3>
+    <ul>
+      <li><strong>R5</strong> — score d'équipe = somme des scores individuels de ses membres.</li>
+      <li><strong>R7</strong> — le prêté compte pour son <strong>équipe d'accueil</strong> (A2 inclut Hugo Blanc).</li>
+      <li><strong>R8</strong> — <span class="exaequo">ex æquo</span> : scores égaux → même rang.</li>
+    </ul>
+    <h3>Écran 3 — Par club</h3>
+    <ul>
+      <li><strong>R6</strong> — score de club = somme des scores de toutes ses équipes engagées (CAF Bègles = A1 + A2).</li>
+      <li><strong>R7</strong> — points du prêté attribués au <strong>club d'accueil</strong> (via l'équipe), retirés du club d'origine pour l'équipe/club.</li>
+    </ul>
+    <h3>Écran 4 — Décomposition (R13)</h3>
+    <ul>
+      <li><strong>R1</strong> — score de voie selon l'issue : <span class="issue top">Top</span> → points voie entière · <span class="issue partiel">Prise valorisée / Zone</span> → points partiels · <span class="issue echec">Échec</span>/<span class="issue np">NP</span> → 0.</li>
+      <li><strong>R2</strong> — score de bloc = points du palier atteint ; échec/NP → 0.</li>
+      <li><strong>R13</strong> — sous-totaux voies / blocs affichés pour tracer le calcul (R1–R3).</li>
+      <li><strong>R14</strong> — la vitesse est affichée pour mémoire mais <strong>hors score</strong>.</li>
+    </ul>
+    <h3>Écran 5 — Officiel (⑤)</h3>
+    <ul>
+      <li><strong>R10</strong> — même classement, bascule <span class="officiel oui">Officiel</span> / figé après publication. Le calcul est inchangé ; le figement relève de la phase (spec #1).</li>
+    </ul>
+    <p style="margin-top:16px;color:var(--texte-doux)">Les chiffres (barème, scores) sont illustratifs. Le calcul est une
+      <strong>fonction pure du domaine</strong> (Vitesse hors périmètre — R14) ; rien n'est stocké, tout est recalculé à la lecture (R10).</p>
+  </div>
+</body>
+</html>

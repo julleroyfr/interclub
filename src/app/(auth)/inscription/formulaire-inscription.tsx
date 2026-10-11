@@ -1,0 +1,73 @@
+'use client'
+
+import { useActionState } from 'react'
+
+import { Bouton, ChampTexte } from '@/composants'
+import { inscrireCoach, type EtatInscription } from '@/lib/invitations/actions'
+import { inscrireAdmin } from '@/lib/invitations/actions-admin'
+
+const etatInitial: EtatInscription = undefined
+
+/**
+ * Formulaire d'inscription par invitation : coach permanent (spec #2 R30) ou
+ * administrateur (R38). Mêmes champs ; seule l'action serveur diffère.
+ */
+export function FormulaireInscription({
+  invitation,
+  type = 'coach',
+}: {
+  invitation: string
+  type?: 'coach' | 'admin'
+}) {
+  const [etat, action, enCours] = useActionState(
+    type === 'admin' ? inscrireAdmin : inscrireCoach,
+    etatInitial,
+  )
+
+  return (
+    <form action={action} className="mt-6 flex flex-col gap-4">
+      <input
+        type="hidden"
+        name={type === 'admin' ? 'invitationAdmin' : 'invitation'}
+        value={invitation}
+      />
+
+      <ChampTexte
+        id="email"
+        name="email"
+        label="E-mail"
+        type="email"
+        autoComplete="email"
+        required
+      />
+
+      <ChampTexte
+        id="motDePasse"
+        name="motDePasse"
+        label="Mot de passe"
+        type="password"
+        autoComplete="new-password"
+        required
+      />
+
+      <ChampTexte
+        id="confirmationMotDePasse"
+        name="confirmationMotDePasse"
+        label="Confirmer le mot de passe"
+        type="password"
+        autoComplete="new-password"
+        required
+      />
+
+      {etat?.erreur && (
+        <p role="alert" className="text-sm text-danger">
+          {etat.erreur}
+        </p>
+      )}
+
+      <Bouton type="submit" disabled={enCours} pleineLargeur>
+        {enCours ? 'Création…' : 'Créer mon compte'}
+      </Bouton>
+    </form>
+  )
+}

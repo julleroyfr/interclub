@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Maquette — Contrôle des résultats (fiches juges)</title>
+<style>
+  :root {
+    --fond: #020617;
+    --surface: rgba(255, 255, 255, 0.04);
+    --surface-forte: rgba(255, 255, 255, 0.08);
+    --bordure: rgba(255, 255, 255, 0.12);
+    --accent: #22d3ee;
+    --accent-doux: #67e8f9;
+    --secondaire: #bef264;
+    --prete: #c084fc;
+    --danger: #fb7185;
+    --attention: #fbbf24;
+    --admin: #f472b6;
+    --texte-fort: #ffffff;
+    --texte: #e2e8f0;
+    --texte-attenue: #94a3b8;
+    --texte-doux: #64748b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--fond); color: var(--texte);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.4; padding: 20px clamp(12px, 3vw, 40px) 80px;
+  }
+  h1 { color: var(--texte-fort); font-size: clamp(18px, 2.4vw, 24px); margin: 0 0 6px; }
+  .intro { color: var(--texte-attenue); max-width: 860px; font-size: 14px; margin: 0 0 10px; }
+  .avert { max-width: 860px; margin: 0 0 14px; font-size: 12.5px; color: var(--attention);
+    background: rgba(251,191,36,.08); border: 1px solid rgba(251,191,36,.3); border-radius: 10px; padding: 10px 14px; }
+  .demo { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 18px; align-items: center; font-size: 12.5px; color: var(--texte-attenue); }
+  .demo button { background: var(--surface-forte); color: var(--texte); border: 1px solid var(--bordure);
+    border-radius: 999px; padding: 6px 12px; font-size: 12px; cursor: pointer; min-height: 34px; }
+  .demo button.actif { border-color: rgba(244,114,182,.5); color: var(--admin); background: rgba(244,114,182,.12); }
+
+  .app {
+    width: min(1240px, 100%);
+    border: 1px solid var(--bordure); border-radius: 18px; overflow: hidden;
+    background: linear-gradient(180deg, rgba(244,114,182,0.05), rgba(2,6,23,0) 160px), var(--fond);
+    box-shadow: 0 16px 50px rgba(0,0,0,.5);
+  }
+  .barre-haut { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px;
+    padding: 14px clamp(14px, 2vw, 22px); border-bottom: 1px solid var(--bordure); }
+  .barre-haut .titres { margin-right: auto; }
+  .lien-retour { color: var(--texte-attenue); font-size: 12.5px; }
+  .titre-rencontre { color: var(--texte-fort); font-weight: 700; font-size: clamp(15px, 1.6vw, 18px); margin-top: 2px; }
+  .meta { color: var(--texte-attenue); font-size: 12.5px; margin-top: 2px; }
+  .badge { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 4px 11px; font-size: 12px; font-weight: 700; }
+  .badge.admin { background: rgba(244,114,182,.12); color: var(--admin); border: 1px solid rgba(244,114,182,.35); }
+  .badge.verif { background: rgba(251,191,36,.12); color: var(--attention); border: 1px solid rgba(251,191,36,.32); }
+  .badge.pub { background: rgba(190,242,100,.10); color: var(--secondaire); border: 1px solid rgba(190,242,100,.3); }
+  .live { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--texte-attenue); }
+  .live .pt { width: 8px; height: 8px; border-radius: 50%; background: var(--secondaire); box-shadow: 0 0 8px var(--secondaire); }
+  .live.coupe .pt { background: var(--danger); box-shadow: none; }
+
+  .bandeau { font-size: 12.5px; padding: 9px clamp(14px, 2vw, 22px); border-bottom: 1px solid var(--bordure); }
+  .bandeau.ctrl { color: var(--admin); background: rgba(244,114,182,.07); }
+  .bandeau.lecture { color: var(--secondaire); background: rgba(190,242,100,.06); }
+  .global { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
+  .jauge { flex: 1; max-width: 320px; height: 6px; background: var(--surface-forte); border-radius: 999px; overflow: hidden; }
+  .jauge i { display: block; height: 100%; background: var(--secondaire); }
+
+  .md { display: grid; grid-template-columns: 1fr; }
+  @media (min-width: 1024px) {
+    .md { grid-template-columns: 340px minmax(0, 1fr); }
+    .maitre { border-right: 1px solid var(--bordure); }
+  }
+  .maitre { padding: 14px clamp(14px, 2vw, 20px); }
+  .groupe { color: var(--accent); font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .06em; margin: 12px 2px 6px; }
+  .groupe:first-child { margin-top: 0; }
+  ul.liste { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+  .sup { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+    padding: 10px 12px; border: 1px solid transparent; border-radius: 10px; cursor: pointer;
+    background: transparent; color: inherit; min-height: 48px; font: inherit; }
+  .sup:hover { background: var(--surface-forte); }
+  .sup.actif { background: rgba(244,114,182,.10); border-color: rgba(244,114,182,.4); }
+  .sup .niv { color: var(--texte-fort); font-weight: 700; font-size: 14px; min-width: 32px; }
+  .sup .cot { color: var(--texte-doux); font-size: 11.5px; }
+  .sup .np { margin-left: auto; font-size: 12px; font-weight: 700; color: var(--texte-attenue); white-space: nowrap; }
+  .sup .np.ok { color: var(--secondaire); }
+
+  .detail { padding: 16px clamp(14px, 2.2vw, 26px); }
+  .detail-tete { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin-bottom: 12px; }
+  .detail-tete .nom { color: var(--texte-fort); font-weight: 700; font-size: clamp(17px, 1.8vw, 21px); margin-right: auto; }
+  .detail-tete .prog { color: var(--texte-attenue); font-size: 13px; font-weight: 700; }
+  .detail-tete .prog b { color: var(--secondaire); }
+  .outils { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 -4px 6px; padding: 8px 4px;
+    position: sticky; top: 0; z-index: 2; background: var(--fond); }
+  .compte { color: var(--texte-doux); font-size: 11.5px; font-weight: 600; margin: 0 2px 8px; }
+  @media (min-width: 1024px) {
+    .md { height: 760px; }
+    .maitre, .detail { overflow-y: auto; }
+    .detail { padding-top: 0; }
+    .detail-tete { position: sticky; top: 0; z-index: 3; background: var(--fond); padding-top: 16px; margin-bottom: 0; }
+    .outils { top: 52px; }
+  }
+  .rech { flex: 1 1 220px; background: rgba(0,0,0,.3); color: var(--texte-fort);
+    border: 1px solid var(--bordure); border-radius: 10px; padding: 10px 12px; font-size: 16px; color-scheme: dark; }
+  .rech::placeholder { color: var(--texte-doux); }
+  .filtre { background: rgba(0,0,0,.28); color: var(--texte-attenue); border: 1px solid var(--bordure);
+    border-radius: 999px; padding: 6px 14px; font-size: 12.5px; font-weight: 600; cursor: pointer; min-height: 44px; }
+  .filtre.actif { background: rgba(244,114,182,.16); color: var(--admin); border-color: rgba(244,114,182,.5); }
+
+  ul.lignes { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+  .ligne { display: grid; grid-template-columns: 1fr auto 48px; align-items: center; gap: 10px;
+    background: var(--surface); border: 1px solid var(--bordure); border-radius: 10px; padding: 4px 6px 4px 12px;
+    transition: background .4s, border-color .4s; }
+  .ligne.cochee { border-color: rgba(190,242,100,.35); background: rgba(190,242,100,.05); }
+  .ligne.flash { background: rgba(244,114,182,.18); border-color: rgba(244,114,182,.6); }
+  .qui .n { color: var(--texte-fort); font-weight: 600; font-size: 14px; }
+  .qui .c { color: var(--texte-doux); font-size: 11.5px; margin-top: 1px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .qui .par { color: var(--secondaire); font-size: 11px; }
+  .pret { font-size: 10px; font-weight: 700; color: var(--prete); background: rgba(192,132,252,.12);
+    border: 1px solid rgba(192,132,252,.35); border-radius: 999px; padding: 1px 7px; }
+  .issue { font-size: 13px; font-weight: 700; border-radius: 8px; padding: 5px 10px; white-space: nowrap;
+    background: var(--surface-forte); color: var(--texte); }
+  .issue.top { color: var(--secondaire); }
+  .issue.np, .issue.echec { color: var(--texte-attenue); }
+  .coche { width: 44px; height: 44px; flex: none; border-radius: 10px; border: 2px solid var(--bordure);
+    background: rgba(0,0,0,.3); cursor: pointer; display: grid; place-items: center; font-size: 22px; color: transparent; }
+  .coche[aria-checked="true"] { border-color: var(--secondaire); background: rgba(190,242,100,.15); color: var(--secondaire); }
+  .coche:disabled { cursor: not-allowed; opacity: .75; }
+  .vide { color: var(--texte-doux); font-size: 13px; padding: 18px; text-align: center;
+    border: 1px dashed var(--bordure); border-radius: 12px; }
+
+  .regles { max-width: 860px; margin-top: 22px; font-size: 12.5px; color: var(--texte-attenue); }
+  .regles code { color: var(--accent-doux); }
+</style>
+</head>
+<body>
+  <h1>Contrôle des résultats contre les fiches de juges — admin</h1>
+  <p class="intro">Spec #16. Par voie de difficulté / bloc : participants tous clubs, issue saisie
+    <b>sans points</b>, coche de concordance avec la fiche papier du juge. Maître-détail sur ordinateur,
+    une colonne sur téléphone.</p>
+  <p class="avert">Maquette de validation visuelle — la spec <code>docs/specs/16-controle-resultats-fiches-juges.md</code> prime.</p>
+
+  <div class="demo">
+    Démo :
+    <button id="ph4" class="actif" type="button">Phase ④ clôture</button>
+    <button id="ph5" type="button">Phase ⑤ résultats publics (lecture seule)</button>
+    <button id="autre" type="button">Simuler une coche de « Marie D. » (temps réel)</button>
+    <button id="coupe" type="button">Couper / rétablir le temps réel</button>
+  </div>
+
+  <div class="app">
+    <div class="barre-haut">
+      <div class="titres">
+        <div class="lien-retour">← Tableau de bord de la rencontre</div>
+        <div class="titre-rencontre">Contrôle des résultats — Rencontre Escalade Bordeaux du 14 mars 2026</div>
+        <div class="meta">Enfants · voies et blocs · tous clubs</div>
+      </div>
+      <span class="live" id="live"><span class="pt"></span><span id="liveTxt">Temps réel connecté</span></span>
+      <span class="badge admin">🛡️ Admin</span>
+      <span class="badge verif" id="badgePhase">④ Clôture</span>
+    </div>
+    <div class="bandeau ctrl" id="bandeau">
+      <span id="bandeauTxt">Fiche du juge en main : cochez chaque ligne dont l'issue concorde. En cas d'écart, laissez non coché et corrigez via la saisie admin.</span>
+      <div class="global"><span id="globalTxt"></span><span class="jauge"><i id="jauge"></i></span></div>
+    </div>
+
+    <div class="md">
+      <nav class="maitre" aria-label="Voies et blocs">
+        <div class="groupe">Voies de difficulté</div>
+        <ul class="liste" id="listeVoies"></ul>
+        <div class="groupe">Blocs</div>
+        <ul class="liste" id="listeBlocs"></ul>
+      </nav>
+      <section class="detail" aria-live="polite">
+        <div class="detail-tete">
+          <div class="nom" id="supNom"></div>
+          <div class="prog" id="supProg"></div>
+        </div>
+        <div class="outils">
+          <input class="rech" id="rech" type="search" placeholder="Rechercher un grimpeur (nom, prénom)…" />
+          <button class="filtre" id="filtre" type="button" aria-pressed="false">Non contrôlées seulement</button>
+        </div>
+        <div class="compte" id="compte"></div>
+        <ul class="lignes" id="lignes"></ul>
+      </section>
+    </div>
+  </div>
+
+  <div class="regles">
+    <p><b>Règles illustrées :</b> accès admin, ④ = contrôle, ⑤ = lecture seule (R1–R3) ·
+      voies puis blocs avec progression <code>n/m</code>, ✓ si complet (R4/R5) ·
+      lignes tous clubs (≈100 sur chaque bloc), prêté signalé, tri nom/prénom, issue sans points, palier en libellé (R6–R8) ·
+      recherche + filtre restant visibles au défilement, compteur de lignes affichées (R9) · coche ligne par ligne, pas de « tout cocher », enregistrée immédiatement (R10) ·
+      auteur sur la ligne, horodatage au survol (R11) · temps réel, état d'affichage conservé, indicateur (R12bis) ·
+      aucune action sur un écart (R16).</p>
+  </div>
+
+<script>
+  const MOI = 'Julien L.';
+  // Jeu de démo déterministe : ~100 grimpeurs (4 clubs), tous sur B1 et B2 ;
+  // voies réparties selon le groupe de départ (certaines très chargées).
+  const NOMS = ['Bernard','Durand','Petit','Moreau','Lefèvre','Garcia','Martin','Roux','Fournier','Girard',
+    'Bonnet','Dupont','Lambert','Fontaine','Rousseau','Vincent','Muller','Faure','André','Mercier',
+    'Blanc','Guérin','Boyer','Garnier','Chevalier','François','Legrand','Gauthier','Perrin','Robin',
+    'Clément','Morin','Nicolas','Henry','Roussel','Mathieu','Gautier','Masson','Marchand','Duval',
+    'Denis','Dumont','Marie','Lemaire','Noël','Meyer','Dufour','Meunier','Brun','Blanchard'];
+  const PRENOMS = ['Lina','Hugo','Zoé','Jade','Tom','Inès','Léo','Emma','Nina','Sacha','Louise','Gabriel',
+    'Chloé','Raphaël','Alice','Arthur','Rose','Jules','Léna','Noah','Manon','Adam','Lou','Paul','Mila'];
+  const CLUBS = ['Escalade Bordeaux','Vertige Mérignac','Roc Pessac','Grimpe Talence'];
+  let graine = 7;
+  const alea = () => (graine = (graine * 16807) % 2147483647) / 2147483647;
+  const choisir = (t) => t[Math.floor(alea() * t.length)];
+  const AUTEURS = ['Julien L.', 'Marie D.'];
+  const grimpeurs = [];
+  for (let i = 0; i < 104; i++) {
+    const club = CLUBS[i % CLUBS.length];
+    const pret = alea() < 0.04 ? `prêté → ${choisir(CLUBS.filter((c) => c !== club))}` : null;
+    // groupe de départ : 3 voies consécutives dans la liste VOIES
+    grimpeurs.push({ nom: NOMS[(i * 7) % NOMS.length], prenom: PRENOMS[(i * 11) % PRENOMS.length],
+      club, pret, groupe: Math.min(5, Math.floor(alea() ** 1.6 * 6)) });
+  }
+  const VOIES = [['m1','M1','4a'],['m2','M2','4b'],['t1','T1','4c'],['t2','T2','5a'],['t3','T3','5b'],
+    ['t4','T4','5c'],['t5','T5','6a'],['t6','T6','6b']];
+  const ligne = (g, issue, pCoche) => {
+    const par = alea() < pCoche ? choisir(AUTEURS) : null;
+    return { nom: g.nom, prenom: g.prenom, club: g.club, pret: g.pret, issue, par,
+      le: par ? `14/03 18:${String(10 + Math.floor(alea() * 49)).padStart(2, '0')}` : null };
+  };
+  const supports = VOIES.map(([id, niv, cot], k) => ({ id, type: 'voie', niv, cot, lignes:
+    grimpeurs.filter((g) => k >= g.groupe && k < g.groupe + 3).map((g) => {
+      const r = alea();
+      const issue = r < 0.05 ? 'NP' : r < 0.5 ? 'Top' : (niv.startsWith('T') && r < 0.75) ? 'Prise valorisée' : 'Échec';
+      return ligne(g, issue, k < 2 ? 1 : k < 4 ? 0.4 : 0);
+    }) }));
+  supports.push({ id: 'b1', type: 'bloc', niv: 'B1', cot: '2 essais', lignes: grimpeurs.map((g) => {
+    const r = alea();
+    return ligne(g, r < 0.04 ? 'NP' : r < 0.45 ? '1er essai' : r < 0.75 ? '2e essai' : 'Échec', 0.55);
+  }) });
+  supports.push({ id: 'b2', type: 'bloc', niv: 'B2', cot: '3 essais', lignes: grimpeurs.map((g) => {
+    const r = alea();
+    return ligne(g, r < 0.04 ? 'NP' : r < 0.3 ? '1er essai' : r < 0.5 ? '2e essai' : r < 0.65 ? '3e essai' : 'Échec', 0);
+  }) });
+  let sel = 'b1', phase = 4, filtre = false, recherche = '', coupe = false;
+  const $ = (id) => document.getElementById(id);
+  const tri = (a, b) => a.nom.localeCompare(b.nom, 'fr') || a.prenom.localeCompare(b.prenom, 'fr');
+  const prog = (s) => [s.lignes.filter((l) => l.par).length, s.lignes.length];
+  const classeIssue = (i) => i === 'Top' ? 'top' : i === 'NP' ? 'np' : i === 'Échec' ? 'echec' : '';
+
+  function rendre(flashKey) {
+    for (const [type, ul] of [['voie', $('listeVoies')], ['bloc', $('listeBlocs')]]) {
+      ul.innerHTML = '';
+      for (const s of supports.filter((x) => x.type === type)) {
+        const [n, m] = prog(s);
+        const li = document.createElement('li');
+        li.innerHTML = `<button type="button" class="sup ${s.id === sel ? 'actif' : ''}">
+          <span class="niv">${s.niv}</span><span class="cot">${s.cot}</span>
+          <span class="np ${m > 0 && n === m ? 'ok' : ''}">${m > 0 && n === m ? '✓ ' : ''}${n}/${m}</span></button>`;
+        li.firstChild.onclick = () => { sel = s.id; rendre(); };
+        ul.appendChild(li);
+      }
+    }
+    const tot = supports.reduce((a, s) => { const [n, m] = prog(s); return [a[0] + n, a[1] + m]; }, [0, 0]);
+    $('globalTxt').textContent = `${tot[0]}/${tot[1]} lignes contrôlées`;
+    $('jauge').style.width = `${tot[1] ? (100 * tot[0] / tot[1]) : 0}%`;
+
+    const s = supports.find((x) => x.id === sel);
+    const [n, m] = prog(s);
+    $('supNom').textContent = `${s.type === 'voie' ? 'Voie' : 'Bloc'} ${s.niv} · ${s.cot}`;
+    $('supProg').innerHTML = `<b>${n}</b>/${m} contrôlées`;
+    const ul = $('lignes'); ul.innerHTML = '';
+    const q = recherche.trim().toLowerCase();
+    const vis = [...s.lignes].sort(tri)
+      .filter((l) => !filtre || !l.par)
+      .filter((l) => !q || `${l.nom} ${l.prenom}`.toLowerCase().includes(q));
+    $('compte').textContent = vis.length === m ? `${m} grimpeurs` : `${vis.length} affichés sur ${m}`;
+    if (!vis.length) ul.innerHTML = `<li class="vide">${m === 0 ? 'Aucun résultat sur ce support.' : 'Aucune ligne à afficher.'}</li>`;
+    for (const l of vis) {
+      const li = document.createElement('li');
+      const key = s.id + l.nom + l.prenom;
+      li.className = `ligne ${l.par ? 'cochee' : ''} ${flashKey === key ? 'flash' : ''}`;
+      li.innerHTML = `<div class="qui"><div class="n">${l.nom.toUpperCase()} ${l.prenom}</div>
+          <div class="c">${l.club}${l.pret ? ` <span class="pret">${l.pret}</span>` : ''}
+          ${l.par ? `<span class="par" title="Contrôlé par ${l.par} le ${l.le}">✓ ${l.par}</span>` : ''}</div></div>
+        <span class="issue ${classeIssue(l.issue)}">${l.issue}</span>
+        <button type="button" class="coche" role="checkbox" aria-checked="${!!l.par}"
+          aria-label="Contrôlé : ${l.nom} ${l.prenom}" ${phase === 5 ? 'disabled' : ''}>✓</button>`;
+      li.querySelector('.coche').onclick = () => {
+        l.par = l.par ? null : MOI; l.le = l.par ? '14/03 19:05' : null; rendre();
+      };
+      ul.appendChild(li);
+      if (flashKey === key) setTimeout(() => li.classList.remove('flash'), 1200);
+    }
+  }
+
+  $('rech').oninput = (e) => { recherche = e.target.value; rendre(); };
+  $('filtre').onclick = () => { filtre = !filtre; $('filtre').classList.toggle('actif', filtre);
+    $('filtre').setAttribute('aria-pressed', filtre); rendre(); };
+  function setPhase(p) {
+    phase = p;
+    $('ph4').classList.toggle('actif', p === 4); $('ph5').classList.toggle('actif', p === 5);
+    $('badgePhase').className = `badge ${p === 4 ? 'verif' : 'pub'}`;
+    $('badgePhase').textContent = p === 4 ? '④ Clôture' : '⑤ Résultats publics';
+    $('bandeau').className = `bandeau ${p === 4 ? 'ctrl' : 'lecture'}`;
+    $('bandeauTxt').textContent = p === 4
+      ? "Fiche du juge en main : cochez chaque ligne dont l'issue concorde. En cas d'écart, laissez non coché et corrigez via la saisie admin."
+      : 'Résultats officiels — contrôle consultable en lecture seule.';
+    rendre();
+  }
+  $('ph4').onclick = () => setPhase(4);
+  $('ph5').onclick = () => setPhase(5);
+  $('autre').onclick = () => {
+    if (coupe || phase === 5) return;
+    for (const s of supports) {
+      const l = [...s.lignes].sort(tri).find((x) => !x.par);
+      if (l) { l.par = 'Marie D.'; l.le = '14/03 19:06'; rendre(s.id + l.nom + l.prenom); return; }
+    }
+  };
+  $('coupe').onclick = () => {
+    coupe = !coupe;
+    $('live').classList.toggle('coupe', coupe);
+    $('liveTxt').textContent = coupe ? 'Temps réel interrompu' : 'Temps réel connecté';
+    if (!coupe) rendre();
+  };
+  rendre();
+</script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+{
+  // Validation Markdown du projet (specs & documentation).
+  // Règle de fonctionnement : les Markdown sont validés avant chaque commit,
+  // sur toute branche. cf. docs/conventions/05-git-et-deploiement.md.
+  "config": {
+    "default": true,
+    // Longueur de ligne : non pertinent (tableaux, liens, blocs de code).
+    "MD013": false,
+    // Titres identiques autorisés s'ils ne sont pas frères (ex. « Nominal »
+    // sous des scénarios différents).
+    "MD024": { "siblings_only": true },
+    // Ponctuation de fin de titre : on autorise « : » et « ? » (titres FR).
+    "MD026": { "punctuation": ".,;!" },
+    // HTML inline autorisé (commentaires de marqueurs, etc.).
+    "MD033": false,
+    // Alignement des pipes de tableaux : stylistique, non maintenable à la main.
+    "MD060": false,
+    // Premier élément = titre : non exigé (fichiers à frontmatter/imports).
+    "MD041": false
+  },
+  "globs": ["**/*.md"],
+  "ignores": [
+    "node_modules",
+    ".next",
+    "coverage",
+    "playwright-report",
+    "test-results",
+    // Fichiers non documentaires / hérités.
+    "CLAUDE.md",
+    "README.original.md"
+  ]
+}

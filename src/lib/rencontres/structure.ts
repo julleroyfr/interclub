@@ -1,0 +1,214 @@
+import 'server-only'
+
+import type { TypeEpreuve, TypeVoie } from '@/domaine/gabarit'
+import type { Categorie, Phase } from '@/domaine/rencontre'
+import { lireRencontreAdmin } from '@/lib/rencontres/lectures-admin'
+import { createClient } from '@/lib/supabase/server'
+
+// Lecture de la structure d'une rencontre (épreuves + voies/blocs/vitesse) pour
+// l'écran de configuration (R36). Lecture via le client `authenticated` : la RLS
+// `*_select_authenticated` (admin, ou phase résultats publics) autorise l'admin ;
+// les grants `authenticated` sur voie_difficulte/bloc/bloc_palier sont posés par
+// la migration 202608281000.
+
+export type VoieDifficulteRencontreVue = {
+  id: string
+  niveau: string
+  typeVoie: TypeVoie
+  cotation: string
+  points: number
+  pointsPriseValorisee: number | null
+  pointsZone1: number | null
+  pointsZone2: number | null
+  ordre: number
+}
+
+export type BlocPalierRencontreVue = {
+  id: string
+  libelle: string
+  points: number
+  ordre: number
+}
+
+export type BlocRencontreVue = {
+  id: string
+  code: string
+  ordre: number
+  paliers: BlocPalierRencontreVue[]
+}
+
+export type VoieVitesseRencontreVue = {
+  id: string
+  numero: number
+  libelle: string | null
+}
+
+/** Un échelon du barème de vitesse par rang (spec #3 R46). */
+export type BaremeVitesseEchelonVue = {
+  id: string
+  rangMin: number
+  /** `null` = « au-delà » (dernier échelon, sans borne haute). */
+  rangMax: number | null
+  points: number
+  decrement: number
+  ordre: number
+}
+
+/** Barème de vitesse d'une rencontre (spec #3 R46) — `null` si pas d'épreuve vitesse. */
+export type BaremeVitesseVue = {
+  epreuveId: string
+  pointsChute: number | null
+  pointsNonPresentation: number | null
+  echelons: BaremeVitesseEchelonVue[]
+}
+
+export type EpreuveRencontreVue = {
+  id: string
+  type: TypeEpreuve
+  voiesDifficulte: VoieDifficulteRencontreVue[]
+  blocs: BlocRencontreVue[]
+}
+
+export type StructureRencontre = {
+  id: string
+  dateRencontre: string
+  categorie: Categorie
+  phase: Phase
+  clubPorteurNom: string
+  epreuves: EpreuveRencontreVue[]
+  voiesVitesse: VoieVitesseRencontreVue[]
+  baremeVitesse: BaremeVitesseVue | null
+}
+
+/**
+ * Charge une rencontre et toute sa structure (épreuves, voies, blocs + paliers,
+ * voies de vitesse). Renvoie `null` si la rencontre est introuvable.
+ * À appeler derrière la garde admin.
+ */
+export async function getStructureRencontre(id: string): Promise<StructureRencontre | null> {
+  const supabase = await createClient()
+
+  // Une seule vague de lectures : chaque table est filtrée sur la rencontre via
+  // une jointure (épreuve, bloc), sans attendre les identifiants des épreuves.
+  // Chaque aller-retour vers la base compte (écran rechargé après chaque action).
+  const [
+    rencontre,
+    { data: epreuves, error: errE },
+    { data: voies, error: errV },
+    { data: blocs, error: errB },
+    { data: paliers, error: errP },
+    { data: vitesses, error: errVV },
+    { data: echelons, error: errEch },
+  ] = await Promise.all([
+    // Partagée avec les autres panneaux du tableau de bord (lot 4 du plan
+    // « appels Supabase »).
+    lireRencontreAdmin(id),
+    supabase
+      .from('epreuve')
+      .select('id, type, points_chute, points_non_presentation')
+      .eq('rencontre_id', id)
+      .order('type'),
+    supabase
+      .from('voie_difficulte')
+      .select(
+        'id, epreuve_id, niveau, type_voie, cotation, points, points_prise_valorisee, points_zone1, points_zone2, ordre, epreuve!inner(rencontre_id)',
+      )
+      .eq('epreuve.rencontre_id', id)
+      .order('ordre'),
+    supabase
+      .from('bloc')
+      .select('id, epreuve_id, code, ordre, epreuve!inner(rencontre_id)')
+      .eq('epreuve.rencontre_id', id)
+      .order('ordre'),
+    supabase
+      .from('bloc_palier')
+      .select('id, bloc_id, libelle, points, ordre, bloc!inner(epreuve!inner(rencontre_id))')
+      .eq('bloc.epreuve.rencontre_id', id)
+      .order('ordre'),
+    supabase
+      .from('voie_vitesse')
+      .select('id, numero, libelle')
+      .eq('rencontre_id', id)
+      .order('numero'),
+    supabase
+      .from('bareme_vitesse_echelon')
+      .select('id, rang_min, rang_max, points, decrement, ordre, epreuve!inner(rencontre_id, type)')
+      .eq('epreuve.rencontre_id', id)
+      .eq('epreuve.type', 'vitesse')
+      .order('ordre'),
+  ])
+  // Ne jamais avaler une erreur d'accès (ex. grant/RLS manquant) : elle
+  // masquerait la structure derrière un « 0 » trompeur.
+  if (!rencontre) return null
+  if (errE) throw errE
+  if (errV) throw errV
+  if (errB) throw errB
+  if (errP) throw errP
+  if (errVV) throw errVV
+  if (errEch) throw errEch
+
+  const clubBrut = (rencontre as Record<string, unknown>).club as unknown
+  const club = (Array.isArray(clubBrut) ? clubBrut[0] : clubBrut) as { nom: string } | null
+  const epreuveVitesse = (epreuves ?? []).find((e) => e.type === 'vitesse')
+
+  return {
+    id: rencontre.id as string,
+    dateRencontre: rencontre.date_rencontre as string,
+    categorie: rencontre.categorie as Categorie,
+    phase: rencontre.phase as Phase,
+    clubPorteurNom: (club?.nom as string) ?? '(club inconnu)',
+    epreuves: (epreuves ?? []).map((e) => ({
+      id: e.id as string,
+      type: e.type as TypeEpreuve,
+      voiesDifficulte: (voies ?? [])
+        .filter((v) => v.epreuve_id === e.id)
+        .map((v) => ({
+          id: v.id as string,
+          niveau: v.niveau as string,
+          typeVoie: v.type_voie as TypeVoie,
+          cotation: v.cotation as string,
+          points: v.points as number,
+          pointsPriseValorisee: (v.points_prise_valorisee as number | null) ?? null,
+          pointsZone1: (v.points_zone1 as number | null) ?? null,
+          pointsZone2: (v.points_zone2 as number | null) ?? null,
+          ordre: v.ordre as number,
+        })),
+      blocs: (blocs ?? [])
+        .filter((b) => b.epreuve_id === e.id)
+        .map((b) => ({
+          id: b.id as string,
+          code: b.code as string,
+          ordre: b.ordre as number,
+          paliers: (paliers ?? [])
+            .filter((p) => p.bloc_id === b.id)
+            .map((p) => ({
+              id: p.id as string,
+              libelle: p.libelle as string,
+              points: p.points as number,
+              ordre: p.ordre as number,
+            })),
+        })),
+    })),
+    voiesVitesse: (vitesses ?? []).map((vv) => ({
+      id: vv.id as string,
+      numero: vv.numero as number,
+      libelle: (vv.libelle as string | null) ?? null,
+    })),
+    baremeVitesse: epreuveVitesse
+      ? {
+          epreuveId: epreuveVitesse.id as string,
+          pointsChute: (epreuveVitesse.points_chute as number | null) ?? null,
+          pointsNonPresentation:
+            (epreuveVitesse.points_non_presentation as number | null) ?? null,
+          echelons: (echelons ?? []).map((e) => ({
+            id: e.id as string,
+            rangMin: e.rang_min as number,
+            rangMax: (e.rang_max as number | null) ?? null,
+            points: e.points as number,
+            decrement: e.decrement as number,
+            ordre: e.ordre as number,
+          })),
+        }
+      : null,
+  }
+}

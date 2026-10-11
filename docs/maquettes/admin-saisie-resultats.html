@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Maquette — Saisie admin des résultats (desktop responsive)</title>
+<style>
+  :root {
+    --fond: #020617;
+    --surface: rgba(255, 255, 255, 0.04);
+    --surface-forte: rgba(255, 255, 255, 0.08);
+    --bordure: rgba(255, 255, 255, 0.12);
+    --accent: #22d3ee;
+    --accent-doux: #67e8f9;
+    --secondaire: #bef264;
+    --prete: #c084fc;
+    --danger: #fb7185;
+    --attention: #fbbf24;
+    --admin: #f472b6;
+    --texte-fort: #ffffff;
+    --texte: #e2e8f0;
+    --texte-attenue: #94a3b8;
+    --texte-doux: #64748b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--fond); color: var(--texte);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.4; padding: 20px clamp(12px, 3vw, 40px) 80px;
+  }
+  h1 { color: var(--texte-fort); font-size: clamp(18px, 2.4vw, 24px); margin: 0 0 6px; }
+  .intro { color: var(--texte-attenue); max-width: 860px; font-size: 14px; margin: 0 0 10px; }
+  .avert { max-width: 860px; margin: 0 0 20px; font-size: 12.5px; color: var(--attention);
+    background: rgba(251,191,36,.08); border: 1px solid rgba(251,191,36,.3); border-radius: 10px; padding: 10px 14px; }
+
+  /* --- cadre application fluide (desktop, se replie en mobile) --- */
+  .app {
+    width: min(1240px, 100%);
+    border: 1px solid var(--bordure); border-radius: 18px; overflow: hidden;
+    background: linear-gradient(180deg, rgba(244,114,182,0.05), rgba(2,6,23,0) 160px), var(--fond);
+    box-shadow: 0 16px 50px rgba(0,0,0,.5);
+  }
+
+  /* barre supérieure */
+  .barre-haut {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px;
+    padding: 14px clamp(14px, 2vw, 22px); border-bottom: 1px solid var(--bordure);
+  }
+  .barre-haut .titres { margin-right: auto; }
+  .lien-retour { color: var(--texte-attenue); font-size: 12.5px; }
+  .titre-rencontre { color: var(--texte-fort); font-weight: 700; font-size: clamp(15px, 1.6vw, 18px); margin-top: 2px; }
+  .meta { color: var(--texte-attenue); font-size: 12.5px; margin-top: 2px; }
+  .badge-admin { display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(244,114,182,.12); color: var(--admin);
+    border: 1px solid rgba(244,114,182,.35); border-radius: 999px; padding: 4px 11px; font-size: 12px; font-weight: 700; }
+  .badge-phase { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 4px 11px; font-size: 12px; font-weight: 600; }
+  .badge-phase.comp { background: rgba(34,211,238,.12); color: var(--accent-doux); border: 1px solid rgba(34,211,238,.3); }
+  .badge-phase.verif { background: rgba(251,191,36,.12); color: var(--attention); border: 1px solid rgba(251,191,36,.32); }
+
+  .note-admin { color: var(--admin); font-size: 12.5px; background: rgba(244,114,182,.07);
+    border-bottom: 1px solid rgba(244,114,182,.2); padding: 9px clamp(14px, 2vw, 22px); }
+
+  /* --- MAÎTRE-DÉTAIL : une colonne en mobile, deux dès lg (1024px) --- */
+  .md {
+    display: grid; grid-template-columns: 1fr; gap: 0;
+  }
+  @media (min-width: 1024px) {
+    .md { grid-template-columns: 380px minmax(0, 1fr); }
+    .maitre { border-right: 1px solid var(--bordure); }
+  }
+
+  /* --- MAÎTRE : liste tous clubs --- */
+  .maitre { padding: 14px clamp(14px, 2vw, 20px); }
+  .rech {
+    width: 100%; background: rgba(0,0,0,.3); color: var(--texte-fort);
+    border: 1px solid var(--bordure); border-radius: 10px; padding: 10px 12px; font-size: 16px;
+    color-scheme: dark; margin-bottom: 8px;
+  }
+  .rech::placeholder { color: var(--texte-doux); }
+  .filtres { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .filtre {
+    background: rgba(0,0,0,.28); color: var(--texte-attenue); border: 1px solid var(--bordure);
+    border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; min-height: 34px;
+  }
+  .filtre.actif { background: rgba(244,114,182,.16); color: var(--admin); border-color: rgba(244,114,182,.5); }
+  .compte { color: var(--texte-doux); font-size: 11.5px; font-weight: 600; margin: 0 2px 10px; }
+  .compte b { color: var(--texte-fort); }
+
+  .groupe-club { color: var(--admin); font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .06em; margin: 12px 2px 4px; display: flex; align-items: center; gap: 6px; }
+  .groupe-club .cpt { color: var(--texte-doux); font-weight: 600; text-transform: none; letter-spacing: 0; }
+
+  ul.liste { list-style: none; margin: 0; padding: 0; }
+  .gr-item {
+    display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+    padding: 10px; border: 1px solid transparent; border-radius: 10px; cursor: pointer;
+    background: transparent; color: inherit; min-height: 56px;
+  }
+  .gr-item:hover { background: var(--surface-forte); }
+  .gr-item.actif { background: rgba(244,114,182,.10); border-color: rgba(244,114,182,.4); }
+  .gr-nom { color: var(--texte-fort); font-weight: 600; font-size: 14px; }
+  .gr-sous { color: var(--texte-doux); font-size: 11px; margin-top: 2px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .tag-eq { display: inline-flex; align-items: center; font-size: 10px; font-weight: 700;
+    color: var(--accent-doux); background: rgba(34,211,238,.10); border: 1px solid rgba(34,211,238,.28); border-radius: 999px; padding: 1px 7px; }
+  .badge-prete { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700;
+    color: var(--prete); background: rgba(192,132,252,.12); border: 1px solid rgba(192,132,252,.35);
+    border-radius: 999px; padding: 1px 7px; text-transform: uppercase; letter-spacing: .04em; }
+  .mini-prog { color: var(--texte-doux); font-size: 10.5px; font-weight: 700; }
+  .mini-prog b { color: var(--secondaire); }
+  .gr-score { margin-left: auto; text-align: right; white-space: nowrap; }
+  .gr-score .val { color: var(--secondaire); font-weight: 800; font-size: 15px; }
+  .gr-score .val.zero { color: var(--texte-doux); }
+  .gr-score .u { color: var(--texte-doux); font-size: 9.5px; font-weight: 700; }
+
+  /* --- DÉTAIL : saisie du grimpeur sélectionné --- */
+  .detail { padding: 16px clamp(14px, 2.2vw, 26px); }
+  .detail-tete { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+  .detail-tete .qui { margin-right: auto; }
+  .detail-tete .nom { color: var(--texte-fort); font-weight: 700; font-size: clamp(17px, 1.8vw, 21px); }
+  .detail-tete .ctx { color: var(--texte-attenue); font-size: 12.5px; margin-top: 3px; }
+  .score-bloc {
+    display: flex; align-items: center; gap: 12px;
+    background: rgba(190,242,100,.06); border: 1px solid rgba(190,242,100,.22);
+    border-radius: 12px; padding: 10px 16px;
+  }
+  .score-bloc .lbl { color: var(--texte-attenue); font-size: 11px; font-weight: 600; }
+  .score-bloc .sub { color: var(--texte-doux); font-size: 10px; }
+  .score-bloc .val { color: var(--secondaire); font-weight: 800; font-size: 22px; }
+  .score-bloc .val .u { color: var(--texte-doux); font-size: 11px; font-weight: 700; }
+
+  /* voies + blocs côte à côte dès lg, empilés en mobile */
+  .epreuves { display: grid; grid-template-columns: 1fr; gap: 14px; }
+  @media (min-width: 1024px) { .epreuves { grid-template-columns: 1fr 1fr; align-items: start; } }
+
+  .carte { background: var(--surface); border: 1px solid var(--bordure); border-radius: 14px; padding: 14px 16px; }
+  .carte-entete { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; gap: 8px; }
+  .epreuve-titre { color: var(--accent); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+  .prog { color: var(--texte-attenue); font-size: 11px; font-weight: 700; }
+  .prog b { color: var(--secondaire); }
+
+  .saisie { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 4px; }
+  .saisie + .saisie { border-top: 1px solid rgba(255,255,255,.05); }
+  .voie-id { color: var(--texte-fort); font-weight: 700; font-size: 13px; min-width: 34px; }
+  .cotation { color: var(--texte-doux); font-size: 11px; }
+  .issue { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700;
+    border-radius: 999px; padding: 2px 10px; border: 1px solid transparent; white-space: nowrap; }
+  .issue.top { color: #04222a; background: var(--secondaire); }
+  .issue.partiel { color: var(--accent-doux); background: rgba(34,211,238,.12); border-color: rgba(34,211,238,.32); }
+  .issue.echec { color: var(--danger); background: rgba(251,113,133,.10); border-color: rgba(251,113,133,.3); }
+  .issue.np { color: var(--texte-attenue); background: rgba(148,163,184,.12); border-color: var(--bordure); }
+
+  .seg { display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto; }
+  .seg button {
+    background: rgba(0,0,0,.28); color: var(--texte-attenue); border: 1px solid var(--bordure);
+    border-radius: 8px; padding: 7px 11px; font-size: 12px; font-weight: 600; cursor: pointer; min-height: 36px;
+  }
+  .seg button.sel-top { background: var(--secondaire); color: #04222a; border-color: var(--secondaire); }
+  .seg button.sel-partiel { background: rgba(34,211,238,.16); color: var(--accent-doux); border-color: rgba(34,211,238,.5); }
+  .seg button.sel-admin { background: rgba(244,114,182,.18); color: var(--admin); border-color: rgba(244,114,182,.55); }
+  .seg button:hover { background: var(--surface-forte); }
+
+  .barre-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; align-items: center; }
+  .cta {
+    border-radius: 10px; padding: 11px 18px; font-size: 14px; font-weight: 700; cursor: pointer;
+    border: 1px solid rgba(244,114,182,.45); background: rgba(244,114,182,.15); color: var(--admin); min-height: 44px;
+  }
+  .cta-sec { border-radius: 10px; padding: 11px 16px; font-size: 13px; font-weight: 600; cursor: pointer;
+    border: 1px solid var(--bordure); background: transparent; color: var(--texte-attenue); min-height: 44px; }
+  .maj { color: var(--texte-doux); font-size: 11.5px; margin-left: auto; }
+
+  .note-lecture { color: var(--texte-attenue); font-size: 12px; background: rgba(148,163,184,.08);
+    border:1px solid var(--bordure); border-radius: 10px; padding: 10px 12px; margin-bottom: 14px; }
+
+  .legende { max-width: 1000px; margin: 40px auto 0; color: var(--texte-attenue); font-size: 13px; }
+  .legende h2 { color: var(--texte-fort); font-size: 15px; margin-bottom: 6px; }
+  .legende h3 { color: var(--admin); font-size: 13px; margin: 16px 0 4px; }
+  .legende li { margin-bottom: 6px; }
+  .legende code { background: var(--surface-forte); padding: 1px 5px; border-radius: 5px; color: var(--texte-fort); font-size: 12px; }
+  .repli { display: inline-block; margin-top: 4px; color: var(--texte-doux); font-size: 12px; }
+</style>
+</head>
+<body>
+  <h1>Saisie admin des résultats — maquette desktop responsive</h1>
+  <p class="intro">L'<strong>administrateur</strong> travaille sur <strong>ordinateur</strong> : l'écran exploite la
+  largeur en <strong>maître-détail</strong> — liste des grimpeurs <strong>tous clubs</strong> à gauche, saisie du
+  grimpeur sélectionné à droite (voies et blocs côte à côte). Il se replie en <strong>une seule colonne</strong> sur
+  téléphone/tablette (&lt; 1024 px). Design « Nuit ». <span class="repli">↔ Redimensionnez la fenêtre pour voir le repli responsive.</span></p>
+  <p class="avert">⚠️ <strong>Décision produit à acter</strong> — périmètre plus large que les specs : spec #6 R1 réserve
+  la saisie au coach (admin → 404), spec #1 R6 ne prévoit l'admin qu'en <strong>④ clôture</strong>. Ici : saisie pleine
+  <strong>dès la ③, tous clubs</strong>. À inscrire en spec avant tout code.</p>
+
+  <div class="app">
+    <div class="barre-haut">
+      <div class="titres">
+        <div class="lien-retour">← Tableau de bord de la rencontre</div>
+        <div class="titre-rencontre">11 oct. 2025 — CAF Bègles</div>
+        <div class="meta">Catégorie enfant · saisie administrateur · 4 clubs engagés</div>
+      </div>
+      <span class="badge-admin">🛡️ Admin</span>
+      <span class="badge-phase comp">● Compétition</span>
+    </div>
+    <div class="note-admin">Vous saisissez en tant qu'<strong>administrateur</strong> : n'importe quel grimpeur, tous
+    clubs. Écritures tracées ; résultats visibles de tous au fil de l'eau (non officiels jusqu'à la ⑤).</div>
+
+    <div class="md">
+      <!-- ===== MAÎTRE : liste tous clubs ===== -->
+      <div class="maitre">
+        <input class="rech" type="search" placeholder="🔍 Rechercher un grimpeur (tous clubs)…" />
+        <div class="filtres">
+          <button class="filtre actif">Tous</button>
+          <button class="filtre">CAF Bègles</button>
+          <button class="filtre">ASPTT Talence</button>
+          <button class="filtre">Stade Bordelais</button>
+        </div>
+        <div class="compte"><b>96</b> grimpeurs · <b>4</b> clubs</div>
+
+        <div class="groupe-club">CAF Bègles <span class="cpt">· 16 grimpeurs</span></div>
+        <ul class="liste">
+          <li><button class="gr-item">
+            <div>
+              <div class="gr-nom">Léa Martin</div>
+              <div class="gr-sous"><span class="tag-eq">A1</span> <span class="mini-prog">🧗 <b>3</b>/3 · 🧱 <b>2</b>/2</span></div>
+            </div>
+            <div class="gr-score"><span class="val">28</span> <span class="u">pts</span></div>
+          </button></li>
+          <li><button class="gr-item">
+            <div>
+              <div class="gr-nom">Tom Dubois</div>
+              <div class="gr-sous"><span class="tag-eq">A1</span> <span class="mini-prog">🧗 1/3 · 🧱 0/2</span></div>
+            </div>
+            <div class="gr-score"><span class="val">7</span> <span class="u">pts</span></div>
+          </button></li>
+        </ul>
+
+        <div class="groupe-club">Stade Bordelais <span class="cpt">· 3 grimpeurs · pas de coach présent</span></div>
+        <ul class="liste">
+          <li><button class="gr-item">
+            <div>
+              <div class="gr-nom">Hugo Blanc</div>
+              <div class="gr-sous"><span class="tag-eq">B1</span> <span class="badge-prete">Prêté · A2</span></div>
+            </div>
+            <div class="gr-score"><span class="val">19</span> <span class="u">pts</span></div>
+          </button></li>
+          <li><button class="gr-item actif">
+            <div>
+              <div class="gr-nom">Cléo Simon</div>
+              <div class="gr-sous"><span class="tag-eq">B1</span> <span class="mini-prog">🧗 2/3 · 🧱 1/2</span></div>
+            </div>
+            <div class="gr-score"><span class="val">13</span> <span class="u">pts</span></div>
+          </button></li>
+        </ul>
+      </div>
+
+      <!-- ===== DÉTAIL : saisie du grimpeur sélectionné ===== -->
+      <div class="detail">
+        <div class="detail-tete">
+          <div class="qui">
+            <div class="nom">Cléo Simon</div>
+            <div class="ctx">enfant · <strong>Stade Bordelais</strong> · Équipe B1 · Groupe T2 → T2 · T3 · T4</div>
+          </div>
+          <div class="score-bloc">
+            <div>
+              <div class="lbl">Score (voie + bloc)</div>
+              <div class="sub">au fil de l'eau · non officiel</div>
+            </div>
+            <div class="val">13 <span class="u">pts</span></div>
+          </div>
+        </div>
+
+        <div class="epreuves">
+          <div class="carte">
+            <div class="carte-entete">
+              <span class="epreuve-titre">Voie de difficulté</span>
+              <span class="prog"><b>2</b>/3 saisies</span>
+            </div>
+            <div class="saisie">
+              <span class="voie-id">T2</span><span class="cotation">5a</span>
+              <div class="seg"><button class="sel-top">Top</button><button>Prise&nbsp;valorisée</button><button>Échec</button></div>
+            </div>
+            <div class="saisie">
+              <span class="voie-id">T3</span><span class="cotation">5b</span>
+              <div class="seg"><button>Top</button><button class="sel-partiel">Prise&nbsp;valorisée</button><button>Échec</button></div>
+            </div>
+            <div class="saisie">
+              <span class="voie-id">T4</span><span class="cotation">5c</span>
+              <div class="seg"><button>Top</button><button>Prise&nbsp;valorisée</button><button>Échec</button>
+                <span class="issue np" style="align-self:center">à saisir</span></div>
+            </div>
+          </div>
+
+          <div class="carte">
+            <div class="carte-entete">
+              <span class="epreuve-titre">Bloc</span>
+              <span class="prog"><b>1</b>/2 saisis</span>
+            </div>
+            <div class="saisie"><span class="voie-id">B1</span><span class="issue top pousse">1er essai</span></div>
+            <div class="saisie">
+              <span class="voie-id">B2</span>
+              <div class="seg"><button>1er essai</button><button>2e essai</button><button>3e essai</button><button>Échec</button></div>
+            </div>
+            <div style="margin-top:10px; color:var(--texte-doux); font-size:11.5px">⚡ Vitesse : saisie juge, lecture seule (non modifiable ici).</div>
+          </div>
+        </div>
+
+        <div class="barre-actions">
+          <button class="cta">Enregistrer</button>
+          <button class="cta-sec">Grimpeur suivant →</button>
+          <span class="maj">Enregistré au fil de l'eau · dernière écriture il y a 12 s</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="legende">
+    <h2>Correspondance maquette → règles &amp; décisions</h2>
+    <h3>Responsive (l'objet de cette version)</h3>
+    <ul>
+      <li><strong>Desktop (≥ 1024 px)</strong> — maître-détail deux colonnes : liste <code>380px</code> + saisie <code>1fr</code> ; dans le détail, <strong>voies et blocs côte à côte</strong>. L'écran occupe la largeur (<code>min(1240px, 100%)</code>), pas de largeur figée.</li>
+      <li><strong>Mobile / tablette (&lt; 1024 px)</strong> — repli en <strong>une colonne</strong> : la liste puis le détail s'empilent ; cibles tactiles ≥ 44 px, champ de recherche à 16 px (anti-zoom iOS). Mobile-first : styles de base sans préfixe, colonnes ajoutées via <code>@media (min-width:1024px)</code>.</li>
+      <li>Le grimpeur sélectionné reste <strong>en évidence</strong> dans la liste (bord rose) ; « Grimpeur suivant » enchaîne sans revenir à la liste.</li>
+    </ul>
+    <h3>Périmètre (à acter en spec)</h3>
+    <ul>
+      <li><strong>Décision produit</strong> — l'admin saisit/modifie tout grimpeur, <strong>tous clubs</strong>, <strong>dès la ③</strong> (et corrige en ④). Étend spec #6 R1 et spec #1 R6.</li>
+      <li>Motivation : club sans coach présent, saisie déléguée, correction.</li>
+    </ul>
+    <h3>Réutilise l'existant</h3>
+    <ul>
+      <li>Lecture cross-club : assemblage <code>service_role</code> déjà en place (classement, ADR 0002/0003).</li>
+      <li>Écriture : la RLS <code>resultat_*</code> autorise déjà l'admin (branche <code>est_admin()</code> des policies insert/update) ; sélecteur d'issue et cohérence catégorie/type identiques au coach (spec #6 R8/R10/R12, trigger BDD).</li>
+      <li>Point d'entrée : action « Saisir / corriger les résultats » sur <code>/admin/rencontres/[id]</code> → nouvelle route <code>/admin/rencontres/[id]/resultats</code>.</li>
+    </ul>
+    <p style="margin-top:16px;color:var(--texte-doux)">Chiffres illustratifs. Rien n'est codé : maquette de cadrage. Prochaine étape après validation — rédiger la spec (spec-first), puis TDD/écran/cahier.</p>
+  </div>
+</body>
+</html>

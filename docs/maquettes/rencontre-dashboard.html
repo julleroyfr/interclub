@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Maquette — Tableau de bord d'une rencontre (admin, spec #3 R40–R45)</title>
+<style>
+  :root {
+    --fond:#020617; --surface:rgba(255,255,255,.04); --surface-forte:rgba(255,255,255,.08);
+    --bordure:rgba(255,255,255,.12); --accent:#22d3ee; --accent-doux:#67e8f9; --secondaire:#bef264;
+    --danger:#fb7185; --texte-fort:#fff; --texte:#e2e8f0; --texte-attenue:#94a3b8; --texte-doux:#64748b;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:linear-gradient(180deg,rgba(34,211,238,.05),rgba(2,6,23,0) 260px),var(--fond); color:var(--texte); font-family:system-ui,-apple-system,"Segoe UI",sans-serif; line-height:1.4; min-height:100vh; }
+
+  .topbar { padding:14px 16px; border-bottom:1px solid var(--bordure); }
+  .retour { color:var(--texte-attenue); font-size:13px; text-decoration:none; }
+  .titre { color:var(--texte-fort); font-size:17px; font-weight:700; margin:8px 0 0; }
+  .meta { color:var(--texte-attenue); font-size:13px; margin-top:3px; }
+
+  .corps { padding:16px; max-width:1680px; margin:0 auto; }
+  .grid-a { display:flex; flex-direction:column; gap:14px; }
+
+  .carte { background:var(--surface); border:1px solid var(--bordure); border-radius:14px; padding:14px 16px; }
+  .c-entete { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px; }
+  .c-titre { color:var(--texte-fort); font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
+
+  .badge { display:inline-flex; align-items:center; gap:6px; border-radius:999px; padding:4px 11px; font-size:12px; font-weight:600; border:1px solid rgba(34,211,238,.35); color:var(--accent-doux); background:rgba(34,211,238,.14); }
+
+  .stepper { display:flex; align-items:center; gap:8px; }
+  .fleche { width:38px; height:38px; border-radius:9px; border:1px solid var(--bordure); background:rgba(255,255,255,.04); color:var(--texte-fort); font-size:16px; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; }
+  .courant { flex:1; text-align:center; color:var(--texte-attenue); font-size:12.5px; }
+
+  .fil { display:flex; flex-wrap:wrap; align-items:center; gap:5px; margin-top:12px; }
+  .puce { font-size:11px; padding:3px 9px; border-radius:999px; border:1px solid var(--bordure); color:var(--texte-doux); background:rgba(255,255,255,.03); white-space:nowrap; }
+  .puce.faite { color:var(--secondaire); border-color:rgba(190,242,100,.3); }
+  .puce.ici { color:var(--accent-doux); border-color:rgba(34,211,238,.4); background:rgba(34,211,238,.1); font-weight:700; }
+  .fil .sep { color:var(--texte-doux); font-size:10px; }
+  .aide { color:var(--texte-doux); font-size:11.5px; margin:11px 0 0; }
+
+  .lien-qr { display:flex; align-items:center; justify-content:space-between; gap:12px; text-decoration:none; color:var(--texte); }
+  .lien-qr .g { display:flex; align-items:center; gap:12px; }
+  .lien-qr .ic { font-size:22px; }
+  .lien-qr .t { font-weight:600; font-size:15px; color:var(--texte-fort); }
+  .lien-qr .s { font-size:12px; color:var(--texte-doux); }
+  .lien-qr .fl { color:var(--accent); font-weight:700; }
+
+  .stats { display:flex; gap:22px; }
+  .stat .k { color:var(--texte-doux); font-size:11px; text-transform:uppercase; letter-spacing:.05em; }
+  .stat .v { color:var(--texte-fort); font-size:20px; font-weight:700; }
+
+  .sec-titre { color:var(--texte-attenue); font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; margin:6px 2px 10px; }
+  .onglets { display:flex; gap:4px; padding:4px; background:rgba(0,0,0,.25); border-radius:12px; margin-bottom:12px; max-width:520px; }
+  .onglet { flex:1; text-align:center; padding:9px 8px; border-radius:9px; font-size:13px; color:var(--texte-attenue); font-weight:600; }
+  .onglet.actif { background:var(--surface-forte); color:var(--texte-fort); }
+  .voies { display:grid; grid-template-columns:1fr; gap:0; }
+  .voies .l { font-size:13px; color:var(--texte); padding:8px 4px; border-top:1px solid rgba(255,255,255,.05); }
+  .voies .l:first-child { border-top:none; }
+  .note { color:var(--texte-doux); font-size:12px; }
+
+  .clubs { display:flex; flex-direction:column; gap:10px; }
+  .club { border:1px solid var(--bordure); border-radius:14px; overflow:hidden; background:var(--surface); }
+  .club-tete { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:13px 15px; cursor:pointer; }
+  .club-tete h4 { margin:0; color:var(--texte-fort); font-size:15px; }
+  .club-tete .d { display:flex; align-items:center; gap:8px; color:var(--texte-attenue); font-size:12px; }
+  .chev { color:var(--texte-doux); }
+  .club.ouvert .chev { transform:rotate(180deg); }
+  .club-corps { padding:0 15px 15px; border-top:1px solid rgba(255,255,255,.06); }
+  .club.ferme .club-corps { display:none; }
+  .equipes-grille { display:grid; grid-template-columns:1fr; gap:10px; margin-top:10px; }
+  .equipe { border:1px solid var(--bordure); border-radius:12px; background:rgba(0,0,0,.2); padding:11px 13px; }
+  .equipe-tete { display:flex; justify-content:space-between; align-items:center; }
+  .equipe-tete h5 { margin:0; font-size:14px; color:var(--texte-fort); }
+  .eff { font-size:12px; color:var(--texte-attenue); font-weight:700; }
+  .membre { font-size:13px; color:var(--texte); padding:5px 0; border-top:1px solid rgba(255,255,255,.05); display:flex; gap:6px; align-items:center; }
+  .membre:first-of-type { border-top:none; }
+  .tag { font-size:10px; font-weight:700; text-transform:uppercase; color:var(--secondaire); border:1px solid rgba(190,242,100,.35); background:rgba(190,242,100,.1); border-radius:999px; padding:1px 7px; }
+
+  /* ===== tablette ===== */
+  @media (min-width:720px) {
+    .topbar { padding:18px 28px; }
+    .corps { padding:22px 28px; }
+    .voies { grid-template-columns:1fr 1fr; column-gap:22px; }
+    .voies .l:nth-child(2) { border-top:none; }
+    .equipes-grille { grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); }
+  }
+  /* ===== bureau : rail de pilotage collant ===== */
+  @media (min-width:1080px) {
+    .grid-a { display:grid; grid-template-columns:340px 1fr; align-items:start; gap:26px; }
+    .rail { position:sticky; top:22px; display:flex; flex-direction:column; gap:14px; }
+    .contenu { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:22px; align-items:start; }
+    .contenu .struct { grid-column:1; }
+    .contenu .equipes { grid-column:2; grid-row:1 / span 2; }
+    .contenu .prets { grid-column:1; }
+    .titre { font-size:20px; }
+    .voies { grid-template-columns:1fr; }
+    .voies .l:nth-child(2){ border-top:1px solid rgba(255,255,255,.05); }
+  }
+  @media (min-width:1500px) {
+    .voies { grid-template-columns:1fr 1fr; }
+    .voies .l:nth-child(2){ border-top:none; }
+  }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <a class="retour" href="#">← Rencontres</a>
+    <div class="titre">Rencontre Bordeaux EC du 12 octobre 2025</div>
+    <div class="meta">Enfant · club porteur Bordeaux EC · saison 2025</div>
+  </div>
+
+  <div class="corps">
+    <div class="grid-a">
+      <aside class="rail">
+        <div class="carte">
+          <div class="c-entete"><span class="c-titre">Phase</span><span class="badge">② Préparation</span></div>
+          <div class="stepper">
+            <button class="fleche" title="Revenir">←</button>
+            <span class="courant">Préparation → Compétition</span>
+            <button class="fleche" title="Avancer">→</button>
+          </div>
+          <div class="fil">
+            <span class="puce faite">Pré-comp.</span><span class="sep">›</span>
+            <span class="puce ici">Prépa</span><span class="sep">›</span>
+            <span class="puce">Comp.</span><span class="sep">›</span>
+            <span class="puce">Clôture</span><span class="sep">›</span>
+            <span class="puce">Résultats</span>
+          </div>
+          <p class="aide">Compétition ne s'active que le jour de la rencontre (R5).</p>
+        </div>
+
+        <a class="carte lien-qr" href="#">
+          <span class="g"><span class="ic">▦</span><span><span class="t">Jetons QR</span><br><span class="s">Coach temporaire &amp; juges</span></span></span>
+          <span class="fl">→</span>
+        </a>
+
+        <div class="carte stats">
+          <div class="stat"><div class="k">Équipes</div><div class="v">5</div></div>
+          <div class="stat"><div class="k">Épreuves</div><div class="v">18</div></div>
+          <div class="stat"><div class="k">Prêts</div><div class="v">2</div></div>
+        </div>
+      </aside>
+
+      <div class="contenu">
+        <section class="struct">
+          <div class="sec-titre">Structure</div>
+          <div class="onglets"><div class="onglet actif">Voies · 14</div><div class="onglet">Blocs · 2</div><div class="onglet">Vitesse · 2</div></div>
+          <div class="carte">
+            <div class="voies">
+              <div class="l">M1 · moulinette · 4c — 1000 pts</div>
+              <div class="l">M2 · moulinette · 5a — 1300 pts</div>
+              <div class="l">M3 · moulinette · 5b — 1550 pts</div>
+              <div class="l">M4 · moulinette · 5c — 1800 pts</div>
+              <div class="l">T1 · tête · 4c — 1200 pts</div>
+              <div class="l">T2 · tête · 5a — 1600 pts</div>
+              <div class="l">T9 · tête · 7b+ — 4600 pts</div>
+              <div class="l">T10 · tête · 7c — 5000 pts</div>
+              <div class="l note">… + 6 voies</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="equipes">
+          <div class="sec-titre">Équipes &amp; engagement</div>
+          <div class="clubs">
+            <div class="club ouvert">
+              <div class="club-tete"><h4>Bordeaux EC</h4><span class="d">3 éq. · 21 gr. <span class="chev">▾</span></span></div>
+              <div class="club-corps">
+                <div class="equipes-grille">
+                  <div class="equipe">
+                    <div class="equipe-tete"><h5>Bordeaux 1</h5><span class="eff">8/8</span></div>
+                    <div class="membre">Léa Martin</div>
+                    <div class="membre">Tom Bernard <span class="tag">Prêté · Talence</span></div>
+                    <div class="membre note">… 6 autres</div>
+                  </div>
+                  <div class="equipe">
+                    <div class="equipe-tete"><h5>Bordeaux 2</h5><span class="eff">6/8</span></div>
+                    <div class="membre note">6 grimpeurs</div>
+                  </div>
+                  <div class="equipe">
+                    <div class="equipe-tete"><h5>Bordeaux 3</h5><span class="eff">7/8</span></div>
+                    <div class="membre note">7 grimpeurs</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="club ferme">
+              <div class="club-tete"><h4>Talence Escalade</h4><span class="d">2 éq. · 14 gr. <span class="chev">▾</span></span></div>
+              <div class="club-corps"></div>
+            </div>
+            <div class="club ferme">
+              <div class="club-tete"><h4>Mérignac Grimpe</h4><span class="d">1 éq. · 7 gr. <span class="chev">▾</span></span></div>
+              <div class="club-corps"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="prets">
+          <div class="sec-titre">Prêts</div>
+          <div class="carte"><span class="note">2 grimpeurs prêtés pour cette rencontre · gérer →</span></div>
+        </section>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

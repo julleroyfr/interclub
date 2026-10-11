@@ -1,0 +1,163 @@
+import type { Metadata } from 'next'
+import Link from 'next/link'
+import { notFound } from 'next/navigation'
+
+import { Carte, Coquille, EnTetePage } from '@/composants'
+import { anneeSaison, CATEGORIES, labelSaison, type Categorie } from '@/domaine/rencontre'
+import { getProgressionControle } from '@/lib/admin/controle'
+import { chargerEngagementTousClubs } from '@/lib/admin/engagement'
+import { liensAdmin } from '@/lib/admin/navigation'
+import { exigerAdmin } from '@/lib/auth/session'
+import { chargerPretsRencontre } from '@/lib/prets/prets'
+import { getStructureRencontre } from '@/lib/rencontres/structure'
+
+import { PanneauEquipes } from './panneau-equipes'
+import { PanneauPilotage } from './panneau-pilotage'
+import { PanneauPrets } from './panneau-prets'
+import { PanneauStructure } from './panneau-structure'
+
+export const metadata: Metadata = {
+  title: 'Tableau de bord d’une rencontre — Interclub',
+}
+
+const labelCategorie = (v: Categorie) =>
+  CATEGORIES.find((c) => c.value === v)?.labelCourt ?? v
+
+/** Date ISO (AAAA-MM-JJ) affichée en français, sans dérive de fuseau. */
+function formaterDate(iso: string): string {
+  const [a, m, j] = iso.split('-')
+  if (!a || !m || !j) return iso
+  return new Date(Date.UTC(Number(a), Number(m) - 1, Number(j))).toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  })
+}
+
+export default async function PageTableauDeBordRencontre({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
+  // Écran réservé à l'admin (R40, spec #1 R12) : 404 pour les autres rôles.
+  // La RLS reste la vraie frontière.
+  await exigerAdmin()
+
+  const { id } = await params
+  // Lectures indépendantes : en parallèle (chaque aller-retour vers la base
+  // compte, l'écran se recharge après chaque action du tableau de bord).
+  const [structure, { grimpeurs, clubs, prets }, engagementClubs, controle] = await Promise.all([
+    getStructureRencontre(id),
+    chargerPretsRencontre(id),
+    chargerEngagementTousClubs(id),
+    // Contrôle des résultats (spec #16) : ④ contrôle, ⑤ lecture seule (R2/R3) —
+    // seulement la progression (comptages), pas les résultats eux-mêmes.
+    getProgressionControle(id),
+  ])
+  if (!structure) notFound()
+
+  const estEnfant = engagementClubs[0]?.engagement.categorie === 'enfant'
+
+  // Compteurs du tableau de bord (R41).
+  const nbEquipes = engagementClubs.reduce((n, c) => n + c.engagement.equipes.length, 0)
+  const nbEpreuves =
+    structure.epreuves.reduce((n, e) => n + e.voiesDifficulte.length + e.blocs.length, 0) +
+    structure.voiesVitesse.length
+  const nbPrets = prets.length
+
+  const progressionControle = controle?.progression ?? null
+
+  return (
+    <Coquille liens={liensAdmin()} largeur="large" deconnexion>
+      <div className="flex flex-col gap-6">
+        <EnTetePage
+          titre={`Rencontre ${structure.clubPorteurNom} du ${formaterDate(structure.dateRencontre)}`}
+          sousTitre={`${labelCategorie(structure.categorie)} · club porteur ${structure.clubPorteurNom} · saison ${labelSaison(anneeSaison(structure.dateRencontre))}`}
+        />
+
+        <div className="lg:grid lg:grid-cols-[320px_minmax(0,1fr)] lg:items-start lg:gap-6">
+          <aside className="flex flex-col gap-4 lg:sticky lg:top-6">
+            <PanneauPilotage
+              rencontreId={id}
+              phase={structure.phase}
+              dateRencontre={structure.dateRencontre}
+            />
+            <Carte className="flex justify-between gap-3 p-4 text-center">
+              <Stat k="Équipes" v={nbEquipes} />
+              <Stat k="Épreuves" v={nbEpreuves} />
+              <Stat k="Prêts" v={nbPrets} />
+            </Carte>
+            {(structure.phase === 'competition' || structure.phase === 'cloture') && (
+              <Link
+                href={`/admin/rencontres/${id}/resultats`}
+                className="rounded-2xl border border-admin/40 bg-admin/10 px-4 py-3 text-center text-sm font-bold text-admin transition hover:bg-admin/20"
+              >
+                🛡️ {structure.phase === 'cloture' ? 'Corriger' : 'Saisir'} les résultats (tous clubs) →
+              </Link>
+            )}
+            {controle && progressionControle && (
+              <Link
+                href={`/admin/rencontres/${id}/controle`}
+                className="rounded-2xl border border-admin/40 bg-admin/10 px-4 py-3 text-center text-sm font-bold text-admin transition hover:bg-admin/20"
+              >
+                ✅{' '}
+                {controle.mode === 'controle'
+                  ? 'Contrôler les résultats (fiches juges)'
+                  : 'Voir le contrôle des résultats'}{' '}
+                →
+                <span className="mt-1 block text-xs font-semibold text-texte-attenue">
+                  {progressionControle.controlees}/{progressionControle.total} lignes contrôlées
+                </span>
+              </Link>
+            )}
+            {/* Classement consultable dès la ③ (spec #12 R15, spec #7 R11) : vue
+                admin dédiée, tous clubs — jamais l'espace coach (corrige B1). */}
+            {['competition', 'cloture', 'resultats_publics'].includes(structure.phase) && (
+              <Link
+                href={`/admin/rencontres/${id}/classement`}
+                className="rounded-2xl border border-bordure bg-surface px-4 py-3 text-center text-sm font-bold text-texte transition hover:bg-surface-forte"
+              >
+                📊 Voir le classement (tous clubs) →
+              </Link>
+            )}
+            {/* Écran de diffusion pour un second afficheur (spec #14), même
+                gate de phase que le classement (visible dès la ③). */}
+            {['competition', 'cloture', 'resultats_publics'].includes(structure.phase) && (
+              <Link
+                href={`/admin/rencontres/${id}/affichage`}
+                className="rounded-2xl border border-bordure bg-surface px-4 py-3 text-center text-sm font-bold text-texte transition hover:bg-surface-forte"
+              >
+                📺 Écran d&apos;affichage (second écran) →
+              </Link>
+            )}
+          </aside>
+
+          <div className="mt-4 flex flex-col gap-6 lg:mt-0 xl:grid xl:grid-cols-2 xl:items-start xl:gap-6">
+            <div className="flex flex-col gap-6 xl:col-start-1">
+              <PanneauStructure structure={structure} />
+              <PanneauPrets
+                rencontreId={id}
+                grimpeurs={grimpeurs}
+                clubs={clubs}
+                prets={prets}
+              />
+            </div>
+            <div className="xl:col-start-2">
+              <PanneauEquipes rencontreId={id} estEnfant={estEnfant} clubs={engagementClubs} />
+            </div>
+          </div>
+        </div>
+      </div>
+    </Coquille>
+  )
+}
+
+function Stat({ k, v }: { k: string; v: number }) {
+  return (
+    <div className="flex-1">
+      <div className="text-2xl font-bold text-texte-fort">{v}</div>
+      <div className="text-xs uppercase tracking-wide text-texte-doux">{k}</div>
+    </div>
+  )
+}

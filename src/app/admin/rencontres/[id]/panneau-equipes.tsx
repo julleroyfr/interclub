@@ -1,0 +1,485 @@
+'use client'
+
+import { useActionState, useId, useRef, useState } from 'react'
+
+import { Bouton, Carte, ChampSelect, ChampTexte, TitreSection } from '@/composants'
+import {
+  EFFECTIF_EQUIPE_MAX,
+  GROUPES_DEPART,
+  equipesCiblesChangement,
+  filtrerGrimpeursRecherche,
+  nomEquipeParDefaut,
+} from '@/domaine/engagement'
+import {
+  ajouterGrimpeurAdmin,
+  changerEquipeAdmin,
+  creerEquipeAdmin,
+  definirGroupeAdmin,
+  retirerGrimpeurAdmin,
+  supprimerEquipeAdmin,
+  type EtatAdminEngagement,
+} from '@/lib/admin/engagement-actions'
+import type { EngagementClub } from '@/lib/admin/engagement'
+import type { EquipeEngagee, MembreEquipe, OptionGrimpeur } from '@/lib/coach/engagement'
+
+const etatInitial: EtatAdminEngagement = undefined
+const OPTIONS_GROUPE = GROUPES_DEPART.map((g) => ({ value: g, label: `Groupe ${g}` }))
+
+/**
+ * CRUD admin des équipes/compositions de TOUS les clubs d'une rencontre (R10),
+ * en toute phase (R6). Un bloc par club : ses équipes + un formulaire de création.
+ */
+export function PanneauEquipes({
+  rencontreId,
+  estEnfant,
+  clubs,
+}: {
+  rencontreId: string
+  estEnfant: boolean
+  clubs: EngagementClub[]
+}) {
+  // « Engagé » = club ayant au moins une équipe (R41c).
+  const clubsEngages = clubs.filter((c) => c.engagement.equipes.length > 0)
+  return (
+    <section className="flex flex-col gap-4">
+      <div>
+        <TitreSection>Équipes & engagement (tous clubs)</TitreSection>
+        <p className="text-xs text-texte-attenue">
+          Créez, composez ou corrigez les équipes de n’importe quel club, en toute
+          phase.
+        </p>
+      </div>
+
+      {clubs.map((c) => {
+        const nbEquipes = c.engagement.equipes.length
+        const nbGrimpeurs = c.engagement.equipes.reduce((n, eq) => n + eq.membres.length, 0)
+        // Repliés par défaut (R41c) ; ouvert d'office si ce club est le seul
+        // engagé (une seule vue à lire, autant l'ouvrir).
+        const ouvertParDefaut = clubsEngages.length === 1 && nbEquipes > 0
+        return (
+          <Carte key={c.clubId} className="p-0">
+            {/* Repliable par club : une dizaine d'équipes reste scannable. */}
+            <details open={ouvertParDefaut} className="group" data-club={c.clubNom}>
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-2xl p-4 hover:bg-surface-forte">
+                <h3 className="text-sm font-bold text-texte-fort">{c.clubNom}</h3>
+                <span className="flex items-center gap-2 text-xs text-texte-attenue">
+                  {nbEquipes} équipe(s) · {nbGrimpeurs} grimpeur(s)
+                  <span className="text-texte-doux transition group-open:rotate-180">▾</span>
+                </span>
+              </summary>
+
+              <div className="flex flex-col gap-3 px-4 pb-4">
+                {nbEquipes === 0 ? (
+                  <p className="text-xs italic text-texte-doux">Aucune équipe.</p>
+                ) : (
+                  <ul className="flex flex-col gap-3">
+                    {c.engagement.equipes.map((eq) => (
+                      <li key={eq.id}>
+                        <CarteEquipe
+                          rencontreId={rencontreId}
+                          equipe={eq}
+                          roster={c.engagement.roster}
+                          estEnfant={estEnfant}
+                          autresEquipes={equipesCiblesChangement(
+                            c.engagement.equipes.map((e) => ({
+                              id: e.id,
+                              clubId: c.clubId,
+                              nom: e.nom,
+                              complete: e.membres.length >= EFFECTIF_EQUIPE_MAX,
+                            })),
+                            eq.id,
+                          )}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                <FormNouvelleEquipe
+                  rencontreId={rencontreId}
+                  clubId={c.clubId}
+                  nomParDefaut={nomEquipeParDefaut(
+                    c.clubNom,
+                    c.engagement.equipes.map((eq) => eq.nom),
+                  )}
+                />
+              </div>
+            </details>
+          </Carte>
+        )
+      })}
+    </section>
+  )
+}
+
+/** Équipe proposée pour un changement d'équipe (spec #3 R41d). */
+type EquipeCible = { id: string; nom: string; complete: boolean }
+
+function CarteEquipe({
+  rencontreId,
+  equipe,
+  roster,
+  estEnfant,
+  autresEquipes,
+}: {
+  rencontreId: string
+  equipe: EquipeEngagee
+  roster: OptionGrimpeur[]
+  estEnfant: boolean
+  /** Autres équipes du club d'affectation (spec #3 R41d). */
+  autresEquipes: EquipeCible[]
+}) {
+  const complete = equipe.membres.length >= EFFECTIF_EQUIPE_MAX
+  const disponibles = roster.filter((g) => !g.dejaEngage)
+
+  return (
+    <div className="rounded-xl border border-bordure bg-black/20 p-3" data-equipe={equipe.nom}>
+      <div className="flex items-center justify-between gap-3">
+        <h4 className="text-sm font-semibold text-texte-fort">{equipe.nom}</h4>
+        <span className="text-xs font-bold text-texte-attenue">
+          {equipe.membres.length}/{EFFECTIF_EQUIPE_MAX}
+        </span>
+      </div>
+
+      {equipe.membres.length > 0 && (
+        <ul className="mt-2 flex flex-col divide-y divide-white/5">
+          {equipe.membres.map((m) => (
+            <LigneMembre
+              key={`${m.grimpeurId}:${m.groupeDepart ?? ''}`}
+              rencontreId={rencontreId}
+              equipeId={equipe.id}
+              membre={m}
+              estEnfant={estEnfant}
+              autresEquipes={autresEquipes}
+            />
+          ))}
+        </ul>
+      )}
+
+      {complete ? (
+        <p className="mt-2 text-xs text-secondaire">
+          Équipe complète — plafond de {EFFECTIF_EQUIPE_MAX}.
+        </p>
+      ) : (
+        <FormAjout
+          key={equipe.membres.map((m) => m.grimpeurId).join(',')}
+          rencontreId={rencontreId}
+          equipeId={equipe.id}
+          disponibles={disponibles}
+          estEnfant={estEnfant}
+        />
+      )}
+
+      <FormSupprimer rencontreId={rencontreId} equipeId={equipe.id} nom={equipe.nom} />
+    </div>
+  )
+}
+
+function LigneMembre({
+  rencontreId,
+  equipeId,
+  membre,
+  estEnfant,
+  autresEquipes,
+}: {
+  rencontreId: string
+  equipeId: string
+  membre: MembreEquipe
+  estEnfant: boolean
+  autresEquipes: EquipeCible[]
+}) {
+  const [etatRetrait, actionRetrait, retraitEnCours] = useActionState(
+    retirerGrimpeurAdmin,
+    etatInitial,
+  )
+  const [, actionGroupe, groupeEnCours] = useActionState(definirGroupeAdmin, etatInitial)
+  const idGroupe = useId()
+
+  return (
+    <li className="flex flex-wrap items-center gap-2 py-2 text-sm">
+      <span className="text-texte-fort">
+        {membre.prenom} {membre.nom}
+      </span>
+      {membre.prete && (
+        <span className="inline-flex items-center rounded-full border border-prete/35 bg-prete/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-prete">
+          Prêté{membre.clubOrigineNom ? ` · ${membre.clubOrigineNom}` : ''}
+        </span>
+      )}
+
+      {estEnfant && (
+        <form action={actionGroupe} className="ml-auto flex items-center gap-1">
+          <input type="hidden" name="rencontreId" value={rencontreId} />
+          <input type="hidden" name="equipeId" value={equipeId} />
+          <input type="hidden" name="grimpeurId" value={membre.grimpeurId} />
+          <label htmlFor={idGroupe} className="sr-only">
+            Groupe de départ de {membre.prenom} {membre.nom}
+          </label>
+          <select
+            id={idGroupe}
+            name="groupeDepart"
+            defaultValue={membre.groupeDepart ?? ''}
+            className="h-9 rounded-lg border border-bordure bg-black/30 px-2 text-xs text-texte-fort [color-scheme:dark] focus:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent/20"
+          >
+            <option value="" className="bg-fond text-texte">
+              à définir
+            </option>
+            {GROUPES_DEPART.map((g) => (
+              <option key={g} value={g} className="bg-fond text-texte">
+                Groupe {g}
+              </option>
+            ))}
+          </select>
+          <Bouton type="submit" taille="sm" variante="secondaire" disabled={groupeEnCours}>
+            OK
+          </Bouton>
+        </form>
+      )}
+
+      <form action={actionRetrait} className={estEnfant ? '' : 'ml-auto'}>
+        <input type="hidden" name="rencontreId" value={rencontreId} />
+        <input type="hidden" name="equipeId" value={equipeId} />
+        <input type="hidden" name="grimpeurId" value={membre.grimpeurId} />
+        <button
+          type="submit"
+          disabled={retraitEnCours}
+          aria-label={`Retirer ${membre.prenom} ${membre.nom}`}
+          className="text-lg leading-none text-danger transition hover:opacity-100 disabled:opacity-40"
+        >
+          ×
+        </button>
+      </form>
+
+      {etatRetrait?.erreur && (
+        <p role="alert" className="w-full text-xs text-danger">
+          {etatRetrait.erreur}
+        </p>
+      )}
+
+      {autresEquipes.length > 0 && (
+        <FormChangerEquipe
+          rencontreId={rencontreId}
+          equipeId={equipeId}
+          membre={membre}
+          autresEquipes={autresEquipes}
+        />
+      )}
+    </li>
+  )
+}
+
+/**
+ * Change le grimpeur d'équipe au sein de son club d'affectation (spec #3 R41d) :
+ * mise à jour, pas retrait + ajout — groupe de départ et résultats conservés
+ * (spec #10 R18bis). Les équipes complètes sont proposées mais désactivées.
+ */
+function FormChangerEquipe({
+  rencontreId,
+  equipeId,
+  membre,
+  autresEquipes,
+}: {
+  rencontreId: string
+  equipeId: string
+  membre: MembreEquipe
+  autresEquipes: EquipeCible[]
+}) {
+  const [etat, action, enCours] = useActionState(changerEquipeAdmin, etatInitial)
+  const idCible = useId()
+
+  return (
+    // Retour à la ligne selon la place réelle (la carte d'équipe est étroite dans
+    // la colonne du tableau de bord, même sur grand écran) plutôt que selon la
+    // largeur de la fenêtre : le bouton ne déborde jamais de la carte.
+    <form action={action} className="flex w-full flex-wrap items-center gap-2">
+      <input type="hidden" name="rencontreId" value={rencontreId} />
+      <input type="hidden" name="equipeId" value={equipeId} />
+      <input type="hidden" name="grimpeurId" value={membre.grimpeurId} />
+      <label htmlFor={idCible} className="basis-full text-xs text-texte-attenue">
+        Changer {membre.prenom} {membre.nom} d’équipe
+      </label>
+      <select
+        id={idCible}
+        name="equipeCibleId"
+        required
+        defaultValue=""
+        className="h-11 min-w-0 flex-1 basis-40 rounded-lg border border-bordure bg-black/30 px-3 text-base text-texte-fort [color-scheme:dark] focus:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent/20 sm:text-sm"
+      >
+        <option value="" disabled className="bg-fond text-texte">
+          Équipe de destination…
+        </option>
+        {autresEquipes.map((e) => (
+          <option key={e.id} value={e.id} disabled={e.complete} className="bg-fond text-texte">
+            {e.nom}
+            {e.complete ? ` (complète, ${EFFECTIF_EQUIPE_MAX})` : ''}
+          </option>
+        ))}
+      </select>
+      <Bouton type="submit" taille="sm" variante="secondaire" disabled={enCours} className="h-11 shrink-0">
+        Changer d’équipe
+      </Bouton>
+      {etat?.erreur && (
+        <p role="alert" className="basis-full text-xs text-danger">
+          {etat.erreur}
+        </p>
+      )}
+    </form>
+  )
+}
+
+function FormAjout({
+  rencontreId,
+  equipeId,
+  disponibles,
+  estEnfant,
+}: {
+  rencontreId: string
+  equipeId: string
+  disponibles: OptionGrimpeur[]
+  estEnfant: boolean
+}) {
+  const [etat, action, enCours] = useActionState(ajouterGrimpeurAdmin, etatInitial)
+  const idRecherche = useId()
+  const idGrimpeur = useId()
+  const idGroupe = useId()
+  // Recherche nom/prénom (spec #5 R12bis), purement d'affichage.
+  const [recherche, setRecherche] = useState('')
+  const filtres = filtrerGrimpeursRecherche(disponibles, recherche)
+
+  if (disponibles.length === 0) {
+    return (
+      <p className="mt-2 text-xs text-texte-doux">
+        Aucun grimpeur disponible pour ce club.
+      </p>
+    )
+  }
+
+  return (
+    <form
+      action={action}
+      className="mt-2 flex flex-col gap-2 rounded-lg border border-dashed border-bordure bg-accent/[0.03] p-2"
+    >
+      <input type="hidden" name="rencontreId" value={rencontreId} />
+      <input type="hidden" name="equipeId" value={equipeId} />
+      <ChampTexte
+        id={idRecherche}
+        label="Ajouter un grimpeur"
+        type="search"
+        placeholder="Rechercher un nom ou prénom…"
+        autoComplete="off"
+        value={recherche}
+        onChange={(e) => setRecherche(e.target.value)}
+      />
+      <ChampSelect
+        // Remonté à chaque recherche : repart du placeholder, ou présélectionne
+        // l'unique correspondance (R12bis).
+        key={recherche}
+        id={idGrimpeur}
+        name="grimpeurId"
+        label={`Grimpeur (${filtres.length})`}
+        defaultValue={filtres.length === 1 ? filtres[0].id : undefined}
+        options={filtres.map((g) => ({
+          value: g.id,
+          label: g.prete
+            ? `${g.prenom} ${g.nom} (prêté · ${g.clubOrigineNom})`
+            : `${g.prenom} ${g.nom}`,
+        }))}
+        placeholder={filtres.length ? '— Choisir —' : 'Aucun grimpeur pour cette recherche'}
+        required
+      />
+      {estEnfant && (
+        <ChampSelect
+          id={idGroupe}
+          name="groupeDepart"
+          label="Groupe (optionnel)"
+          options={OPTIONS_GROUPE}
+          placeholder="— À définir —"
+        />
+      )}
+      {etat?.erreur && (
+        <p role="alert" className="text-xs text-danger">
+          {etat.erreur}
+        </p>
+      )}
+      <Bouton type="submit" taille="sm" disabled={enCours}>
+        {enCours ? 'Ajout…' : 'Ajouter'}
+      </Bouton>
+    </form>
+  )
+}
+
+function FormSupprimer({
+  rencontreId,
+  equipeId,
+  nom,
+}: {
+  rencontreId: string
+  equipeId: string
+  nom: string
+}) {
+  const [etat, action, enCours] = useActionState(supprimerEquipeAdmin, etatInitial)
+  return (
+    <form action={action} className="mt-2">
+      <input type="hidden" name="rencontreId" value={rencontreId} />
+      <input type="hidden" name="equipeId" value={equipeId} />
+      <Bouton
+        type="submit"
+        variante="fantome"
+        taille="sm"
+        disabled={enCours}
+        aria-label={`Supprimer l'équipe ${nom}`}
+      >
+        Supprimer l’équipe
+      </Bouton>
+      {etat?.erreur && (
+        <span role="alert" className="ml-2 text-xs text-danger">
+          {etat.erreur}
+        </span>
+      )}
+    </form>
+  )
+}
+
+/** Création d'équipe pour un club, pré-remplie « <club> N » (spec #5 R10bis). */
+function FormNouvelleEquipe({
+  rencontreId,
+  clubId,
+  nomParDefaut,
+}: {
+  rencontreId: string
+  clubId: string
+  nomParDefaut: string
+}) {
+  const [etat, action, enCours] = useActionState(creerEquipeAdmin, etatInitial)
+  const idNom = useId()
+  const formRef = useRef<HTMLFormElement>(null)
+
+  return (
+    <form
+      ref={formRef}
+      action={(fd) => {
+        action(fd)
+        formRef.current?.reset()
+      }}
+      className="flex items-end gap-2 rounded-lg border border-dashed border-bordure bg-accent/[0.03] p-2"
+    >
+      <input type="hidden" name="rencontreId" value={rencontreId} />
+      <input type="hidden" name="clubId" value={clubId} />
+      <ChampTexte
+        // Remonté quand le défaut change (après création) pour l'afficher (R10bis).
+        key={nomParDefaut}
+        id={idNom}
+        name="nom"
+        label="Nouvelle équipe"
+        defaultValue={nomParDefaut}
+        required
+        maxLength={100}
+        autoComplete="off"
+        erreur={etat?.erreur}
+        className="flex-1"
+      />
+      <Bouton type="submit" taille="sm" disabled={enCours}>
+        {enCours ? 'Création…' : 'Créer'}
+      </Bouton>
+    </form>
+  )
+}

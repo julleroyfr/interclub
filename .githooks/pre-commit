@@ -1,0 +1,13 @@
+#!/bin/sh
+# Validation Markdown avant chaque commit (toute branche).
+# Valide TOUS les Markdown du projet et bloque le commit en cas d'erreur.
+# cf. docs/conventions/05-git-et-deploiement.md (garde-fou avant commit).
+#
+# Contournement volontaire (déconseillé) : git commit --no-verify
+
+echo "→ Validation Markdown (npm run lint:md)…"
+npm run --silent lint:md || {
+  echo "✗ Markdown invalide. Corriger (npm run lint:md:fix puis à la main) avant de committer."
+  exit 1
+}
+echo "✓ Markdown valide."

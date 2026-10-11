@@ -1,0 +1,4 @@
+# Scripts shell exécutés par bash (Git Bash, Docker) : toujours en LF, quel
+# que soit core.autocrlf — un CR en fin de ligne casse `set -o pipefail`.
+*.sh text eol=lf
+.githooks/* text eol=lf

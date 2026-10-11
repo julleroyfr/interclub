@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Maquettes — Saisie de la vitesse (spec #10)</title>
+<style>
+  :root {
+    --fond: #020617;
+    --surface: rgba(255, 255, 255, 0.04);
+    --surface-forte: rgba(255, 255, 255, 0.08);
+    --bordure: rgba(255, 255, 255, 0.12);
+    --accent: #22d3ee;
+    --accent-doux: #67e8f9;
+    --secondaire: #bef264;
+    --filles: #f0abfc;
+    --garcons: #7dd3fc;
+    --danger: #fb7185;
+    --texte-fort: #ffffff;
+    --texte: #e2e8f0;
+    --texte-attenue: #94a3b8;
+    --texte-doux: #64748b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--fond);
+    color: var(--texte);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.4;
+  }
+  .page { max-width: 1400px; margin: 0 auto; padding: 20px 24px 80px; }
+  .intro { color: var(--texte-attenue); font-size: 13px; max-width: 900px; margin: 0 0 20px; }
+  .intro strong { color: var(--texte); }
+
+  /* --- barre de tête (rencontre / épreuve / juge / phase / progression) --- */
+  .entete {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px;
+    padding: 14px 18px; background: var(--surface); border: 1px solid var(--bordure);
+    border-radius: 14px; margin-bottom: 14px;
+  }
+  .entete .titre { color: var(--texte-fort); font-size: 18px; font-weight: 700; }
+  .entete .meta { color: var(--texte-attenue); font-size: 13px; }
+  .badge-phase {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(34,211,238,.12); color: var(--accent-doux);
+    border: 1px solid rgba(34,211,238,.3); border-radius: 999px;
+    padding: 4px 12px; font-size: 12px; font-weight: 600;
+  }
+  .prog { margin-left: auto; display: inline-flex; align-items: baseline; gap: 8px; }
+  .prog .val { color: var(--texte-fort); font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .prog .lbl { color: var(--texte-doux); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+  .barre-prog { width: 100%; height: 4px; border-radius: 999px; background: rgba(255,255,255,.08); overflow: hidden; }
+  .barre-prog > i { display: block; height: 100%; width: 62%; background: var(--accent); }
+
+  /* --- compteurs de progression par sexe --- */
+  .compteurs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+  @media (max-width: 640px) { .compteurs { grid-template-columns: 1fr; } }
+  .compteur {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; background: var(--surface); border: 1px solid var(--bordure); border-radius: 12px;
+  }
+  .compteur .pastille { width: 9px; height: 9px; border-radius: 999px; }
+  .compteur .titre { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; }
+  .compteur .val { color: var(--texte-fort); font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .compteur .sur { color: var(--texte-doux); font-size: 12px; font-weight: 700; }
+  .compteur .barre { flex: 1; height: 4px; border-radius: 999px; background: rgba(255,255,255,.08); overflow: hidden; }
+  .compteur .barre > i { display: block; height: 100%; }
+  .compteur.filles .titre, .compteur.filles .pastille { color: var(--filles); }
+  .compteur.filles .pastille { background: var(--filles); }
+  .compteur.filles .barre > i { background: var(--filles); }
+  .compteur.garcons .titre, .compteur.garcons .pastille { color: var(--garcons); }
+  .compteur.garcons .pastille { background: var(--garcons); }
+  .compteur.garcons .barre > i { background: var(--garcons); }
+
+  /* --- segment de filtre par sexe (Tous / Filles / Garçons) --- */
+  .segment { display: inline-flex; border: 1px solid var(--bordure); border-radius: 999px; overflow: hidden; }
+  .segment .seg { background: rgba(0,0,0,.2); color: var(--texte-attenue); border: 0; padding: 9px 16px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .segment .seg.actif { background: rgba(34,211,238,.14); color: var(--accent-doux); }
+
+  /* --- barre d'outils (recherche + filtre) --- */
+  .outils { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 18px; }
+  .recherche { position: relative; flex: 1 1 320px; max-width: 460px; }
+  .recherche input {
+    width: 100%; background: rgba(0,0,0,.3); color: var(--texte-fort);
+    border: 1px solid var(--bordure); border-radius: 10px; padding: 10px 12px 10px 36px;
+    font-size: 14px; color-scheme: dark;
+  }
+  .recherche input::placeholder { color: var(--texte-doux); }
+  .recherche .loupe { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--texte-doux); }
+  .filtres { display: inline-flex; gap: 6px; }
+  .filtre {
+    border: 1px solid var(--bordure); background: rgba(0,0,0,.28); color: var(--texte-attenue);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .filtre.actif { background: rgba(34,211,238,.14); color: var(--accent-doux); border-color: rgba(34,211,238,.5); }
+
+  /* --- deux colonnes (sexe) côte à côte sur grand écran, empilées sinon --- */
+  .colonnes { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+  @media (max-width: 900px) { .colonnes { grid-template-columns: 1fr; } }
+
+  .groupe { background: var(--surface); border: 1px solid var(--bordure); border-radius: 14px; overflow: hidden; }
+  .groupe-titre {
+    position: sticky; top: 0; z-index: 2;
+    display: flex; align-items: center; gap: 8px; padding: 11px 16px;
+    font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .07em;
+    background: #0a1424; border-bottom: 1px solid var(--bordure); backdrop-filter: blur(4px);
+  }
+  .groupe-titre .pastille { width: 9px; height: 9px; border-radius: 999px; }
+  .groupe.filles .groupe-titre { color: var(--filles); }
+  .groupe.filles .pastille { background: var(--filles); }
+  .groupe.garcons .groupe-titre { color: var(--garcons); }
+  .groupe.garcons .pastille { background: var(--garcons); }
+  .groupe-titre .cpt { margin-left: auto; color: var(--texte-doux); font-weight: 600; letter-spacing: 0; text-transform: none; font-size: 11px; }
+
+  /* --- lignes denses : une ligne compacte par grimpeur --- */
+  .ligne {
+    display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 10px;
+    padding: 8px 16px; border-top: 1px solid rgba(255,255,255,.05);
+  }
+  .ligne:first-of-type { border-top: 0; }
+  .ligne:hover { background: var(--surface-forte); }
+  .ligne.faite { background: rgba(190,242,100,.04); }
+  .qui { min-width: 0; }
+  .qui .nom { color: var(--texte-fort); font-size: 13.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .qui .club { color: var(--texte-doux); font-size: 11px; }
+
+  .issue {
+    display: inline-flex; align-items: center; justify-content: center; min-width: 74px;
+    font-size: 12.5px; font-weight: 700; border-radius: 999px; padding: 3px 10px;
+    border: 1px solid transparent; white-space: nowrap; font-variant-numeric: tabular-nums;
+  }
+  .issue.temps { color: #04222a; background: var(--secondaire); }
+  .issue.chute { color: var(--danger); background: rgba(251,113,133,.10); border-color: rgba(251,113,133,.3); }
+  .issue.np    { color: var(--texte-attenue); background: rgba(148,163,184,.12); border-color: var(--bordure); }
+  .issue.vide  { color: var(--texte-doux); background: transparent; border-style: dashed; border-color: var(--bordure); font-weight: 600; }
+
+  /* saisie inline : champ temps + boutons */
+  .saisie { display: inline-flex; align-items: center; gap: 5px; }
+  .saisie input {
+    width: 92px; background: rgba(0,0,0,.3); color: var(--texte-fort);
+    border: 1px solid var(--bordure); border-radius: 8px; padding: 7px 9px;
+    font-size: 14px; text-align: right; font-variant-numeric: tabular-nums; color-scheme: dark;
+  }
+  .saisie input::placeholder { color: var(--texte-doux); }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 8px; padding: 7px 10px; font-size: 12px; font-weight: 700; cursor: pointer;
+    border: 1px solid var(--bordure); background: rgba(0,0,0,.28); color: var(--texte-attenue);
+  }
+  .btn-ok { background: var(--accent); color: #04222a; border-color: var(--accent); }
+  .btn-chute:hover, .btn-chute.sel { color: var(--danger); border-color: rgba(251,113,133,.5); background: rgba(251,113,133,.14); }
+  .btn-np:hover, .btn-np.sel { color: var(--texte-fort); background: var(--surface-forte); }
+
+  .aide { color: var(--texte-doux); font-size: 12px; margin-top: 18px; }
+  kbd { background: rgba(255,255,255,.08); border:1px solid var(--bordure); border-bottom-width:2px; border-radius:5px; padding:1px 6px; font-size:11px; color: var(--texte); }
+</style>
+</head>
+<body>
+  <div class="page">
+    <p class="intro">
+      <strong>Spec #10 — Saisie de la vitesse (juge).</strong> Écran <strong>plein
+      écran, responsive</strong> (le juge saisit sur PC/tablette, R14c). Pensé pour
+      le <strong>volume</strong> : plusieurs dizaines de compétiteurs par sexe (R14b)
+      → lignes <strong>denses</strong>, <strong>recherche</strong> par nom et
+      <strong>filtre « à saisir »</strong>. Filles / Garçons <strong>côte à côte</strong>
+      sur grand écran, empilés sur mobile. Un seul résultat par grimpeur ; ressaisie =
+      remplacement (R10/R11).
+    </p>
+
+    <!-- En-tête -->
+    <div class="entete">
+      <div>
+        <div class="titre">⚡ Vitesse — Vertical Mérignac · 22 sept.</div>
+        <div class="meta">Épreuve de vitesse · couloir 2 · Karim B. (juge affecté)</div>
+      </div>
+      <span class="badge-phase">● ③ Compétition</span>
+    </div>
+
+    <!-- Progression séparée par sexe (R14) -->
+    <div class="compteurs">
+      <div class="compteur filles">
+        <span class="pastille"></span><span class="titre">Filles</span>
+        <span class="val">31</span><span class="sur">/ 52</span>
+        <span class="barre"><i style="width:60%"></i></span>
+      </div>
+      <div class="compteur garcons">
+        <span class="pastille"></span><span class="titre">Garçons</span>
+        <span class="val">31</span><span class="sur">/ 52</span>
+        <span class="barre"><i style="width:60%"></i></span>
+      </div>
+    </div>
+
+    <!-- Outils -->
+    <div class="outils">
+      <div class="recherche">
+        <span class="loupe">🔎</span>
+        <input type="text" placeholder="Rechercher un grimpeur (nom, prénom)…" />
+      </div>
+      <div class="filtres">
+        <button class="filtre">À saisir (42)</button>
+      </div>
+      <div class="segment">
+        <button class="seg actif">Tous</button>
+        <button class="seg">Filles</button>
+        <button class="seg">Garçons</button>
+      </div>
+    </div>
+
+    <!-- Deux colonnes par sexe -->
+    <div class="colonnes">
+
+      <!-- Filles -->
+      <section class="groupe filles">
+        <header class="groupe-titre">
+          <span class="pastille"></span> Filles <span class="cpt">52 grimpeuses · 31 saisies</span>
+        </header>
+
+        <div class="ligne faite">
+          <div class="qui"><div class="nom">Girard Manon</div><div class="club">Grimpe Pessac</div></div>
+          <span class="issue temps">9,340 s</span>
+          <div class="saisie">
+            <input type="text" inputmode="decimal" value="9.340" aria-label="Temps Manon Girard" />
+            <button class="btn btn-ok">OK</button>
+            <button class="btn btn-chute">Chute</button>
+            <button class="btn btn-np">Abs.</button>
+          </div>
+        </div>
+
+        <div class="ligne">
+          <div class="qui"><div class="nom">Dumas Sofia</div><div class="club">Grimpe Pessac</div></div>
+          <span class="issue vide">à saisir</span>
+          <div class="saisie">
+            <input type="text" inputmode="decimal" placeholder="0.000" aria-label="Temps Sofia Dumas" />
+            <button class="btn btn-ok">OK</button>
+            <button class="btn btn-chute">Chute</button>
+            <button class="btn btn-np">Abs.</button>
+          </div>
+        </div>
+
+        <div class="ligne">
+          <div class="qui"><div class="nom">Fabre Inès</div><div class="club">Vertical Mérignac</div></div>
+          <span class="issue chute">Chute</span>
+          <div class="saisie">
+            <input type="text" inputmode="decimal" placeholder="0.000" aria-label="Temps Inès Fabre" />
+            <button class="btn btn-ok">OK</button>
+            <button class="btn btn-chute sel">Chute</button>
+            <button class="btn btn-np">Abs.</button>
+          </div>
+        </div>
+
+        <div class="ligne">
+          <div class="qui"><div class="nom">Colin Jade</div><div class="club">Grimpe Pessac</div></div>
+          <span class="issue np">Non prés.</span>
+          <div class="saisie">
+            <input type="text" inputmode="decimal" placeholder="0.000" aria-label="Temps Jade Colin" />
+            <button class="btn btn-ok">OK</button>
+            <button class="btn btn-chute">Chute</button>
+            <button class="btn btn-np sel">Abs.</button>
+          </div>
+        </div>
+
+        <div class="ligne faite">
+          <div class="qui"><div class="nom">Marchand Léa</div><div class="club">Vertical Mérignac</div></div>
+          <span class="issue temps">8,970 s</span>
+          <div class="saisie">
+            <input type="text" inputmode="decimal" value="8.970" aria-label="Temps Léa Marchand" />
+            <button class="btn btn-ok">OK</button>
+            <button class="btn btn-chute">Chute</button>
+            <button class="btn btn-np">Abs.</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Garçons -->
+      <section class="groupe garcons">
+        <header class="groupe-titre">
+          <span class="pastille"></span> Garçons <span class="cpt">52 grimpeurs · 31 saisis</span>
+        </header>
+
+        <div class="ligne faite">
+          <div class="qui"><div class="nom">Brun Lucas</div><div class="club">Vertical Mérignac</div></div>
+          <span class="issue temps">8,123 s</span>
+          <div class="saisie">
+            <input type="text" inputmode="decimal" value="8.123" aria-label="Temps Lucas Brun" />
+            <button class="btn btn-ok">OK</button>
+            <button class="btn btn-chute">Chute</button>
+            <button class="btn btn-np">Abs.</button>
+          </div>
+        </div>
+
+        <div class="ligne">
+          <div class="qui"><div class="nom">Perrin Enzo</div><div class="club">Vertical Mérignac</div></div>
+          <span class="issue vide">à saisir</span>
+          <div class="saisie">
+            <input type="text" inputmode="decimal" placeholder="0.000" aria-label="Temps Enzo Perrin" />
+            <button class="btn btn-ok">OK</button>
+            <button class="btn btn-chute">Chute</button>
+            <button class="btn btn-np">Abs.</button>
+          </div>
+        </div>
+
+        <div class="ligne">
+          <div class="qui"><div class="nom">Renard Hugo</div><div class="club">Vertical Mérignac</div></div>
+          <span class="issue vide">à saisir</span>
+          <div class="saisie">
+            <input type="text" inputmode="decimal" placeholder="0.000" aria-label="Temps Hugo Renard" />
+            <button class="btn btn-ok">OK</button>
+            <button class="btn btn-chute">Chute</button>
+            <button class="btn btn-np">Abs.</button>
+          </div>
+        </div>
+
+        <div class="ligne faite">
+          <div class="qui"><div class="nom">Lemoine Noah</div><div class="club">Grimpe Pessac</div></div>
+          <span class="issue temps">8,540 s</span>
+          <div class="saisie">
+            <input type="text" inputmode="decimal" value="8.540" aria-label="Temps Noah Lemoine" />
+            <button class="btn btn-ok">OK</button>
+            <button class="btn btn-chute">Chute</button>
+            <button class="btn btn-np">Abs.</button>
+          </div>
+        </div>
+
+        <div class="ligne faite">
+          <div class="qui"><div class="nom">Rivière Tom</div><div class="club">Grimpe Pessac</div></div>
+          <span class="issue temps">8,880 s</span>
+          <div class="saisie">
+            <input type="text" inputmode="decimal" value="8.880" aria-label="Temps Tom Rivière" />
+            <button class="btn btn-ok">OK</button>
+            <button class="btn btn-chute">Chute</button>
+            <button class="btn btn-np">Abs.</button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <p class="aide">
+      Saisie rapide au clavier : taper le temps en secondes puis <kbd>Entrée</kbd>
+      (R14c). Les en-têtes Filles / Garçons restent visibles au défilement
+      (sticky). Le compteur et la barre de progression s'actualisent à chaque
+      saisie (R14).
+    </p>
+  </div>
+</body>
+</html>
