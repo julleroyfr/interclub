@@ -29,13 +29,13 @@ On reprend le gitflow (cf.
 |---------|----------------------|---------------|------|
 | `develop` | **Preview** (URL de branche stable) | recette | actif |
 | `feature/*` | **Preview** (une URL par déploiement) | recette | actif |
-| `main` | **Production** | prod | **désactivé** jusqu'à la bascule (§5) |
+| `main` | **Production** | prod | actif depuis la bascule du 2026-10-11 (§5) |
 
 ```mermaid
 flowchart LR
   F["feature/*"] --> P["Vercel Preview<br/>base recette"]
   D["develop"] --> P
-  M["main"] -. "désactivé (vercel.json)<br/>jusqu'à la bascule" .-> R["Vercel Production<br/>base prod"]
+  M["main"] --> R["Vercel Production<br/>base prod"]
 ```
 
 ## 3. Ce qui est versionné
@@ -47,7 +47,6 @@ flowchart LR
 | `framework` | `nextjs` | Détection explicite du framework |
 | `buildCommand` | `npm run build` | Même build que Netlify |
 | `regions` | `["dub1"]` | Fonctions (Server Components, Server Actions, routes, `proxy.ts`) exécutées à Dublin |
-| `git.deploymentEnabled.main` | `false` | Aucun déploiement Vercel depuis `main` tant que la prod n'est pas basculée (§5) |
 
 Rien d'autre ne change dans le code : `next.config.ts`, `proxy.ts` et les
 helpers Supabase fonctionnent tels quels.
@@ -117,17 +116,18 @@ Aucun réglage nécessaire : l'authentification utilise
 e-mail ni URL de redirection. Le domaine Vercel n'a pas à être déclaré dans
 *Auth → URL Configuration*.
 
-## 5. Plus tard : la production sur `main`
+## 5. La production sur `main`
 
-À faire au moment de la bascule de la prod vers Vercel :
+Bascule du 2026-10-11 : `vercel.json` ne bloque plus `main` (étape 3 faite).
+Étapes manuelles côté Vercel, à vérifier :
 
 1. **Vérifier la région du projet Supabase prod.** `regions` est commun à tous
    les environnements : si la prod n'est pas en `eu-west-1`, choisir avec quelle
    base co-localiser les fonctions (ou aligner les deux projets).
 2. *Settings → Environments → Production* : ajouter les 3 variables avec les
    valeurs du projet Supabase **prod** (mêmes types qu'au §4.3).
-3. Dans `vercel.json`, supprimer le bloc `git.deploymentEnabled` (ou passer
-   `main` à `true`), committer sur `develop` puis promouvoir vers `main`.
+3. ✅ Dans `vercel.json`, bloc `git.deploymentEnabled` supprimé (commité sur
+   `develop` puis promu vers `main`).
 4. Le domaine de production (`<projet>.vercel.app` ou domaine personnalisé) se
    règle dans *Settings → Domains*.
 

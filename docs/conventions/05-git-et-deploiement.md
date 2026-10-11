@@ -14,7 +14,7 @@
   arrive qu'après passage en recette et cahier de test joué.
 - **Essai Vercel (expérimental, mesure de performance)** : `vercel.json`
   déploie `develop` et `feature/*` en **Preview** Vercel (région `dub1`, base
-  recette) ; `main` → Production Vercel reste désactivée jusqu'à la bascule.
+  recette) et `main` en **Production** Vercel (base prod, depuis le 2026-10-11).
   Netlify reste l'hébergeur de référence. Guide :
   [deploiement-vercel.md](../deploiement-vercel.md).
 
