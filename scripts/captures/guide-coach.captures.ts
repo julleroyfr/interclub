@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+
 import { test, expect, type Page } from '@playwright/test'
 
 import { commeCoach } from '../../e2e/helpers/auth'
@@ -46,7 +48,28 @@ function invitationClubA(): string {
   ).split('\n')[0]
 }
 
+/** Rencontre Ado en ③ du seed opt-in 04 : « T4 a », « T4 b », « T5 Jaune », « T5 b »… */
+const ADO_REPERES = 'aeaeaeae-0000-0000-0000-000000000002'
+const NORA = 'adadadad-0000-0000-0000-0000000000c1'
+
+/** Seed opt-in 04 (voies doublées et repères, spec #3 R49/R50) + 2 résultats de Nora. */
+function chargerDemoReperes(): void {
+  execSql(readFileSync('supabase/seed/04-demo-repere-voies.sql', 'utf8'))
+  execSql(
+    `insert into interclub.resultat_voie (voie_difficulte_id, grimpeur_id, issue)
+       select v.id, '${NORA}', g.issue from interclub.voie_difficulte v
+         join interclub.epreuve e on e.id = v.epreuve_id
+         join (values ('T5', 'Jaune', 'top'), ('T4', null, 'zone1')) as g(niveau, repere, issue)
+           on g.niveau = v.niveau and v.repere is not distinct from g.repere
+        where e.rencontre_id = '${ADO_REPERES}'
+          and v.ordre = (select max(v2.ordre) from interclub.voie_difficulte v2
+                          where v2.epreuve_id = v.epreuve_id and v2.niveau = v.niveau
+                            and v2.repere is not distinct from g.repere);`,
+  )
+}
+
 function etatSeed(): void {
+  execSql(`delete from interclub.rencontre where id::text like 'aeaeaeae-%';`)
   reinitialiserEngagement()
   poserPhase('pre_competition')
   poserDate(RENCONTRE_PILOTE_DATE)
@@ -164,6 +187,20 @@ test('05 — saisie des résultats', async ({ page }) => {
     page.getByRole('button', { name: 'Bloc complet' }).first(),
   ])
   await capturer(page, '10-resultats-grimpeur')
+})
+
+test('05b — voies doublées (Ado)', async ({ page }) => {
+  chargerDemoReperes()
+  await commeCoach(page)
+  await page.goto(`/coach/rencontres/${ADO_REPERES}/resultats`)
+  await page.getByRole('button', { name: /^Nora Delta/ }).click()
+  await expect(page.getByRole('button', { name: '← Liste des grimpeurs' })).toBeVisible()
+  await numeroter(page, [
+    page.getByText('T4 b', { exact: true }),
+    page.getByText('T5 Jaune', { exact: true }),
+    page.getByRole('combobox').first(),
+  ])
+  await capturer(page, '13-voies-doublees')
 })
 
 test('06 — classement', async ({ page }) => {

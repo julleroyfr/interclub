@@ -252,7 +252,33 @@ L'écran central de la préparation d'une rencontre : phase, structure, prêts e
 | 6 | Bloc d'un club | Déplie les équipes de ce club |
 
 **Structure** : modifiable **uniquement en ① pré-compétition**, par exemple pour
-ajouter une 2ᵉ voie d'un niveau très demandé. Ensuite, elle est verrouillée.
+ajouter une 2ᵉ voie d'un niveau très demandé. Ensuite, elle est verrouillée,
+sauf le **repère** des voies (voir ci-dessous).
+
+### Voies doublées et repères
+
+En Ado, un même niveau peut compter plusieurs voies (deux T5, par exemple). Le
+**repère** permet de les distinguer au mur et à la saisie.
+
+<img src="captures/18-structure-reperes.png" alt="Voies de difficulté avec repères" width="640">
+
+| N° | Élément | Effet |
+| --- | --- | --- |
+| 1 | Libellé de la voie | Nom affiché partout : niveau + repère, ou niveau + lettre |
+| 2 | Repère d'une voie | Texte libre : numéro de relais, couleur… (30 caractères au plus) |
+| 3 | OK | Enregistre le repère ; un repère vide l'efface |
+| 4 | Repère (ajout) | Repère de la nouvelle voie, facultatif |
+
+- **Libellé** affiché dans la saisie, le contrôle, le classement et le PDF :
+  - voie avec repère → « T5 Jaune », « T5 Relais 12 » ;
+  - niveau doublé sans repère → lettre selon l'ordre des voies : « T5 c »,
+    « T6 a », « T6 b » ;
+  - niveau unique sans repère → le niveau seul : « T4 ».
+- Deux voies d'un même niveau ne peuvent pas porter le même repère (casse
+  ignorée).
+- Le repère est modifiable de la ① pré-compétition à la ③ compétition, puis
+  figé à la clôture.
+- Les voies sont listées par niveau (M1 → M4, puis T1 → T10), puis par libellé.
 
 **Prêts** : choisir le club du grimpeur, le grimpeur, puis le club d'accueil. Le
 grimpeur apparaît alors chez les coachs du club d'accueil, qui l'engagent comme
@@ -324,7 +350,9 @@ En ③ compétition et en ④ clôture, l'administrateur saisit les résultats d
 | 7 | Voir le classement | Ouvre le classement de la rencontre |
 
 Les règles sont celles des coachs : une issue par voie et par bloc, la nouvelle
-saisie remplace l'ancienne, 6 voies au plus en Ado. L'administrateur peut en
+saisie remplace l'ancienne, 6 voies au plus en Ado. Les voies doublées sont
+désignées par leur libellé (« T5 Jaune », « T6 a »…, voir
+[§ 7](#voies-doublées-et-repères)). L'administrateur peut en
 plus **remplacer un NP** posé à la clôture par le vrai résultat. Chaque
 écriture garde son auteur (administrateur ou coach).
 
@@ -412,6 +440,7 @@ publication.
 | 3 | Club | Club du coach (rôle Coach uniquement) |
 | 4 | Attribuer | Enregistre le rôle |
 | 5 | Générer une invitation | Crée une invitation administrateur |
+| 6 | Supprimer | Supprime définitivement le compte, après confirmation |
 
 - Un compte **sans rôle** n'a accès à rien. Le rôle de coach est attribué
   automatiquement par l'invitation du club ([§ 3](#3-clubs-et-invitations-des-coachs)) ;

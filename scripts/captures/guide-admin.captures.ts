@@ -1,7 +1,9 @@
+import { readFileSync } from 'node:fs'
+
 import { expect, test, type Locator, type Page } from '@playwright/test'
 
 import { commeAdmin } from '../../e2e/helpers/auth'
-import { RENCONTRE_PILOTE, RENCONTRE_PILOTE_DATE } from '../../e2e/helpers/donnees'
+import { CLUB_A, RENCONTRE_PILOTE, RENCONTRE_PILOTE_DATE } from '../../e2e/helpers/donnees'
 import {
   execSql,
   nettoyerSessionsQr,
@@ -78,7 +80,16 @@ function phaseAdo(phase: 'competition' | 'cloture' | 'resultats_publics'): void 
   execSql(`update interclub.rencontre set phase = '${phase}' where id = '${ADO}';`)
 }
 
+/** Rencontre Ado en ① du seed opt-in 04 : T5 ×3 (« T5 Jaune », « T5 Relais 12 », « T5 c »). */
+const ADO_REPERES = 'aeaeaeae-0000-0000-0000-000000000001'
+
+/** Seed opt-in 04 (voies doublées et repères, spec #3 R49/R50), rejouable. */
+function chargerDemoReperes(): void {
+  execSql(readFileSync('supabase/seed/04-demo-repere-voies.sql', 'utf8'))
+}
+
 function etatSeed(): void {
+  execSql(`delete from interclub.rencontre where id::text like 'aeaeaeae-%';`)
   purgerResultatsAdo()
   phaseAdo('competition')
   reinitialiserEngagement()
@@ -165,6 +176,12 @@ test('04 — jetons QR d’une rencontre', async ({ page }) => {
 })
 
 test('05 — clubs et invitation coach', async ({ page }) => {
+  // Invitation active du Club A (créée si absente) : sinon l'écran propose « Générer ».
+  execSql(
+    `insert into interclub.invitation_coach (club_id)
+       select '${CLUB_A}' where not exists (
+         select 1 from interclub.invitation_coach where club_id = '${CLUB_A}' and actif);`,
+  )
   await page.goto('/admin/clubs')
   await numeroter(page, [
     page.locator('summary').filter({ hasText: 'Nouveau club' }),
@@ -232,8 +249,24 @@ test('08 — rôles', async ({ page }) => {
     page.getByRole('combobox').nth(1),
     bouton(page, 'Attribuer'),
     bouton(page, 'Générer une invitation'),
+    bouton(page, /^Supprimer le compte /),
   ])
   await capturer(page, '12-roles')
+})
+
+test('08b — voies doublées et repères (rencontre Ado)', async ({ page }) => {
+  chargerDemoReperes()
+  await page.goto(`/admin/rencontres/${ADO_REPERES}`)
+  await bouton(page, /Voies de difficulté/).click()
+  const repereJaune = page.getByRole('textbox', { name: 'Repère de la voie T5 Jaune' })
+  await expect(repereJaune).toBeVisible()
+  await numeroter(page, [
+    page.getByText('T5 c', { exact: true }).first(),
+    repereJaune,
+    repereJaune.locator('xpath=following-sibling::button[1]'),
+    page.getByLabel('Repère', { exact: true }),
+  ])
+  await capturer(page, '18-structure-reperes')
 })
 
 test('09 — saisie, affichage, contrôle, classement (rencontre Ado)', async ({ page }) => {

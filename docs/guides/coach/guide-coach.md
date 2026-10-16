@@ -273,6 +273,20 @@ Chaque ligne résume la progression du grimpeur :
 On saisit toujours la **meilleure tentative** du grimpeur : un seul résultat
 par voie et par bloc.
 
+**Voies doublées (Ado)** : quand un niveau compte plusieurs voies, chacune a son
+propre nom, celui affiché au mur par l'organisation.
+
+<img src="captures/13-voies-doublees.png" alt="Saisie sur des voies doublées" width="320">
+
+| N° | Élément | Effet |
+| --- | --- | --- |
+| 1 | « T4 b » | Voie sans repère : niveau + lettre (a, b, c… dans l'ordre des voies) |
+| 2 | « T5 Jaune » | Voie avec repère : niveau + repère (couleur, numéro de relais…) |
+| 3 | Choisir une voie | La liste distingue les voies de même niveau par ce nom |
+
+Vérifier le nom de la voie au mur avant de saisir : « T5 Jaune » et « T5 b »
+sont deux voies différentes.
+
 **Voies de difficulté** :
 
 - **Enfant** : les 3 voies découlent du groupe de départ et sont affichées

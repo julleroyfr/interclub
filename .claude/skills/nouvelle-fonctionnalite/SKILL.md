@@ -61,6 +61,18 @@ Ordre non négociable : **spec → (maquette si écrans) → tests → implémen
   générer/mettre à jour le cahier avec le skill `rediger-cahier-de-test`.
 - Dérouler les cas concernés et tracer l'exécution.
 
+## Étape 5bis — Guides utilisateur coach et admin
+
+- Toute fonctionnalité visible par un coach ou un admin **met à jour son guide** :
+  `docs/guides/coach/guide-coach.md`, `docs/guides/admin/guide-admin.md` (et
+  `docs/guides/juge/guide-juge.md` si les écrans juge changent).
+- Écran nouveau ou modifié : ajouter / ajuster son scénario dans
+  `scripts/captures/guide-*.captures.ts` (repères numérotés), puis
+  `npm run doc:captures` (stack locale au seed) ; aligner le tableau « N° » du
+  guide sur la capture.
+- Régénérer les PDF : `npm run doc:pdf` (ignorés par git, distribués à part).
+- `npm run lint:md` doit passer.
+
 ## Étape 6 — Definition of Done
 
 Vérifier la checklist de `docs/conventions/01-workflow-spec-first-tdd.md` §6
