@@ -17,6 +17,8 @@
   **Repère de voie (R49) et libellé d'affichage d'une voie (R50) ajoutés et
   validés le 2026-10-16** : distinguer au mur et à la saisie les voies doublées
   ou triplées d'un même niveau (ex. deux T5 en ado).
+  **Tri des voies de la structure par niveau puis libellé (R42) : demandé et
+  validé le 2026-10-16.**
 - **Sources** : décision produit du 2026-07-25 (tranche T8 — premiers écrans
   d'administration). S'appuie sur la **spec #1 — Rôles & autorisations**
   (`01-roles-et-autorisations.md`), qui reste la vérité pour « qui peut faire
@@ -488,6 +490,12 @@ flowchart TD
   éléments existants** de la rencontre, dans leur ordre (`ordre`, R38/R39) :
   - **Voies** : **libellé** (R50), type (moulinette/tête), cotation et points
     (voie entière, et prise valorisée ou zones selon la catégorie, R38).
+    *(Rév. 2026-10-16.)* Par exception à l'ordre `ordre`, les voies sont **triées
+    par niveau** — `M1`→`M4` puis `T1`→`T10` — **puis par libellé** (R50) au sein
+    d'un même niveau : ordre alphabétique, casse ignorée, nombres dans l'ordre
+    naturel (« Relais 2 » avant « Relais 12 »). Exemple : « T5 c », « T5 Jaune »,
+    « T5 Relais 12 », « T6 a ». Ce tri ne change ni l'`ordre` stocké ni les
+    lettres (R50b).
   - **Blocs** : code et **paliers** (libellé + points, R39).
   - **Vitesse** : numéro et libellé (R32), **et le barème par rang** de l'épreuve
     (échelons + points de chute / non-présentation, R46) — éditable.

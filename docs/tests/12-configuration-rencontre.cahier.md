@@ -282,6 +282,9 @@ d'ouverture du **tableau de bord** → `/admin/rencontres/<id>`.
   1. **Lettres par défaut** (R50b/c) : onglet **Voies** → les deux T5 s'affichent
      **« T5 a »** et **« T5 b »** (dans l'ordre de la liste) ; les niveaux uniques
      restent seuls (« T6 »). ✅
+     **Tri** (R42, rév. 2026-10-16) : la liste est triée **par niveau** (T1 → T10,
+     et M1 → M4 d'abord en enfant) **puis par libellé** dans un niveau — ex.
+     « T5 c », « T5 Jaune », « T5 Relais 12 », puis « T6 a ». ✅
   2. **Poser un repère en ③** (R49d, R50a) : sur la ligne « T5 b », saisir
      « Jaune » entouré d'espaces dans **Repère** → **OK** → « Repère enregistré. » ; la ligne
      devient **« T5 Jaune »** (espaces retirés) et l'autre reste **« T5 a »**

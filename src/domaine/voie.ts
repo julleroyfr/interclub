@@ -4,6 +4,7 @@
 // garantit en dernier ressort la borne (check) et l'unicité (index unique
 // partiel `(epreuve_id, niveau, lower(repere))`).
 
+import { NIVEAUX_MOULINETTE, NIVEAUX_TETE } from './gabarit'
 import type { Phase } from './rencontre'
 
 /** Longueur maximale d'un repère de voie (R49b). */
@@ -74,4 +75,25 @@ export function libellesVoies(
     })
   }
   return libelles
+}
+
+/** Rang d'un niveau : M1→M4 puis T1→T10 ; un niveau inconnu passe en fin. */
+const RANG_NIVEAU = new Map<string, number>(
+  [...NIVEAUX_MOULINETTE, ...NIVEAUX_TETE].map((n, i) => [n, i]),
+)
+
+const comparerLibelle = new Intl.Collator('fr', { sensitivity: 'base', numeric: true }).compare
+
+/**
+ * Voies de la structure d'une rencontre triées pour l'affichage (R42, rév.
+ * 2026-10-16) : par niveau (M1→M4 puis T1→T10), puis par libellé (R50) —
+ * alphabétique, casse ignorée, nombres naturels. Renvoie une nouvelle liste.
+ */
+export function trierVoiesStructure<T extends { niveau: string; libelle: string }>(
+  voies: T[],
+): T[] {
+  const rang = (n: string) => RANG_NIVEAU.get(n) ?? Number.MAX_SAFE_INTEGER
+  return [...voies].sort(
+    (a, b) => rang(a.niveau) - rang(b.niveau) || comparerLibelle(a.libelle, b.libelle),
+  )
 }
