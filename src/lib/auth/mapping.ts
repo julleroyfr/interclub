@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { type RoleApplicatif } from '@/domaine/mapping-de-role'
+import { comptesPermanents, type RoleApplicatif } from '@/domaine/mapping-de-role'
 import { exigerLectureAdmin } from '@/lib/auth/garde-lecture'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -10,11 +10,14 @@ export type CompteSupabase = { id: string; email: string | null }
 /** Club sélectionnable pour un mapping coach. */
 export type ClubOption = { id: string; nom: string }
 
-/** Mapping déjà attribué, pour affichage. */
-export type MappingExistant = {
+/**
+ * Compte permanent listé à l'écran, avec son mapping s'il en a un (`role` null =
+ * sans rôle, R5). Base de l'action « Supprimer » (spec #2 R46).
+ */
+export type CompteListe = {
   utilisateurId: string
   email: string | null
-  role: RoleApplicatif
+  role: RoleApplicatif | null
   clubNom: string | null
 }
 
@@ -22,7 +25,7 @@ export type MappingExistant = {
 export type ContexteMapping = {
   comptes: CompteSupabase[]
   clubs: ClubOption[]
-  mappings: MappingExistant[]
+  listeComptes: CompteListe[]
 }
 
 /**
@@ -45,21 +48,16 @@ export async function chargerContexteMapping(): Promise<ContexteMapping> {
   if (clubsRes.error) throw clubsRes.error
   if (mappingsRes.error) throw mappingsRes.error
 
-  const emailParId = new Map(
-    comptesRes.data.users.map((u) => [u.id, u.email ?? null]),
-  )
-
-  const comptes: CompteSupabase[] = comptesRes.data.users.map((u) => ({
-    id: u.id,
-    email: u.email ?? null,
-  }))
+  // Les comptes anonymes des sessions QR ne sont pas des comptes permanents :
+  // ni listés, ni proposés à l'attribution (R46).
+  const comptes: CompteSupabase[] = comptesPermanents(comptesRes.data.users)
 
   const clubs: ClubOption[] = (clubsRes.data ?? []).map((c) => ({
     id: c.id as string,
     nom: c.nom as string,
   }))
 
-  const mappings: MappingExistant[] = (mappingsRes.data ?? []).map((m) => {
+  const mappingParId = new Map((mappingsRes.data ?? []).map((m) => {
     // `club:club_id (nom)` : jointure to-one — un objet (ou null pour un admin).
     // Selon la version du client, une jointure peut être typée/renvoyée en
     // tableau : on aplati les deux formes.
@@ -68,15 +66,22 @@ export async function chargerContexteMapping(): Promise<ContexteMapping> {
       | { nom: string }[]
       | null
     const club = Array.isArray(brut) ? (brut[0] ?? null) : brut
-    return {
-      utilisateurId: m.utilisateur_id as string,
-      email: emailParId.get(m.utilisateur_id as string) ?? null,
-      role: m.role as RoleApplicatif,
-      clubNom: club?.nom ?? null,
-    }
-  })
+    return [
+      m.utilisateur_id as string,
+      { role: m.role as RoleApplicatif, clubNom: club?.nom ?? null },
+    ] as const
+  }))
 
-  return { comptes, clubs, mappings }
+  const listeComptes: CompteListe[] = comptes
+    .map((c) => ({
+      utilisateurId: c.id,
+      email: c.email,
+      role: mappingParId.get(c.id)?.role ?? null,
+      clubNom: mappingParId.get(c.id)?.clubNom ?? null,
+    }))
+    .sort((a, b) => (a.email ?? a.utilisateurId).localeCompare(b.email ?? b.utilisateurId))
+
+  return { comptes, clubs, listeComptes }
 }
 
 /** État renvoyé au formulaire de mapping (pour `useActionState`). */

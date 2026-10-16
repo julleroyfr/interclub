@@ -6,7 +6,10 @@ import {
   creerMappingDeRole,
   MappingDeRoleInvalideError,
   type RoleApplicatif,
+  SuppressionCompteRefuseeError,
+  verifierSuppressionCompte,
 } from '@/domaine/mapping-de-role'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 
 import { type EtatMapping } from './mapping'
@@ -61,4 +64,45 @@ export async function attribuerMapping(
   revalidatePath('/admin/mapping')
   revalidatePath('/', 'layout')
   return { succes: 'Rôle attribué.' }
+}
+
+/**
+ * Supprime **définitivement** un compte permanent (spec #2 R41–R45). Server
+ * Action : joignable par POST direct, l'autorisation est revérifiée ici.
+ *
+ * Seul cas d'écriture via `service_role` de l'écran (ADR 0005, exceptions) : la
+ * suppression d'un compte Supabase Auth n'existe que dans l'API d'administration
+ * Auth. La garde est donc ici, AVANT tout appel : demandeur admin et cible
+ * différente de lui-même (`verifierSuppressionCompte`). La base fait le reste
+ * (R43, R44) : mapping et sessions QR supprimés en cascade, auteurs des saisies
+ * passés à `null`.
+ */
+export async function supprimerCompte(
+  _etatPrecedent: EtatMapping,
+  formData: FormData,
+): Promise<EtatMapping> {
+  const utilisateur = await getUtilisateurCourant()
+
+  let cibleId
+  try {
+    cibleId = verifierSuppressionCompte({
+      demandeur: utilisateur ? { id: utilisateur.id, role: utilisateur.role } : null,
+      cibleId: String(formData.get('utilisateurId') ?? ''),
+    })
+  } catch (e) {
+    if (e instanceof SuppressionCompteRefuseeError) return { erreur: e.message }
+    throw e
+  }
+
+  const { error } = await createAdminClient().auth.admin.deleteUser(cibleId)
+  if (error) {
+    // Compte déjà supprimé (deux admins en même temps) ou identifiant inconnu (R45).
+    if (error.status === 404) {
+      return { erreur: 'Compte introuvable : il a peut-être déjà été supprimé.' }
+    }
+    return { erreur: 'La suppression a échoué. Réessayez.' }
+  }
+
+  revalidatePath('/admin/mapping')
+  return { succes: 'Compte supprimé.' }
 }

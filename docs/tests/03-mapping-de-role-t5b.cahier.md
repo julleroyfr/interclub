@@ -5,7 +5,7 @@
 > Règles dans [docs/conventions/06-cahier-de-test.md](../conventions/06-cahier-de-test.md).
 
 - **Spec de référence** : `docs/specs/02-authentification-et-sessions-qr.md`
-  (R1–R5 : mapping de rôle) ; `docs/specs/01-roles-et-autorisations.md` (R4, R10).
+  (R1–R5 : mapping de rôle ; R41–R46 : suppression d'un compte, rév. 2026-10-16) ; `docs/specs/01-roles-et-autorisations.md` (R4, R10).
 - **Décision d'architecture** :
   [ADR 0002](../decisions/0002-liste-des-comptes-via-cle-service.md) — lecture des
   comptes / clubs via la clé `service_role`, écriture via RLS.
@@ -67,8 +67,9 @@ R3) ; aucune de ces écritures n'aboutit, l'état n'est donc pas modifié. Les c
   1. Depuis l'accueil, cliquer « Administrer les rôles » (ou aller `/admin/mapping`).
 - **Résultat attendu** : l'écran s'affiche ; le sélecteur **Compte** liste les
   3 comptes de test (par e-mail) ; le sélecteur **Club** liste « Club A » ; le
-  tableau « Mappings existants » montre `admin@test.local` (admin) et
-  `coach@test.local` (coach / Club A).
+  tableau « Comptes » montre `admin@test.local` (admin, « (vous) »),
+  `coach@test.local` (coach / Club A) et `sansmapping@test.local` (« sans
+  rôle »). Aucun compte anonyme (session QR) n'y figure (R46).
 - **RLS / sécurité** : la liste des comptes provient du client `service_role`
   côté serveur (ADR 0002), jamais exposé au navigateur.
 
@@ -146,6 +147,78 @@ R3) ; aucune de ces écritures n'aboutit, l'état n'est donc pas modifié. Les c
 - **Résultat attendu** : l'accueil affiche « Rôle : coach » (avant l'attribution il
   affichait « aucun rôle attribué », R5 fail-closed). Le mapping prend effet.
 
+### CT-09 — Supprimer un compte coach   (couvre : R41, R42, R43 ; nominal)
+
+- **Rôle / compte** : `admin@test.local`.
+- **Pré-condition** : `coach@test.local` existe, coach du Club A.
+- **Étapes** :
+  1. Sur `/admin/mapping`, ligne `coach@test.local`, cliquer **Supprimer**.
+  2. Vérifier la confirmation (e-mail rappelé, « Suppression définitive »),
+     cliquer **Supprimer définitivement**.
+  3. Dans une autre fenêtre, tenter de se connecter avec `coach@test.local`.
+- **Résultat attendu** : « Compte supprimé. » ; la ligne disparaît du tableau et
+  du sélecteur **Compte** ; la connexion échoue (identifiants invalides).
+- **Vérif base** : `select count(*) from auth.users where email='coach@test.local';`
+  → 0 ; aucune ligne `interclub.compte` orpheline.
+
+### CT-10 — Annuler la confirmation   (couvre : R42 ; négatif)
+
+- **Rôle / compte** : `admin@test.local`.
+- **Étapes** : cliquer **Supprimer** sur un compte, puis **Annuler** (ou Échap).
+- **Résultat attendu** : la confirmation se ferme ; le compte est toujours listé.
+
+### CT-11 — Supprimer un autre admin et un compte sans rôle   (couvre : R41 ; nominal)
+
+- **Rôle / compte** : `admin@test.local`.
+- **Pré-condition** : un second admin existe (cf. CT-03 ou invitation
+  administrateur), `sansmapping@test.local` sans rôle.
+- **Étapes** : supprimer le second admin, puis `sansmapping@test.local`.
+- **Résultat attendu** : les deux suppressions réussissent ; `admin@test.local`
+  reste admin et garde l'accès à l'écran.
+
+### CT-12 — Pas de suppression de son propre compte   (couvre : R41, R45 ; négatif)
+
+- **Rôle / compte** : `admin@test.local`.
+- **Étapes** :
+  1. Constater que sa ligne affiche « (vous) » sans bouton **Supprimer**.
+  2. (Contournement) Rejouer le POST de la Server Action `supprimerCompte` avec
+     son propre `utilisateurId` (DevTools → copier la requête d'une autre
+     suppression, changer l'id).
+- **Résultat attendu** : « Vous ne pouvez pas supprimer votre propre compte. » ;
+  rien n'est supprimé.
+
+### CT-13 — Compte déjà supprimé   (couvre : R45 ; cas limite)
+
+- **Rôle / compte** : `admin@test.local` dans **deux onglets**.
+- **Étapes** : ouvrir la confirmation sur le même compte dans les deux onglets ;
+  confirmer dans le premier, puis dans le second.
+- **Résultat attendu** : le premier affiche « Compte supprimé. » ; le second
+  « Compte introuvable : il a peut-être déjà été supprimé. ».
+
+### CT-14 — Données conservées, session coupée   (couvre : R43, R44)
+
+- **Rôle / compte** : `admin@test.local` + un coach ayant **saisi des
+  résultats** (connecté dans un autre navigateur).
+- **Étapes** :
+  1. Supprimer ce coach depuis `/admin/mapping`.
+  2. Dans le navigateur du coach, recharger son espace.
+  3. Ouvrir le classement / contrôle de la rencontre concernée.
+- **Résultat attendu** : le coach n'a plus aucun droit (accueil « aucun rôle »
+  ou retour à la connexion) ; les résultats qu'il avait saisis sont **toujours
+  présents** dans le classement ; l'auteur éventuellement affiché est « — ».
+- **Vérif base** : noter avant suppression
+  `select count(*) from interclub.resultat_voie where auteur_utilisateur_id = '<id du coach>';`
+  (idem `resultat_bloc`) ; après suppression, ces lignes existent toujours avec
+  `auteur_utilisateur_id is null`.
+
+### CT-15 — Un non-admin ne peut pas supprimer   (couvre : R45 ; négatif)
+
+- **Rôle / compte** : `coach@test.local` (avant CT-09, ou un autre coach).
+- **Étapes** (contournement) : rejouer le POST de la Server Action
+  `supprimerCompte` avec la session du coach.
+- **Résultat attendu** : « Seul un administrateur peut supprimer un compte. » ;
+  rien n'est supprimé.
+
 ## Registre d'exécution
 
 | Date | Testeur | Version/commit | Cas | Résultat | Remarque |
@@ -158,3 +231,10 @@ R3) ; aucune de ces écritures n'aboutit, l'état n'est donc pas modifié. Les c
 | 2026-07-22 | julleroyfr | `57cc179` | CT-06 | ✅ | IHM (404 non-admin) |
 | | | | CT-07 | ⏳ | à exécuter : `npm run test:t5b` (RLS écriture) |
 | 2026-07-22 | julleroyfr | `57cc179` | CT-08 | ✅ | IHM |
+| | | | CT-09 | ⏳ | suppression de compte (R41–R46) |
+| | | | CT-10 | ⏳ | suppression de compte (R41–R46) |
+| | | | CT-11 | ⏳ | suppression de compte (R41–R46) |
+| | | | CT-12 | ⏳ | suppression de compte (R41–R46) |
+| | | | CT-13 | ⏳ | suppression de compte (R41–R46) |
+| | | | CT-14 | ⏳ | suppression de compte (R41–R46) |
+| | | | CT-15 | ⏳ | suppression de compte (R41–R46) |

@@ -69,3 +69,60 @@ export function creerMappingDeRole(demande: DemandeMapping): MappingDeRole {
   }
   return { utilisateurId, role: 'coach', clubId }
 }
+
+// --- Suppression d'un compte permanent (spec #2 R41–R46, rév. 2026-10-16) ---
+
+/** Suppression de compte refusée (non-admin, soi-même, cible absente — R45). */
+export class SuppressionCompteRefuseeError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'SuppressionCompteRefuseeError'
+  }
+}
+
+/** Demande de suppression : qui la fait (null = personne de connecté), et qui est visé. */
+export type DemandeSuppressionCompte = {
+  demandeur: { id: string; role: RoleApplicatif | null } | null
+  cibleId: string
+}
+
+/**
+ * Vérifie qu'une suppression de compte est permise et renvoie l'identifiant
+ * normalisé du compte à supprimer (R41, R45).
+ *
+ * - Seul un admin supprime un compte (R41, R45).
+ * - Tout compte permanent est supprimable — coach, admin ou sans mapping —
+ *   sauf celui du demandeur : il reste donc toujours au moins un admin (R41).
+ */
+export function verifierSuppressionCompte(demande: DemandeSuppressionCompte): string {
+  if (demande.demandeur?.role !== 'admin') {
+    throw new SuppressionCompteRefuseeError(
+      'Seul un administrateur peut supprimer un compte.',
+    )
+  }
+  const cibleId = demande.cibleId?.trim() ?? ''
+  if (!cibleId) {
+    throw new SuppressionCompteRefuseeError('Aucun compte à supprimer.')
+  }
+  if (cibleId === demande.demandeur.id) {
+    throw new SuppressionCompteRefuseeError(
+      'Vous ne pouvez pas supprimer votre propre compte.',
+    )
+  }
+  return cibleId
+}
+
+/** Utilisateur Supabase Auth, réduit à ce qui sert ici. */
+type UtilisateurAuth = { id: string; email?: string | null; is_anonymous?: boolean }
+
+/**
+ * Comptes permanents parmi les utilisateurs Supabase Auth : les comptes
+ * **anonymes** des sessions QR éphémères (R6) en sont exclus (R46).
+ */
+export function comptesPermanents(
+  utilisateurs: UtilisateurAuth[],
+): { id: string; email: string | null }[] {
+  return utilisateurs
+    .filter((u) => !u.is_anonymous)
+    .map((u) => ({ id: u.id, email: u.email ?? null }))
+}
