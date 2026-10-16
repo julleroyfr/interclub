@@ -24,6 +24,8 @@ const EXCEPTIONS: Record<string, string> = {
     "inscription par le secret de l'invitation administrateur, avant toute session (spec #2 R36–R39)",
   exportDisponible: 'autorisation par le demandeur résolu côté serveur (`peutExporter`, spec #15 R1–R5)',
   reponseExportPdf: 'autorisation par le demandeur résolu côté serveur (`peutExporter`, spec #15 R1–R5)',
+  supprimerCompte:
+    'écriture via l’API Auth admin, gardée par `verifierSuppressionCompte` (admin, pas soi-même — spec #2 R41/R45)',
   reponseRapportPeriodique: 'cron sans session, gardé par le secret du déclencheur (`verifierSecret`, spec #19 R4/R5/R19)',
 }
 

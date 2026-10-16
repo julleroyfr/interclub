@@ -421,7 +421,13 @@ publication.
   une nouvelle invitation annule la précédente ; elle peut aussi être révoquée.
   L'écran indique si elle est valable (avec le temps restant), utilisée,
   expirée ou révoquée.
-- La liste du bas récapitule les rôles attribués.
+- La liste **Comptes** affiche tous les comptes, avec leur rôle (ou « sans
+  rôle ») et leur club.
+- **Supprimer** un compte (coach, admin ou sans rôle) : bouton **Supprimer** sur
+  sa ligne, puis confirmer. La suppression est **définitive** : la personne ne
+  peut plus se connecter et son e-mail redevient libre pour une nouvelle
+  inscription. Les résultats qu'elle a saisis sont conservés, sans auteur. Votre
+  propre compte ne peut pas être supprimé.
 
 ## 12. Questions fréquentes
 

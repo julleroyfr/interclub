@@ -33,6 +33,11 @@
   QR/URL **à usage unique**, **valable 15 minutes**, qui permet à une personne de
   créer son compte permanent avec le rôle **admin**. R4 étend en conséquence son
   exception d'attribution automatique.
+- **Révision** : 2026-10-16 — **suppression d'un compte permanent** (R41–R46,
+  validée le 2026-10-16) : depuis l'écran « Mapping de rôle », l'admin supprime
+  définitivement **tout** compte permanent (coach, admin ou sans rôle) **sauf le
+  sien** ; les données saisies sont conservées, sans auteur. Retire la
+  suppression de compte du « Hors périmètre ».
 
 ## Objectif
 
@@ -252,6 +257,34 @@ alimente le modèle de données (mapping, jetons) et les policies **RLS**.
   restant**), **utilisée**, **expirée** ou **révoquée**, et propose d'en
   **générer** une nouvelle.
 
+### Suppression d'un compte permanent (rév. 2026-10-16)
+
+- **R41.** **Seul l'admin** peut **supprimer** un compte permanent, depuis
+  l'écran **« Mapping de rôle »**. Tout compte permanent est supprimable —
+  coach, admin ou compte **sans mapping** — **à l'exception du compte de l'admin
+  qui agit** : il reste donc toujours au moins un admin.
+- **R42.** La suppression est **définitive** et demande une **confirmation
+  explicite** rappelant l'e-mail du compte visé. Sans confirmation, rien n'est
+  supprimé.
+- **R43.** Supprimer un compte supprime le **compte Supabase Auth** et son
+  **mapping de rôle** dans la même opération : le titulaire ne peut plus se
+  connecter, une session encore ouverte perd **immédiatement** tout droit
+  applicatif (R5), et l'e-mail redevient **libre** (une nouvelle inscription
+  par invitation est possible, R30/R38).
+- **R44.** Les **données produites** par le compte supprimé sont **conservées** :
+  résultats saisis, coches de contrôle, invitation administrateur utilisée
+  restent en place, avec un **auteur vide** (affiché « — »).
+- **R45.** Est **refusée**, sans rien supprimer et avec un message : la
+  suppression de **son propre** compte, d'un compte **inexistant** (déjà
+  supprimé), ou une demande émanant d'un **non-admin** (y compris par appel
+  direct, hors écran).
+- **R46.** L'écran « Mapping de rôle » liste **tous les comptes permanents**
+  (avec ou sans mapping) avec leur e-mail, leur rôle (ou « sans rôle ») et leur
+  club, et propose l'action **« Supprimer »** sur chaque compte sauf celui de
+  l'admin connecté. Les comptes **anonymes** des sessions QR éphémères (R6) ne
+  sont pas des comptes permanents : ils ne sont **ni listés ni proposés** à
+  l'attribution d'un rôle.
+
 ## Scénarios
 
 ### Nominal — attribution d'un compte coach
@@ -276,6 +309,14 @@ minutes, alors elle crée son compte (e-mail + mot de passe saisi deux fois) et
 devient **admin** (R35, R36, R38). L'écran de l'admin affiche ensuite
 l'invitation comme **utilisée** ; la même URL n'ouvre plus d'inscription (R36,
 R40).
+
+### Nominal — suppression d'un compte coach
+
+Étant donné un coach du club A qui a quitté le club, quand l'admin clique
+« Supprimer » sur son compte dans l'écran « Mapping de rôle » et confirme, alors
+le compte disparaît de la liste, son titulaire ne peut plus se connecter (R41,
+R43), et les résultats qu'il avait saisis restent dans le classement, sans auteur
+(R44).
 
 ### Nominal — session coach temporaire
 
@@ -325,6 +366,15 @@ alors une session juge s'ouvre et permet de saisir les **résultats de vitesse**
 - Deux personnes envoient en même temps le formulaire de la **même** invitation
   administrateur → un seul compte créé ; l'autre reçoit « invitation invalide »
   (R38).
+- L'admin tente de supprimer **son propre** compte (bouton absent ; par appel
+  direct) → refusé, rien supprimé (R41, R45).
+- L'admin supprime **un autre admin** → autorisé ; l'admin qui agit reste admin
+  (R41).
+- L'admin annule la confirmation → rien supprimé (R42).
+- Deux admins suppriment le même compte presque en même temps → le second reçoit
+  « compte introuvable », rien d'autre n'est supprimé (R45).
+- Un coach supprimé alors qu'il était connecté → ses actions suivantes sont
+  refusées comme un compte sans rôle (R43, R5).
 - Un **admin connecté** scanne un QR juge avec son téléphone → sa session admin
   est conservée ; il choisit « Aller à mon espace » ou « Me déconnecter et ouvrir
   la session QR » (R34).
@@ -420,8 +470,15 @@ sequenceDiagram
   (avec le compte créé) ; état **actif / révoqué** ; **au plus une** invitation
   active (R35–R37). La consommation et la création du mapping `admin` se font
   dans **une seule** opération atomique (R38).
+- **Suppression d'un compte** : la suppression du compte Supabase Auth entraîne
+  celle de son mapping et de ses sessions QR ; les références d'auteur
+  (résultats, contrôles, invitation administrateur utilisée) passent à **vide**
+  sans supprimer la donnée (R43, R44).
 - **RLS attendue** :
   - administration du mapping de rôle **réservée à l'admin** (R4) ;
+  - suppression d'un compte permanent par l'**API d'administration Auth**,
+    côté serveur uniquement, après vérification que le demandeur est admin et
+    que la cible n'est pas lui-même (R41, R45) ;
   - génération / affichage / révocation des jetons `coach_temporaire` d'un club
     **réservée à l'admin ou au coach permanent de ce club** (R15, R16, R21) ;
   - génération / révocation des jetons `juge` **réservée à l'admin** (R17, R20) ;
@@ -451,7 +508,8 @@ Cette spec ne couvre pas (à traiter ailleurs) :
   conditions (hors périmètre déjà posé par la spec #1).
 - La **gestion des comptes permanents** au-delà du mapping de rôle et de
   l'**onboarding par invitation** (R26–R33, R35–R40) : réinitialisation de mot de passe,
-  e-mails transactionnels, modification/suppression d'un compte existant.
+  e-mails transactionnels, modification d'un compte existant (e-mail, mot de
+  passe). La **suppression** est couverte par R41–R46 (rév. 2026-10-16).
 - L'accès **visiteur non authentifié** aux infos publiques : sans objet (pas
   d'espace public, spec #1 R8 rév. 2026-10-02).
 - Le **cumul de rôles** par une même personne (spec #1 R4 : une session = un
