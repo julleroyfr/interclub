@@ -231,8 +231,8 @@ R3) ; aucune de ces écritures n'aboutit, l'état n'est donc pas modifié. Les c
 | 2026-07-22 | julleroyfr | `57cc179` | CT-06 | ✅ | IHM (404 non-admin) |
 | | | | CT-07 | ⏳ | à exécuter : `npm run test:t5b` (RLS écriture) |
 | 2026-07-22 | julleroyfr | `57cc179` | CT-08 | ✅ | IHM |
-| | | | CT-09 | ⏳ | suppression de compte (R41–R46) |
-| | | | CT-10 | ⏳ | suppression de compte (R41–R46) |
+| 2026-10-16 | julleroyfr | `613a3a9` | CT-09 | ✅ | local ; suppression d’un compte (R41–R43) |
+| 2026-10-16 | julleroyfr | `613a3a9` | CT-10 | ✅ | local ; annulation de la confirmation (R42) |
 | | | | CT-11 | ⏳ | suppression de compte (R41–R46) |
 | | | | CT-12 | ⏳ | suppression de compte (R41–R46) |
 | | | | CT-13 | ⏳ | suppression de compte (R41–R46) |
