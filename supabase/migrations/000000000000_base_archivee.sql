@@ -1,6 +1,6 @@
 -- ============================================================================
 -- FICHIER GÉNÉRÉ par scripts/consolider-archive.sh — NE PAS MODIFIER.
--- Concaténation des 45 migrations de supabase/migrations/archive/,
+-- Concaténation des 47 migrations de supabase/migrations/archive/,
 -- déjà appliquées en recette et en prod (cf. JOURNAL.md).
 -- Usage LOCAL uniquement (supabase db reset) : ne jamais l'appliquer en
 -- recette ni en prod.
@@ -6630,6 +6630,123 @@ insert into interclub.version (version, description, applique_par)
 values (
   '202610101000_import_csv_sans_licence',
   'Import CSV sans licence (spec #18, spec #3 R21c) : colonne dérivée grimpeur.licence_generee (licence >= 2e9), fonction forme_comparable(text), RPC importer_grimpeurs_csv(uuid, jsonb) SECURITY INVOKER atomique (rapprochement par identité dans le club cible, licence générée, verrou transactionnel).',
+  'julleroyfr'
+)
+on conflict (version) do nothing;
+
+
+-- ----------------------------------------------------------------------------
+-- archive/202610161000_rapport_periodique.sql
+-- ----------------------------------------------------------------------------
+-- ===========================================================================
+-- 202610161000_rapport_periodique
+--
+-- Objet : rapport périodique (spec #19, validée le 2026-10-16).
+--   1. Table `interclub.rapport_periodique` : historique des rapports produits
+--      tous les 3 jours par la route `/api/rapport` (R15, R16).
+--   2. Accès (R19) : RLS activée, AUCUNE policy ; rien pour anon/authenticated.
+--      Seul `service_role` insère (la route, gardée par CRON_SECRET) et lit
+--      (diagnostic). L'admin consulte la table dans le Table Editor (postgres).
+--   3. Extension pg_cron + tâche nommée `purge-rapport-periodique`, quotidienne
+--      à 03:00 UTC : supprime les rapports de plus d'un mois (R20), et rien
+--      d'autre (R21).
+--
+-- Dépendances : extension pg_cron disponible (Supabase : Database → Extensions).
+-- Idempotent : create … if not exists ; cron.schedule remplace une tâche de même
+--              nom.
+-- Application : MANUELLE dans le SQL Editor Supabase — recette d'abord, prod à
+--               la bascule sur `main`.
+-- ===========================================================================
+
+-- 1. Historique des rapports (R15).
+create table if not exists interclub.rapport_periodique (
+  id       uuid primary key default gen_random_uuid(),
+  cree_le  timestamptz not null default now(),
+  saison   int not null,
+  contenu  jsonb not null
+);
+create index if not exists idx_rapport_periodique_cree_le
+  on interclub.rapport_periodique (cree_le);
+
+comment on table interclub.rapport_periodique is
+  'Rapports périodiques (clubs, grimpeurs par tranche d''âge, rencontres de la saison), produits tous les 3 jours par le cron de l''hébergeur ; purgés après un mois (spec #19).';
+
+-- 2. Accès (R19).
+alter table interclub.rapport_periodique enable row level security;
+revoke all on interclub.rapport_periodique from public, anon, authenticated;
+grant select, insert on interclub.rapport_periodique to service_role;
+
+-- 3. Purge quotidienne des rapports de plus d'un mois (R20, R21).
+create extension if not exists pg_cron with schema pg_catalog;
+
+select cron.schedule(
+  'purge-rapport-periodique',
+  '0 3 * * *',
+  $$delete from interclub.rapport_periodique where cree_le < now() - interval '1 month'$$
+);
+
+-- ===========================================================================
+-- Suivi de version
+-- ===========================================================================
+
+insert into interclub.version (version, description, applique_par)
+values (
+  '202610161000_rapport_periodique',
+  'Rapport périodique (spec #19) : table rapport_periodique (RLS sans policy, select/insert service_role), extension pg_cron, tâche purge-rapport-periodique quotidienne 03:00 UTC (rapports de plus d''un mois).',
+  'julleroyfr'
+)
+on conflict (version) do nothing;
+
+
+-- ----------------------------------------------------------------------------
+-- archive/202610161100_repere_voie.sql
+-- ----------------------------------------------------------------------------
+-- ===========================================================================
+-- 202610161100_repere_voie
+--
+-- Objet : repère d'une voie de difficulté de rencontre (spec #3 R49, validée le
+--         2026-10-16) — texte libre (relais, couleur…) qui distingue au mur les
+--         voies doublées d'un même niveau. Le libellé affiché (R50) est calculé
+--         par l'application ; rien à stocker de plus.
+--   1. Colonne `voie_difficulte.repere text` nullable : non vide et ≤ 30
+--      caractères quand renseignée (R49a/b).
+--   2. Unicité du repère par (épreuve, niveau), insensible à la casse, pour les
+--      repères non nuls (R49c) : index unique partiel.
+--   Pas de colonne dans le gabarit (R49e). Les droits existants suffisent :
+--   écriture admin (`voie_difficulte_all_admin`), grant `update` à
+--   `authenticated` (migration 202608281000).
+--
+-- Idempotent : add column if not exists ; contrainte et index recréés.
+-- Application : MANUELLE dans le SQL Editor Supabase — recette d'abord, prod à
+--               la bascule sur `main`.
+-- ===========================================================================
+
+-- 1. Repère (R49a/b).
+alter table interclub.voie_difficulte
+  add column if not exists repere text;
+
+alter table interclub.voie_difficulte
+  drop constraint if exists voie_difficulte_repere_check;
+alter table interclub.voie_difficulte
+  add constraint voie_difficulte_repere_check
+  check (repere is null or (length(btrim(repere)) > 0 and length(repere) <= 30));
+
+comment on column interclub.voie_difficulte.repere is
+  'Repère au mur (relais, couleur…), facultatif — distingue les voies d''un même niveau (spec #3 R49). Libellé affiché calculé par l''application (R50).';
+
+-- 2. Unicité par (épreuve, niveau), insensible à la casse (R49c).
+create unique index if not exists uq_voie_difficulte_repere
+  on interclub.voie_difficulte (epreuve_id, niveau, lower(repere))
+  where repere is not null;
+
+-- ===========================================================================
+-- Suivi de version
+-- ===========================================================================
+
+insert into interclub.version (version, description, applique_par)
+values (
+  '202610161100_repere_voie',
+  'Repère de voie (spec #3 R49) : colonne voie_difficulte.repere (nullable, non vide, ≤ 30 car.) + index unique partiel (epreuve_id, niveau, lower(repere)).',
   'julleroyfr'
 )
 on conflict (version) do nothing;
