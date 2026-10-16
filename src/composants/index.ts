@@ -36,6 +36,7 @@ export {
 } from './Tableau'
 
 export { Coquille } from './Coquille'
+export { LogoInterclub } from './LogoInterclub'
 export { EcranErreur } from './EcranErreur'
 export { IndicateurNavigation } from './IndicateurNavigation'
 export { NavPrincipale } from './NavPrincipale'

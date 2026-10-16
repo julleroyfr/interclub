@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 
 import { seDeconnecter, terminerSession } from '@/lib/auth/actions'
 
+import { LogoInterclub } from './LogoInterclub'
 import { NavPrincipale, type LienNav } from './NavPrincipale'
 
 type Props = {
@@ -50,9 +51,7 @@ export function Coquille({
       <header className="sticky top-0 z-10 border-b border-bordure bg-fond/70 backdrop-blur">
         <div className={`mx-auto flex ${largeurCls} items-center justify-between gap-2 px-4 py-3`}>
           <div className="flex items-center gap-2">
-            <span className="grid size-8 place-items-center rounded-lg bg-accent/20 font-bold text-accent-doux ring-1 ring-accent/40">
-              I
-            </span>
+            <LogoInterclub />
             <span className="hidden font-semibold text-texte-fort sm:inline">Interclub</span>
           </div>
           <div className="flex items-center gap-2">
