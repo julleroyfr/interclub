@@ -16,6 +16,7 @@ import {
   type Rang,
 } from '@/domaine/score'
 import { formaterTempsVitesse } from '@/domaine/vitesse'
+import { libellesVoies } from '@/domaine/voie'
 import { exigerLectureAdminOuCoach } from '@/lib/auth/garde-lecture'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { verifierLecture } from '@/lib/supabase/lecture'
@@ -167,7 +168,7 @@ export async function getClassementRencontre(
       admin
         .from('voie_difficulte')
         .select(
-          'id, niveau, cotation, ordre, points, points_prise_valorisee, points_zone1, points_zone2, epreuve!inner(rencontre_id)',
+          'id, niveau, cotation, repere, ordre, points, points_prise_valorisee, points_zone1, points_zone2, epreuve!inner(rencontre_id)',
         )
         .eq('epreuve.rencontre_id', rencontreId)
         .order('ordre'),
@@ -256,8 +257,18 @@ export async function getClassementRencontre(
 
   // Structure (barème + libellés) des voies et blocs.
   const baremeParVoie = new Map<string, BaremeVoie>()
-  const metaVoie = new Map<string, { niveau: string; cotation: string | null; ordre: number }>()
-  for (const v of verifierLecture(voiesRes, 'des voies') ?? []) {
+  const metaVoie = new Map<string, { libelle: string; cotation: string | null; ordre: number }>()
+  const lignesVoies = verifierLecture(voiesRes, 'des voies') ?? []
+  // Libellés calculés sur toutes les voies de l'épreuve (spec #3 R50).
+  const libelles = libellesVoies(
+    lignesVoies.map((v) => ({
+      id: v.id as string,
+      niveau: v.niveau as string,
+      ordre: (v.ordre as number) ?? 0,
+      repere: (v.repere as string | null) ?? null,
+    })),
+  )
+  for (const v of lignesVoies) {
     const id = v.id as string
     baremeParVoie.set(id, {
       points: (v.points as number) ?? 0,
@@ -266,7 +277,7 @@ export async function getClassementRencontre(
       pointsZone2: (v.points_zone2 as number | null) ?? null,
     })
     metaVoie.set(id, {
-      niveau: v.niveau as string,
+      libelle: libelles.get(id) ?? (v.niveau as string),
       cotation: (v.cotation as string | null) ?? null,
       ordre: (v.ordre as number) ?? 0,
     })
@@ -320,7 +331,7 @@ export async function getClassementRencontre(
     const gid = r.grimpeur_id as string
     if (!decompVoie.has(gid)) decompVoie.set(gid, [])
     decompVoie.get(gid)!.push({
-      libelle: meta?.niveau ?? '?',
+      libelle: meta?.libelle ?? '?',
       cotation: meta?.cotation ?? null,
       issue,
       points: scoreVoie(issue, bareme),

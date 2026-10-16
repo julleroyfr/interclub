@@ -24,6 +24,10 @@
   l'enregistrement, **sans relire tout l'écran** ; les écritures des autres
   acteurs arrivent par le temps réel (spec #11). Motif : mesure en recette — 5 à
   6 allers-retours vers la base par clic (~2 s), pour 1 indispensable.
+  **Rév. 2026-10-16 — libellé des voies (validée le 2026-10-16)** : **R21**
+  complétée — chaque voie est désignée par son **libellé** (spec #3 R50 :
+  niveau + repère, ou lettre `a`, `b`… quand le niveau est doublé), pour
+  distinguer deux voies de même niveau (R11) à la saisie et dans le récapitulatif.
 - **Sources** :
   - **Spec #1 — Rôles & autorisations** (`01-roles-et-autorisations.md`), vérité
     pour « qui peut faire quoi » : un coach **saisit et modifie les résultats des
@@ -285,7 +289,10 @@ coach se ferme et l'**admin** vérifie/corrige ; la **⑤ résultats publics**
   (R20) tiennent compte des saisies en attente. Détail : spec #17 R22–R28.
 - **R21.** L'écran présente la saisie **par grimpeur** puis **par épreuve** (voies,
   blocs) ; pour chaque voie/bloc attendu, il affiche l'issue courante ou l'état
-  « à saisir ».
+  « à saisir ». Chaque voie est désignée par son **libellé** (spec #3 R50), avec
+  sa cotation : dans la liste des voies du grimpeur, dans le **choix de la voie**
+  à ajouter (ado, R11) et dans le **récapitulatif** d'une saisie. Deux voies de
+  même niveau sont ainsi toujours distinguables (ex. « T5 Jaune » / « T5 b »).
 - **R21bis.** *(Rév. 2026-10-02.)* Avant la **③ compétition** (① pré-compétition,
   ② préparation), la **structure** des épreuves (voies, blocs, paliers) n'est **pas
   encore lisible** par le coach (lecture authentifiée dès la ③, R6 — garanti par la
@@ -338,7 +345,8 @@ essai, B2 = Échec, et affiche « 3/3 voies · 2/2 blocs » (R20).
 Étant donné une rencontre **ado** en **phase ③** et un coach du club A, quand un
 grimpeur réalise successivement **T5 (Top)**, **T4 (Zone 2)**, **T5 (une seconde
 voie de même niveau, Zone 1)**, **T6 (Échec)** (R11/R12), alors les 4 résultats
-sont enregistrés (2 voies de niveau `T5` autorisées car voies distinctes). Quand le
+sont enregistrés (2 voies de niveau `T5` autorisées car voies distinctes). Les
+deux T5 apparaissent sous leur libellé (ex. « T5 Jaune » et « T5 b », R21). Quand le
 coach tente d'enregistrer une **7ᵉ** voie, alors c'est **refusé** (R14).
 
 ### Nominal — correction d'un résultat

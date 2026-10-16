@@ -642,7 +642,7 @@ function LigneVoie({
   return (
     <li className="flex flex-col gap-2 py-2" data-en-attente={voie.enAttente ? '' : undefined}>
       <div className="flex items-center gap-2">
-        <span className="min-w-9 font-bold text-texte-fort">{voie.niveau}</span>
+        <span className="min-w-9 font-bold text-texte-fort">{voie.libelle}</span>
         <span className="text-[11px] text-texte-doux">{voie.cotation}</span>
         <span className="ml-auto flex items-center gap-2">
           <EtatEnvoi cle={cle} enAttente={voie.enAttente} suivi={suivi} />
@@ -665,7 +665,7 @@ function LigneVoie({
               const issue = String(fd.get('issue')) as IssueVoie
               return {
                 s: { type: 'voie', ...cible, issue },
-                resume: { grimpeur: nomGrimpeur, cible: `Voie ${voie.niveau}`, valeur: LIBELLE_ISSUE[issue] },
+                resume: { grimpeur: nomGrimpeur, cible: `Voie ${voie.libelle}`, valeur: LIBELLE_ISSUE[issue] },
               }
             })}
             className="flex flex-wrap gap-1.5"
@@ -693,7 +693,7 @@ function LigneVoie({
             <form
               onSubmit={surSoumission(() => ({
                 s: { type: 'retrait_voie', ...cible },
-                resume: { grimpeur: nomGrimpeur, cible: `Voie ${voie.niveau}`, valeur: 'Retrait' },
+                resume: { grimpeur: nomGrimpeur, cible: `Voie ${voie.libelle}`, valeur: 'Retrait' },
               }))}
             >
               <input type="hidden" name="rencontreId" value={saisie.id} />
@@ -701,7 +701,7 @@ function LigneVoie({
               <input type="hidden" name="grimpeurId" value={grimpeur.grimpeurId} />
               <button
                 type="submit"
-                aria-label={`Retirer la voie ${voie.niveau}`}
+                aria-label={`Retirer la voie ${voie.libelle}`}
                 className="min-h-11 min-w-11 rounded-lg border border-danger/40 px-2 py-1 text-sm text-danger hover:bg-danger/10"
               >
                 ×
@@ -742,12 +742,12 @@ function FormAjoutVoieAdo({
           issue: String(fd.get('issue')) as IssueVoie,
         }
         setDerniereCle(cleSaisie(s))
-        const niveau = disponibles.find((v) => v.voieDifficulteId === s.voieDifficulteId)?.niveau ?? ''
+        const libelle = disponibles.find((v) => v.voieDifficulteId === s.voieDifficulteId)?.libelle ?? ''
         return {
           s,
           resume: {
             grimpeur: `${grimpeur.prenom} ${grimpeur.nom}`,
-            cible: `Voie ${niveau}`,
+            cible: `Voie ${libelle}`,
             valeur: LIBELLE_ISSUE[s.issue],
           },
         }
@@ -769,7 +769,7 @@ function FormAjoutVoieAdo({
           </option>
           {disponibles.map((v) => (
             <option key={v.voieDifficulteId} value={v.voieDifficulteId} className="bg-fond text-texte">
-              {v.niveau} ({v.cotation})
+              {v.libelle} ({v.cotation})
             </option>
           ))}
         </select>
