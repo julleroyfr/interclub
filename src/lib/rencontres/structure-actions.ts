@@ -10,7 +10,8 @@ import {
   validerPoints,
 } from '@/domaine/gabarit'
 import type { TypeEpreuve, TypeVoie } from '@/domaine/gabarit'
-import type { Categorie } from '@/domaine/rencontre'
+import type { Categorie, Phase } from '@/domaine/rencontre'
+import { RepereVoieInvalideError, normaliserRepereVoie, repereModifiable } from '@/domaine/voie'
 import { BaremeVitesseInvalideError, type EchelonBareme } from '@/domaine/vitesse'
 import { getUtilisateurCourant } from '@/lib/auth/session'
 import { lireEchelonsSoumis } from '@/lib/bareme-vitesse'
@@ -22,7 +23,8 @@ type Client = Awaited<ReturnType<typeof createClient>>
 
 // Configuration de la structure d'une rencontre (R36) : ajout de voies de
 // difficulté, blocs et voies de vitesse — uniquement par l'admin et uniquement
-// en phase pré-compétition. Aucune édition/suppression (hors périmètre).
+// en phase pré-compétition. Aucune édition/suppression (hors périmètre), sauf le
+// repère d'une voie, modifiable de ① à ③ (spec #3 R49d).
 
 export type EtatStructure = { erreur?: string; succes?: string } | undefined
 
@@ -151,12 +153,14 @@ export async function ajouterVoieDifficulteRencontre(
   if (!epreuveId) return { erreur: 'Épreuve introuvable.' }
   if (!cotation) return { erreur: 'La cotation est obligatoire.' }
 
+  let repere: string | null
   let points: number
   let pointsPriseValorisee: number | null
   let pointsZone1: number | null
   let pointsZone2: number | null
   try {
     validerNiveauVoie(niveau, typeVoie, categorie)
+    repere = normaliserRepereVoie(String(formData.get('repere') ?? ''))
     points = lirePointsObligatoire(formData, 'points')
     const champs = champsPointsVoie(categorie, typeVoie)
     pointsPriseValorisee = champs.priseValorisee
@@ -165,7 +169,11 @@ export async function ajouterVoieDifficulteRencontre(
     pointsZone1 = champs.zones ? lirePointsOptionnel(formData, 'pointsZone1') : null
     pointsZone2 = champs.zones ? lirePointsOptionnel(formData, 'pointsZone2') : null
   } catch (e) {
-    if (e instanceof NiveauVoieInvalideError || e instanceof PointsInvalideError) {
+    if (
+      e instanceof NiveauVoieInvalideError ||
+      e instanceof PointsInvalideError ||
+      e instanceof RepereVoieInvalideError
+    ) {
       return { erreur: e.message }
     }
     throw e
@@ -182,16 +190,89 @@ export async function ajouterVoieDifficulteRencontre(
     niveau,
     type_voie: typeVoie,
     cotation,
+    repere,
     points,
     points_prise_valorisee: pointsPriseValorisee,
     points_zone1: pointsZone1,
     points_zone2: pointsZone2,
     ordre,
   })
-  if (error) return { erreur: "L'ajout a échoué. Réessayez." }
+  if (error) {
+    if (error.code === '23505') return { erreur: messageRepereEnDoublon(niveau, repere) }
+    return { erreur: "L'ajout a échoué. Réessayez." }
+  }
 
   revalidatePath(`/admin/rencontres/${rencontreId}`)
   return { succes: 'Voie ajoutée.' }
+}
+
+/** Message d'un repère déjà porté par une voie de même niveau (R49c, R5). */
+function messageRepereEnDoublon(niveau: string, repere: string | null): string {
+  return `Une autre voie ${niveau} porte déjà le repère « ${repere} ».`
+}
+
+/**
+ * Modifie (ou efface) le repère d'une voie de difficulté (spec #3 R49) — admin,
+ * de la ① pré-compétition à la ③ compétition (R49d) : le repère ne change ni les
+ * points ni les résultats. Un repère déjà porté par une voie de même niveau est
+ * refusé par l'index unique (R49c), traduit en message lisible (R5).
+ */
+export async function modifierRepereVoie(
+  _etat: EtatStructure,
+  formData: FormData,
+): Promise<EtatStructure> {
+  const refus = await refuserSiNonAdmin()
+  if (refus) return refus
+
+  const rencontreId = String(formData.get('rencontreId') ?? '')
+  const epreuveId = String(formData.get('epreuveId') ?? '')
+  const voieId = String(formData.get('voieId') ?? '')
+  const niveau = String(formData.get('niveau') ?? '')
+  if (!voieId || !epreuveId) return { erreur: 'Voie introuvable.' }
+
+  let repere: string | null
+  try {
+    repere = normaliserRepereVoie(String(formData.get('repere') ?? ''))
+  } catch (e) {
+    if (e instanceof RepereVoieInvalideError) return { erreur: e.message }
+    throw e
+  }
+
+  const supabase = await createClient()
+  // Phase lue via l'épreuve : garantit que l'épreuve appartient à la rencontre.
+  const epreuve = verifierLecture(
+    await supabase
+      .from('epreuve')
+      .select('id, rencontre!inner(phase)')
+      .eq('id', epreuveId)
+      .eq('rencontre_id', rencontreId)
+      .maybeSingle(),
+    "de l'épreuve",
+  )
+  if (!epreuve) return { erreur: 'Rencontre introuvable.' }
+  const rencontreBrute = (epreuve as Record<string, unknown>).rencontre as unknown
+  const rencontre = (Array.isArray(rencontreBrute) ? rencontreBrute[0] : rencontreBrute) as {
+    phase: Phase
+  }
+  if (!repereModifiable(rencontre.phase)) {
+    return { erreur: 'Le repère ne peut plus être modifié une fois la compétition clôturée.' }
+  }
+
+  // Bornée à l'épreuve : une voie d'une autre rencontre n'est pas touchée.
+  const { data, error } = await supabase
+    .from('voie_difficulte')
+    .update({ repere })
+    .eq('id', voieId)
+    .eq('epreuve_id', epreuveId)
+    .select('id')
+  if (error) {
+    if (error.code === '23505') return { erreur: messageRepereEnDoublon(niveau, repere) }
+    return { erreur: "L'enregistrement a échoué. Réessayez." }
+  }
+  if (!data?.length) return { erreur: 'Voie introuvable.' }
+
+  revalidatePath(`/admin/rencontres/${rencontreId}`)
+  return { succes: repere ? 'Repère enregistré.' : 'Repère effacé.' }
 }
 
 /** Ajoute un bloc à une rencontre (R36). */

@@ -83,12 +83,13 @@ function appliquerAuGrimpeur(
           {
             voieDifficulteId: v.voieDifficulteId,
             niveau: v.niveau,
+            libelle: v.libelle,
             cotation: v.cotation,
             typeVoie: v.typeVoie,
             issue: s.issue,
             enAttente,
           },
-        ].sort((a, b) => a.niveau.localeCompare(b.niveau))
+        ].sort((a, b) => a.libelle.localeCompare(b.libelle))
       }
     }
   } else if (s.type === 'retrait_voie') {

@@ -365,7 +365,7 @@ function LigneVoie({
   return (
     <li className="flex flex-col gap-2 py-2">
       <div className="flex items-center gap-2">
-        <span className="min-w-9 font-bold text-texte-fort">{voie.niveau}</span>
+        <span className="min-w-9 font-bold text-texte-fort">{voie.libelle}</span>
         <span className="text-[11px] text-texte-doux">{voie.cotation}</span>
         {voie.issue && (
           <span
@@ -404,7 +404,7 @@ function LigneVoie({
               <input type="hidden" name="grimpeurId" value={grimpeur.grimpeurId} />
               <button
                 type="submit"
-                aria-label={`Retirer la voie ${voie.niveau}`}
+                aria-label={`Retirer la voie ${voie.libelle}`}
                 className="min-h-11 rounded-lg border border-danger/40 px-2 py-1 lg:min-h-9 text-sm text-danger hover:bg-danger/10"
               >
                 ×
@@ -451,7 +451,7 @@ function FormAjoutVoieAdo({
           </option>
           {disponibles.map((v) => (
             <option key={v.voieDifficulteId} value={v.voieDifficulteId} className="bg-fond text-texte">
-              {v.niveau} ({v.cotation})
+              {v.libelle} ({v.cotation})
             </option>
           ))}
         </select>

@@ -284,7 +284,7 @@ test.describe('Cahier 17 — saisie des résultats voie & bloc (spec #6)', () =>
     ).toBe('1')
   })
 
-  test('CT-07 · ado : choix libre, deux T5, plafond 6 (R11, R12, R14)', async ({ page }) => {
+  test('CT-07 · ado : choix libre, deux T5, plafond 6 (R11, R12, R14, R21)', async ({ page }) => {
     await commeCoach(page)
     await ouvrirGrimpeur(page, URL_ADO, 'Nora Delta')
     const formAjout = page.locator('form', { has: page.getByText(/Ajouter une voie/) })
@@ -310,8 +310,10 @@ test.describe('Cahier 17 — saisie des résultats voie & bloc (spec #6)', () =>
       await formAjout.getByRole('button', { name: issue, exact: true }).click()
       await expect(compteur(page, 'Voie de difficulté')).toHaveText(`${i + 1}/6`)
     }
-    // Deux T5 distinctes enregistrées ; plafond atteint → plus d'ajout (R14).
-    await expect(ligne(page, 'Voie de difficulté', 'T5')).toHaveCount(2)
+    // Deux T5 distinctes enregistrées, distinguées par leur libellé (lettre faute
+    // de repère, spec #3 R50b / spec #6 R21) ; plafond atteint → plus d'ajout (R14).
+    await expect(ligne(page, 'Voie de difficulté', 'T5 a')).toHaveCount(1)
+    await expect(ligne(page, 'Voie de difficulté', 'T5 b')).toHaveCount(1)
     await expect(page.getByText(/Ajouter une voie/)).toHaveCount(0)
   })
 

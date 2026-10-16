@@ -12,6 +12,7 @@ import {
 } from '@/domaine/controle'
 import { type Categorie, type Phase } from '@/domaine/rencontre'
 import { type IssueBloc, type IssueVoie } from '@/domaine/resultat'
+import { libellesVoies } from '@/domaine/voie'
 import { exigerLectureAdmin } from '@/lib/auth/garde-lecture'
 import { lireRencontreAdmin } from '@/lib/rencontres/lectures-admin'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -31,7 +32,7 @@ export type SupportControle = {
   /** Id de la voie ou du bloc. */
   id: string
   type: 'voie' | 'bloc'
-  /** Niveau de la voie (`T3`) ou code du bloc (`B1`). */
+  /** Libellé de la voie (`T3`, `T5 Jaune`, `T5 b` — spec #3 R50) ou code du bloc (`B1`). */
   code: string
   /** Cotation de la voie ; `null` pour un bloc. */
   cotation: string | null
@@ -95,7 +96,7 @@ export async function getControleRencontre(
       .maybeSingle(),
     supabase
       .from('voie_difficulte')
-      .select('id, niveau, cotation, ordre, epreuve!inner(rencontre_id)')
+      .select('id, niveau, cotation, repere, ordre, epreuve!inner(rencontre_id)')
       .eq('epreuve.rencontre_id', rencontreId)
       .order('ordre'),
     supabase
@@ -233,11 +234,20 @@ export async function getControleRencontre(
     }
   }
 
+  // Libellés calculés sur toutes les voies de l'épreuve (spec #3 R50).
+  const libelles = libellesVoies(
+    voies.map((v) => ({
+      id: v.id as string,
+      niveau: v.niveau as string,
+      ordre: v.ordre as number,
+      repere: (v.repere as string | null) ?? null,
+    })),
+  )
   const supports: SupportControle[] = [
     ...voies.map((v) => ({
       id: v.id as string,
       type: 'voie' as const,
-      code: v.niveau as string,
+      code: libelles.get(v.id as string) ?? (v.niveau as string),
       cotation: v.cotation as string,
       lignes: trierLignes((parSupport.get(v.id as string) ?? []).map(versLigne)),
     })),

@@ -21,8 +21,8 @@ function grimpeur(partiel: Partial<GrimpeurSaisie> = {}): GrimpeurSaisie {
     clubOrigineNom: null,
     groupeDepart: '5',
     voies: [
-      { voieDifficulteId: 'v1', niveau: 'T1', cotation: '5a', typeVoie: 'tete', issue: 'top' },
-      { voieDifficulteId: 'v2', niveau: 'T2', cotation: '5b', typeVoie: 'tete', issue: null },
+      { voieDifficulteId: 'v1', niveau: 'T1', libelle: 'T1', cotation: '5a', typeVoie: 'tete', issue: 'top' },
+      { voieDifficulteId: 'v2', niveau: 'T2', libelle: 'T2', cotation: '5b', typeVoie: 'tete', issue: null },
     ],
     voiesTotal: 3,
     blocs: [
@@ -44,9 +44,9 @@ function saisie(g: GrimpeurSaisie = grimpeur(), categorie: 'enfant' | 'ado' = 'e
     clubPorteurNom: 'Club',
     ouverteSaisie: true,
     voiesEpreuve: [
-      { voieDifficulteId: 'v1', niveau: 'T1', cotation: '5a', typeVoie: 'tete', ordre: 1 },
-      { voieDifficulteId: 'v2', niveau: 'T2', cotation: '5b', typeVoie: 'tete', ordre: 2 },
-      { voieDifficulteId: 'v3', niveau: 'T3', cotation: '5c', typeVoie: 'tete', ordre: 3 },
+      { voieDifficulteId: 'v1', niveau: 'T1', libelle: 'T1', cotation: '5a', typeVoie: 'tete', ordre: 1 },
+      { voieDifficulteId: 'v2', niveau: 'T2', libelle: 'T2', cotation: '5b', typeVoie: 'tete', ordre: 2 },
+      { voieDifficulteId: 'v3', niveau: 'T3', libelle: 'T3', cotation: '5c', typeVoie: 'tete', ordre: 3 },
     ],
     blocsConfig: [
       { blocId: 'b1', code: 'B1', ordre: 1, paliers: [{ id: 'p1', libelle: '1er essai', ordre: 1 }] },
@@ -83,7 +83,7 @@ describe('spec #17 — Affichage immédiat d’une saisie voie/bloc (R22, spec #
 
   it('ado : une voie ajoutée apparaît, triée par niveau (spec #6 R11)', () => {
     const ado = grimpeur({
-      voies: [{ voieDifficulteId: 'v3', niveau: 'T3', cotation: '5c', typeVoie: 'tete', issue: 'top' }],
+      voies: [{ voieDifficulteId: 'v3', niveau: 'T3', libelle: 'T3', cotation: '5c', typeVoie: 'tete', issue: 'top' }],
       voiesTotal: 6,
       progression: { voiesFaites: 1, voiesTotal: 6, blocsFaites: 0, blocsTotal: 2 },
     })

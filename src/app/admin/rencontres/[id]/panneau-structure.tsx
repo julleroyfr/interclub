@@ -5,18 +5,21 @@ import { useActionState, useId, useRef, useState } from 'react'
 import { Bouton, Carte, Etiquette, TitreSection } from '@/composants'
 import { NIVEAUX_MOULINETTE, NIVEAUX_TETE, champsPointsVoie } from '@/domaine/gabarit'
 import { PHASES, type Categorie } from '@/domaine/rencontre'
+import { REPERE_VOIE_MAX, repereModifiable } from '@/domaine/voie'
 import {
   ajouterBlocRencontre,
   ajouterEpreuveRencontre,
   ajouterVoieDifficulteRencontre,
   ajouterVoieVitesseRencontre,
   mettreAJourBaremeVitesse,
+  modifierRepereVoie,
   type EtatStructure,
 } from '@/lib/rencontres/structure-actions'
 import type {
   BaremeVitesseVue,
   EpreuveRencontreVue,
   StructureRencontre,
+  VoieDifficulteRencontreVue,
 } from '@/lib/rencontres/structure'
 
 const etatInitial: EtatStructure = undefined
@@ -61,12 +64,52 @@ function ChampPoints({
 }
 
 /** Message affiché à la place des formulaires hors phase pré-compétition (R44). */
-function NoteLectureSeule({ phase }: { phase: string }) {
+function NoteLectureSeule({ phase, repereEditable }: { phase: string; repereEditable: boolean }) {
   return (
     <p className="rounded-lg border border-bordure bg-black/20 px-3 py-2 text-xs text-texte-attenue">
       Phase « {labelPhase(phase)} » : la structure est verrouillée. Elle ne peut être modifiée qu’en
       phase pré-compétition.
+      {repereEditable && ' Le repère des voies reste modifiable.'}
     </p>
+  )
+}
+
+/** Saisie / modification du repère d'une voie (spec #3 R49d) ; vide = effacer. */
+function FormRepere({
+  voie,
+  epreuveId,
+  rencontreId,
+}: {
+  voie: VoieDifficulteRencontreVue
+  epreuveId: string
+  rencontreId: string
+}) {
+  const [etat, action, enCours] = useActionState(modifierRepereVoie, etatInitial)
+  return (
+    <form action={action} className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+      <input type="hidden" name="rencontreId" value={rencontreId} />
+      <input type="hidden" name="epreuveId" value={epreuveId} />
+      <input type="hidden" name="voieId" value={voie.id} />
+      <input type="hidden" name="niveau" value={voie.niveau} />
+      <input
+        name="repere"
+        type="text"
+        defaultValue={voie.repere ?? ''}
+        maxLength={REPERE_VOIE_MAX}
+        placeholder="Repère (relais, couleur)"
+        aria-label={`Repère de la voie ${voie.libelle}`}
+        className={`min-h-9 w-44 ${champTexte}`}
+      />
+      <Bouton type="submit" taille="sm" variante="secondaire" disabled={enCours}>
+        OK
+      </Bouton>
+      {etat?.erreur && (
+        <p role="alert" className="w-full text-xs text-danger">
+          {etat.erreur}
+        </p>
+      )}
+      {etat?.succes && <p className="w-full text-xs text-secondaire">{etat.succes}</p>}
+    </form>
   )
 }
 
@@ -108,16 +151,20 @@ function OngletVoies({
   rencontreId,
   categorie,
   editable,
+  repereEditable,
 }: {
   epreuve: EpreuveRencontreVue
   rencontreId: string
   categorie: Categorie
   editable: boolean
+  /** Repère modifiable (① à ③, spec #3 R49d). */
+  repereEditable: boolean
 }) {
   const [etat, action, enCours] = useActionState(ajouterVoieDifficulteRencontre, etatInitial)
   const idNiveau = useId()
   const idType = useId()
   const idCotation = useId()
+  const idRepere = useId()
 
   const niveaux = [...(categorie === 'enfant' ? NIVEAUX_MOULINETTE : []), ...NIVEAUX_TETE]
   // Champs de points conditionnels à la catégorie (R38) — pilotent le formulaire (R43).
@@ -132,9 +179,10 @@ function OngletVoies({
           {epreuve.voiesDifficulte.map((v) => (
             <li
               key={v.id}
-              className="flex items-baseline gap-2 border-b border-bordure/40 pb-1.5 text-sm last:border-0"
+              className="flex flex-wrap items-baseline gap-x-2 gap-y-1.5 border-b border-bordure/40 pb-1.5 text-sm last:border-0"
             >
-              <span className="w-10 font-medium text-accent-doux">{v.niveau}</span>
+              {/* Libellé : niveau + repère, ou lettre si niveau doublé (R50). */}
+              <span className="min-w-10 font-medium text-accent-doux">{v.libelle}</span>
               <span className="text-texte-fort">{v.cotation}</span>
               <span className="text-texte-attenue">
                 {labelTypeVoie[v.typeVoie]} · voie {v.points} pts
@@ -142,6 +190,9 @@ function OngletVoies({
                 {v.pointsZone1 != null && ` · Z1 ${v.pointsZone1} pts`}
                 {v.pointsZone2 != null && ` · Z2 ${v.pointsZone2} pts`}
               </span>
+              {repereEditable && (
+                <FormRepere voie={v} epreuveId={epreuve.id} rencontreId={rencontreId} />
+              )}
             </li>
           ))}
         </ul>
@@ -193,6 +244,20 @@ function OngletVoies({
               placeholder="ex. 6a+"
               required
               className={`w-20 ${champTexte}`}
+            />
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label htmlFor={idRepere} className="text-xs text-texte-attenue">
+              Repère
+            </label>
+            <input
+              id={idRepere}
+              name="repere"
+              type="text"
+              maxLength={REPERE_VOIE_MAX}
+              placeholder="Relais 12, Jaune…"
+              className={`w-36 ${champTexte}`}
             />
           </div>
 
@@ -609,6 +674,7 @@ function OngletVitesse({
 export function PanneauStructure({ structure }: { structure: StructureRencontre }) {
   const [onglet, setOnglet] = useState<Onglet>('voie')
   const editable = structure.phase === 'pre_competition'
+  const repereEditable = repereModifiable(structure.phase)
 
   const epreuveVoie = structure.epreuves.find((e) => e.type === 'voie')
   const epreuveBloc = structure.epreuves.find((e) => e.type === 'bloc')
@@ -623,7 +689,7 @@ export function PanneauStructure({ structure }: { structure: StructureRencontre 
     <Carte className="flex flex-col gap-5 p-5">
       <TitreSection>Structure</TitreSection>
 
-      {!editable && <NoteLectureSeule phase={structure.phase} />}
+      {!editable && <NoteLectureSeule phase={structure.phase} repereEditable={repereEditable} />}
 
       <div className="flex gap-1 rounded-xl border border-bordure bg-black/20 p-1">
         {ONGLETS.map((o) => (
@@ -651,6 +717,7 @@ export function PanneauStructure({ structure }: { structure: StructureRencontre 
               rencontreId={structure.id}
               categorie={structure.categorie}
               editable={editable}
+              repereEditable={repereEditable}
             />
           ) : editable ? (
             <FormAjoutEpreuve rencontreId={structure.id} type="voie" libelle="Voies de difficulté" />
