@@ -2,7 +2,7 @@ import 'server-only'
 
 import type { TypeEpreuve, TypeVoie } from '@/domaine/gabarit'
 import type { Categorie, Phase } from '@/domaine/rencontre'
-import { libellesVoies } from '@/domaine/voie'
+import { libellesVoies, trierVoiesStructure } from '@/domaine/voie'
 import { lireRencontreAdmin } from '@/lib/rencontres/lectures-admin'
 import { createClient } from '@/lib/supabase/server'
 
@@ -175,21 +175,24 @@ export async function getStructureRencontre(id: string): Promise<StructureRencon
     epreuves: (epreuves ?? []).map((e) => ({
       id: e.id as string,
       type: e.type as TypeEpreuve,
-      voiesDifficulte: (voies ?? [])
-        .filter((v) => v.epreuve_id === e.id)
-        .map((v) => ({
-          id: v.id as string,
-          niveau: v.niveau as string,
-          typeVoie: v.type_voie as TypeVoie,
-          cotation: v.cotation as string,
-          repere: (v.repere as string | null) ?? null,
-          libelle: libelles.get(v.id as string) ?? (v.niveau as string),
-          points: v.points as number,
-          pointsPriseValorisee: (v.points_prise_valorisee as number | null) ?? null,
-          pointsZone1: (v.points_zone1 as number | null) ?? null,
-          pointsZone2: (v.points_zone2 as number | null) ?? null,
-          ordre: v.ordre as number,
-        })),
+      // Affichage trié par niveau puis libellé (R42, rév. 2026-10-16).
+      voiesDifficulte: trierVoiesStructure(
+        (voies ?? [])
+          .filter((v) => v.epreuve_id === e.id)
+          .map((v) => ({
+            id: v.id as string,
+            niveau: v.niveau as string,
+            typeVoie: v.type_voie as TypeVoie,
+            cotation: v.cotation as string,
+            repere: (v.repere as string | null) ?? null,
+            libelle: libelles.get(v.id as string) ?? (v.niveau as string),
+            points: v.points as number,
+            pointsPriseValorisee: (v.points_prise_valorisee as number | null) ?? null,
+            pointsZone1: (v.points_zone1 as number | null) ?? null,
+            pointsZone2: (v.points_zone2 as number | null) ?? null,
+            ordre: v.ordre as number,
+          })),
+      ),
       blocs: (blocs ?? [])
         .filter((b) => b.epreuve_id === e.id)
         .map((b) => ({
@@ -215,8 +218,7 @@ export async function getStructureRencontre(id: string): Promise<StructureRencon
       ? {
           epreuveId: epreuveVitesse.id as string,
           pointsChute: (epreuveVitesse.points_chute as number | null) ?? null,
-          pointsNonPresentation:
-            (epreuveVitesse.points_non_presentation as number | null) ?? null,
+          pointsNonPresentation: (epreuveVitesse.points_non_presentation as number | null) ?? null,
           echelons: (echelons ?? []).map((e) => ({
             id: e.id as string,
             rangMin: e.rang_min as number,

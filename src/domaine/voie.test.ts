@@ -5,6 +5,7 @@ import {
   libellesVoies,
   normaliserRepereVoie,
   repereModifiable,
+  trierVoiesStructure,
 } from './voie'
 
 // Spec #3 « Écrans de paramétrage » — repère (R49) et libellé d'affichage (R50)
@@ -97,5 +98,43 @@ describe('spec #3 — Libellé d’une voie (R50)', () => {
 
   it('liste vide → aucun libellé', () => {
     expect(libellesVoies([]).size).toBe(0)
+  })
+})
+
+describe('spec #3 — Tri des voies de la structure (R42, rév. 2026-10-16)', () => {
+  const v = (niveau: string, libelle: string) => ({ niveau, libelle })
+
+  it('trie par niveau : moulinette M1→M4 puis tête T1→T10 (ordre numérique)', () => {
+    const tries = trierVoiesStructure([
+      v('T10', 'T10'),
+      v('T2', 'T2'),
+      v('M3', 'M3'),
+      v('T1', 'T1'),
+      v('M1', 'M1'),
+    ])
+    expect(tries.map((x) => x.niveau)).toEqual(['M1', 'M3', 'T1', 'T2', 'T10'])
+  })
+
+  it('au sein d’un niveau, trie par libellé : alphabétique, casse ignorée, nombres naturels', () => {
+    const tries = trierVoiesStructure([
+      v('T5', 'T5 Relais 12'),
+      v('T6', 'T6 a'),
+      v('T5', 'T5 Jaune'),
+      v('T5', 'T5 Relais 2'),
+      v('T5', 'T5 c'),
+    ])
+    expect(tries.map((x) => x.libelle)).toEqual([
+      'T5 c',
+      'T5 Jaune',
+      'T5 Relais 2',
+      'T5 Relais 12',
+      'T6 a',
+    ])
+  })
+
+  it('ne modifie pas la liste reçue', () => {
+    const voies = [v('T2', 'T2'), v('T1', 'T1')]
+    trierVoiesStructure(voies)
+    expect(voies.map((x) => x.niveau)).toEqual(['T2', 'T1'])
   })
 })
