@@ -2,6 +2,7 @@ import 'server-only'
 
 import type { TypeEpreuve, TypeVoie } from '@/domaine/gabarit'
 import type { Categorie, Phase } from '@/domaine/rencontre'
+import { libellesVoies, trierVoiesStructure } from '@/domaine/voie'
 import { lireRencontreAdmin } from '@/lib/rencontres/lectures-admin'
 import { createClient } from '@/lib/supabase/server'
 
@@ -16,6 +17,10 @@ export type VoieDifficulteRencontreVue = {
   niveau: string
   typeVoie: TypeVoie
   cotation: string
+  /** Repère au mur, facultatif (spec #3 R49). */
+  repere: string | null
+  /** Libellé affiché : niveau + repère ou lettre (spec #3 R50). */
+  libelle: string
   points: number
   pointsPriseValorisee: number | null
   pointsZone1: number | null
@@ -111,7 +116,7 @@ export async function getStructureRencontre(id: string): Promise<StructureRencon
     supabase
       .from('voie_difficulte')
       .select(
-        'id, epreuve_id, niveau, type_voie, cotation, points, points_prise_valorisee, points_zone1, points_zone2, ordre, epreuve!inner(rencontre_id)',
+        'id, epreuve_id, niveau, type_voie, cotation, repere, points, points_prise_valorisee, points_zone1, points_zone2, ordre, epreuve!inner(rencontre_id)',
       )
       .eq('epreuve.rencontre_id', id)
       .order('ordre'),
@@ -150,6 +155,16 @@ export async function getStructureRencontre(id: string): Promise<StructureRencon
   const clubBrut = (rencontre as Record<string, unknown>).club as unknown
   const club = (Array.isArray(clubBrut) ? clubBrut[0] : clubBrut) as { nom: string } | null
   const epreuveVitesse = (epreuves ?? []).find((e) => e.type === 'vitesse')
+  // Une seule épreuve de voie par rencontre : les libellés se calculent sur
+  // toutes ses voies (R50).
+  const libelles = libellesVoies(
+    (voies ?? []).map((v) => ({
+      id: v.id as string,
+      niveau: v.niveau as string,
+      ordre: v.ordre as number,
+      repere: (v.repere as string | null) ?? null,
+    })),
+  )
 
   return {
     id: rencontre.id as string,
@@ -160,19 +175,24 @@ export async function getStructureRencontre(id: string): Promise<StructureRencon
     epreuves: (epreuves ?? []).map((e) => ({
       id: e.id as string,
       type: e.type as TypeEpreuve,
-      voiesDifficulte: (voies ?? [])
-        .filter((v) => v.epreuve_id === e.id)
-        .map((v) => ({
-          id: v.id as string,
-          niveau: v.niveau as string,
-          typeVoie: v.type_voie as TypeVoie,
-          cotation: v.cotation as string,
-          points: v.points as number,
-          pointsPriseValorisee: (v.points_prise_valorisee as number | null) ?? null,
-          pointsZone1: (v.points_zone1 as number | null) ?? null,
-          pointsZone2: (v.points_zone2 as number | null) ?? null,
-          ordre: v.ordre as number,
-        })),
+      // Affichage trié par niveau puis libellé (R42, rév. 2026-10-16).
+      voiesDifficulte: trierVoiesStructure(
+        (voies ?? [])
+          .filter((v) => v.epreuve_id === e.id)
+          .map((v) => ({
+            id: v.id as string,
+            niveau: v.niveau as string,
+            typeVoie: v.type_voie as TypeVoie,
+            cotation: v.cotation as string,
+            repere: (v.repere as string | null) ?? null,
+            libelle: libelles.get(v.id as string) ?? (v.niveau as string),
+            points: v.points as number,
+            pointsPriseValorisee: (v.points_prise_valorisee as number | null) ?? null,
+            pointsZone1: (v.points_zone1 as number | null) ?? null,
+            pointsZone2: (v.points_zone2 as number | null) ?? null,
+            ordre: v.ordre as number,
+          })),
+      ),
       blocs: (blocs ?? [])
         .filter((b) => b.epreuve_id === e.id)
         .map((b) => ({
@@ -198,8 +218,7 @@ export async function getStructureRencontre(id: string): Promise<StructureRencon
       ? {
           epreuveId: epreuveVitesse.id as string,
           pointsChute: (epreuveVitesse.points_chute as number | null) ?? null,
-          pointsNonPresentation:
-            (epreuveVitesse.points_non_presentation as number | null) ?? null,
+          pointsNonPresentation: (epreuveVitesse.points_non_presentation as number | null) ?? null,
           echelons: (echelons ?? []).map((e) => ({
             id: e.id as string,
             rangMin: e.rang_min as number,

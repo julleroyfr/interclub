@@ -11,15 +11,19 @@
 > IHM : [08-ihm-responsive.md](../conventions/08-ihm-responsive.md).
 
 - **Spec de référence** : `docs/specs/03-ecrans-de-parametrage-admin.md`
-  (Configuration d'une rencontre R40–R45 ; niveaux R37 ; points R38 ; phase R36) ;
+  (Configuration d'une rencontre R40–R45 ; niveaux R37 ; points R38 ; phase R36 ;
+  repère et libellé des voies R49/R50, ajout du 2026-10-16) ;
   `docs/specs/01-roles-et-autorisations.md` (R12 : écriture réservée à l'admin).
 - **Domaine** : `src/domaine/gabarit.ts` (`validerNiveauVoie` plages R37,
   `validerPoints` R38, `champsPointsVoie` champs conditionnels R38/R43 —
-  couverts par `gabarit.test.ts`, 22 tests Vitest).
+  couverts par `gabarit.test.ts`, 22 tests Vitest) ; `src/domaine/voie.ts`
+  (`normaliserRepereVoie` R49a/b, `repereModifiable` R49d, `libellesVoies` R50 —
+  couverts par `voie.test.ts`).
 - **Data / actions** : `src/lib/rencontres/structure.ts` (`getStructureRencontre`) ;
   `src/lib/rencontres/structure-actions.ts` (`ajouterEpreuveRencontre`,
   `ajouterVoieDifficulteRencontre`, `ajouterBlocRencontre`,
-  `ajouterVoieVitesseRencontre` — garde admin + phase pré-compétition).
+  `ajouterVoieVitesseRencontre` — garde admin + phase pré-compétition ;
+  `modifierRepereVoie` — garde admin + phases ① à ③, R49d).
 - **IHM** : `src/app/admin/rencontres/[id]/page.tsx` (garde admin, chargement,
   en-tête à titre dynamique, mise en page tableau de bord — cf. maquette
   `docs/maquettes/rencontre-dashboard.html`) ; `panneau-pilotage.tsx` (phase R41a
@@ -32,7 +36,10 @@
   couverts par Vitest.
 - **Migration** : aucune nouvelle (réutilise les tables `epreuve`,
   `voie_difficulte`, `bloc`, `bloc_palier`, `voie_vitesse` du gabarit —
-  `202607291000_gabarit_et_voies_epreuve.sql`, **déjà appliquée**).
+  `202607291000_gabarit_et_voies_epreuve.sql`, **déjà appliquée**). **CT-18** :
+  migration `202610161100_repere_voie.sql` (colonne `voie_difficulte.repere`,
+  check ≤ 30 car., index unique partiel par épreuve/niveau) **à appliquer à la
+  main** avant le cas.
 - **Pré-requis** :
   - Migrations + seed `01-jeu-de-test.sql` chargés ; migration gabarit appliquée.
   - Seed gabarit présent : enfant (14 voies diff, 2 blocs, Filles/Garçons),
@@ -264,6 +271,47 @@ d'ouverture du **tableau de bord** → `/admin/rencontres/<id>`.
   la rencontre **reste en ④** (aucun saut ④ → ②).
 - **Automatisé** : `e2e/pilotage-phase.spec.ts` (`npm run test:cahier:phase`).
 
+### CT-18 — Repère et libellé des voies doublées (couvre R49, R50 ; spec #6 R21)
+
+- **Rôle** : admin, puis coach. **Pré-condition** : migration
+  `202610161100_repere_voie` appliquée (vérifier :
+  `select version from interclub.version where version = '202610161100_repere_voie';`
+  → 1 ligne) ; une rencontre **ado** avec **deux voies T5** (au seed : rencontre
+  ado `adadadad-…`, en ③ ; sinon ajouter une 2ᵉ T5 en ① via l'onglet Voies).
+- **Étapes / résultat attendu** :
+  1. **Lettres par défaut** (R50b/c) : onglet **Voies** → les deux T5 s'affichent
+     **« T5 a »** et **« T5 b »** (dans l'ordre de la liste) ; les niveaux uniques
+     restent seuls (« T6 »). ✅
+     **Tri** (R42, rév. 2026-10-16) : la liste est triée **par niveau** (T1 → T10,
+     et M1 → M4 d'abord en enfant) **puis par libellé** dans un niveau — ex.
+     « T5 c », « T5 Jaune », « T5 Relais 12 », puis « T6 a ». ✅
+  2. **Poser un repère en ③** (R49d, R50a) : sur la ligne « T5 b », saisir
+     « Jaune » entouré d'espaces dans **Repère** → **OK** → « Repère enregistré. » ; la ligne
+     devient **« T5 Jaune »** (espaces retirés) et l'autre reste **« T5 a »**
+     (la lettre ne bouge pas). ✅
+  3. **Doublon refusé** (R49c) : sur « T5 a », saisir `jaune` → **OK** → message
+     « Une autre voie T5 porte déjà le repère « jaune » » ; rien n'est enregistré.
+     Saisir `Jaune` sur **T6** → accepté (« T6 Jaune »), puis l'effacer (champ
+     vide → **OK** → « Repère effacé. », retour à « T6 »). ✅
+  4. **Trop long** (R49b) : coller 31 caractères via un appel direct (le champ
+     bloque à 30) → refus « Le repère ne peut dépasser 30 caractères. ». ✅
+  5. **Ajout avec repère** (R43, en ① sur une autre rencontre ado) : ajouter une
+     voie T7 avec Repère `Relais 12` → la ligne affiche **« T7 Relais 12 »**. ✅
+  6. **Côté coach** (spec #6 R21) : `coach@test.local` → saisie ado d'un grimpeur
+     → le choix **Ajouter une voie** propose **« T5 a (…) »** et **« T5 Jaune
+     (…) »** ; après une saisie, la ligne et le **récapitulatif** affichent le même
+     libellé. Même libellé dans la **saisie admin** (spec #9), le **contrôle**
+     (spec #16, rencontre en ④), la **décomposition du classement** et le **PDF**
+     (spec #15). ✅
+  7. **Gel à la clôture** (R49d) : passer la rencontre en **④ clôture** → le champ
+     Repère **disparaît** ; un appel direct à `modifierRepereVoie` est refusé
+     (« … une fois la compétition clôturée »). ✅
+- **Rétablir** : effacer les repères posés (ou
+  `update interclub.voie_difficulte set repere = null where …`) et remettre la
+  rencontre ado en ③.
+- **Partiellement automatisé** : `e2e/repere-voie.spec.ts` (étapes 1, 2, 3, 6
+  côté coach, 7) ; le cahier reste la validation sur base réelle.
+
 ## Registre d'exécution
 
 | Cas | Environnement | Date | Testeur | Verdict | Notes |
@@ -285,6 +333,7 @@ d'ouverture du **tableau de bord** → `/admin/rencontres/<id>`.
 | CT-15 | | | | ⬜ | blocs équipes (R41c) |
 | CT-16 | | | | ⬜ | barème par rang, édition + validation (R47/R48) |
 | CT-17 | | | | ⬜ | phase refusée depuis un écran périmé (R17) |
+| CT-18 | | | | ⬜ | repère / libellé des voies doublées (R49/R50) |
 
 > Le domaine (`validerNiveauVoie` R37, `validerPoints` R38, `champsPointsVoie`
 > R38/R43) est couvert par Vitest (`npm run test`, `src/domaine/gabarit.test.ts`).

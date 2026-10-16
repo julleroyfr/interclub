@@ -71,6 +71,7 @@ loader ; (b) revenir à des lectures RLS en ouvrant des policies cross-club.
 | `resoudreInvitationAdmin` | page d'inscription **publique** : l'accès repose sur la possession du **secret** de l'invitation administrateur (spec #2 R35–R39, ajout du 2026-10-09) |
 | `inscrireAdmin` | crée le compte et le mapping admin **avant toute session**, sur présentation du secret (spec #2 R36–R39, ajout du 2026-10-09) ; écrit via `service_role` (API Auth admin + RPC `finaliser_inscription_admin` réservée à `service_role`) |
 | `exportDisponible`, `reponseExportPdf` | autorisation par le **demandeur** résolu côté serveur (`demandeurAdmin` / `demandeurCoach`) et `peutExporter` (spec #15 R1–R5) ; le PDF lui-même passe par `getClassementRencontre`, gardé |
+| `reponseRapportPeriodique` | route appelée par le **cron** de l'hébergeur, **sans session** : l'accès repose sur le **secret du déclencheur** (`CRON_SECRET`, `verifierSecret`, spec #19 R4/R5) vérifié avant toute lecture ; écrit via `service_role` dans `rapport_periodique` (insert réservé à `service_role`, spec #19 R19, ajout du 2026-10-16) |
 
 ## Conséquences
 

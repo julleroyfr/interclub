@@ -5,6 +5,7 @@ import { type TypeVoie } from '@/domaine/gabarit'
 import { PLAFOND_VOIES_ADO, type IssueBloc, type IssueVoie } from '@/domaine/resultat'
 import { type Categorie, type Phase } from '@/domaine/rencontre'
 import { scoreBloc, scoreVoie, type BaremeVoie } from '@/domaine/score'
+import { libellesVoies } from '@/domaine/voie'
 import { verifierLecture } from '@/lib/supabase/lecture'
 import { lireToutesLesPages } from '@/lib/supabase/pagination'
 import { createClient } from '@/lib/supabase/server'
@@ -26,6 +27,8 @@ const VOIES_ENFANT = 3
 export type SaisieVoie = {
   voieDifficulteId: string
   niveau: string
+  /** Libellé affiché : niveau + repère ou lettre (spec #3 R50, spec #6 R21). */
+  libelle: string
   cotation: string
   typeVoie: TypeVoie
   issue: IssueVoie | null
@@ -91,6 +94,8 @@ export type BlocConfig = { blocId: string; code: string; ordre: number; paliers:
 export type VoieOption = {
   voieDifficulteId: string
   niveau: string
+  /** Libellé affiché : niveau + repère ou lettre (spec #3 R50, spec #6 R21). */
+  libelle: string
   cotation: string
   typeVoie: TypeVoie
   ordre: number
@@ -193,7 +198,7 @@ async function chargerSaisie(
     supabase
       .from('voie_difficulte')
       .select(
-        'id, niveau, cotation, type_voie, ordre, points, points_prise_valorisee, points_zone1, points_zone2, epreuve!inner(rencontre_id)',
+        'id, niveau, cotation, repere, type_voie, ordre, points, points_prise_valorisee, points_zone1, points_zone2, epreuve!inner(rencontre_id)',
       )
       .eq('epreuve.rencontre_id', rencontreId)
       .order('ordre'),
@@ -279,9 +284,19 @@ async function chargerSaisie(
   const paliers = verifierLecture(paliersRes, 'des paliers') ?? []
   const lignesVoies = verifierLecture(voiesRes, 'des voies') ?? []
 
+  // Libellés calculés sur toutes les voies de l'épreuve (spec #3 R50).
+  const libelles = libellesVoies(
+    lignesVoies.map((v) => ({
+      id: v.id as string,
+      niveau: v.niveau as string,
+      ordre: v.ordre as number,
+      repere: (v.repere as string | null) ?? null,
+    })),
+  )
   const voies = lignesVoies.map((v) => ({
     voieDifficulteId: v.id as string,
     niveau: v.niveau as string,
+    libelle: libelles.get(v.id as string) ?? (v.niveau as string),
     cotation: v.cotation as string,
     typeVoie: v.type_voie as TypeVoie,
     ordre: v.ordre as number,
@@ -395,6 +410,7 @@ async function chargerSaisie(
         .map((v) => ({
           voieDifficulteId: v.voieDifficulteId,
           niveau: v.niveau,
+          libelle: v.libelle,
           cotation: v.cotation,
           typeVoie: v.typeVoie,
           issue: issuesVoie.get(v.voieDifficulteId) ?? null,
@@ -407,13 +423,14 @@ async function chargerSaisie(
           return {
             voieDifficulteId: v.voieDifficulteId,
             niveau: v.niveau,
+            libelle: v.libelle,
             cotation: v.cotation,
             typeVoie: v.typeVoie,
             issue,
           }
         })
         .filter((v): v is SaisieVoie => v != null)
-        .sort((a, b) => a.niveau.localeCompare(b.niveau))
+        .sort((a, b) => a.libelle.localeCompare(b.libelle))
     }
 
     const resBloc = resBlocParGrimpeur.get(c.grimpeurId) ?? new Map()

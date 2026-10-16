@@ -578,8 +578,8 @@
               <span class="prog"><span class="part"><span class="lbl">réalisées</span> <span class="n">4</span>/6</span></span>
             </div>
             <div class="saisie"><span class="voie-id">T6</span><span class="cotation">6b</span><span class="issue top pousse">✓ Top</span></div>
-            <div class="saisie"><span class="voie-id">T5</span><span class="cotation">6a</span><span class="issue partiel pousse">Zone 2</span></div>
-            <div class="saisie"><span class="voie-id">T5</span><span class="cotation">6a</span><span class="issue partiel pousse">Zone 1</span></div>
+            <div class="saisie"><span class="voie-id">T5 Jaune</span><span class="cotation">6a</span><span class="issue partiel pousse">Zone 2</span></div>
+            <div class="saisie"><span class="voie-id">T5 b</span><span class="cotation">6a</span><span class="issue partiel pousse">Zone 1</span></div>
             <div class="saisie"><span class="voie-id">T7</span><span class="cotation">6c</span><span class="issue echec pousse">Échec</span></div>
 
             <div class="form-ajout">
@@ -591,6 +591,8 @@
                     <option selected>T8 (7a)</option>
                     <option>T4 (5c)</option>
                     <option disabled>T6 (6b) — déjà réalisée</option>
+                    <option disabled>T5 Jaune (6a) — déjà réalisée</option>
+                    <option disabled>T5 b (6a) — déjà réalisée</option>
                   </select>
                 </div>
                 <div class="champ"><label>Issue</label>
@@ -753,7 +755,7 @@
     </ul>
     <h3>Écran 5 — Saisie ado</h3>
     <ul>
-      <li><strong>R11</strong> — jusqu'à <strong>6 voies au choix</strong> (T1–T10) ; <strong>2 voies de même niveau</strong> autorisées (ici deux T5).</li>
+      <li><strong>R11</strong> — jusqu'à <strong>6 voies au choix</strong> (T1–T10) ; <strong>2 voies de même niveau</strong> autorisées (ici deux T5), distinguées par leur <strong>libellé</strong> (spec #3 R50 : repère « Jaune », ou lettre « b » faute de repère).</li>
       <li><strong>R12</strong> — issues voie ado : <span class="issue top">Top</span> · <span class="issue partiel">Zone 2</span> · <span class="issue partiel">Zone 1</span> · <span class="issue echec">Échec</span> (zones non cumulatives).</li>
       <li><strong>R13</strong> — une voie déjà réalisée est désactivée à l'ajout.</li>
       <li><strong>R16</strong> — blocs ado : Zone / Zone 1 / Zone 2 / Bloc complet selon B1/B2.</li>

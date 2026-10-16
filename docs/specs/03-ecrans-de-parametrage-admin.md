@@ -14,6 +14,11 @@
   **Nom d'équipe par défaut (R41c) ajouté le 2026-09-29** (renvoi spec #5
   R10bis) ; **recherche à l'ajout d'un grimpeur (R41c) le 2026-09-29** (renvoi
   spec #5 R12bis), étendue au **formulaire de prêt** le même jour.
+  **Repère de voie (R49) et libellé d'affichage d'une voie (R50) ajoutés et
+  validés le 2026-10-16** : distinguer au mur et à la saisie les voies doublées
+  ou triplées d'un même niveau (ex. deux T5 en ado).
+  **Tri des voies de la structure par niveau puis libellé (R42) : demandé et
+  validé le 2026-10-16.**
 - **Sources** : décision produit du 2026-07-25 (tranche T8 — premiers écrans
   d'administration). S'appuie sur la **spec #1 — Rôles & autorisations**
   (`01-roles-et-autorisations.md`), qui reste la vérité pour « qui peut faire
@@ -53,6 +58,12 @@ saisie, les flux CRUD, et les règles de suppression (dépendances / cascade).
   voies tête (enfant et ado). Le niveau désigne la difficulté cible ; plusieurs
   voies peuvent partager le même niveau dans une épreuve (voies doublées ou
   triplées). Le niveau est toujours dans ces plages réglementaires.
+- **Repère de voie** : texte libre et facultatif porté par une voie de difficulté
+  **d'une rencontre**, qui la désigne au mur (ex. « Relais 12 », « Jaune »).
+  Il sert à distinguer les voies d'un même niveau (R49).
+- **Libellé d'une voie** : désignation affichée d'une voie de difficulté dans
+  l'application — son niveau, complété du repère ou d'une lettre `a`, `b`, `c`…
+  quand le niveau est doublé (R50).
 - **Gabarit** : modèle de format stocké en base pour une catégorie donnée
   (`enfant` ou `ado`), définissant les épreuves et leurs voies. L'admin peut le
   modifier via l'IHM ; les rencontres futures en héritent par copie. Toute
@@ -352,6 +363,67 @@ saisie, les flux CRUD, et les règles de suppression (dépendances / cascade).
   (migration `202609221500`). La validation est une **fonction pure** du domaine
   (testable hors Supabase), rejouée par la Server Action avant écriture.
 
+### Repère et libellé d'une voie de difficulté
+
+*(Ajout validé le 2026-10-16. Source : règlement CT33 § Après-midi, « faire 2
+voies de même niveau est autorisé ».)*
+
+- **R49.** Chaque voie de difficulté **d'une rencontre** peut porter un **repère**
+  : texte libre et **facultatif** qui la désigne au mur (numéro de relais,
+  couleur…).
+  - a. Il est **normalisé** comme tout libellé (R4) ; une saisie vide après
+    normalisation signifie « pas de repère ».
+  - b. Il fait **au plus 30 caractères** ; au-delà, la saisie est **refusée**.
+  - c. Dans une même épreuve, deux voies de **même niveau** ne peuvent pas porter
+    le **même repère** (comparaison insensible à la casse) ; un doublon est
+    **refusé** avec un message lisible (R5). Deux voies de niveaux différents
+    peuvent partager un repère.
+  - d. Il se saisit à l'**ajout** de la voie (R43) et reste **modifiable** (y
+    compris pour l'effacer) tant que la rencontre est en **① pré-compétition**,
+    **② préparation** ou **③ compétition** : il ne change ni les points ni les
+    résultats, et peut être corrigé le jour J. En **④ clôture** et **⑤ résultats
+    publics**, il est figé.
+  - e. Il n'existe **pas** dans le gabarit : à la création d'une rencontre (R30),
+    les voies copiées n'ont **aucun** repère.
+- **R50.** Partout où l'application **désigne une voie de difficulté d'une
+  rencontre** (structure R42, saisie coach et admin — specs #6 et #9 —, contrôle
+  des fiches — spec #16 —, classement et sa décomposition — spec #7 —, export PDF
+  — spec #15 —, file de saisie hors ligne — spec #17), elle affiche son
+  **libellé**, calculé ainsi sur l'ensemble des voies de son épreuve :
+  - a. voie **avec repère** → `<niveau> <repère>` (ex. « T5 Jaune », « T5 Relais
+    12 ») ;
+  - b. voie **sans repère** dont le niveau est **porté par au moins deux voies**
+    de l'épreuve → `<niveau> <lettre>`, où la lettre (`a`, `b`, `c`…) est le
+    **rang de la voie parmi toutes les voies de ce niveau**, triées par `ordre`
+    croissant (repérées ou non) ; au-delà de 26 voies, la lettre est remplacée
+    par le rang en chiffres ;
+  - c. voie **sans repère** dont le niveau est **unique** dans l'épreuve →
+    `<niveau>` seul (ex. « T7 »).
+
+  Exemple — épreuve ado avec deux T5 et un T6 :
+
+  | Ordre | Niveau | Repère | Libellé |
+  |-------|--------|--------|---------|
+  | 5 | T5 | — | T5 a |
+  | 6 | T5 | — | T5 b |
+  | 7 | T6 | — | T6 |
+
+  Après saisie du repère « Jaune » sur la seconde T5 : « T5 a », « T5 Jaune »,
+  « T6 ». La lettre d'une voie ne dépend pas des repères des autres voies : elle
+  **ne change pas** quand on renseigne ou efface un repère ailleurs.
+
+  La **cotation** reste affichée à côté du libellé là où elle l'est déjà ; elle ne
+  sert pas à distinguer les voies.
+
+```mermaid
+flowchart TD
+  V["Voie de difficulté"] --> R{"Repère renseigné ?"}
+  R -- oui --> L1["niveau + repère<br/>« T5 Jaune »"]
+  R -- non --> D{"Niveau porté par<br/>≥ 2 voies de l'épreuve ?"}
+  D -- oui --> L2["niveau + lettre du rang (ordre)<br/>« T5 b »"]
+  D -- non --> L3["niveau seul<br/>« T7 »"]
+```
+
 ### Écran Tableau de bord d'une rencontre (`/admin/rencontres/[id]`)
 
 > Cet écran est le **tableau de bord** d'une rencontre : il agrège son pilotage
@@ -416,8 +488,14 @@ saisie, les flux CRUD, et les règles de suppression (dépendances / cascade).
   difficulté**, **Blocs**, **Vitesse** — chacun indiquant son **nombre
   d'éléments** et n'affichant qu'un seul type à la fois. Chaque onglet **liste les
   éléments existants** de la rencontre, dans leur ordre (`ordre`, R38/R39) :
-  - **Voies** : niveau, type (moulinette/tête), cotation et points (voie entière,
-    et prise valorisée ou zones selon la catégorie, R38).
+  - **Voies** : **libellé** (R50), type (moulinette/tête), cotation et points
+    (voie entière, et prise valorisée ou zones selon la catégorie, R38).
+    *(Rév. 2026-10-16.)* Par exception à l'ordre `ordre`, les voies sont **triées
+    par niveau** — `M1`→`M4` puis `T1`→`T10` — **puis par libellé** (R50) au sein
+    d'un même niveau : ordre alphabétique, casse ignorée, nombres dans l'ordre
+    naturel (« Relais 2 » avant « Relais 12 »). Exemple : « T5 c », « T5 Jaune »,
+    « T5 Relais 12 », « T6 a ». Ce tri ne change ni l'`ordre` stocké ni les
+    lettres (R50b).
   - **Blocs** : code et **paliers** (libellé + points, R39).
   - **Vitesse** : numéro et libellé (R32), **et le barème par rang** de l'épreuve
     (échelons + points de chute / non-présentation, R46) — éditable.
@@ -426,13 +504,16 @@ saisie, les flux CRUD, et les règles de suppression (dépendances / cascade).
   conforme à R36–R39 et R37 (niveaux contraints). Les **champs de points** du
   formulaire de voie sont **conditionnels** à la catégorie et au type (R38) :
   prise valorisée pour les voies **tête enfant**, zones 1/2 pour les voies
-  **ado**. L'ajout est le **seul** geste d'édition (ni modification ni
-  suppression — hors périmètre).
+  **ado**. Le formulaire de voie propose un champ **Repère** facultatif (R49).
+  L'ajout est le **seul** geste d'édition de structure (ni modification ni
+  suppression — hors périmètre), à l'exception du **repère**, modifiable selon
+  R49.
 - **R44.** **Hors phase pré-compétition** (préparation, compétition, clôture,
   résultats publics), l'écran est en **lecture seule** : aucun formulaire n'est affiché et un
   **message** indique que la structure est **verrouillée** et ne peut être
   modifiée qu'en pré-compétition (R36). Les listes des onglets restent
-  consultables.
+  consultables. Seule exception : en **② préparation** et **③ compétition**, le
+  **repère** de chaque voie reste modifiable (R49).
 - **R45.** **Rencontre sans format** (créée sur gabarit vide, R35) : si la
   rencontre ne comporte **aucune épreuve**, l'écran affiche un **état vide** et
   permet d'**ajouter d'abord une épreuve** en choisissant son **type** (voie,
@@ -523,6 +604,12 @@ année à 4 chiffres valide, alors le grimpeur est ajouté au roster de ce club
 - Ajout d'une épreuve d'un type déjà présent sur la rencontre → refusé (R45).
 - Saisie d'un niveau hors plage réglementaire (ex. T11 pour ado, M5 pour enfant,
   ou toute moulinette pour ado) → refusée (R37).
+- Repère de plus de 30 caractères → refusé (R49b).
+- Second repère « jaune » sur une autre T5 de la même épreuve qui porte déjà
+  « Jaune » → refusé (R49c) ; « Jaune » sur une T6 → accepté.
+- Modification du repère d'une voie en ④ clôture ou ⑤ résultats publics →
+  refusée (R49d) ; en ③ compétition → acceptée.
+- Repère effacé → la voie reprend sa lettre (R50b) ou son niveau seul (R50c).
 
 ## Contraintes de données
 
@@ -572,6 +659,11 @@ année à 4 chiffres valide, alors le grimpeur est ajouté au roster de ce club
     points_prise_valorisee, points_zone1, points_zone2, ordre)` — même structure
     et contraintes que le gabarit ; copie au moment de la création (R30) ou ajout
     post-création (R36).
+  - Colonne **`repere text`** (nullable) sur `voie_difficulte` (R49) : non vide
+    et ≤ 30 caractères quand renseignée (`check`) ; **unicité** de
+    `(epreuve_id, niveau, lower(repere))` pour les repères non nuls (index unique
+    partiel, R49c). Pas de colonne équivalente sur `gabarit_voie_difficulte`
+    (R49e).
   - `bloc(id, epreuve_id, code, ordre)` — idem.
   - `bloc_palier(id, bloc_id, libelle, points, ordre)` — paliers de points d'un
     bloc de rencontre (R39) ; cascade sur `bloc`.
@@ -596,6 +688,8 @@ année à 4 chiffres valide, alors le grimpeur est ajouté au roster de ce club
   grimpeurs de son club, spec #1 R18) — tranche coach ultérieure.
 - La **suppression** de voies ou d'épreuves d'une rencontre existante (seul
   l'ajout est couvert par R36 ; suppression = hors périmètre pour l'instant).
+- Un **repère dans le gabarit** (R49e) : il dépend de la salle et des voies
+  ouvertes pour la rencontre.
 - La gestion des **équipes / compositions** (engagement en rencontre, spec #1
   R6, R17) et des **jetons QR** (spec #2).
 - Le **scoring** et le classement (spec #7). Le **calcul** des points de vitesse à

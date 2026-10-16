@@ -27,6 +27,11 @@ Règles : [docs/conventions/09-environnements-et-donnees.md](../../docs/conventi
   de **peupler les classements de vitesse** sans saisie manuelle ; le trigger
   calcule les points. À appliquer après `01` (+ `02`) et les migrations
   vitesse. Purgé par `99` (via `temps_vitesse` des rencontres de test).
+- `04-demo-repere-voies.sql` — **opt-in**. Deux rencontres **ado** Club A
+  (① pré-compétition et ③ compétition du jour) avec des **voies doublées** (T4,
+  T5, T6, T7), avec et sans **repère**, pour tester le libellé des voies (spec #3
+  R49/R50, cahier 12 CT-18). Nora et Owen Delta engagés. Rejouable : supprime
+  d'abord ses deux rencontres (UUID `aeaeaeae-…`). À appliquer après `01`.
 - `99-purge-jeu-de-test.sql` — DELETE borné aux seules données de test
   (rejouable). **Jamais chargé automatiquement** (exclu de `config.toml`) pour
   ne pas effacer le seed au reset.
