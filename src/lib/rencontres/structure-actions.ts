@@ -11,7 +11,13 @@ import {
 } from '@/domaine/gabarit'
 import type { TypeEpreuve, TypeVoie } from '@/domaine/gabarit'
 import type { Categorie, Phase } from '@/domaine/rencontre'
-import { RepereVoieInvalideError, normaliserRepereVoie, repereModifiable } from '@/domaine/voie'
+import {
+  LibelleVoieVitesseInvalideError,
+  RepereVoieInvalideError,
+  normaliserLibelleVoieVitesse,
+  normaliserRepereVoie,
+  repereModifiable,
+} from '@/domaine/voie'
 import { BaremeVitesseInvalideError, type EchelonBareme } from '@/domaine/vitesse'
 import { getUtilisateurCourant } from '@/lib/auth/session'
 import { lireEchelonsSoumis } from '@/lib/bareme-vitesse'
@@ -344,6 +350,45 @@ export async function ajouterVoieVitesseRencontre(
 
   revalidatePath(`/admin/rencontres/${rencontreId}`)
   return { succes: 'Voie de vitesse ajoutée.' }
+}
+
+/**
+ * Modifie le libellé d'une voie de vitesse de la rencontre (spec #20 R9bis), aux
+ * mêmes phases que l'édition de la structure (pré-compétition, R44). Libellé
+ * normalisé et obligatoire : une saisie vide est refusée et l'ancien libellé
+ * conservé.
+ */
+export async function modifierLibelleVoieVitesseRencontre(
+  _etat: EtatStructure,
+  formData: FormData,
+): Promise<EtatStructure> {
+  const refus = await refuserSiNonAdmin()
+  if (refus) return refus
+
+  const rencontreId = String(formData.get('rencontreId') ?? '')
+  const id = String(formData.get('id') ?? '')
+  if (!id) return { erreur: 'Voie de vitesse introuvable.' }
+  let libelle: string
+  try {
+    libelle = normaliserLibelleVoieVitesse(String(formData.get('libelle') ?? ''))
+  } catch (e) {
+    if (e instanceof LibelleVoieVitesseInvalideError) return { erreur: e.message }
+    throw e
+  }
+
+  const supabase = await createClient()
+  const refusPhase = await refuserSiPasPreCompetition(supabase, rencontreId)
+  if (refusPhase) return refusPhase
+
+  const { error } = await supabase
+    .from('voie_vitesse')
+    .update({ libelle })
+    .eq('id', id)
+    .eq('rencontre_id', rencontreId)
+  if (error) return { erreur: 'La modification a échoué. Réessayez.' }
+
+  revalidatePath(`/admin/rencontres/${rencontreId}`)
+  return { succes: 'Libellé enregistré.' }
 }
 
 /**

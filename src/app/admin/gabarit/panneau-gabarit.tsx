@@ -2,15 +2,16 @@
 
 import { useActionState, useId, useRef, useState } from 'react'
 
-import { Bouton, Carte, Etiquette, TitreSection } from '@/composants'
+import { Bouton, Carte, Etiquette, FormLibelleVoieVitesse, TitreSection } from '@/composants'
 import { NIVEAUX_MOULINETTE, NIVEAUX_TETE } from '@/domaine/gabarit'
-import type { Categorie } from '@/domaine/rencontre'
+import { aVoiesLibres, type Categorie } from '@/domaine/rencontre'
 import {
   ajouterBlocGabarit,
   ajouterPalierBlocGabarit,
   ajouterVoieDifficulteGabarit,
   ajouterVoieVitesseGabarit,
   mettreAJourBaremeVitesseGabarit,
+  modifierLibelleVoieVitesseGabarit,
   modifierPointsVoieGabarit,
   supprimerBlocGabarit,
   supprimerPalierBlocGabarit,
@@ -84,7 +85,7 @@ function LigneVoieDifficulte({
   const [, actionSuppr] = useActionState(supprimerVoieDifficulteGabarit, etatInitial)
 
   const estEnfantTete = categorie === 'enfant' && voie.typeVoie === 'tete'
-  const estAdo = categorie === 'ado'
+  const estAdo = aVoiesLibres(categorie)
 
   return (
     <li className="flex flex-col gap-1 border-b border-bordure/40 pb-2 last:border-0">
@@ -228,7 +229,7 @@ function SectionVoiesDifficulte({
 
         <ChampPoints nom="points" label="Voie entière" required />
         {categorie === 'enfant' && <ChampPoints nom="pointsPriseValorisee" label="Prise valo." />}
-        {categorie === 'ado' && (
+        {aVoiesLibres(categorie) && (
           <>
             <ChampPoints nom="pointsZone1" label="Zone 1" />
             <ChampPoints nom="pointsZone2" label="Zone 2" />
@@ -580,13 +581,19 @@ function SectionVitesse({ epreuve }: { epreuve: EpreuveGabaritVue }) {
       {epreuve.voiesVitesse.length === 0 ? (
         <p className="text-sm text-texte-attenue">Aucune voie de vitesse.</p>
       ) : (
-        <ul className="flex flex-wrap gap-2">
+        <ul className="flex flex-col gap-2">
           {epreuve.voiesVitesse.map((vv) => (
-            <li key={vv.id} className="flex items-center gap-1">
-              <Etiquette variante="neutre">{vv.libelle}</Etiquette>
+            <li key={vv.id} className="flex flex-wrap items-end gap-2">
+              {/* Libellé modifiable (spec #20 R9bis). */}
+              <FormLibelleVoieVitesse
+                action={modifierLibelleVoieVitesseGabarit}
+                libelle={vv.libelle}
+                rang={vv.ordre}
+                champsCaches={{ id: vv.id }}
+              />
               <form action={actionSuppr}>
                 <input type="hidden" name="id" value={vv.id} />
-                <Bouton type="submit" variante="fantome" taille="sm">
+                <Bouton type="submit" variante="fantome" taille="sm" aria-label={`Supprimer ${vv.libelle}`}>
                   ✕
                 </Bouton>
               </form>

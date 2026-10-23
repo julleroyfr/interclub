@@ -234,9 +234,12 @@ test('07 — gabarit', async ({ page }) => {
     bouton(page, '+ Palier'),
     bouton(page, '+ Bloc'),
     bouton(page, '+ Voie'),
-    // Barème : on numérote la colonne Ado, entièrement visible dans la capture.
-    page.getByRole('button', { name: '+ Ajouter un échelon' }).last(),
-    page.getByRole('button', { name: 'Enregistrer le barème' }).last(),
+    // Barème : on numérote la colonne Ado (2ᵉ carte), entièrement visible dans la
+    // capture — la carte Adulte (3ᵉ) passe sous les deux premières.
+    page.getByRole('button', { name: '+ Ajouter un échelon' }).nth(1),
+    page.getByRole('button', { name: 'Enregistrer le barème' }).nth(1),
+    // Libellé d'une voie de vitesse, modifiable (spec #20 R9bis).
+    page.getByLabel('Libellé (voie 1)').first(),
   ])
   await capturer(page, '11-gabarit', { pleinePage: false })
 })

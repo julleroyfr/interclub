@@ -32,8 +32,8 @@ Mot de passe des cinq comptes permanents : `interclub`.
 
 | ID | Description | Données (seed) | Utilisé par |
 |----|-------------|----------------|-------------|
-| JD-ADMIN | Administrateur, sans club | `admin@test.local` · `aaaaaaaa-…-aaaaaaaaaaaa` · rôle `admin` | 17:CT-01/CT-12 · 18:CT-01/CT-07/CT-08/CT-11 · 19:CT-01→CT-10 · 22:CT-01/CT-03/CT-08/CT-10/CT-11 · 25:CT-01/CT-02/CT-05/CT-07 · 02 · 03 · 04 · 06 · 07 · 08 · 09 · 10 · 11 · 12 · 13 · 14 · 15 · 16 · 26:CT-01→CT-10 · 27:CT-01→CT-12 |
-| JD-COACH-A | Coach **permanent** Club A (acteur principal de saisie/engagement/consultation) | `coach@test.local` · `cccccccc-…-cccccccccccc` · rôle `coach`, club A | 17:CT-01→CT-14 · 18:CT-01→CT-11 · 19:CT-01/CT-05 · 22:CT-02→CT-12 · 25:CT-01/CT-03/CT-07 · 03 · 04 · 06 · 09 · 12 · 13 · 16 · 26:CT-04/CT-05/CT-06/CT-07 · 27:CT-02 |
+| JD-ADMIN | Administrateur, sans club | `admin@test.local` · `aaaaaaaa-…-aaaaaaaaaaaa` · rôle `admin` | 17:CT-01/CT-12 · 18:CT-01/CT-07/CT-08/CT-11 · 19:CT-01→CT-10 · 22:CT-01/CT-03/CT-08/CT-10/CT-11 · 25:CT-01/CT-02/CT-05/CT-07 · 02 · 03 · 04 · 06 · 07 · 08 · 09 · 10 · 11 · 12 · 13 · 14 · 15 · 16 · 26:CT-01→CT-10 · 27:CT-01→CT-12 · 33:CT-02→CT-06 |
+| JD-COACH-A | Coach **permanent** Club A (acteur principal de saisie/engagement/consultation) | `coach@test.local` · `cccccccc-…-cccccccccccc` · rôle `coach`, club A | 17:CT-01→CT-14 · 18:CT-01→CT-11 · 19:CT-01/CT-05 · 22:CT-02→CT-12 · 25:CT-01/CT-03/CT-07 · 03 · 04 · 06 · 09 · 12 · 13 · 16 · 26:CT-04/CT-05/CT-06/CT-07 · 27:CT-02 · 33:CT-06 |
 | JD-COACH-A2 | 2ᵉ coach **permanent** Club A (2ᵉ observateur Club A pour les tests cross-fenêtre) | `coach2@test.local` · `cccccccc-…-cccccccccc02` · rôle `coach`, club A | 22:CT-03/CT-06/CT-07/CT-08/CT-09/CT-11 |
 | JD-COACH-B | Coach **permanent** Club B (observateur Club B ; vérifie bornage cross-club) | `coachb@test.local` · `dddddddd-…-dddddddddddd` · rôle `coach`, club B | 22:CT-03/CT-10/CT-11 · 26:CT-04/CT-06 |
 | JD-SANSMAP | Compte **authentifié sans rôle** (négatif d'accès ; lecture RLS publique) | `sansmapping@test.local` · `55555555-…-555555555555` · **aucune** ligne `compte` | 17:CT-01/CT-13 · 22:CT-10 · 25:CT-01 · 02 · 03 · 04 · 06 · 13 · 16 · 26:CT-07 · 27:CT-02 |
@@ -42,7 +42,7 @@ Mot de passe des cinq comptes permanents : `interclub`.
 
 | ID | Description | Données (seed) | Utilisé par |
 |----|-------------|----------------|-------------|
-| JD-CLUB-A | Club porteur de la rencontre de test | `Club A` · `11111111-…` | 06 · 09 · 13 · 14 · 15 · 17 · 18 · 22 · 25 · 26 |
+| JD-CLUB-A | Club porteur de la rencontre de test | `Club A` · `11111111-…` | 06 · 09 · 13 · 14 · 15 · 17 · 18 · 22 · 25 · 26 · 33 |
 | JD-CLUB-B | Club tiers (grimpeur prêté, lecture cross-club) | `Club B` · `22222222-…` | 06 · 09 · 13 · 14 · 15 · 17 · 18 · 22 · 25 · 26 |
 
 ## Rencontre & structure d'épreuve — ENFANT

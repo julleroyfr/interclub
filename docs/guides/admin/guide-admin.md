@@ -128,7 +128,7 @@ correspondant. En l'ouvrant, un coach crée son compte, qui est
 
 Un grimpeur porte un **club**, un **nom**, un **prénom**, une **année de
 naissance**, un **sexe** et un **numéro de licence**, obligatoire et unique. La
-catégorie (Enfant ou Ado) n'est pas saisie : elle découle de l'âge.
+catégorie (Enfant, Ado ou Adulte) n'est pas saisie : elle découle de l'âge.
 
 **Attention** : supprimer un grimpeur supprime aussi ses engagements et tous ses
 résultats ; la confirmation le signale.
@@ -189,7 +189,8 @@ les doublons du fichier, et les lignes en erreur ou ambiguës.
 
 ## 5. Gabarit de rencontre
 
-Le gabarit est le **modèle** d'une rencontre, un par catégorie (Enfant, Ado) :
+Le gabarit est le **modèle** d'une rencontre, un par catégorie (Enfant, Ado,
+Adulte) :
 blocs et leurs paliers, voies de vitesse et barème, voies de difficulté et
 leurs points. Il est **copié** dans chaque nouvelle rencontre ; le modifier ne
 change pas les rencontres déjà créées.
@@ -203,6 +204,7 @@ change pas les rencontres déjà créées.
 | 3 | + Voie (vitesse) | Ajoute une voie de vitesse (ex. « Filles », « Garçons ») |
 | 4 | + Ajouter un échelon | Ajoute une ligne au barème de vitesse |
 | 5 | Enregistrer le barème | Enregistre le barème de vitesse |
+| 6 | Libellé (voie N) | Renomme une voie de vitesse : modifier le texte puis **Enregistrer** ; un libellé vide est refusé |
 
 **Barème de vitesse** : les points dépendent du rang dans le classement de
 vitesse de chaque sexe. Un échelon couvre une plage de rangs : `points − (rang −
@@ -213,7 +215,14 @@ champs **Chute** et **Non-présentation** fixent les points de ces deux cas.
 
 **Voies de difficulté** (bas de page) : niveau (`M1`–`M4` en moulinette pour les
 enfants, `T1`–`T10` en tête), cotation et points (voie entière, prise valorisée
-en Enfant, zones 1 et 2 en Ado).
+en Enfant, zones 1 et 2 en Ado et en Adulte).
+
+**Gabarit Adulte** (règlement Adultes du CT33) : voies `T1`–`T10` au même barème
+que l'Ado, blocs B1 (zone 15, bloc complet 30) et B2 (zone 1 20, zone 2 50, bloc
+complet 70), vitesse sur « Voie 1 » et « Voie 2 », barème 100, 95, 90, 85, 80
+puis 75, 60, 45, 30, 15 par tranches de 5 rangs, 10 au-delà, chute 5,
+non-présentation 0. Pour la variante à 5 blocs du règlement, ajouter les blocs
+et leurs paliers.
 
 ## 6. Rencontres
 
@@ -231,6 +240,12 @@ en Enfant, zones 1 et 2 en Ado).
 
 La saison est calculée à partir de la date ; la saison en cours est affichée par
 défaut.
+
+**Catégorie Adulte** : ouverte aux grimpeurs de **16 ans et plus** en saison
+(un grimpeur de 16 à 19 ans peut donc aussi faire l'Ado). La rencontre est créée
+à partir du gabarit Adulte. Dans l'onglet **Vitesse** de sa structure, les voies
+se renomment en ① pré-compétition (champ « Libellé (voie N) », toutes
+catégories).
 
 **Attention** : supprimer une rencontre supprime aussi ses équipes, ses épreuves
 et tous ses résultats ; la confirmation le signale.

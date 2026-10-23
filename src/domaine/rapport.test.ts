@@ -37,14 +37,14 @@ describe('verifierSecret — garde du déclencheur', () => {
 })
 
 describe('trancheAge — âge en saison (R7)', () => {
-  it('classe enfant jusqu’à 12 ans, pivot à 13, ado de 14 à 19, hors tranche dès 20 (R7)', () => {
+  it('classe enfant jusqu’à 12 ans, pivot à 13, ado de 14 à 19, adulte dès 20 (R7, spec #20 R33)', () => {
     expect(trancheAge(2020, 2026)).toBe('enfant')
     expect(trancheAge(2014, 2026)).toBe('enfant')
     expect(trancheAge(2013, 2026)).toBe('pivot')
     expect(trancheAge(2012, 2026)).toBe('ado')
     expect(trancheAge(2007, 2026)).toBe('ado')
-    expect(trancheAge(2006, 2026)).toBe('hors_tranche')
-    expect(trancheAge(1980, 2026)).toBe('hors_tranche')
+    expect(trancheAge(2006, 2026)).toBe('adulte')
+    expect(trancheAge(1980, 2026)).toBe('adulte')
   })
 })
 
@@ -67,7 +67,7 @@ describe('construireRapport', () => {
       { club_id: 'c-a', annee_naissance: 2013 }, // pivot
       { club_id: 'c-a', annee_naissance: 2010 }, // ado (16)
       { club_id: 'c-z', annee_naissance: 2012 }, // ado (14)
-      { club_id: 'c-z', annee_naissance: 2000 }, // hors tranche
+      { club_id: 'c-z', annee_naissance: 2000 }, // adulte (spec #20 R33)
     ],
     rencontres: [
       { id: 'r-avant', date_rencontre: '2026-08-31', categorie: 'enfant', phase: 'resultats_publics', club_porteur_id: 'c-a' },
@@ -93,14 +93,14 @@ describe('construireRapport', () => {
 
   it('détaille chaque club par tranche, trié par nom sans tenir compte des accents ; club vide à 0 (R9)', () => {
     expect(rapport.clubs).toEqual([
-      { nom: 'ASM Grimpe', enfant: 1, pivot: 1, ado: 1, horsTranche: 0, total: 3 },
-      { nom: 'Écureuils', enfant: 0, pivot: 0, ado: 0, horsTranche: 0, total: 0 },
-      { nom: 'Zénith Escalade', enfant: 0, pivot: 0, ado: 1, horsTranche: 1, total: 2 },
+      { nom: 'ASM Grimpe', enfant: 1, pivot: 1, ado: 1, adulte: 0, total: 3 },
+      { nom: 'Écureuils', enfant: 0, pivot: 0, ado: 0, adulte: 0, total: 0 },
+      { nom: 'Zénith Escalade', enfant: 0, pivot: 0, ado: 1, adulte: 1, total: 2 },
     ])
   })
 
   it('donne les totaux tous clubs, total général = somme des clubs (R10)', () => {
-    expect(rapport.totaux).toEqual({ enfant: 1, pivot: 1, ado: 2, horsTranche: 1, total: 5 })
+    expect(rapport.totaux).toEqual({ enfant: 1, pivot: 1, ado: 2, adulte: 1, total: 5 })
     expect(rapport.clubs.reduce((s, c) => s + c.total, 0)).toBe(rapport.totaux.total)
   })
 
@@ -127,15 +127,31 @@ describe('construireRapport', () => {
   })
 
   it('compte les rencontres de la saison par catégorie (R13)', () => {
-    expect(rapport.nombreRencontres).toEqual({ enfant: 2, ado: 2, total: 4 })
+    expect(rapport.nombreRencontres).toEqual({ enfant: 2, ado: 2, adulte: 0, total: 4 })
+  })
+
+  it('trie et compte aussi les rencontres adultes, après l’ado (spec #20 R33)', () => {
+    const avecAdulte = construireRapport(
+      {
+        ...VIDE,
+        rencontres: [
+          { id: 'a', date_rencontre: '2026-11-07', categorie: 'adulte', phase: 'pre_competition', club_porteur_id: 'x' },
+          { id: 'b', date_rencontre: '2026-11-07', categorie: 'ado', phase: 'pre_competition', club_porteur_id: 'x' },
+          { id: 'c', date_rencontre: '2026-11-07', categorie: 'enfant', phase: 'pre_competition', club_porteur_id: 'x' },
+        ],
+      },
+      '2027-03-10',
+    )
+    expect(avecAdulte.rencontres.map((r) => r.categorie)).toEqual(['enfant', 'ado', 'adulte'])
+    expect(avecAdulte.nombreRencontres).toEqual({ enfant: 1, ado: 1, adulte: 1, total: 3 })
   })
 
   it('produit un rapport à zéro sur une base vide (cas limite)', () => {
     const vide = construireRapport(VIDE, '2027-03-10')
     expect(vide.saison).toBe(2026)
     expect(vide.nombreClubs).toBe(0)
-    expect(vide.totaux).toEqual({ enfant: 0, pivot: 0, ado: 0, horsTranche: 0, total: 0 })
-    expect(vide.nombreRencontres).toEqual({ enfant: 0, ado: 0, total: 0 })
+    expect(vide.totaux).toEqual({ enfant: 0, pivot: 0, ado: 0, adulte: 0, total: 0 })
+    expect(vide.nombreRencontres).toEqual({ enfant: 0, ado: 0, adulte: 0, total: 0 })
   })
 })
 

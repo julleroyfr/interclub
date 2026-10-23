@@ -9,6 +9,7 @@ import { indicateurCible } from '@/composants/saisie-hors-ligne/etat-cible'
 import { useFileSaisies } from '@/composants/saisie-hors-ligne/useFileSaisies'
 import { useSuiviEnvoi } from '@/composants/saisie-hors-ligne/useSuiviEnvoi'
 import type { IssueEnvoi } from '@/domaine/hors-ligne'
+import { aVoiesLibres } from '@/domaine/rencontre'
 import { affichageVoiesBlocs, issuesVoieSaisissables, type IssueVoie } from '@/domaine/resultat'
 import { formaterTempsVitesse } from '@/domaine/vitesse'
 import { enregistrerSaisieCoach } from '@/lib/coach/resultats-actions'
@@ -579,7 +580,8 @@ function DetailGrimpeur({
 
 /** Section « voies de difficulté » : enfant (3 attendues) ou ado (réalisées + ajout). */
 function SectionVoies({ saisie, grimpeur }: { saisie: SaisieRencontre; grimpeur: GrimpeurSaisie }) {
-  const estAdo = saisie.categorie === 'ado'
+  // Voies libres : ado et adulte (spec #20 R22).
+  const estAdo = aVoiesLibres(saisie.categorie)
   const dejaSaisies = new Set(grimpeur.voies.map((v) => v.voieDifficulteId))
   const dispoAdo = saisie.voiesEpreuve.filter((v) => !dejaSaisies.has(v.voieDifficulteId))
   const peutAjouterAdo =
@@ -726,8 +728,8 @@ function FormAjoutVoieAdo({
   disponibles: VoieOption[]
 }) {
   const { surSoumission } = useEnvoi()
-  // Ado : voies tête → issues Top / Zone 2 / Zone 1 / Échec.
-  const issues = issuesVoieSaisissables('ado', 'tete')
+  // Voies libres (tête) : issues de la catégorie (ado, adulte — spec #20 R23).
+  const issues = issuesVoieSaisissables(saisie.categorie, 'tete')
   // La voie ajoutée s'affiche aussitôt dans la liste (en attente) ; un rejet
   // s'affiche ici, la voie disparaissant alors de la liste.
   const [derniereCle, setDerniereCle] = useState<string | null>(null)

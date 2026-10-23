@@ -2,7 +2,7 @@
 
 import { useActionState, useId, useRef, useState } from 'react'
 
-import { Bouton, Carte, Etiquette, TitreSection } from '@/composants'
+import { Bouton, Carte, Etiquette, FormLibelleVoieVitesse, TitreSection } from '@/composants'
 import { NIVEAUX_MOULINETTE, NIVEAUX_TETE, champsPointsVoie } from '@/domaine/gabarit'
 import { PHASES, type Categorie } from '@/domaine/rencontre'
 import { REPERE_VOIE_MAX, repereModifiable } from '@/domaine/voie'
@@ -12,6 +12,7 @@ import {
   ajouterVoieDifficulteRencontre,
   ajouterVoieVitesseRencontre,
   mettreAJourBaremeVitesse,
+  modifierLibelleVoieVitesseRencontre,
   modifierRepereVoie,
   type EtatStructure,
 } from '@/lib/rencontres/structure-actions'
@@ -618,9 +619,19 @@ function OngletVitesse({
       ) : (
         <ul className="flex flex-wrap gap-2">
           {structure.voiesVitesse.map((vv) => (
-            <li key={vv.id} className="flex items-center gap-1.5">
-              <span className="text-xs text-texte-doux">{vv.numero}</span>
-              <Etiquette variante="neutre">{vv.libelle ?? '(sans libellé)'}</Etiquette>
+            <li key={vv.id} className="flex items-end gap-1.5">
+              <span className="pb-2 text-xs text-texte-doux">{vv.numero}</span>
+              {editable ? (
+                // Libellé modifiable en pré-compétition (spec #20 R9bis).
+                <FormLibelleVoieVitesse
+                  action={modifierLibelleVoieVitesseRencontre}
+                  libelle={vv.libelle ?? ''}
+                  rang={vv.numero}
+                  champsCaches={{ id: vv.id, rencontreId: structure.id }}
+                />
+              ) : (
+                <Etiquette variante="neutre">{vv.libelle ?? '(sans libellé)'}</Etiquette>
+              )}
             </li>
           ))}
         </ul>

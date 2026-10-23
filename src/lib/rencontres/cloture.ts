@@ -4,6 +4,7 @@ import {
   GroupeDepartInvalideError,
   voiesDuGroupeDepart,
 } from '@/domaine/engagement'
+import type { Categorie } from '@/domaine/rencontre'
 import { manquantsCloture } from '@/domaine/resultat'
 import { verifierLecture } from '@/lib/supabase/lecture'
 import { createClient } from '@/lib/supabase/server'
@@ -37,7 +38,7 @@ export async function materialiserNpCloture(
     'de la rencontre',
   )
   if (!renc) return
-  const categorie = renc.categorie as 'enfant' | 'ado'
+  const categorie = renc.categorie as Categorie
 
   const epreuves = verifierLecture(
     await supabase.from('epreuve').select('id, type').eq('rencontre_id', rencontreId),

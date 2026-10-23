@@ -6,7 +6,7 @@
 import { ageEnSaison, anneeSaison, bornesSaison, labelSaison, type Categorie } from './rencontre'
 
 /** Tranche d'âge d'un grimpeur dans la saison (R7). */
-export type TrancheAge = 'enfant' | 'pivot' | 'ado' | 'hors_tranche'
+export type TrancheAge = 'enfant' | 'pivot' | 'ado' | 'adulte'
 
 /** Issue de la vérification du secret du déclencheur (R4, R5). */
 export type VerificationSecret = 'ok' | 'refuse' | 'non_configure'
@@ -26,7 +26,7 @@ export type DonneesRapport = {
 }
 
 /** Effectifs par tranche d'âge (R9, R10). */
-export type Effectifs = { enfant: number; pivot: number; ado: number; horsTranche: number; total: number }
+export type Effectifs = { enfant: number; pivot: number; ado: number; adulte: number; total: number }
 
 export type RapportPeriodique = {
   dateExecution: string
@@ -36,7 +36,7 @@ export type RapportPeriodique = {
   clubs: ({ nom: string } & Effectifs)[]
   totaux: Effectifs
   rencontres: { date: string; clubPorteur: string; categorie: Categorie; phase: string; equipes: number }[]
-  nombreRencontres: { enfant: number; ado: number; total: number }
+  nombreRencontres: { enfant: number; ado: number; adulte: number; total: number }
 }
 
 const PREFIXE_BEARER = 'Bearer '
@@ -56,13 +56,13 @@ export function verifierSecret(enTete: string | null, secret: string | undefined
   return ecart === 0 ? 'ok' : 'refuse'
 }
 
-/** Tranche d'âge (R7) : enfant ≤ 12, pivot = 13, ado 14–19, hors tranche ≥ 20. */
+/** Tranche d'âge (R7) : enfant ≤ 12, pivot = 13, ado 14–19, adulte ≥ 20. */
 export function trancheAge(anneeNaissance: number, saison: number): TrancheAge {
   const age = ageEnSaison(anneeNaissance, saison)
   if (age <= 12) return 'enfant'
   if (age === 13) return 'pivot'
   if (age <= 19) return 'ado'
-  return 'hors_tranche'
+  return 'adulte'
 }
 
 /** Date d'exécution (AAAA-MM-JJ) dans le fuseau Europe/Paris (Vocabulaire). */
@@ -75,14 +75,14 @@ const CLE_TRANCHE: Record<TrancheAge, keyof Omit<Effectifs, 'total'>> = {
   enfant: 'enfant',
   pivot: 'pivot',
   ado: 'ado',
-  hors_tranche: 'horsTranche',
+  adulte: 'adulte',
 }
 
 function effectifsVides(): Effectifs {
-  return { enfant: 0, pivot: 0, ado: 0, horsTranche: 0, total: 0 }
+  return { enfant: 0, pivot: 0, ado: 0, adulte: 0, total: 0 }
 }
 
-const ORDRE_CATEGORIE: Record<Categorie, number> = { enfant: 0, ado: 1 }
+const ORDRE_CATEGORIE: Record<Categorie, number> = { enfant: 0, ado: 1, adulte: 2 }
 
 /** Construit le rapport de la saison contenant `dateExecutionISO` (R6–R13). */
 export function construireRapport(donnees: DonneesRapport, dateExecutionISO: string): RapportPeriodique {
@@ -125,7 +125,7 @@ export function construireRapport(donnees: DonneesRapport, dateExecutionISO: str
       phase: r.phase,
       equipes: equipesParRencontre.get(r.id) ?? 0,
     }))
-  const enfant = rencontres.filter((r) => r.categorie === 'enfant').length
+  const compter = (categorie: Categorie) => rencontres.filter((r) => r.categorie === categorie).length
 
   return {
     dateExecution: dateExecutionISO,
@@ -135,7 +135,12 @@ export function construireRapport(donnees: DonneesRapport, dateExecutionISO: str
     clubs,
     totaux,
     rencontres,
-    nombreRencontres: { enfant, ado: rencontres.length - enfant, total: rencontres.length },
+    nombreRencontres: {
+      enfant: compter('enfant'),
+      ado: compter('ado'),
+      adulte: compter('adulte'),
+      total: rencontres.length,
+    },
   }
 }
 

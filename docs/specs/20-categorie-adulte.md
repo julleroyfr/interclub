@@ -215,9 +215,13 @@ catégories **enfant** et **ado** reste **inchangé**.
   l'admin, et au coach permanent **dont au moins un grimpeur** est composé dans
   une équipe de la rencontre. *(Remplace, en adulte, « au moins une équipe du
   club », spec #15 R4.)*
-- **R33.** Dans le rapport périodique (spec #19 R7/R9), la tranche « hors
-  tranche » (âge en saison ≥ 20) est renommée **« adulte »**. Les bornes des
-  tranches ne changent pas.
+- **R33.** Dans le rapport périodique (spec #19) :
+  - la tranche « hors tranche » (âge en saison ≥ 20) est renommée
+    **« adulte »** ; les bornes des tranches ne changent pas (R7/R9) ;
+  - les rencontres sont triées par date puis par catégorie **enfant, ado,
+    adulte** (R12) ;
+  - le nombre de rencontres de la saison est donné pour **enfant, ado,
+    adulte** et au total (R13).
 
 ### Réversibilité
 
@@ -329,7 +333,7 @@ enfant/ado :
 | #7 | R6 | pas de classement club en adulte (R30/R31) |
 | #13 | R7 | import sans limite d'âge (R5) |
 | #15 | R4 | accès coach en adulte (R32) |
-| #19 | tranches | tranche adulte (R33) |
+| #19 | R7, R12, R13 | tranche « adulte », tri et décompte des rencontres adultes (R33) |
 
 ## Hors périmètre
 

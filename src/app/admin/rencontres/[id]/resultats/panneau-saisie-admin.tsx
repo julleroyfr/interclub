@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 
+import { aVoiesLibres, type Categorie } from '@/domaine/rencontre'
 import { issuesVoieSaisissables, type IssueVoie } from '@/domaine/resultat'
 import {
   retirerResultatVoieAdmin,
@@ -305,7 +306,8 @@ function SectionVoies({
   saisie: SaisieAdminRencontre
   grimpeur: GrimpeurSaisie
 }) {
-  const estAdo = saisie.categorie === 'ado'
+  // Voies libres : ado et adulte (spec #20 R22).
+  const estAdo = aVoiesLibres(saisie.categorie)
   const dejaSaisies = new Set(grimpeur.voies.map((v) => v.voieDifficulteId))
   const dispoAdo = saisie.voiesEpreuve.filter((v) => !dejaSaisies.has(v.voieDifficulteId))
   const peutAjouterAdo =
@@ -341,7 +343,11 @@ function SectionVoies({
       </ul>
 
       {peutAjouterAdo && dispoAdo.length > 0 && (
-        <FormAjoutVoieAdo grimpeur={grimpeur} disponibles={dispoAdo} />
+        <FormAjoutVoieAdo
+              categorie={saisie.categorie}
+              grimpeur={grimpeur}
+              disponibles={dispoAdo}
+            />
       )}
     </div>
   )
@@ -423,14 +429,17 @@ function LigneVoie({
 }
 
 function FormAjoutVoieAdo({
+  categorie,
   grimpeur,
   disponibles,
 }: {
+  categorie: Categorie
   grimpeur: GrimpeurSaisie
   disponibles: VoieOption[]
 }) {
   const [etat, action, enCours] = useActionState(saisirResultatVoieAdmin, etatInitial)
-  const issues = issuesVoieSaisissables('ado', 'tete')
+  // Voies libres (tête) : issues de la catégorie (ado, adulte — spec #20 R23).
+  const issues = issuesVoieSaisissables(categorie, 'tete')
 
   return (
     <form
