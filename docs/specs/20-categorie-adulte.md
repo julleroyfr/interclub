@@ -168,6 +168,9 @@ catégories **enfant** et **ado** reste **inchangé**.
 - **R20.** Un jeton capitaine ne peut pas être généré pour une équipe d'une
   rencontre **enfant ou ado**. Les jetons « coach temporaire » d'une rencontre
   adulte ne sont pas proposés (R10).
+- **R20bis.** Un résultat de voie ou de bloc écrit par une session capitaine
+  garde pour **auteur** la session et le rôle **« capitaine »** (spec #9 R14 :
+  rôles `admin`, `coach`, et désormais `capitaine`). *(Décision 2026-10-23.)*
 
 ### Saisie des résultats de voie et de bloc
 
@@ -330,6 +333,8 @@ enfant/ado :
 |------|-------|--------|
 | #1 | R34 | 3ᵉ catégorie adulte, éligibilité ≥ 16 ans (R1–R3) ; prêts sans objet en adulte (R11) |
 | #2 | R9b–R23 | nouvelle nature de jeton **capitaine** (R16–R20) |
+| #9 | R14 | rôle d'auteur `capitaine` (R20bis) |
+| #12 | R9 | redirection du scan capitaine vers `/capitaine` (R17–R19) |
 | #3 | R29, R32, R33 | gabarit adulte (R6–R9) ; libellé de voie de vitesse modifiable (R9bis) |
 | #5 | R13, R15, R16 | en adulte : équipes admin, sans club, 4 au plus (R10–R14) |
 | #6 | R11, R12, R14 | issues adultes dont Top en moulinette, plafond 6 (R22–R27) |

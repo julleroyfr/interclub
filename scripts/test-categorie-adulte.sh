@@ -8,6 +8,7 @@
 #   - R24/R26: zones admises en adulte ; prise valorisée refusée (trigger)
 #   - R22    : plafond de 6 voies par grimpeur en adulte (trigger)
 #   - R23/R26: issue « top_moulinette » admise en adulte seulement (lot 4)
+#   - R16–R21: jeton et session capitaine (périmètre, ③, son équipe, auteur)
 #   - R10–R14: équipes adultes sans club, composées par l'admin seul, 4 au plus,
 #              nom unique (lot 3) ; R28 : roster juge avec le club d'origine
 #
@@ -186,6 +187,70 @@ select pg_temp.verif('R28-roster-juge-clubs-origine',
   'Club A,Club A,Club A,Club B');
 reset role;
 
+-- ---- Lot 5 — capitaine d'équipe (R16–R21, R20bis) ---------------------------
+-- Équipe 2 (Félix), rencontre en ③, jeton capitaine de l'Équipe 1, session
+-- anonyme ouverte sur ce jeton.
+insert into interclub.equipe (rencontre_id, club_id, nom) values (:'rid', null, 'Équipe 2') returning id as eq2 \gset
+insert into interclub.composition (equipe_id, grimpeur_id) values (:'eq2', 'a0000000-0000-0000-0000-0000000000a6');
+update interclub.rencontre set phase = 'competition' where id = :'rid';
+insert into interclub.jeton_qr (rencontre_id, nature, equipe_id) values (:'rid', 'capitaine', :'eq1') returning id as jcap \gset
+insert into auth.users (instance_id, id, aud, role, is_anonymous, created_at, updated_at) values
+  ('00000000-0000-0000-0000-000000000000', 'ca000000-0000-0000-0000-0000000000a1', 'authenticated', 'authenticated', true, now(), now());
+insert into interclub.session_qr (utilisateur_id, jeton_qr_id) values ('ca000000-0000-0000-0000-0000000000a1', :'jcap');
+
+-- R16/R20 : périmètre et unicité du jeton (superuser : contraintes et trigger).
+select pg_temp.essai('R16-2e-jeton-capitaine-actif-KO', false,
+  format($$insert into interclub.jeton_qr (rencontre_id, nature, equipe_id) values (%L, 'capitaine', %L)$$, :'rid', :'eq1'));
+select pg_temp.essai('R16-jeton-capitaine-avec-club-KO', false,
+  format($$insert into interclub.jeton_qr (rencontre_id, nature, equipe_id, club_id) values (%L, 'capitaine', %L, '11111111-1111-1111-1111-111111111111')$$, :'rid', :'eq2'));
+select pg_temp.essai('R20-jeton-capitaine-equipe-enfant-KO', false,
+  $$insert into interclub.jeton_qr (rencontre_id, nature, equipe_id) values ('33333333-3333-3333-3333-333333333333', 'capitaine', '66666666-6666-6666-6666-666666666666')$$);
+select pg_temp.essai('R20-jeton-capitaine-autre-rencontre-KO', false,
+  format($$insert into interclub.jeton_qr (rencontre_id, nature, equipe_id) values ('33333333-3333-3333-3333-333333333333', 'capitaine', %L)$$, :'eq2'));
+
+select set_config('request.jwt.claims','{"sub":"ca000000-0000-0000-0000-0000000000a1","role":"authenticated"}', true); set role authenticated;
+-- R17 : contexte de la session en ③.
+select pg_temp.verif('R17-contexte-capitaine-equipe', (interclub.contexte_capitaine()->>'equipe_id'), :'eq1');
+-- R19 : il lit son équipe et ses membres, pas l'autre équipe.
+select pg_temp.verif('R19-lit-sa-composition',
+  (select count(*)::text from interclub.composition where equipe_id = :'eq1'), '4');
+select pg_temp.verif('R19-ne-lit-pas-autre-equipe',
+  (select count(*)::text from interclub.composition where equipe_id = :'eq2'), '0');
+select pg_temp.verif('R19-lit-nom-membre',
+  (select nom from interclub.grimpeur where id = 'a0000000-0000-0000-0000-0000000000a3'), 'Alpha');
+-- R18 : saisie voie et bloc pour un membre, refus hors équipe et vitesse.
+select pg_temp.essai('R18-capitaine-voie-membre-OK', true,
+  format($$select interclub.saisir_resultat_voie(%L, 'a0000000-0000-0000-0000-0000000000a3', 'top_moulinette')$$, :'v1'));
+select interclub.saisir_resultat_voie(:'v1', 'a0000000-0000-0000-0000-0000000000a3', 'zone2');
+select b.id as b1, p.id as p1 from interclub.bloc b join interclub.bloc_palier p on p.bloc_id = b.id
+  join interclub.epreuve e on e.id = b.epreuve_id where e.rencontre_id = :'rid' and b.code = 'B1' and p.libelle = 'Zone' \gset
+select pg_temp.essai('R18-capitaine-bloc-membre-OK', true,
+  format($$select interclub.saisir_resultat_bloc(%L, 'a0000000-0000-0000-0000-0000000000a3', 'palier', %L)$$, :'b1', :'p1'));
+select pg_temp.essai('R18-capitaine-voie-autre-equipe-KO', false,
+  format($$select interclub.saisir_resultat_voie(%L, 'a0000000-0000-0000-0000-0000000000a6', 'top')$$, :'v1'));
+select pg_temp.essai('R18-capitaine-vitesse-KO', false,
+  format($$insert into interclub.temps_vitesse (epreuve_id, grimpeur_id, issue, temps) values (%L, 'a0000000-0000-0000-0000-0000000000a3', 'temps', 8.5)$$, :'evit'));
+select pg_temp.essai('R10-capitaine-compose-KO', false,
+  format($$insert into interclub.composition (equipe_id, grimpeur_id) values (%L, 'a0000000-0000-0000-0000-0000000000a7')$$, :'eq1'));
+reset role;
+-- R20bis : auteur « capitaine ».
+select pg_temp.verif('R20bis-auteur-capitaine',
+  (select auteur_role from interclub.resultat_voie where voie_difficulte_id = :'v1' and grimpeur_id = 'a0000000-0000-0000-0000-0000000000a3'),
+  'capitaine');
+
+-- R17 : hors ③, puis jeton révoqué → plus de session ni d'écriture.
+update interclub.rencontre set phase = 'cloture' where id = :'rid';
+select set_config('request.jwt.claims','{"sub":"ca000000-0000-0000-0000-0000000000a1","role":"authenticated"}', true); set role authenticated;
+select pg_temp.verif('R17-hors-competition-pas-de-contexte', coalesce(interclub.contexte_capitaine()::text, 'null'), 'null');
+reset role;
+update interclub.rencontre set phase = 'competition' where id = :'rid';
+update interclub.jeton_qr set actif = false where id = :'jcap';
+select set_config('request.jwt.claims','{"sub":"ca000000-0000-0000-0000-0000000000a1","role":"authenticated"}', true); set role authenticated;
+select pg_temp.verif('R17-revoque-pas-de-contexte', coalesce(interclub.contexte_capitaine()::text, 'null'), 'null');
+select pg_temp.essai('R17-revoque-ecriture-KO', false,
+  format($$select interclub.saisir_resultat_voie(%L, 'a0000000-0000-0000-0000-0000000000a3', 'top')$$, :'v1'));
+reset role;
+
 -- ---- Restitution --------------------------------------------------------
 \echo '--- Détail des assertions ---'
 select id, attendu, obtenu, case when ok then 'OK' else 'KO' end as verdict from pg_temp._res order by id;
@@ -205,9 +270,9 @@ if [ $STATUS -ne 0 ]; then
 fi
 
 if echo "$OUT" | grep -qE 'ADULTE RESULT: [0-9]+ OK / 0 KO'; then
-  echo "✅ Spec #20 (lots 1, 3 et 4) : toutes les assertions BDD passent."
+  echo "✅ Spec #20 (lots 1, 3, 4 et 5) : toutes les assertions BDD passent."
   exit 0
 else
-  echo "❌ Spec #20 (lots 1, 3 et 4) : au moins une assertion BDD a échoué (voir le détail ci-dessus)." >&2
+  echo "❌ Spec #20 (lots 1, 3, 4 et 5) : au moins une assertion BDD a échoué (voir le détail ci-dessus)." >&2
   exit 1
 fi

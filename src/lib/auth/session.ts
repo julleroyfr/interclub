@@ -158,6 +158,45 @@ export async function exigerContexteCoach(): Promise<ContexteCoach> {
 }
 
 /**
+ * Contexte d'accès à l'espace capitaine (spec #20 R17–R19). Session QR
+ * « capitaine » (anonyme) active, rencontre adulte en ③ compétition : périmètre =
+ * une équipe.
+ */
+export type ContexteCapitaine = { equipeId: string; rencontreId: string }
+
+/**
+ * Résout le contexte capitaine de la requête courante, ou `null` sans session
+ * capitaine active en ③ (RPC `contexte_capitaine`, SECURITY DEFINER, fail-closed).
+ * Mémoïsé sur la durée d'un rendu.
+ */
+export const getContexteCapitaine = cache(async (): Promise<ContexteCapitaine | null> => {
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc('contexte_capitaine')
+  if (error) {
+    console.error('Lecture du contexte capitaine impossible :', error.message)
+    return null
+  }
+  if (!data || typeof data !== 'object') return null
+  const d = data as Record<string, unknown>
+  const equipeId = typeof d['equipe_id'] === 'string' ? d['equipe_id'] : null
+  const rencontreId = typeof d['rencontre_id'] === 'string' ? d['rencontre_id'] : null
+  if (!equipeId || !rencontreId) return null
+  return { equipeId, rencontreId }
+})
+
+/**
+ * Garde de l'espace capitaine (spec #12 R5, spec #20 R17) : **pas de session** →
+ * `redirect('/connexion')` ; **session sans périmètre capitaine** (autre rôle,
+ * hors ③, jeton révoqué) → `notFound()`.
+ */
+export async function exigerContexteCapitaine(): Promise<ContexteCapitaine> {
+  const contexte = await getContexteCapitaine()
+  if (contexte) return contexte
+  await exigerUtilisateur()
+  notFound()
+}
+
+/**
  * Contexte d'accès à l'espace juge (spec #10 R1/R2). Session QR « juge »
  * (anonyme) active en ③ compétition : périmètre = l'**épreuve de vitesse** de sa
  * rencontre (le couloir n'est qu'une information d'organisation, spec #1 R30).
@@ -166,6 +205,8 @@ export type ContexteJuge = {
   rencontreId: string
   epreuveVitesseId: string
   couloirNumero: number | null
+  /** Libellé de la voie (spec #20 R9bis), `null` si absent. */
+  couloirLibelle: string | null
   dateRencontre: string
   clubPorteurNom: string
   phase: string
@@ -199,6 +240,7 @@ export const getContexteJuge = cache(async (): Promise<ContexteJuge | null> => {
     rencontreId,
     epreuveVitesseId,
     couloirNumero: typeof d['couloir_numero'] === 'number' ? d['couloir_numero'] : null,
+    couloirLibelle: typeof d['couloir_libelle'] === 'string' ? d['couloir_libelle'] : null,
     dateRencontre: typeof d['date_rencontre'] === 'string' ? d['date_rencontre'] : '',
     clubPorteurNom: typeof d['club_porteur_nom'] === 'string' ? d['club_porteur_nom'] : '',
     phase: typeof d['phase'] === 'string' ? d['phase'] : '',

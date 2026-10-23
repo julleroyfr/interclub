@@ -186,12 +186,18 @@ function libelleVitesse(vitesse: GrimpeurSaisie['vitesse']): string {
 export function PanneauResultats({
   saisie: saisieServeur,
   clubId,
+  equipeCapitaineId,
   sessionQr,
   heureServeur,
 }: {
   saisie: SaisieRencontre
   /** Club du coach : périmètre de la file d'attente (spec #17 R4). */
   clubId: string
+  /**
+   * Capitaine d'une équipe adulte (spec #20 R18) : la file d'attente est propre à
+   * son équipe ; `clubId` est alors ignoré.
+   */
+  equipeCapitaineId?: string
   /** Coach temporaire (session QR) : à rescanner si la session manque (R25). */
   sessionQr: boolean
   /** Heure du serveur au rendu (ms) : écart d'horloge de l'appareil (R6). */
@@ -217,7 +223,9 @@ export function PanneauResultats({
 
   // File d'attente de l'appareil (spec #17 R12–R19, R28).
   const fileSaisies = useFileSaisies<ContenuSaisie, ScoreGrimpeur>({
-    perimetre: { role: 'coach', rencontreId: saisieServeur.id, clubId },
+    perimetre: equipeCapitaineId
+      ? { role: 'capitaine', rencontreId: saisieServeur.id, equipeId: equipeCapitaineId }
+      : { role: 'coach', rencontreId: saisieServeur.id, clubId },
     heureServeur,
     envoyer: (saisie, saisiLe) => envoyerSaisie(saisie.contenu, saisiLe),
     surAcceptee: (saisie, score) => {
@@ -294,7 +302,9 @@ export function PanneauResultats({
         sessionAbsente={fileSaisies.sessionAbsente}
         actionSession={
           sessionQr ? (
-            <span className="text-xs font-bold">Rescannez le QR code de votre club.</span>
+            <span className="text-xs font-bold">
+              Rescannez le QR code de votre {equipeCapitaineId ? 'équipe' : 'club'}.
+            </span>
           ) : (
             <Link href="/connexion" className="min-h-9 rounded-lg border border-current px-3 py-2 text-xs font-bold">
               Se reconnecter

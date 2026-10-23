@@ -251,7 +251,14 @@ et plus de **tous les clubs** (club affiché à côté de chaque nom). Il n'y a 
 de prêt en adulte et les coachs n'ont aucun droit sur ces équipes.
 En compétition, une voie adulte peut être réussie **en tête** (« Top ») ou **en
 moulinette** (« Top en moulinette », pastille ambre) : la moulinette rapporte la
-moitié des points du top et jamais de points de zone. Dans l'onglet **Vitesse** de sa structure, les voies
+moitié des points du top et jamais de points de zone.
+
+**Capitaines d'équipe (adulte)** : dans **Jetons QR**, une rencontre adulte
+affiche une section « Capitaines d'équipe » (et pas de coach temporaire) : un
+jeton par équipe, à générer, afficher, régénérer ou révoquer. Le capitaine qui
+scanne le QR pendant la compétition saisit les voies et les blocs des seuls
+membres de son équipe, et consulte le classement ; ses saisies sont tracées avec
+le rôle « capitaine ». La vitesse reste aux juges. Voir le guide du capitaine. Dans l'onglet **Vitesse** de sa structure, les voies
 se renomment en ① pré-compétition (champ « Libellé (voie N) », toutes
 catégories).
 

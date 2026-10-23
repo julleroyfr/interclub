@@ -49,7 +49,11 @@ export default async function PageJuge() {
             </h1>
             <p className="mt-0.5 text-sm text-texte-attenue">
               Épreuve de vitesse
-              {contexte.couloirNumero != null && ` · couloir ${contexte.couloirNumero}`} · juge
+              {/* Libellé de la voie (spec #20 R9bis), sinon son numéro. */}
+              {contexte.couloirLibelle
+                ? ` · ${contexte.couloirLibelle}`
+                : contexte.couloirNumero != null && ` · couloir ${contexte.couloirNumero}`}{' '}
+              · juge
             </p>
           </div>
           <span className="inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent/12 px-3 py-1 text-xs font-semibold text-accent-doux">

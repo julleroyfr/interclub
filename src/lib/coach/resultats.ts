@@ -136,6 +136,26 @@ export async function getSaisieRencontre(
 }
 
 /**
+ * Charge la saisie des membres d'UNE équipe adulte, pour son capitaine (spec #20
+ * R18/R19). Sous session capitaine, la RLS ne laisse lire que son équipe et ses
+ * membres ; le filtre sur `equipeId` est une défense en profondeur. Renvoie
+ * `null` si la rencontre est introuvable. À appeler derrière la garde capitaine.
+ */
+export async function getSaisieEquipe(
+  rencontreId: string,
+  equipeId: string,
+): Promise<SaisieRencontre | null> {
+  const saisie = await chargerSaisie(rencontreId, null)
+  if (!saisie) return null
+  const { grimpeursParClub, ...rencontre } = saisie
+  const grimpeurs = [...grimpeursParClub.values()]
+    .flat()
+    .filter((g) => g.equipeId === equipeId)
+    .sort((a, b) => a.nom.localeCompare(b.nom, 'fr') || a.prenom.localeCompare(b.prenom, 'fr'))
+  return { ...rencontre, grimpeurs }
+}
+
+/**
  * Charge la saisie de TOUS les clubs engagés en une seule série de lectures
  * (écran admin, spec #9) : sous session admin, la RLS `est_admin()` ouvre tous
  * les clubs. Renvoie `null` si la rencontre est introuvable. À appeler derrière

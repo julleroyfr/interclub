@@ -5,8 +5,8 @@ import { commeAdmin, commeCoach } from './helpers/auth'
 import { execSql } from './helpers/sql'
 
 /**
- * Cahier 33 — catégorie adulte, lots 1, 3 et 4 (spec #20 R1, R6–R9, R9bis, R10–R14,
- * R23, R25).
+ * Cahier 33 — catégorie adulte, lots 1, 3, 4 et 5 (spec #20 R1, R6–R9, R9bis,
+ * R10–R14, R16–R20bis, R23, R25).
  * L'admin crée une rencontre adulte depuis l'IHM : le gabarit adulte est copié
  * (T1–T10, B1/B2, « Voie 1 »/« Voie 2 »). Il renomme une voie de vitesse dans la
  * rencontre et dans le gabarit ; un libellé blanc est refusé. Il compose des
@@ -194,6 +194,60 @@ test.describe('Catégorie adulte — lot 1 (spec #20)', () => {
         .toBe('top_moulinette')
       // T5 : top 12 → 6 points en moulinette (R25), seul résultat de Lucie.
       await expect(page.getByText(/^6\s*pts$/).first()).toBeVisible()
+    } finally {
+      execSql(`update interclub.rencontre set phase = 'pre_competition' where id = '${id}';`)
+    }
+  })
+
+  test('l’admin génère le jeton capitaine d’une équipe adulte (R16, R20)', async ({ page }) => {
+    await commeAdmin(page)
+    await page.goto(`/admin/jetons?rencontre=${idRencontre()}`)
+    await expect(page.getByRole('heading', { name: 'Capitaines d’équipe' })).toBeVisible()
+    // Pas de coach temporaire en adulte (R20).
+    await expect(page.getByRole('heading', { name: /Coach temporaire/ })).toHaveCount(0)
+    const carte = page.locator('div', { has: page.getByRole('heading', { name: 'Équipe 1', exact: true }) }).last()
+    await carte.getByRole('button', { name: 'Générer le jeton' }).click()
+    await expect(page.getByAltText('QR du jeton Équipe 1')).toBeVisible()
+  })
+
+  test('le capitaine saisit pour son équipe seulement, en ③ (R17–R20bis)', async ({ page }) => {
+    const id = idRencontre()
+    const valeur = execSql(
+      `select j.valeur from interclub.jeton_qr j join interclub.equipe e on e.id = j.equipe_id
+        where j.rencontre_id = '${id}' and j.nature = 'capitaine' and j.actif and e.nom = 'Équipe 1';`,
+    )
+    execSql(`update interclub.rencontre set phase = 'competition' where id = '${id}';`)
+    try {
+      await page.goto(`/scan?jeton=${valeur}`)
+      await page.waitForURL('**/capitaine')
+      await expect(page.getByText(/capitaine de « Équipe 1 »/)).toBeVisible()
+      // Membres de son équipe seulement (R18/R19).
+      await expect(page.getByRole('button', { name: /^Sarah Foxtrot/ })).toBeVisible()
+      await expect(page.getByRole('button', { name: /^Inès Foxtrot/ })).toHaveCount(0)
+
+      await page.getByRole('button', { name: /^Sarah Foxtrot/ }).click()
+      const ajout = page.locator('form', { has: page.locator('select[name="voieDifficulteId"]') })
+      await ajout.locator('select[name="voieDifficulteId"]').selectOption({ label: 'T3 (5b)' })
+      await ajout.getByRole('button', { name: 'Top', exact: true }).click()
+      await expect
+        .poll(() =>
+          execSql(
+            `select rv.issue || '|' || rv.auteur_role from interclub.resultat_voie rv
+               join interclub.voie_difficulte vd on vd.id = rv.voie_difficulte_id
+               join interclub.epreuve e on e.id = vd.epreuve_id
+               join interclub.grimpeur g on g.id = rv.grimpeur_id
+              where e.rencontre_id = '${id}' and g.prenom = 'Sarah' and vd.niveau = 'T3';`,
+          ),
+        )
+        .toBe('top|capitaine')
+
+      await page.getByRole('link', { name: 'Voir le classement →' }).click()
+      await expect(page.getByRole('heading', { name: 'Classement' })).toBeVisible()
+
+      // Jeton révoqué : l'espace capitaine n'est plus accessible (R17).
+      execSql(`update interclub.jeton_qr set actif = false where valeur = '${valeur}';`)
+      const reponse = await page.goto('/capitaine')
+      expect(reponse?.status()).toBe(404)
     } finally {
       execSql(`update interclub.rencontre set phase = 'pre_competition' where id = '${id}';`)
     }

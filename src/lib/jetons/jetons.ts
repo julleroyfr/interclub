@@ -3,6 +3,7 @@ import 'server-only'
 import { headers } from 'next/headers'
 import QRCode from 'qrcode'
 
+import type { NatureJeton } from '@/domaine/jeton-qr'
 import { construireUrlScan } from '@/domaine/session-qr'
 import { exigerLectureAdmin, exigerLectureCoachDuClub } from '@/lib/auth/garde-lecture'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -20,15 +21,19 @@ export type RencontreVue = {
 /** Club pour lequel un jeton coach temporaire peut être généré (R19 spec #2). */
 export type ClubEngage = { id: string; nom: string }
 
-/** Voie de vitesse d'une rencontre (périmètre d'un jeton juge). */
-export type VoieVue = { id: string; numero: number }
+/** Voie de vitesse d'une rencontre (périmètre d'un jeton juge), avec son libellé. */
+export type VoieVue = { id: string; numero: number; libelle: string | null }
+
+/** Équipe adulte d'une rencontre (périmètre d'un jeton capitaine, spec #20 R16). */
+export type EquipeVue = { id: string; nom: string }
 
 /** Jeton actif prêt à afficher (avec son QR encodé en data URL). */
 export type JetonVue = {
   id: string
-  nature: 'coach_temporaire' | 'juge'
+  nature: NatureJeton
   clubId: string | null
   voieVitesseId: string | null
+  equipeId: string | null
   valeur: string
   qrDataUrl: string
 }
@@ -36,9 +41,10 @@ export type JetonVue = {
 /** Encode la valeur d'un jeton en QR (data URL PNG), généré côté serveur. */
 async function versJetonVue(row: {
   id: string
-  nature: 'coach_temporaire' | 'juge'
+  nature: NatureJeton
   club_id: string | null
   voie_vitesse_id: string | null
+  equipe_id: string | null
   valeur: string
 }): Promise<JetonVue> {
   // Encode l'URL de scan complète (T5d, ADR 0003). Le host est lu depuis les
@@ -53,6 +59,7 @@ async function versJetonVue(row: {
     nature: row.nature,
     clubId: row.club_id,
     voieVitesseId: row.voie_vitesse_id,
+    equipeId: row.equipe_id,
     valeur: row.valeur,
     qrDataUrl,
   }
@@ -131,11 +138,29 @@ export async function listerVoies(rencontreId: string): Promise<VoieVue[]> {
   const admin = createAdminClient()
   const { data, error } = await admin
     .from('voie_vitesse')
-    .select('id, numero')
+    .select('id, numero, libelle')
     .eq('rencontre_id', rencontreId)
     .order('numero')
   if (error) throw error
-  return (data ?? []).map((v) => ({ id: v.id as string, numero: v.numero as number }))
+  return (data ?? []).map((v) => ({
+    id: v.id as string,
+    numero: v.numero as number,
+    libelle: (v.libelle as string | null) ?? null,
+  }))
+}
+
+/** Équipes adultes (sans club) d'une rencontre, par nom (spec #20 R16). */
+export async function listerEquipesAdultes(rencontreId: string): Promise<EquipeVue[]> {
+  await exigerLectureAdmin('équipes adultes (jetons)')
+  const admin = createAdminClient()
+  const { data, error } = await admin
+    .from('equipe')
+    .select('id, nom')
+    .eq('rencontre_id', rencontreId)
+    .is('club_id', null)
+    .order('nom')
+  if (error) throw error
+  return (data ?? []).map((e) => ({ id: e.id as string, nom: e.nom as string }))
 }
 
 /**
@@ -149,7 +174,7 @@ export async function listerJetonsActifs(
   const supabase = await createClient()
   const { data, error } = await supabase
     .from('jeton_qr')
-    .select('id, nature, club_id, voie_vitesse_id, valeur')
+    .select('id, nature, club_id, voie_vitesse_id, equipe_id, valeur')
     .eq('rencontre_id', rencontreId)
     .eq('actif', true)
   if (error) throw error

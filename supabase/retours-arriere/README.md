@@ -31,8 +31,9 @@ développée sur une branche dédiée et testée sur l'unique base de recette
 | `202610231000_categorie_adulte` | `202610231000_categorie_adulte_retour_arriere.sql` | supprime rencontres et gabarit adultes ; restaure contraintes de catégorie et 4 fonctions |
 | `202610231100_equipes_adultes` | `202610231100_equipes_adultes_retour_arriere.sql` | supprime les équipes sans club ; retire 2 triggers et 1 index ; remet `equipe.club_id` à NOT NULL ; restaure `liste_grimpeurs_vitesse` |
 | `202610231200_top_moulinette` | `202610231200_top_moulinette_retour_arriere.sql` | supprime les résultats `top_moulinette` ; restaure la contrainte d'issue et `valider_resultat_voie` / `saisir_resultat_voie` dans leur version du lot 1 |
+| `202610231300_jeton_capitaine` | `202610231300_jeton_capitaine_retour_arriere.sql` | supprime les jetons capitaine (et leurs sessions) ; auteur `capitaine` → `coach` ; retire policies, fonctions, trigger, index et colonne `jeton_qr.equipe_id` ; restaure contraintes et 4 fonctions (`exiger_session_coach`, `peut_ecrire_resultat`, `proteger_audit_resultat`, `contexte_juge`) |
 
-Ordre d'annulation : lot 4 (`202610231200`), lot 3 (`202610231100`), **puis**
-lot 1 (`202610231000`). Quand une fonction a déjà été modifiée par une migration
+Ordre d'annulation : lot 5 (`202610231300`), lot 4 (`202610231200`), lot 3
+(`202610231100`), **puis** lot 1 (`202610231000`). Quand une fonction a déjà été modifiée par une migration
 antérieure de la même évolution, le retour arrière restaure **cette** version
 (pas celle de la base archivée).

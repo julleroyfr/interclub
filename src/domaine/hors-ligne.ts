@@ -7,9 +7,15 @@
 export type PerimetreFile =
   | { role: 'coach'; rencontreId: string; clubId: string }
   | { role: 'juge'; rencontreId: string; clubId?: undefined }
+  /** Capitaine d'une équipe adulte (spec #20 R18) : file propre à son équipe. */
+  | { role: 'capitaine'; rencontreId: string; equipeId: string }
 
-/** Clé de stockage d'une file : rôle, rencontre et, pour un coach, son club (R4). */
+/**
+ * Clé de stockage d'une file : rôle, rencontre et, pour un coach, son club ;
+ * pour un capitaine, son équipe (R4).
+ */
 export function clePerimetre(p: PerimetreFile): string {
+  if (p.role === 'capitaine') return `capitaine:${p.rencontreId}:${p.equipeId}`
   return `${p.role}:${p.rencontreId}:${p.clubId ?? ''}`
 }
 

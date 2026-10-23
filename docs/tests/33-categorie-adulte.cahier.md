@@ -4,15 +4,16 @@
 - **Périmètre actuel** : **lot 1** — catégorie et gabarit (R1–R4, R6–R9,
   R9bis, R22, R24, R26 côté base, R33, R34/R35) ; **lot 2** — import sans
   limite d'âge (R5) ; **lot 3** — équipes adultes (R10–R15, R28 côté écran
-  juge) ; **lot 4** — top en moulinette (R23, R25, R26). Les lots suivants
-  (capitaine, classement) compléteront ce cahier.
+  juge) ; **lot 4** — top en moulinette (R23, R25, R26) ; **lot 5** — jeton
+  capitaine (R16–R21, R20bis) et libellé de voie sur l'écran juge (R9bis). Le
+  lot 6 (classement sans club) complétera ce cahier.
 - **Pré-requis** :
   - Migrations **`202610231000_categorie_adulte`**,
-    **`202610231100_equipes_adultes`** puis **`202610231200_top_moulinette`**
-    appliquées à la main, dans cet ordre (recette seulement tant que la branche
-    n'est pas fusionnée).
+    **`202610231100_equipes_adultes`**, **`202610231200_top_moulinette`** puis
+    **`202610231300_jeton_capitaine`** appliquées à la main, dans cet ordre
+    (recette seulement tant que la branche n'est pas fusionnée).
   - Scripts de retour arrière disponibles dans `supabase/retours-arriere/`, à
-    exécuter dans l'**ordre inverse** (lot 4, lot 3, puis lot 1).
+    exécuter dans l'**ordre inverse** (lot 5, lot 4, lot 3, puis lot 1).
 - **Environnement** : local, puis recette (preview `feature/categorie-adulte`) —
   version/commit : `______`
 - **Validé en local le 2026-10-23** : `npm run db:verifier-retours --
@@ -242,6 +243,57 @@ main, `[mixte]` partie automatisée + vérification à l'œil.
 - **Résultat attendu** : la base refuse `top_moulinette` sur une voie enfant
   ou ado et toute issue inconnue.
 
+### CT-20 — L'admin génère le jeton capitaine d'une équipe (couvre : R16, R20) `[auto]`
+
+- **Rôle / compte** : `JD-ADMIN`, rencontre adulte avec « Équipe 1 ».
+- **Étapes** : Jetons QR → la rencontre adulte → section **« Capitaines
+  d'équipe »** → carte « Équipe 1 » → **Générer le jeton**.
+- **Résultat attendu** : QR affiché, avec **Régénérer** et **Révoquer** ; la
+  section « Coach temporaire » est absente ; les jetons juge portent le libellé
+  de leur voie (R9bis).
+- **RLS / sécurité** : local `npm run test:adulte`, assertions `R16-*` et
+  `R20-*` : deuxième jeton actif pour la même équipe, jeton avec club, jeton sur
+  une équipe enfant ou d'une autre rencontre → refusés.
+
+### CT-21 — Session capitaine : son équipe seulement, en ③ (couvre : R17, R18, R19) `[auto]`
+
+- **Rôle / compte** : appareil sans session (navigation privée).
+- **Pré-condition** : rencontre en ③, jeton de CT-20.
+- **Étapes** : scanner le QR (ou ouvrir l'URL `/scan?jeton=…`).
+- **Résultat attendu** : arrivée sur **`/capitaine`** (« capitaine de « Équipe 1
+  » ») ; seuls les membres de l'Équipe 1 sont listés ; la vitesse est en lecture
+  seule ; « Voir le classement » ouvre `/capitaine/classement`.
+
+### CT-22 — Le capitaine saisit voies et blocs ; l'auteur est « capitaine » (couvre : R18, R20bis, R21) `[auto]`
+
+- **Étapes** : Sarah Foxtrot → « Ajouter une voie » T3 → **Top** ; puis un
+  palier de bloc.
+- **Résultat attendu** : résultat enregistré, score à jour ; en base,
+  `auteur_role = 'capitaine'`. Local : `npm run test:adulte`, assertions
+  `R18-*`, `R20bis-*`.
+
+### CT-23 — Hors de son périmètre : refusé (couvre : R17, R18) `[mixte]`
+
+- **Étapes** (local, `npm run test:adulte`) : saisie pour un grimpeur d'une
+  autre équipe, temps de vitesse, composition d'équipe → refusés ; en recette,
+  ouvrir `/coach`, `/admin` ou `/juge` avec la session capitaine.
+- **Résultat attendu** : refus en base ; les espaces coach, admin et juge
+  renvoient 404.
+
+### CT-24 — Fin de session : hors ③ ou jeton révoqué (couvre : R17) `[auto]`
+
+- **Étapes** : révoquer le jeton (ou passer la rencontre en ④), recharger
+  `/capitaine`.
+- **Résultat attendu** : 404 ; plus aucune écriture possible (assertions
+  `R17-*`). Un QR capitaine scanné en ② n'ouvre aucune session.
+
+### CT-25 — Écran juge : libellé de la voie (couvre : R9bis) `[manuel]`
+
+- **Étapes** : renommer la « Voie 1 » d'une rencontre adulte (CT-04), passer
+  en ③, scanner le jeton juge de cette voie.
+- **Résultat attendu** : l'en-tête de l'écran juge affiche le libellé (« Voie 1
+  — dalle ») au lieu de « couloir 1 ».
+
 ## Couverture hors cahier
 
 - R2, R3 (éligibilité dès 16 ans), R23 (issues proposées), R33 (rapport) et la
@@ -249,6 +301,9 @@ main, `[mixte]` partie automatisée + vérification à l'œil.
   `resultat.test.ts`, `rapport.test.ts`, `voie.test.ts`).
 - R11–R14 (plafond 4, double composition, nom « Équipe N », changement
   d'équipe) : Vitest (`engagement.test.ts`).
+- R16 (périmètre et gestion d'un jeton capitaine), R17 (redirection du scan)
+  et file hors ligne par équipe : Vitest (`jeton-qr.test.ts`,
+  `session-qr.test.ts`, `hors-ligne.test.ts`).
 - R25 (moitié du top, arrondi supérieur, pas de zone ; exemple 8 + 12 + 5 = 25)
   et R23/R26 (issues proposées et admises) : Vitest (`score.test.ts`,
   `resultat.test.ts`).
@@ -264,4 +319,5 @@ main, `[mixte]` partie automatisée + vérification à l'œil.
 | 2026-10-23 | agent (local) | feature/categorie-adulte | CT-13, CT-15, CT-16 (étape 1) | ✅ | E2E `categorie-adulte.spec.ts` 7/7 |
 | 2026-10-23 | agent (local) | feature/categorie-adulte | CT-14 (1), CT-16 (2), CT-17 (base) | ✅ | `npm run test:adulte` 21/21 ; retour arrière lot 3 identique à l'état lot 1 |
 | 2026-10-23 | agent (local) | feature/categorie-adulte | CT-18, CT-19 | ✅ | E2E 8/8 ; `test:adulte` 24/24 ; `db:verifier-retours` lots 1, 3, 4 ✅ |
-| | | | CT-01 → CT-19 (recette) | | |
+| 2026-10-23 | agent (local) | feature/categorie-adulte | CT-20, CT-21, CT-22, CT-24 | ✅ | E2E `categorie-adulte.spec.ts` 10/10 ; `test:adulte` 41/41 |
+| | | | CT-01 → CT-25 (recette) | | |
