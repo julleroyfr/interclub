@@ -2,8 +2,9 @@
 
 - **Spec de référence** : `docs/specs/20-categorie-adulte.md`
 - **Périmètre actuel** : **lot 1** — catégorie et gabarit (R1–R4, R6–R9,
-  R9bis, R22, R24, R26 côté base, R33, R34/R35). Les lots suivants (import,
-  équipes adultes, moulinette, capitaine, classement) compléteront ce cahier.
+  R9bis, R22, R24, R26 côté base, R33, R34/R35) ; **lot 2** — import sans
+  limite d'âge (R5). Les lots suivants (équipes adultes, moulinette, capitaine,
+  classement) compléteront ce cahier.
 - **Pré-requis** :
   - Migration **`202610231000_categorie_adulte`** appliquée à la main (recette
     seulement tant que la branche n'est pas fusionnée).
@@ -155,6 +156,21 @@ main, `[mixte]` partie automatisée + vérification à l'œil.
   fonctionnent normalement. Avec le code de `develop` (sans la catégorie adulte),
   l'application fonctionne aussi sur la base migrée (R34).
 
+### CT-11 — Import des licenciés FFME sans limite d'âge (couvre : R5) `[manuel]`
+
+- **Rôle / compte** : `JD-ADMIN`.
+- **Étapes** : `/admin/grimpeurs/import`, déposer un export FFME contenant au
+  moins un adulte (né avant 2000) et un enfant.
+- **Résultat attendu** : les deux sont créés ; le compte-rendu affiche Créés,
+  Mis à jour, Lignes en erreur, sans « Ignorés (hors âge) » ni année de
+  référence. Détail : cahier 24 CT-04/CT-05.
+
+### CT-12 — Import CSV sans licence, sans limite d'âge (couvre : R5) `[auto]`
+
+- **Étapes** : E2E `import-csv-sans-licence.spec.ts` (CT-04/05 du cahier 31).
+- **Résultat attendu** : le grimpeur né en 2001 du fichier est créé ; aucun
+  compteur « ignorés ».
+
 ## Couverture hors cahier
 
 - R2, R3 (éligibilité dès 16 ans), R23 (issues proposées), R33 (rapport) et la
@@ -168,4 +184,5 @@ main, `[mixte]` partie automatisée + vérification à l'œil.
 | 2026-10-23 | agent (local) | feature/categorie-adulte | CT-02, CT-04, CT-05, CT-06 (étapes 1–2) | ✅ | E2E `categorie-adulte.spec.ts` 4/4 |
 | 2026-10-23 | agent (local) | feature/categorie-adulte | CT-07, CT-08 | ✅ | `npm run test:adulte` 11/11 |
 | 2026-10-23 | agent (local) | feature/categorie-adulte | CT-01, CT-10 (base locale) | ✅ | aller → retour → aller identique à la référence |
-| | | | CT-01 → CT-10 (recette) | | |
+| 2026-10-23 | agent (local) | feature/categorie-adulte | CT-12 | ✅ | E2E `import-csv-sans-licence.spec.ts` 5/5 |
+| | | | CT-01 → CT-12 (recette) | | |

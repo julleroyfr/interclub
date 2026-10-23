@@ -67,7 +67,10 @@ catégories **enfant** et **ado** reste **inchangé**.
 - **R5.** L'import des licenciés FFME (spec #13) et l'import CSV sans licence
   (spec #18) importent les licenciés **de tout âge** : le filtre « 18 ans au
   plus » (spec #13 R7) est supprimé. L'éligibilité à une catégorie reste
-  vérifiée à l'engagement (R2, spec #1 R34).
+  vérifiée à l'engagement (R2, spec #1 R34). En conséquence, l'**année de
+  référence** (spec #13 R6), qui ne servait qu'à ce filtre, disparaît, et les
+  comptes-rendus d'import n'affichent plus ni « ignorés (hors âge) » ni année de
+  référence (spec #13 R8/R18, spec #18 R11/R17).
 
 ### Gabarit adulte
 
@@ -331,7 +334,8 @@ enfant/ado :
 | #5 | R13, R15, R16 | en adulte : équipes admin, sans club, 4 au plus (R10–R14) |
 | #6 | R11, R12, R14 | issues adultes dont Top en moulinette, plafond 6 (R22–R27) |
 | #7 | R6 | pas de classement club en adulte (R30/R31) |
-| #13 | R7 | import sans limite d'âge (R5) |
+| #13 | R6, R7, R8, R18 | import sans limite d'âge, ni année de référence, ni « ignorés hors âge » (R5) |
+| #18 | R11, R16, R17 | idem pour l'import CSV sans licence (R5) |
 | #15 | R4 | accès coach en adulte (R32) |
 | #19 | R7, R12, R13 | tranche « adulte », tri et décompte des rencontres adultes (R33) |
 

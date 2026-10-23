@@ -150,8 +150,9 @@ Les numéros de licence à partir de **2 000 000 000** sont réservés aux licen
 - **Format** : un fichier `.xlsx`, lu sur sa première feuille, avec les colonnes
   Nom, Prénom, Date de naissance (`JJ/MM/AAAA`), Sexe, N° de licence et nom de
   la structure (le club).
-- **Âge** : seuls les licenciés de **18 ans au plus** à la fin de la saison sont
-  importés ; les autres sont ignorés, sans erreur.
+- **Âge** : les licenciés de **tout âge** sont importés, adultes compris. La
+  catégorie d'une rencontre filtre ensuite les grimpeurs proposés à
+  l'engagement.
 - **Clubs** : chaque grimpeur est rattaché au club qui porte exactement le nom
   de sa structure ; un club absent est **créé automatiquement**.
 - **Mise à jour** : un grimpeur dont la licence existe déjà est **mis à jour**

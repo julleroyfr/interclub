@@ -16,7 +16,7 @@ const CLUB_ID = '18181818-1818-1818-1818-181818181818'
 const CLUB_NOM = 'Club E2E import CSV'
 
 // Fichier synthétique (aucune donnée réelle) : 2 valides, 1 doublon de clé,
-// 1 accent perdu (U+FFFD), 1 QUALITE invalide, 1 hors âge.
+// 1 accent perdu (U+FFFD), 1 QUALITE invalide, 1 adulte (importé : spec #20 R5).
 const CSV = [
   'QUALITE,NOM,PRENOM,DATNAISS',
   'MME,ROBIN-BROSSE,CELESTE ,2021-07-04',
@@ -86,9 +86,10 @@ test.describe('Import CSV sans licence (spec #18)', () => {
     await deposer(page, 'liste.csv', CSV)
 
     await expect(page.getByText(/Import terminé — club/)).toContainText(CLUB_NOM)
-    await expect(stat(page, 'Créés (licence générée)')).toHaveText('2')
+    await expect(stat(page, 'Créés (licence générée)')).toHaveText('3')
     await expect(stat(page, 'Déjà présents')).toHaveText('0')
-    await expect(stat(page, 'Ignorés (hors âge)')).toHaveText('1')
+    // Plus de filtre d'âge (spec #20 R5) : ni compteur « ignorés », ni grimpeur écarté.
+    await expect(page.getByText('Ignorés (hors âge)')).toHaveCount(0)
     await expect(stat(page, 'Lignes en erreur')).toHaveText('2')
     await expect(page.getByText(/1 doublon dans le fichier/)).toContainText('(L. 3)')
     await expect(page.locator('tr', { hasText: 'L. 5' })).toContainText(/caractère illisible/)
@@ -99,14 +100,18 @@ test.describe('Import CSV sans licence (spec #18)', () => {
       `select nom || '|' || prenom || '|' || annee_naissance || '|' || licence_generee
          from interclub.grimpeur where club_id = '${CLUB_ID}' order by nom;`,
     ).split('\n')
-    expect(lignes).toEqual(['L HOSTIS|Gabin|2021|true', 'ROBIN-BROSSE|CELESTE|2021|true'])
+    expect(lignes).toEqual([
+      'ANCIEN|PAUL|2001|true',
+      'L HOSTIS|Gabin|2021|true',
+      'ROBIN-BROSSE|CELESTE|2021|true',
+    ])
 
     // Ré-import : tout est reconnu, rien n'est créé (R13).
     await deposer(page, 'liste.csv', CSV)
     await expect(stat(page, 'Créés (licence générée)')).toHaveText('0')
-    await expect(stat(page, 'Déjà présents')).toHaveText('2')
+    await expect(stat(page, 'Déjà présents')).toHaveText('3')
     expect(execSql(`select count(*) from interclub.grimpeur where club_id = '${CLUB_ID}';`)).toBe(
-      '2',
+      '3',
     )
   })
 

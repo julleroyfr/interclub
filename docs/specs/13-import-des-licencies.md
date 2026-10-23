@@ -80,6 +80,8 @@ que de saisir chaque grimpeur un par un (spec #3 R21–R24). L'import :
   **suivante**). Exemple : le 2026-09-25, saison courante = 2026 (2026–2027) →
   **année de référence = 2027**. Elle est **calculée automatiquement**, ni saisie
   ni modifiable par l'admin (aucun champ dans l'écran).
+  *(Catégorie adulte, rév. 2026-10-23 : sans objet, l'année de référence ne
+  servait qu'au filtre d'âge, supprimé — spec #20 R5.)*
 - **R7.** Seuls sont importés les licenciés **âgés de 18 ans au plus** à l'année
   de référence, soit **`année de naissance ≥ année de référence − 18`**. Exemple
   (référence 2027) : seuil = **2009** ; un licencié né en 2009 (18 ans en 2027)
@@ -91,6 +93,8 @@ que de saisir chaque grimpeur un par un (spec #3 R21–R24). L'import :
 - **R8.** Une ligne **ignorée pour cause d'âge** (né avant le seuil) n'est **pas
   une erreur** : elle est comptée séparément dans le compte-rendu (R18), sans
   message d'erreur.
+  *(Catégorie adulte, rév. 2026-10-23 : sans objet, plus aucune ligne n'est
+  ignorée pour son âge — spec #20 R5.)*
 
 ### Lecture & normalisation d'une ligne
 
@@ -156,6 +160,8 @@ que de saisir chaque grimpeur un par un (spec #3 R21–R24). L'import :
   **numéro de ligne** dans le fichier et la **raison**), la liste des **clubs
   créés**, et l'**année de référence** utilisée. Après un import réussi, les
   écrans qui listent les grimpeurs (spec #3 R26) reflètent l'état à jour.
+  *(Catégorie adulte, rév. 2026-10-23 : le compte-rendu n'affiche plus ni
+  « ignorés (hors tranche d'âge) » ni année de référence — spec #20 R5.)*
 
 ## Déroulé (vue d'ensemble)
 

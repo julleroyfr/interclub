@@ -39,8 +39,7 @@ export function FormulaireImport() {
             />
             <p className="mt-1 text-xs text-texte-doux">
               Export FFME : 1<sup>re</sup> feuille, colonnes Nom, Prénom, Date de naissance,
-              Sexe, N° de licence, Nom de la structure. Seuls les licenciés de 18 ans au plus à
-              la fin de la saison en cours sont importés.
+              Sexe, N° de licence, Nom de la structure. Les licenciés de tout âge sont importés.
             </p>
           </div>
 
@@ -66,15 +65,13 @@ function CompteRendu({ cr }: { cr: CompteRenduImport }) {
     <Carte className="max-w-2xl p-6">
       <TitreSection>Compte-rendu de l’import</TitreSection>
       <p className="mt-1 text-sm text-secondaire">
-        ✅ Import terminé — année de référence <strong>{cr.anneeReference}</strong> · seuil de
-        naissance <strong>{cr.seuilAnneeNaissance}</strong> · {cr.totalLignes} ligne
+        ✅ Import terminé — {cr.totalLignes} ligne
         {cr.totalLignes > 1 ? 's' : ''} traitée{cr.totalLignes > 1 ? 's' : ''}.
       </p>
 
-      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
         <Stat valeur={cr.crees} label="Créés" ton="text-secondaire" />
         <Stat valeur={cr.misAJour} label="Mis à jour" ton="text-accent" />
-        <Stat valeur={cr.ignoresHorsAge} label="Ignorés (hors âge)" ton="text-texte-attenue" />
         <Stat valeur={cr.erreurs.length} label="Lignes en erreur" ton="text-danger" />
       </div>
 
