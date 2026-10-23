@@ -80,6 +80,8 @@ sollicite la base au moins une fois par semaine.
   - **hors tranche** : âge ≥ 20.
 
   Chaque grimpeur appartient à **exactement une** tranche.
+  *(Catégorie adulte, rév. 2026-10-23 : la tranche « hors tranche » est renommée
+  **« adulte »** — spec #20 R33.)*
 - **R8.** Le rapport donne le **nombre total de clubs**.
 - **R9.** Pour **chaque club**, le rapport donne son **nom** et le nombre de
   grimpeurs **par tranche** (enfant, pivot, ado, hors tranche) ainsi que leur

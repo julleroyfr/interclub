@@ -72,6 +72,9 @@ manuelle ni capture d'écran.
   officielle **si et seulement si son club y est engagé** (au moins une équipe du
   club dans la rencontre). Sinon : aucune action d'export affichée, demande
   directe refusée (404).
+  *(Catégorie adulte, rév. 2026-10-23 : en rencontre adulte, le coach permanent
+  exporte si au moins un grimpeur de son club est composé dans une équipe — spec
+  #20 R32.)*
 - **R5.** Le **coach temporaire** et le **juge** n'ont **pas** accès à l'export
   (404) ; le **visiteur non authentifié** est redirigé vers `/connexion` (spec #12
   R2, rév. 2026-10-02). *(Pour le coach temporaire

@@ -86,6 +86,8 @@ que de saisir chaque grimpeur un par un (spec #3 R21–R24). L'import :
   est importé, un né en 2008 (19 ans) est **ignoré**. Ce filtre est **propre à
   l'import** et distinct de l'âge de compétition (spec #1 R34), qui rapporte l'âge
   à l'année de **début** de saison.
+  *(Catégorie adulte, rév. 2026-10-23 : le filtre d'âge est **supprimé** : les
+  licenciés de tout âge sont importés — spec #20 R5.)*
 - **R8.** Une ligne **ignorée pour cause d'âge** (né avant le seuil) n'est **pas
   une erreur** : elle est comptée séparément dans le compte-rendu (R18), sans
   message d'erreur.

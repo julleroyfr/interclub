@@ -131,6 +131,8 @@ alimente le modèle de données (mapping, jetons) et les policies **RLS**.
   - jeton **juge** : phase **③ compétition**.
 
   Hors de cette fenêtre, scanner le jeton **n'ouvre aucune session**.
+  *(Catégorie adulte, rév. 2026-10-23 : jeton **capitaine** d'une équipe adulte :
+  phase ③ compétition seulement — spec #20 R17.)*
 - **R13.** Le passage de la rencontre **hors de la fenêtre** d'un jeton — pour le
   coach temporaire, dès la **④ clôture** ; pour le juge, dès la fin de la **③
   compétition** — **met fin** immédiatement à ses sessions QR éphémères (spec #1
@@ -145,6 +147,9 @@ alimente le modèle de données (mapping, jetons) et les policies **RLS**.
 - **R15.** L'**admin** peut générer et afficher le jeton QR de **tout** périmètre
   (coach temporaire de n'importe quel club, juge) de **toute** rencontre (spec #1
   R14).
+  *(Catégorie adulte, rév. 2026-10-23 : l'admin génère aussi le jeton
+  **capitaine** de chaque équipe adulte, au plus un actif par équipe — spec #20
+  R16–R20.)*
 - **R16.** Un **coach permanent** peut générer et afficher le jeton QR « coach
   temporaire » de **son** club, et **uniquement** le sien (spec #1 R26).
 - **R17.** Générer/afficher un jeton QR « juge » pour **une voie de vitesse** d'une

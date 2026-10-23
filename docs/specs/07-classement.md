@@ -139,6 +139,8 @@ classement, les résultats ne sont qu'une liste d'issues.
 - **R6.** Le **score d'un club** dans la rencontre est la **somme des scores de
   toutes ses équipes** engagées (un club peut aligner plusieurs équipes, spec #5
   R11).
+  *(Catégorie adulte, rév. 2026-10-23 : pas de classement club en rencontre adulte
+  — spec #20 R30/R31.)*
 - **R7.** Un grimpeur **prêté** compte, pour les scores d'**équipe** et de **club**,
   dans son **équipe d'accueil** (là où il est composé). Son **score individuel**
   lui reste attribué et, au **classement individuel**, il est rattaché à son

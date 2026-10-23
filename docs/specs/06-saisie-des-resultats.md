@@ -215,6 +215,9 @@ coach se ferme et l'**admin** vérifie/corrige ; la **⑤ résultats publics**
 - **R12.** *(Ado)* Les issues admises pour une voie sont : **Top**, **Zone 2**,
   **Zone 1**, **Échec**, **NP**. Zone 1 et Zone 2 sont **non cumulatives** (une
   seule s'applique — la meilleure atteinte).
+  *(Catégorie adulte, rév. 2026-10-23 : en adulte, issues Top, **Top en
+  moulinette** (moitié du top, arrondi supérieur, sans zone), Zone 2, Zone 1,
+  Échec ; saisie par le capitaine de l'équipe ou l'admin — spec #20 R21–R26.)*
 - **R13.** Une **même voie** ne peut porter qu'**un seul résultat par grimpeur**
   (unicité `(voie, grimpeur)`, garantie en base). Une seconde saisie sur la même
   voie pour le même grimpeur **remplace** la première (correction), elle n'en
@@ -233,6 +236,8 @@ coach se ferme et l'**admin** vérifie/corrige ; la **⑤ résultats publics**
   direct à l'API, deux saisies simultanées). *(Rév. 2026-10-03.)* *(Enfant : les
   voies sont bornées aux 3 du groupe de départ, R9 — aucune autre voie n'est
   saisissable.)*
+  *(Catégorie adulte, rév. 2026-10-23 : le plafond de 6 voies s'applique aussi en
+  adulte — spec #20 R22.)*
 
 ### Saisie — épreuve de bloc
 

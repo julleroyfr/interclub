@@ -217,6 +217,8 @@ saisie, les flux CRUD, et les règles de suppression (dépendances / cascade).
   persistent en base. Chaque gabarit définit les **épreuves** (voie de
   difficulté, bloc, vitesse) et leurs **voies** associées. L'admin peut
   consulter et modifier ces gabarits via l'IHM.
+  *(Catégorie adulte, rév. 2026-10-23 : un **gabarit adulte** existe aussi — spec
+  #20 R6–R9.)*
 - **R30.** À la **création** d'une rencontre, le gabarit de sa catégorie est
   **copié** dans la rencontre : épreuves, voies, **points de voies** (R38),
   **paliers de blocs** (R39) et **barème de vitesse** (R46) sont instanciés tels
