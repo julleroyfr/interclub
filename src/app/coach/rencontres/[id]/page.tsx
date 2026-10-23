@@ -47,8 +47,10 @@ export default async function PageEngagement({
   const engagement = await getEngagementRencontre(id, contexte.clubId)
   if (!engagement) notFound()
 
+  // Rencontre adulte : équipes créées et composées par l'admin seul (spec #20 R10).
+  const estAdulte = engagement.categorie === 'adulte'
   // Édition : phases ①/② pour le permanent, ② préparation seule pour le temporaire (R16).
-  const peutEditer = compositionModifiableParCoach(engagement.phase, contexte.type)
+  const peutEditer = !estAdulte && compositionModifiableParCoach(engagement.phase, contexte.type)
 
   return (
     <Coquille liens={liensCoach(contexte)} deconnexion={contexte.type === 'permanent'} finSession={contexte.type === 'temporaire'}>
@@ -80,11 +82,18 @@ export default async function PageEngagement({
           </div>
         </div>
 
-        <PanneauEngagement
-          engagement={engagement}
-          peutEditer={peutEditer}
-          estEnfant={engagement.categorie === 'enfant'}
-        />
+        {estAdulte ? (
+          <p className="rounded-2xl border border-bordure bg-surface p-4 text-sm text-texte-attenue">
+            Rencontre adulte : les équipes, qui mélangent les clubs, sont créées et composées par
+            l’administrateur. Les résultats et le classement sont consultables dès la compétition.
+          </p>
+        ) : (
+          <PanneauEngagement
+            engagement={engagement}
+            peutEditer={peutEditer}
+            estEnfant={engagement.categorie === 'enfant'}
+          />
+        )}
       </div>
     </Coquille>
   )

@@ -1,14 +1,16 @@
 import type { Page } from '@playwright/test'
 
 import { expect, test } from './helpers/fixtures'
-import { commeAdmin } from './helpers/auth'
+import { commeAdmin, commeCoach } from './helpers/auth'
 import { execSql } from './helpers/sql'
 
 /**
- * Cahier 33 — catégorie adulte, lot 1 (spec #20 R1, R6–R9, R9bis).
+ * Cahier 33 — catégorie adulte, lots 1 et 3 (spec #20 R1, R6–R9, R9bis, R10–R14).
  * L'admin crée une rencontre adulte depuis l'IHM : le gabarit adulte est copié
  * (T1–T10, B1/B2, « Voie 1 »/« Voie 2 »). Il renomme une voie de vitesse dans la
- * rencontre et dans le gabarit ; un libellé blanc est refusé.
+ * rencontre et dans le gabarit ; un libellé blanc est refusé. Il compose des
+ * équipes adultes sans club (grimpeurs adultes du seed, clubs A et B), 4 au plus ;
+ * le coach n'a que la lecture.
  *
  * Série : crée puis supprime une rencontre adulte (date 2027-01-16) et rétablit
  * le libellé « Voie 2 » du gabarit adulte.
@@ -26,6 +28,16 @@ function retablirGabarit(): void {
       where ordre = 2 and gabarit_epreuve_id =
         (select id from interclub.gabarit_epreuve where categorie = 'adulte' and type = 'vitesse');`,
   )
+}
+
+const idRencontre = () =>
+  execSql(`select id from interclub.rencontre where categorie = 'adulte' and date_rencontre = '${DATE}';`)
+
+/** Ajoute un grimpeur (recherche unique) à une équipe adulte de l'écran admin. */
+async function ajouter(page: Page, equipe: string, recherche: string) {
+  const carte = page.locator(`[data-equipe="${equipe}"]`)
+  await carte.getByLabel('Ajouter un grimpeur (tous clubs, 16 ans et plus)').fill(recherche)
+  await carte.getByRole('button', { name: 'Ajouter' }).click()
 }
 
 /** Carte du gabarit d'une catégorie (titre « Gabarit <label> »). */
@@ -96,6 +108,62 @@ test.describe('Catégorie adulte — lot 1 (spec #20)', () => {
     expect(
       execSql(`select libelle from interclub.voie_vitesse where rencontre_id = '${id}' and numero = 2;`),
     ).toBe('Voie 2')
+  })
+
+  test('l’admin compose une équipe adulte inter-clubs, 4 au plus (R10–R14)', async ({ page }) => {
+    await commeAdmin(page)
+    await page.goto(`/admin/rencontres/${idRencontre()}`)
+    await expect(page.getByRole('heading', { name: 'Équipes adultes' })).toBeVisible()
+    // Pas de prêt en adulte (R11).
+    await expect(page.getByRole('heading', { name: /Prêts/ })).toHaveCount(0)
+
+    await expect(page.getByLabel('Nouvelle équipe')).toHaveValue('Équipe 1')
+    await page.getByRole('button', { name: 'Créer' }).click()
+    const carte = page.locator('[data-equipe="Équipe 1"]')
+    await expect(carte).toBeVisible()
+
+    for (const nom of ['Lucie', 'Sarah', 'Karim', 'Emma']) {
+      await ajouter(page, 'Équipe 1', nom)
+      await expect(carte.getByText(new RegExp(`${nom} (Echo|Foxtrot)`))).toBeVisible()
+    }
+    await expect(carte.getByText('4/4')).toBeVisible()
+    await expect(carte.getByText(/Équipe complète/)).toBeVisible()
+
+    const id = idRencontre()
+    expect(
+      execSql(
+        `select count(*) || '/' || count(distinct g.club_id) || '/' || bool_and(e.club_id is null)
+           from interclub.composition c join interclub.equipe e on e.id = c.equipe_id
+           join interclub.grimpeur g on g.id = c.grimpeur_id where e.rencontre_id = '${id}';`,
+      ),
+    ).toBe('4/2/true')
+  })
+
+  test('l’admin change un grimpeur d’équipe adulte (R11, R12)', async ({ page }) => {
+    await commeAdmin(page)
+    await page.goto(`/admin/rencontres/${idRencontre()}`)
+    await expect(page.getByLabel('Nouvelle équipe')).toHaveValue('Équipe 2')
+    await page.getByRole('button', { name: 'Créer' }).click()
+    await expect(page.locator('[data-equipe="Équipe 2"]')).toBeVisible()
+    await ajouter(page, 'Équipe 2', 'Inès')
+    await expect(page.locator('[data-equipe="Équipe 2"]').getByText('Inès Foxtrot', { exact: true })).toBeVisible()
+
+    const carte1 = page.locator('[data-equipe="Équipe 1"]')
+    await carte1.getByLabel('Changer Karim Echo d’équipe').selectOption({ label: 'Équipe 2' })
+    await carte1
+      .getByLabel('Changer Karim Echo d’équipe')
+      .locator('xpath=ancestor::form')
+      .getByRole('button', { name: 'Changer d’équipe' })
+      .click()
+    await expect(page.locator('[data-equipe="Équipe 2"]').getByText('Karim Echo', { exact: true })).toBeVisible()
+    await expect(carte1.getByText('3/4')).toBeVisible()
+  })
+
+  test('le coach voit la rencontre adulte en lecture seule (R10)', async ({ page }) => {
+    await commeCoach(page)
+    await page.goto(`/coach/rencontres/${idRencontre()}`)
+    await expect(page.getByText(/créées et composées par\s+l’administrateur/)).toBeVisible()
+    await expect(page.getByLabel('Nouvelle équipe')).toHaveCount(0)
   })
 
   test('le gabarit affiche la catégorie adulte et son libellé de vitesse se modifie (R6, R9bis)', async ({

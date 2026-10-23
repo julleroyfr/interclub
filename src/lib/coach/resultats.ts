@@ -276,7 +276,8 @@ async function chargerSaisie(
   const equipes = (verifierLecture(equipesRes, 'des équipes') ?? []) as {
     id: string
     nom: string
-    club_id: string
+    /** `null` pour une équipe adulte, sans club (spec #20 R11). */
+    club_id: string | null
   }[]
   const nomEquipe = new Map(equipes.map((e) => [e.id, e.nom]))
   const clubEquipe = new Map(equipes.map((e) => [e.id, e.club_id]))
@@ -387,8 +388,10 @@ async function chargerSaisie(
 
   const grimpeursParClub = new Map<string, GrimpeurSaisie[]>()
   for (const c of lignesCompo) {
-    const clubDeLEquipe = clubEquipe.get(c.equipeId) as string
     const info = infoGrimpeur.get(c.grimpeurId)
+    // Équipe adulte sans club (spec #20 R11) : le grimpeur est rattaché à son club
+    // d'origine — pas de prêt en adulte.
+    const clubDeLEquipe = clubEquipe.get(c.equipeId) ?? info?.clubId ?? ''
     const prete = !!info && info.clubId !== clubDeLEquipe
     const issuesVoie = issueVoieParGrimpeur.get(c.grimpeurId) ?? new Map<string, IssueVoie>()
 

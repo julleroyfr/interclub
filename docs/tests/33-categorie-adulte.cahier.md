@@ -3,13 +3,15 @@
 - **Spec de référence** : `docs/specs/20-categorie-adulte.md`
 - **Périmètre actuel** : **lot 1** — catégorie et gabarit (R1–R4, R6–R9,
   R9bis, R22, R24, R26 côté base, R33, R34/R35) ; **lot 2** — import sans
-  limite d'âge (R5). Les lots suivants (équipes adultes, moulinette, capitaine,
-  classement) compléteront ce cahier.
+  limite d'âge (R5) ; **lot 3** — équipes adultes (R10–R15, R28 côté écran
+  juge). Les lots suivants (moulinette, capitaine, classement) compléteront ce
+  cahier.
 - **Pré-requis** :
-  - Migration **`202610231000_categorie_adulte`** appliquée à la main (recette
-    seulement tant que la branche n'est pas fusionnée).
-  - Script de retour arrière disponible :
-    `supabase/retours-arriere/202610231000_categorie_adulte_retour_arriere.sql`.
+  - Migrations **`202610231000_categorie_adulte`** puis
+    **`202610231100_equipes_adultes`** appliquées à la main, dans cet ordre
+    (recette seulement tant que la branche n'est pas fusionnée).
+  - Scripts de retour arrière disponibles dans `supabase/retours-arriere/`, à
+    exécuter dans l'**ordre inverse** (lot 3, puis lot 1).
 - **Environnement** : local, puis recette (preview `feature/categorie-adulte`) —
   version/commit : `______`
 - **Validé en local le 2026-10-23** : aller → retour → aller sur base neuve
@@ -23,7 +25,8 @@ main, `[mixte]` partie automatisée + vérification à l'œil.
 
 ## Jeu de données initial
 
-- Recette : le seed (`JD-ADMIN`, `JD-COACH-A`, `JD-CLUB-A`). Local : seed `01`.
+- Recette : le seed (`JD-ADMIN`, `JD-COACH-A`, `JD-CLUB-A`, `JD-CLUB-B`,
+  `JD-ADULTES`). Local : seed `01`.
 - Aucune rencontre adulte au départ. Le gabarit adulte est créé par la
   migration.
 
@@ -171,11 +174,63 @@ main, `[mixte]` partie automatisée + vérification à l'œil.
 - **Résultat attendu** : le grimpeur né en 2001 du fichier est créé ; aucun
   compteur « ignorés ».
 
+### CT-13 — L'admin compose une équipe adulte inter-clubs (couvre : R10, R11, R12, R14) `[auto]`
+
+- **Rôle / compte** : `JD-ADMIN`, rencontre adulte de CT-02 en ①.
+- **Étapes** :
+  1. Tableau de bord de la rencontre : panneau **« Équipes adultes »** ; le
+     panneau **Prêts** et le compteur « Prêts » sont absents.
+  2. Nouvelle équipe : le nom proposé est **« Équipe 1 »** → **Créer**.
+  3. Ajouter Lucie Echo et Karim Echo (Club A), Sarah Foxtrot et Emma Foxtrot
+     (Club B).
+- **Résultat attendu** : chaque membre affiche son club ; compteur **4/4** et
+  « Équipe complète » ; plus de formulaire d'ajout. En base, l'équipe n'a pas de
+  club.
+
+### CT-14 — 5ᵉ grimpeur, moins de 16 ans, double composition refusés (couvre : R2, R12, R13) `[mixte]`
+
+- **Étapes** :
+  1. Local : `npm run test:adulte`, assertions `R12-*` (5ᵉ grimpeur refusé en
+     base).
+  2. Recette : dans « Équipe 2 », chercher un enfant du seed (ex. « Ana ») :
+     il n'est pas proposé (roster des 16 ans et plus).
+  3. Un grimpeur déjà dans « Équipe 1 » n'est pas proposé pour « Équipe 2 ».
+- **Résultat attendu** : refus en base ; aucun grimpeur de moins de 16 ans ni
+  déjà composé dans la liste.
+
+### CT-15 — Changer un grimpeur d'équipe adulte (couvre : R11, R12) `[auto]`
+
+- **Étapes** : créer « Équipe 2 », y ajouter Inès Foxtrot ; dans « Équipe 1 »,
+  « Changer Karim Echo d'équipe » → « Équipe 2 ».
+- **Résultat attendu** : Karim apparaît dans « Équipe 2 » ; « Équipe 1 » passe à
+  3/4. Une équipe complète est proposée mais désactivée.
+
+### CT-16 — Le coach n'a aucun droit sur les équipes adultes (couvre : R10) `[mixte]`
+
+- **Rôle / compte** : `JD-COACH-A`.
+- **Étapes** :
+  1. Ouvrir la rencontre adulte depuis « Mes rencontres ».
+  2. Local : `npm run test:adulte`, assertions `R10-*`.
+- **Résultat attendu** : message « Rencontre adulte : les équipes […] sont
+  créées et composées par l'administrateur » ; aucun formulaire. En base, le
+  coach ne peut ni créer d'équipe (avec ou sans club) ni composer.
+
+### CT-17 — Écran juge : les adultes apparaissent avec leur club (couvre : R28) `[mixte]`
+
+- **Pré-condition** : rencontre adulte en ③, équipes de CT-13/CT-15, jeton
+  juge de la « Voie 1 ».
+- **Étapes** : scanner le jeton juge, consulter la liste des grimpeurs.
+- **Résultat attendu** : les grimpeurs adultes sont listés, chacun avec son
+  club d'origine (Club A ou Club B). Local : `npm run test:adulte`, assertion
+  `R28-*`.
+
 ## Couverture hors cahier
 
 - R2, R3 (éligibilité dès 16 ans), R23 (issues proposées), R33 (rapport) et la
   normalisation du libellé (R9bis) : Vitest (`rencontre.test.ts`,
   `resultat.test.ts`, `rapport.test.ts`, `voie.test.ts`).
+- R11–R14 (plafond 4, double composition, nom « Équipe N », changement
+  d'équipe) : Vitest (`engagement.test.ts`).
 
 ## Registre d'exécution
 
@@ -185,4 +240,6 @@ main, `[mixte]` partie automatisée + vérification à l'œil.
 | 2026-10-23 | agent (local) | feature/categorie-adulte | CT-07, CT-08 | ✅ | `npm run test:adulte` 11/11 |
 | 2026-10-23 | agent (local) | feature/categorie-adulte | CT-01, CT-10 (base locale) | ✅ | aller → retour → aller identique à la référence |
 | 2026-10-23 | agent (local) | feature/categorie-adulte | CT-12 | ✅ | E2E `import-csv-sans-licence.spec.ts` 5/5 |
-| | | | CT-01 → CT-12 (recette) | | |
+| 2026-10-23 | agent (local) | feature/categorie-adulte | CT-13, CT-15, CT-16 (étape 1) | ✅ | E2E `categorie-adulte.spec.ts` 7/7 |
+| 2026-10-23 | agent (local) | feature/categorie-adulte | CT-14 (1), CT-16 (2), CT-17 (base) | ✅ | `npm run test:adulte` 21/21 ; retour arrière lot 3 identique à l'état lot 1 |
+| | | | CT-01 → CT-17 (recette) | | |

@@ -7,6 +7,8 @@
 #              paliers, voies de vitesse « Voie 1 »/« Voie 2 », barème, chute/NP)
 #   - R24/R26: zones admises en adulte ; prise valorisée refusée (trigger)
 #   - R22    : plafond de 6 voies par grimpeur en adulte (trigger)
+#   - R10–R14: équipes adultes sans club, composées par l'admin seul, 4 au plus,
+#              nom unique (lot 3) ; R28 : roster juge avec le club d'origine
 #
 # Les règles applicatives (éligibilité ≥ 16 ans, issues proposées, libellé de voie
 # de vitesse) sont couvertes par le domaine pur (Vitest). Le reste est au cahier.
@@ -65,6 +67,7 @@ begin
     raise notice '% : obtenu « % », attendu « % »', p_id, p_obtenu, p_attendu;
   end if;
 end $fn$;
+grant execute on function pg_temp.verif(text, text, text) to authenticated;
 
 -- ---- R1 — création d'une rencontre adulte (admin) -------------------------
 select set_config('request.jwt.claims','{"sub":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"}', true); set role authenticated;
@@ -127,6 +130,51 @@ select pg_temp.essai('R22-correction-voie-saisie-OK', true,
            on conflict (voie_difficulte_id, grimpeur_id) do update set issue = excluded.issue$$, :'v1'));
 reset role;
 
+-- ---- Lot 3 — équipes adultes (R10–R14, R28) -------------------------------
+update interclub.rencontre set phase = 'pre_competition' where id = :'rid';
+select set_config('request.jwt.claims','{"sub":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"}', true); set role authenticated;
+select pg_temp.essai('R11-admin-equipe-avec-club-KO', false,
+  format($$insert into interclub.equipe (rencontre_id, club_id, nom) values (%L, '11111111-1111-1111-1111-111111111111', 'X')$$, :'rid'));
+select pg_temp.essai('R11-equipe-enfant-sans-club-KO', false,
+  $$insert into interclub.equipe (rencontre_id, club_id, nom) values ('33333333-3333-3333-3333-333333333333', null, 'X')$$);
+insert into interclub.equipe (rencontre_id, club_id, nom) values (:'rid', null, 'Équipe 1') returning id as eq1 \gset
+select pg_temp.essai('R14-nom-equipe-adulte-duplique-KO', false,
+  format($$insert into interclub.equipe (rencontre_id, club_id, nom) values (%L, null, 'Équipe 1')$$, :'rid'));
+-- R11/R12 : 4 grimpeurs de deux clubs, le 5ᵉ refusé.
+select pg_temp.essai('R11-compo-inter-clubs-OK', true,
+  format($$insert into interclub.composition (equipe_id, grimpeur_id) values
+    (%1$L, 'a0000000-0000-0000-0000-0000000000a3'), (%1$L, 'a0000000-0000-0000-0000-0000000000a4'),
+    (%1$L, 'a0000000-0000-0000-0000-0000000000a5'), (%1$L, 'b0000000-0000-0000-0000-0000000000b1')$$, :'eq1'));
+insert into interclub.composition (equipe_id, grimpeur_id) values
+  (:'eq1', 'a0000000-0000-0000-0000-0000000000a3'), (:'eq1', 'a0000000-0000-0000-0000-0000000000a4'),
+  (:'eq1', 'a0000000-0000-0000-0000-0000000000a5'), (:'eq1', 'b0000000-0000-0000-0000-0000000000b1');
+select pg_temp.essai('R12-5e-grimpeur-KO', false,
+  format($$insert into interclub.composition (equipe_id, grimpeur_id) values (%L, 'a0000000-0000-0000-0000-0000000000a6')$$, :'eq1'));
+reset role;
+
+-- R10 : le coach n'écrit rien sur les équipes d'une rencontre adulte.
+select set_config('request.jwt.claims','{"sub":"cccccccc-cccc-cccc-cccc-cccccccccccc"}', true); set role authenticated;
+select pg_temp.essai('R10-coach-equipe-son-club-KO', false,
+  format($$insert into interclub.equipe (rencontre_id, club_id, nom) values (%L, '11111111-1111-1111-1111-111111111111', 'Coach')$$, :'rid'));
+select pg_temp.essai('R10-coach-equipe-sans-club-KO', false,
+  format($$insert into interclub.equipe (rencontre_id, club_id, nom) values (%L, null, 'Coach')$$, :'rid'));
+-- Un DELETE filtré par la RLS ne lève rien : on teste l'INSERT (refus explicite)
+-- et on vérifie plus bas que la composition est intacte.
+select pg_temp.essai('R10-coach-compose-KO', false,
+  format($$insert into interclub.composition (equipe_id, grimpeur_id) values (%L, 'a0000000-0000-0000-0000-0000000000a6')$$, :'eq1'));
+delete from interclub.composition where equipe_id = :'eq1';
+reset role;
+select pg_temp.verif('R10-compo-intacte-apres-coach',
+  (select count(*)::text from interclub.composition where equipe_id = :'eq1'), '4');
+
+-- R28 : l'écran juge liste les adultes, avec leur club d'origine.
+select e.id as evit from interclub.epreuve e where e.rencontre_id = :'rid' and e.type = 'vitesse' \gset
+select set_config('request.jwt.claims','{"sub":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"}', true); set role authenticated;
+select pg_temp.verif('R28-roster-juge-clubs-origine',
+  (select string_agg(club_nom, ',' order by club_nom) from interclub.liste_grimpeurs_vitesse(:'evit')),
+  'Club A,Club A,Club A,Club B');
+reset role;
+
 -- ---- Restitution --------------------------------------------------------
 \echo '--- Détail des assertions ---'
 select id, attendu, obtenu, case when ok then 'OK' else 'KO' end as verdict from pg_temp._res order by id;
@@ -146,9 +194,9 @@ if [ $STATUS -ne 0 ]; then
 fi
 
 if echo "$OUT" | grep -qE 'ADULTE RESULT: [0-9]+ OK / 0 KO'; then
-  echo "✅ Spec #20 (lot 1) : toutes les assertions BDD passent."
+  echo "✅ Spec #20 (lots 1 et 3) : toutes les assertions BDD passent."
   exit 0
 else
-  echo "❌ Spec #20 (lot 1) : au moins une assertion BDD a échoué (voir le détail ci-dessus)." >&2
+  echo "❌ Spec #20 (lots 1 et 3) : au moins une assertion BDD a échoué (voir le détail ci-dessus)." >&2
   exit 1
 fi

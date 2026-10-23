@@ -244,7 +244,11 @@ défaut.
 
 **Catégorie Adulte** : ouverte aux grimpeurs de **16 ans et plus** en saison
 (un grimpeur de 16 à 19 ans peut donc aussi faire l'Ado). La rencontre est créée
-à partir du gabarit Adulte. Dans l'onglet **Vitesse** de sa structure, les voies
+à partir du gabarit Adulte. Ses équipes se gèrent dans le panneau **Équipes
+adultes** du tableau de bord : équipes **sans club**, nommées « Équipe 1 »,
+« Équipe 2 »… par défaut, de **4 grimpeurs au plus**, choisis parmi les 16 ans
+et plus de **tous les clubs** (club affiché à côté de chaque nom). Il n'y a pas
+de prêt en adulte et les coachs n'ont aucun droit sur ces équipes. Dans l'onglet **Vitesse** de sa structure, les voies
 se renomment en ① pré-compétition (champ « Libellé (voie N) », toutes
 catégories).
 

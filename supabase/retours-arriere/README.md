@@ -24,3 +24,6 @@ développée sur une branche dédiée et testée sur l'unique base de recette
 | Migration | Script | Effet |
 |-----------|--------|-------|
 | `202610231000_categorie_adulte` | `202610231000_categorie_adulte_retour_arriere.sql` | supprime rencontres et gabarit adultes ; restaure contraintes de catégorie et 4 fonctions |
+| `202610231100_equipes_adultes` | `202610231100_equipes_adultes_retour_arriere.sql` | supprime les équipes sans club ; retire 2 triggers et 1 index ; remet `equipe.club_id` à NOT NULL ; restaure `liste_grimpeurs_vitesse` |
+
+Ordre d'annulation : lot 3 (`202610231100`) **puis** lot 1 (`202610231000`).

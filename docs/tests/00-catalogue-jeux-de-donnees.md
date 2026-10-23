@@ -87,6 +87,8 @@ Mot de passe des cinq comptes permanents : `interclub`.
 | JD-PRETE-DEVI | Grimpeur **Garçons** Club B, **prêté** à Club A — composé dans `JD-EQUIPE-A2` au seed (R35/R36 ; R7 classement) | `b0000000-…-b2` (2016, **G**) · composé dans `JD-EQUIPE-A2` | 18:CT-07 · 22:CT-13 · 14 · 13 · 15 · 17 (jeu de données) · 26:CT-03 · 27:CT-04 |
 | JD-POOL-LIBRES | **8 grimpeurs libres** Club A (Chloé…Jade) : remplir une équipe à 8/8, ou engager **sans groupe** (cas R9) | `a0000000-…-a3` … `a0000000-…-aa` (sexe **F/G** au seed) | 13:remplissage 8/8 · 17:cas R9 (groupe « à définir ») · 18:CT-10 · 26:CT-09 |
 
+| JD-ADULTES | **6 grimpeurs adultes** (16 ans et plus) : Club A Lucie (1990, F), Karim (1978, H), Hugo (2009, H — aussi éligible ado) ; Club B Sarah (1995, F), Emma (1988, F), Inès (2001, F) | `ad000000-…-d1` … `ad000000-…-d6` · licences 100015–100020 | 33:CT-13→CT-17 |
+
 ## Jetons QR (sessions éphémères)
 
 | ID | Description | Données (seed) | Utilisé par |
