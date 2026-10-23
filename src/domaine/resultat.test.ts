@@ -33,8 +33,24 @@ describe('spec #6 — issues de voie saisissables selon catégorie/type (R10/R12
 })
 
 describe('spec #20 — issues de voie en catégorie adulte (R23, R26)', () => {
-  it('adulte : Top, Zone 2, Zone 1, Échec (R23)', () => {
-    expect(issuesVoieSaisissables('adulte', 'tete')).toEqual(['top', 'zone2', 'zone1', 'echec'])
+  it('adulte : Top, Top en moulinette, Zone 2, Zone 1, Échec (R23)', () => {
+    expect(issuesVoieSaisissables('adulte', 'tete')).toEqual([
+      'top',
+      'top_moulinette',
+      'zone2',
+      'zone1',
+      'echec',
+    ])
+  })
+
+  it('le top en moulinette est réservé à l’adulte (R26)', () => {
+    expect(() => validerIssueVoie('top_moulinette', 'adulte', 'tete')).not.toThrow()
+    expect(() => validerIssueVoie('top_moulinette', 'ado', 'tete')).toThrow(ResultatInvalideError)
+    expect(() => validerIssueVoie('top_moulinette', 'enfant', 'tete')).toThrow(ResultatInvalideError)
+    expect(() => validerIssueVoie('top_moulinette', 'enfant', 'moulinette')).toThrow(
+      ResultatInvalideError,
+    )
+    expect(issuesVoieSaisissables('ado', 'tete')).not.toContain('top_moulinette')
   })
 
   it('adulte : accepte une zone (R24, R26)', () => {

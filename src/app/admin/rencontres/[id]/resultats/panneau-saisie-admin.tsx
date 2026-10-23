@@ -24,6 +24,7 @@ const etatInitial: EtatSaisie = undefined
 
 const LIBELLE_ISSUE: Record<IssueVoie, string> = {
   top: 'Top',
+  top_moulinette: 'Top en moulinette',
   prise_valorisee: 'Prise valorisée',
   zone2: 'Zone 2',
   zone1: 'Zone 1',
@@ -36,6 +37,8 @@ function classeIssue(issue: IssueVoie | 'palier' | null): string {
     case 'top':
     case 'palier':
       return 'bg-secondaire/15 text-secondaire border-secondaire/30'
+    case 'top_moulinette':
+      return 'bg-attention/15 text-attention border-attention/40'
     case 'prise_valorisee':
     case 'zone1':
     case 'zone2':

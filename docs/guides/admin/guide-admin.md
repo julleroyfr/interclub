@@ -248,7 +248,10 @@ défaut.
 adultes** du tableau de bord : équipes **sans club**, nommées « Équipe 1 »,
 « Équipe 2 »… par défaut, de **4 grimpeurs au plus**, choisis parmi les 16 ans
 et plus de **tous les clubs** (club affiché à côté de chaque nom). Il n'y a pas
-de prêt en adulte et les coachs n'ont aucun droit sur ces équipes. Dans l'onglet **Vitesse** de sa structure, les voies
+de prêt en adulte et les coachs n'ont aucun droit sur ces équipes.
+En compétition, une voie adulte peut être réussie **en tête** (« Top ») ou **en
+moulinette** (« Top en moulinette », pastille ambre) : la moulinette rapporte la
+moitié des points du top et jamais de points de zone. Dans l'onglet **Vitesse** de sa structure, les voies
 se renomment en ① pré-compétition (champ « Libellé (voie N) », toutes
 catégories).
 

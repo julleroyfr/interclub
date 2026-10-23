@@ -39,6 +39,7 @@
     "db:reset": "supabase db reset && npm run db:verifier",
     "db:consolider": "bash scripts/consolider-archive.sh",
     "db:verifier": "bash scripts/verifier-schema.sh",
+    "db:verifier-retours": "bash scripts/verifier-retours-arriere.sh",
     "doc:captures": "playwright test --config scripts/captures/playwright.config.ts",
     "doc:pdf": "node scripts/guides/generer-pdf.mjs"
   },

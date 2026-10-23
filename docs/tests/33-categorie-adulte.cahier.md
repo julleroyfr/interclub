@@ -4,21 +4,23 @@
 - **Périmètre actuel** : **lot 1** — catégorie et gabarit (R1–R4, R6–R9,
   R9bis, R22, R24, R26 côté base, R33, R34/R35) ; **lot 2** — import sans
   limite d'âge (R5) ; **lot 3** — équipes adultes (R10–R15, R28 côté écran
-  juge). Les lots suivants (moulinette, capitaine, classement) compléteront ce
-  cahier.
+  juge) ; **lot 4** — top en moulinette (R23, R25, R26). Les lots suivants
+  (capitaine, classement) compléteront ce cahier.
 - **Pré-requis** :
-  - Migrations **`202610231000_categorie_adulte`** puis
-    **`202610231100_equipes_adultes`** appliquées à la main, dans cet ordre
-    (recette seulement tant que la branche n'est pas fusionnée).
+  - Migrations **`202610231000_categorie_adulte`**,
+    **`202610231100_equipes_adultes`** puis **`202610231200_top_moulinette`**
+    appliquées à la main, dans cet ordre (recette seulement tant que la branche
+    n'est pas fusionnée).
   - Scripts de retour arrière disponibles dans `supabase/retours-arriere/`, à
-    exécuter dans l'**ordre inverse** (lot 3, puis lot 1).
+    exécuter dans l'**ordre inverse** (lot 4, lot 3, puis lot 1).
 - **Environnement** : local, puis recette (preview `feature/categorie-adulte`) —
   version/commit : `______`
-- **Validé en local le 2026-10-23** : aller → retour → aller sur base neuve
-  (définitions de fonctions, droits, contraintes, triggers, policies identiques
-  à la référence après retour), migration rejouée deux fois sans doublon,
-  `db:verifier`, suites SQL existantes, `npm run test:adulte` 11/11, E2E
-  `categorie-adulte.spec.ts` 4/4.
+- **Validé en local le 2026-10-23** : `npm run db:verifier-retours --
+  202610231000_categorie_adulte 202610231100_equipes_adultes
+  202610231200_top_moulinette` — chaque retour arrière (ordre inverse) ramène
+  à l'état antérieur exact (empreinte du schéma, aux fins de ligne près), rejeu
+  idempotent, `db reset` final identique ; `db:verifier`, suites SQL,
+  `npm run test:adulte` 24/24, E2E `categorie-adulte.spec.ts` 8/8.
 
 Légende : `[auto]` rejoué par un test automatisé, `[manuel]` à dérouler à la
 main, `[mixte]` partie automatisée + vérification à l'œil.
@@ -224,6 +226,22 @@ main, `[mixte]` partie automatisée + vérification à l'œil.
   club d'origine (Club A ou Club B). Local : `npm run test:adulte`, assertion
   `R28-*`.
 
+### CT-18 — Saisir un top en moulinette (couvre : R23, R25) `[auto]`
+
+- **Rôle / compte** : `JD-ADMIN`, rencontre adulte en ③, équipes de CT-13.
+- **Étapes** : saisie admin → Lucie Echo → « Ajouter une voie » T5 (6a) →
+  bouton **Top en moulinette**.
+- **Résultat attendu** : les issues proposées sont Top, Top en moulinette,
+  Zone 2, Zone 1, Échec ; la voie affiche la pastille ambre « Top en
+  moulinette » ; le score de Lucie vaut **6** (top 12 ÷ 2).
+
+### CT-19 — Top en moulinette refusé hors adulte (couvre : R26) `[auto]`
+
+- **Étapes** : `npm run test:adulte`, assertions `R26-top-moulinette-*` et
+  `R23-*` ; à l'écran, une rencontre ado ne propose pas « Top en moulinette ».
+- **Résultat attendu** : la base refuse `top_moulinette` sur une voie enfant
+  ou ado et toute issue inconnue.
+
 ## Couverture hors cahier
 
 - R2, R3 (éligibilité dès 16 ans), R23 (issues proposées), R33 (rapport) et la
@@ -231,6 +249,9 @@ main, `[mixte]` partie automatisée + vérification à l'œil.
   `resultat.test.ts`, `rapport.test.ts`, `voie.test.ts`).
 - R11–R14 (plafond 4, double composition, nom « Équipe N », changement
   d'équipe) : Vitest (`engagement.test.ts`).
+- R25 (moitié du top, arrondi supérieur, pas de zone ; exemple 8 + 12 + 5 = 25)
+  et R23/R26 (issues proposées et admises) : Vitest (`score.test.ts`,
+  `resultat.test.ts`).
 
 ## Registre d'exécution
 
@@ -242,4 +263,5 @@ main, `[mixte]` partie automatisée + vérification à l'œil.
 | 2026-10-23 | agent (local) | feature/categorie-adulte | CT-12 | ✅ | E2E `import-csv-sans-licence.spec.ts` 5/5 |
 | 2026-10-23 | agent (local) | feature/categorie-adulte | CT-13, CT-15, CT-16 (étape 1) | ✅ | E2E `categorie-adulte.spec.ts` 7/7 |
 | 2026-10-23 | agent (local) | feature/categorie-adulte | CT-14 (1), CT-16 (2), CT-17 (base) | ✅ | `npm run test:adulte` 21/21 ; retour arrière lot 3 identique à l'état lot 1 |
-| | | | CT-01 → CT-17 (recette) | | |
+| 2026-10-23 | agent (local) | feature/categorie-adulte | CT-18, CT-19 | ✅ | E2E 8/8 ; `test:adulte` 24/24 ; `db:verifier-retours` lots 1, 3, 4 ✅ |
+| | | | CT-01 → CT-19 (recette) | | |

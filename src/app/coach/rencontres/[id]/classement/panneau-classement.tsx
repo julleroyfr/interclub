@@ -13,6 +13,7 @@ const PAGE_SIZE = 20
 
 const LIBELLE_ISSUE_VOIE: Record<IssueVoie, string> = {
   top: 'Top',
+  top_moulinette: 'Top en moulinette',
   prise_valorisee: 'Prise valorisée',
   zone2: 'Zone 2',
   zone1: 'Zone 1',
@@ -26,6 +27,8 @@ function classeIssue(issue: string): string {
     case 'top':
     case 'palier':
       return 'bg-secondaire/15 text-secondaire border-secondaire/30'
+    case 'top_moulinette':
+      return 'bg-attention/15 text-attention border-attention/40'
     case 'prise_valorisee':
     case 'zone1':
     case 'zone2':

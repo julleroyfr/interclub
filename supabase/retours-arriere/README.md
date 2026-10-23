@@ -12,9 +12,14 @@ développée sur une branche dédiée et testée sur l'unique base de recette
   puis retire la ligne de `interclub.version`.
 - Plusieurs migrations d'une même évolution s'annulent dans l'**ordre inverse**
   de leur application.
-- Validation locale obligatoire avant la recette : état de référence sans la
-  migration → migration → retour arrière → comparaison (définitions et droits
-  des fonctions, contraintes, triggers, policies) → migration rejouée.
+- Validation locale obligatoire avant la recette, automatisée par
+  `npm run db:verifier-retours -- <versions dans l'ordre d'application>`
+  (`scripts/verifier-retours-arriere.sh`) : référence sans les migrations, puis
+  pour chaque préfixe, retours arrière en ordre inverse comparés à l'état
+  antérieur (empreinte `scripts/empreinte-schema.sql` : définitions et droits
+  des fonctions, contraintes, triggers, policies, index, colonnes), rejeu
+  idempotent et `db reset` final. Comparaison par `cmp`, aux fins de ligne près
+  (le fichier consolidé est en CRLF).
 - Application : **à la main** dans le SQL Editor, comme les migrations
   (convention `docs/conventions/03-base-de-donnees-supabase.md` §5.2). Consigner
   l'exécution dans `supabase/migrations/JOURNAL.md`.
@@ -25,5 +30,9 @@ développée sur une branche dédiée et testée sur l'unique base de recette
 |-----------|--------|-------|
 | `202610231000_categorie_adulte` | `202610231000_categorie_adulte_retour_arriere.sql` | supprime rencontres et gabarit adultes ; restaure contraintes de catégorie et 4 fonctions |
 | `202610231100_equipes_adultes` | `202610231100_equipes_adultes_retour_arriere.sql` | supprime les équipes sans club ; retire 2 triggers et 1 index ; remet `equipe.club_id` à NOT NULL ; restaure `liste_grimpeurs_vitesse` |
+| `202610231200_top_moulinette` | `202610231200_top_moulinette_retour_arriere.sql` | supprime les résultats `top_moulinette` ; restaure la contrainte d'issue et `valider_resultat_voie` / `saisir_resultat_voie` dans leur version du lot 1 |
 
-Ordre d'annulation : lot 3 (`202610231100`) **puis** lot 1 (`202610231000`).
+Ordre d'annulation : lot 4 (`202610231200`), lot 3 (`202610231100`), **puis**
+lot 1 (`202610231000`). Quand une fonction a déjà été modifiée par une migration
+antérieure de la même évolution, le retour arrière restaure **cette** version
+(pas celle de la base archivée).

@@ -7,6 +7,7 @@
 #              paliers, voies de vitesse « Voie 1 »/« Voie 2 », barème, chute/NP)
 #   - R24/R26: zones admises en adulte ; prise valorisée refusée (trigger)
 #   - R22    : plafond de 6 voies par grimpeur en adulte (trigger)
+#   - R23/R26: issue « top_moulinette » admise en adulte seulement (lot 4)
 #   - R10–R14: équipes adultes sans club, composées par l'admin seul, 4 au plus,
 #              nom unique (lot 3) ; R28 : roster juge avec le club d'origine
 #
@@ -115,6 +116,16 @@ select pg_temp.essai('R26-prise-valorisee-adulte-KO', false,
 -- chemin sera celui du capitaine (lot 5) et testé avec lui.
 reset role;
 
+-- Lot 4 — top en moulinette (R23, R26) : admis en adulte (tête), refusé ailleurs.
+select set_config('request.jwt.claims','{"sub":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"}', true); set role authenticated;
+select pg_temp.essai('R26-top-moulinette-adulte-OK', true,
+  format($$insert into interclub.resultat_voie (voie_difficulte_id, grimpeur_id, issue) values (%L, 'a0000000-0000-0000-0000-0000000000a1', 'top_moulinette')$$, :'v1'));
+select pg_temp.essai('R26-top-moulinette-voie-enfant-KO', false,
+  $$insert into interclub.resultat_voie (voie_difficulte_id, grimpeur_id, issue) values ('99999999-9999-9999-9999-999999999901', 'a0000000-0000-0000-0000-0000000000a2', 'top_moulinette')$$);
+select pg_temp.essai('R23-issue-inconnue-KO', false,
+  format($$insert into interclub.resultat_voie (voie_difficulte_id, grimpeur_id, issue) values (%L, 'a0000000-0000-0000-0000-0000000000a1', 'moulinette')$$, :'v1'));
+reset role;
+
 -- Plafond : 6 voies saisies pour un grimpeur (superuser), la 7ᵉ est refusée.
 insert into interclub.resultat_voie (voie_difficulte_id, grimpeur_id, issue)
 select vd.id, 'a0000000-0000-0000-0000-0000000000a2', 'top'
@@ -194,9 +205,9 @@ if [ $STATUS -ne 0 ]; then
 fi
 
 if echo "$OUT" | grep -qE 'ADULTE RESULT: [0-9]+ OK / 0 KO'; then
-  echo "✅ Spec #20 (lots 1 et 3) : toutes les assertions BDD passent."
+  echo "✅ Spec #20 (lots 1, 3 et 4) : toutes les assertions BDD passent."
   exit 0
 else
-  echo "❌ Spec #20 (lots 1 et 3) : au moins une assertion BDD a échoué (voir le détail ci-dessus)." >&2
+  echo "❌ Spec #20 (lots 1, 3 et 4) : au moins une assertion BDD a échoué (voir le détail ci-dessus)." >&2
   exit 1
 fi

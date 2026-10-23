@@ -5,7 +5,8 @@ import { commeAdmin, commeCoach } from './helpers/auth'
 import { execSql } from './helpers/sql'
 
 /**
- * Cahier 33 — catégorie adulte, lots 1 et 3 (spec #20 R1, R6–R9, R9bis, R10–R14).
+ * Cahier 33 — catégorie adulte, lots 1, 3 et 4 (spec #20 R1, R6–R9, R9bis, R10–R14,
+ * R23, R25).
  * L'admin crée une rencontre adulte depuis l'IHM : le gabarit adulte est copié
  * (T1–T10, B1/B2, « Voie 1 »/« Voie 2 »). Il renomme une voie de vitesse dans la
  * rencontre et dans le gabarit ; un libellé blanc est refusé. Il compose des
@@ -164,6 +165,38 @@ test.describe('Catégorie adulte — lot 1 (spec #20)', () => {
     await page.goto(`/coach/rencontres/${idRencontre()}`)
     await expect(page.getByText(/créées et composées par\s+l’administrateur/)).toBeVisible()
     await expect(page.getByLabel('Nouvelle équipe')).toHaveCount(0)
+  })
+
+  test('l’admin saisit un top en moulinette : moitié du top (R23, R25)', async ({ page }) => {
+    const id = idRencontre()
+    execSql(`update interclub.rencontre set phase = 'competition' where id = '${id}';`)
+    try {
+      await commeAdmin(page)
+      await page.goto(`/admin/rencontres/${id}/resultats`)
+      await page.getByRole('button', { name: /^Lucie Echo/ }).click()
+      const ajout = page.locator('form', { has: page.locator('select[name="voieDifficulteId"]') })
+      await ajout.locator('select[name="voieDifficulteId"]').selectOption({ label: 'T5 (6a)' })
+      // Issues adultes proposées (R23).
+      for (const nom of ['Top', 'Top en moulinette', 'Zone 2', 'Zone 1', 'Échec']) {
+        await expect(ajout.getByRole('button', { name: nom, exact: true })).toBeVisible()
+      }
+      await ajout.getByRole('button', { name: 'Top en moulinette', exact: true }).click()
+      await expect
+        .poll(() =>
+          execSql(
+            `select rv.issue from interclub.resultat_voie rv
+               join interclub.voie_difficulte vd on vd.id = rv.voie_difficulte_id
+               join interclub.epreuve e on e.id = vd.epreuve_id
+               join interclub.grimpeur g on g.id = rv.grimpeur_id
+              where e.rencontre_id = '${id}' and g.prenom = 'Lucie' and vd.niveau = 'T5';`,
+          ),
+        )
+        .toBe('top_moulinette')
+      // T5 : top 12 → 6 points en moulinette (R25), seul résultat de Lucie.
+      await expect(page.getByText(/^6\s*pts$/).first()).toBeVisible()
+    } finally {
+      execSql(`update interclub.rencontre set phase = 'pre_competition' where id = '${id}';`)
+    }
   })
 
   test('le gabarit affiche la catégorie adulte et son libellé de vitesse se modifie (R6, R9bis)', async ({
