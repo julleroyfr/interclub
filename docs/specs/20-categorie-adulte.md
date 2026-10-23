@@ -99,8 +99,9 @@ catégories **enfant** et **ado** reste **inchangé**.
 
   L'admin peut ajouter des blocs et modifier les paliers (spec #3 R31), par
   exemple pour la variante « 5 blocs » de l'addendum.
-- **R9.** Le gabarit adulte comporte une épreuve de **vitesse** avec **2 voies**
-  (féminines, masculins) et ce **barème par rang** (spec #3 R46) :
+- **R9.** Le gabarit adulte comporte une épreuve de **vitesse** avec **2 voies**,
+  libellées par défaut **« Voie 1 »** et **« Voie 2 »** (aucune mention de sexe),
+  et ce **barème par rang** (spec #3 R46) :
 
   | Rangs | Points |
   |-------|--------|
@@ -117,6 +118,13 @@ catégories **enfant** et **ado** reste **inchangé**.
   | 31 et au-delà | 10 |
   | Chute | 5 |
   | Non-présentation | 0 |
+
+- **R9bis.** L'admin peut **modifier le libellé** d'une voie de vitesse existante,
+  dans un gabarit comme dans une rencontre (par exemple « Voie 1 — dalle »). Le
+  libellé est obligatoire et normalisé (spec #3 R4) ; une saisie vide est refusée
+  et l'ancien libellé est conservé. Le nouveau libellé s'affiche partout où la
+  voie apparaît (jetons QR, écran juge, saisie). Cette possibilité vaut pour
+  **toutes les catégories** (renvoi dans spec #3 R32). *(Décision 2026-10-23.)*
 
 ### Équipes adultes
 
@@ -281,6 +289,8 @@ sequenceDiagram
 - Top en moulinette sur une voie dont le top vaut 7 (gabarit modifié) → 4 points
   (R25).
 - Génération d'un jeton capitaine sur une rencontre ado → refusée (R20).
+- Libellé de voie de vitesse vidé à la modification → refusé, l'ancien libellé
+  est conservé (R9bis).
 - Retour arrière exécuté sur la base de recette → plus aucune rencontre adulte,
   les écrans enfant et ado fonctionnent comme avant (R35).
 
@@ -313,7 +323,7 @@ enfant/ado :
 |------|-------|--------|
 | #1 | R34 | 3ᵉ catégorie adulte, éligibilité ≥ 16 ans (R1–R3) ; prêts sans objet en adulte (R11) |
 | #2 | R9b–R23 | nouvelle nature de jeton **capitaine** (R16–R20) |
-| #3 | R29, R33 | gabarit adulte (R6–R9) |
+| #3 | R29, R32, R33 | gabarit adulte (R6–R9) ; libellé de voie de vitesse modifiable (R9bis) |
 | #5 | R13, R15, R16 | en adulte : équipes admin, sans club, 4 au plus (R10–R14) |
 | #6 | R11, R12, R14 | issues adultes dont Top en moulinette, plafond 6 (R22–R27) |
 | #7 | R6 | pas de classement club en adulte (R30/R31) |

@@ -237,6 +237,9 @@ saisie, les flux CRUD, et les règles de suppression (dépendances / cascade).
   un **libellé** indiquant le classement concerné (ex. « Filles »,
   « Garçons »). Ce libellé est utilisé dans les écrans de jetons QR et
   d'affectation juge (spec #2 R17–R18).
+  *(Rév. 2026-10-23 : l'admin peut modifier le libellé d'une voie de vitesse
+  existante, dans le gabarit comme dans une rencontre, toutes catégories — spec
+  #20 R9bis.)*
 - **R33.** Le gabarit **enfant** est pré-initialisé avec le format du règlement
   CT33 FFME 2025-2026 (§ Matin) lors du déploiement (via seed) :
 
