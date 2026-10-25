@@ -70,6 +70,8 @@ export type BaremeVitesseVue = {
 export type EpreuveRencontreVue = {
   id: string
   type: TypeEpreuve
+  /** Faux : épreuve désactivée (bloc ou vitesse d'une rencontre adulte, spec #20 R36). */
+  active: boolean
   voiesDifficulte: VoieDifficulteRencontreVue[]
   blocs: BlocRencontreVue[]
 }
@@ -110,7 +112,7 @@ export async function getStructureRencontre(id: string): Promise<StructureRencon
     lireRencontreAdmin(id),
     supabase
       .from('epreuve')
-      .select('id, type, points_chute, points_non_presentation')
+      .select('id, type, active, points_chute, points_non_presentation')
       .eq('rencontre_id', id)
       .order('type'),
     supabase
@@ -175,6 +177,7 @@ export async function getStructureRencontre(id: string): Promise<StructureRencon
     epreuves: (epreuves ?? []).map((e) => ({
       id: e.id as string,
       type: e.type as TypeEpreuve,
+      active: (e.active as boolean | null) ?? true,
       // Affichage trié par niveau puis libellé (R42, rév. 2026-10-16).
       voiesDifficulte: trierVoiesStructure(
         (voies ?? [])

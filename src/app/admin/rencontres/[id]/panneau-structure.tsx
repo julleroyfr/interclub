@@ -4,13 +4,14 @@ import { useActionState, useId, useRef, useState } from 'react'
 
 import { Bouton, Carte, Etiquette, FormLibelleVoieVitesse, TitreSection } from '@/composants'
 import { NIVEAUX_MOULINETTE, NIVEAUX_TETE, champsPointsVoie } from '@/domaine/gabarit'
-import { PHASES, type Categorie } from '@/domaine/rencontre'
+import { PHASES, epreuveDesactivable, etatEpreuveModifiable, type Categorie } from '@/domaine/rencontre'
 import { REPERE_VOIE_MAX, repereModifiable } from '@/domaine/voie'
 import {
   ajouterBlocRencontre,
   ajouterEpreuveRencontre,
   ajouterVoieDifficulteRencontre,
   ajouterVoieVitesseRencontre,
+  changerEtatEpreuve,
   mettreAJourBaremeVitesse,
   modifierLibelleVoieVitesseRencontre,
   modifierRepereVoie,
@@ -111,6 +112,67 @@ function FormRepere({
       )}
       {etat?.succes && <p className="w-full text-xs text-secondaire">{etat.succes}</p>}
     </form>
+  )
+}
+
+/**
+ * État d'une épreuve de bloc ou de vitesse d'une rencontre adulte (spec #20
+ * R36–R39) : active ou désactivée ; bouton de bascule en ① et ② seulement.
+ */
+function EtatEpreuve({
+  epreuve,
+  rencontreId,
+  modifiable,
+}: {
+  epreuve: EpreuveRencontreVue
+  rencontreId: string
+  modifiable: boolean
+}) {
+  const [etat, action, enCours] = useActionState(changerEtatEpreuve, etatInitial)
+  const nom = epreuve.type === 'bloc' ? 'de bloc' : 'de vitesse'
+  return (
+    <div
+      className={`flex flex-col gap-2 rounded-xl border p-3 ${
+        epreuve.active ? 'border-bordure bg-black/20' : 'border-dashed border-bordure bg-black/10'
+      }`}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-sm text-texte-attenue">
+          {epreuve.active
+            ? `Épreuve ${nom} active.`
+            : `Épreuve ${nom} désactivée : masquée à la saisie et au classement.`}
+        </p>
+        <Etiquette variante={epreuve.active ? 'succes' : 'neutre'}>
+          {epreuve.active ? 'Active' : 'Désactivée'}
+        </Etiquette>
+      </div>
+      {modifiable && (
+        <form action={action}>
+          <input type="hidden" name="rencontreId" value={rencontreId} />
+          <input type="hidden" name="epreuveId" value={epreuve.id} />
+          <input type="hidden" name="active" value={epreuve.active ? 'false' : 'true'} />
+          <Bouton
+            type="submit"
+            taille="sm"
+            variante={epreuve.active ? 'danger' : 'secondaire'}
+            disabled={enCours}
+          >
+            {epreuve.active ? `Désactiver l’épreuve ${nom}` : `Réactiver l’épreuve ${nom}`}
+          </Bouton>
+        </form>
+      )}
+      {modifiable && epreuve.active && epreuve.type === 'vitesse' && (
+        <p className="text-xs text-texte-doux">
+          Désactiver la vitesse révoque ses jetons juges ; après réactivation, générez-en de nouveaux.
+        </p>
+      )}
+      {etat?.erreur && (
+        <p role="alert" className="text-xs text-danger">
+          {etat.erreur}
+        </p>
+      )}
+      {etat?.succes && <p className="text-xs text-secondaire">{etat.succes}</p>}
+    </div>
   )
 }
 
@@ -689,6 +751,16 @@ export function PanneauStructure({ structure }: { structure: StructureRencontre 
 
   const epreuveVoie = structure.epreuves.find((e) => e.type === 'voie')
   const epreuveBloc = structure.epreuves.find((e) => e.type === 'bloc')
+  const epreuveVitesse = structure.epreuves.find((e) => e.type === 'vitesse')
+  // Bloc et vitesse désactivables en adulte, en ① et ② (spec #20 R36/R37).
+  const etatModifiable = etatEpreuveModifiable(structure.phase)
+  const desactivable = (e: EpreuveRencontreVue | undefined): e is EpreuveRencontreVue =>
+    !!e && epreuveDesactivable(structure.categorie, e.type)
+  const desactivee: Record<Onglet, boolean> = {
+    voie: false,
+    bloc: epreuveBloc?.active === false,
+    vitesse: epreuveVitesse?.active === false,
+  }
 
   const comptes: Record<Onglet, number> = {
     voie: epreuveVoie?.voiesDifficulte.length ?? 0,
@@ -716,6 +788,7 @@ export function PanneauStructure({ structure }: { structure: StructureRencontre 
             }`}
           >
             {o.label} · {comptes[o.cle]}
+            {desactivee[o.cle] && ' · désactivée'}
           </button>
         ))}
       </div>
@@ -735,6 +808,17 @@ export function PanneauStructure({ structure }: { structure: StructureRencontre 
           ) : (
             <p className="text-sm text-texte-attenue">Aucune épreuve de voies.</p>
           ))}
+
+        {onglet !== 'voie' && desactivable(onglet === 'bloc' ? epreuveBloc : epreuveVitesse) && (
+          <div className="mb-4">
+            <EtatEpreuve
+              key={onglet}
+              epreuve={(onglet === 'bloc' ? epreuveBloc : epreuveVitesse)!}
+              rencontreId={structure.id}
+              modifiable={etatModifiable}
+            />
+          </div>
+        )}
 
         {onglet === 'bloc' &&
           (epreuveBloc ? (

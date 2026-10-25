@@ -12,6 +12,7 @@
 #   - R10–R14: équipes adultes sans club, composées par l'admin seul, 4 au plus,
 #              nom unique (lot 3) ; R28 : roster juge avec le club d'origine
 #   - R10    : équipes adultes figées hors ① et ② (correctif 2026-10-25)
+#   - R36–R40: épreuves bloc et vitesse désactivables en adulte, en ①/②
 #
 # Les règles applicatives (éligibilité ≥ 16 ans, issues proposées, libellé de voie
 # de vitesse) sont couvertes par le domaine pur (Vitest). Le reste est au cahier.
@@ -296,6 +297,45 @@ update interclub.rencontre set phase = 'resultats_publics' where id = :'rid';
 select pg_temp.essai('R10-suppression-rencontre-cascade-OK', true,
   format($$delete from interclub.rencontre where id = %L$$, :'rid'));
 
+-- ---- R36–R40 — épreuves bloc et vitesse désactivables (2026-10-25) ----------
+update interclub.rencontre set phase = 'preparation' where id = :'rid';
+select id as vv1 from interclub.voie_vitesse where rencontre_id = :'rid' and numero = 1 \gset
+insert into interclub.jeton_qr (rencontre_id, nature, voie_vitesse_id) values (:'rid', 'juge', :'vv1') returning id as jjuge \gset
+select set_config('request.jwt.claims','{"sub":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"}', true); set role authenticated;
+select pg_temp.essai('R36-admin-desactive-bloc-OK', true,
+  format($$update interclub.epreuve set active = false where rencontre_id = %L and type = 'bloc'$$, :'rid'));
+select pg_temp.essai('R36-desactive-voie-KO', false,
+  format($$update interclub.epreuve set active = false where rencontre_id = %L and type = 'voie'$$, :'rid'));
+select pg_temp.essai('R36-desactive-epreuve-ado-KO', false,
+  $$update interclub.epreuve set active = false where rencontre_id = 'adadadad-adad-adad-adad-adadadadadad' and type = 'bloc'$$);
+update interclub.epreuve set active = false where rencontre_id = :'rid' and type in ('bloc', 'vitesse');
+reset role;
+-- R39 : jeton juge révoqué, et aucun nouveau tant que la vitesse est désactivée.
+select pg_temp.verif('R39-jeton-juge-revoque',
+  (select actif::text from interclub.jeton_qr where id = :'jjuge'), 'false');
+select pg_temp.essai('R39-nouveau-jeton-juge-KO', false,
+  format($$insert into interclub.jeton_qr (rencontre_id, nature, voie_vitesse_id) values (%L, 'juge', %L)$$, :'rid', :'vv1'));
+-- R37/R40 : en ③, état figé et aucune écriture de bloc ni de temps.
+update interclub.rencontre set phase = 'competition' where id = :'rid';
+select set_config('request.jwt.claims','{"sub":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"}', true); set role authenticated;
+select pg_temp.essai('R37-reactiver-en-competition-KO', false,
+  format($$update interclub.epreuve set active = true where rencontre_id = %L and type = 'bloc'$$, :'rid'));
+select pg_temp.essai('R40-resultat-bloc-epreuve-desactivee-KO', false,
+  format($$insert into interclub.resultat_bloc (bloc_id, grimpeur_id, issue) values (%L, 'a0000000-0000-0000-0000-0000000000a4', 'echec')$$, :'b1'));
+select pg_temp.essai('R40-temps-epreuve-desactivee-KO', false,
+  format($$insert into interclub.temps_vitesse (epreuve_id, grimpeur_id, issue, temps) values (%L, 'a0000000-0000-0000-0000-0000000000a4', 'temps', 9.1)$$, :'evit'));
+reset role;
+-- R37 : réactivation en ②, à l'identique.
+update interclub.rencontre set phase = 'preparation' where id = :'rid';
+select set_config('request.jwt.claims','{"sub":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"}', true); set role authenticated;
+update interclub.epreuve set active = true where rencontre_id = :'rid' and type in ('bloc', 'vitesse');
+reset role;
+select pg_temp.verif('R37-reactivation-blocs-conserves',
+  (select count(*)::text from interclub.bloc b join interclub.epreuve e on e.id = b.epreuve_id
+    where e.rencontre_id = :'rid' and e.active), '2');
+select pg_temp.essai('R39-jeton-juge-apres-reactivation-OK', true,
+  format($$insert into interclub.jeton_qr (rencontre_id, nature, voie_vitesse_id) values (%L, 'juge', %L)$$, :'rid', :'vv1'));
+
 -- ---- Restitution --------------------------------------------------------
 \echo '--- Détail des assertions ---'
 select id, attendu, obtenu, case when ok then 'OK' else 'KO' end as verdict from pg_temp._res order by id;
@@ -315,9 +355,9 @@ if [ $STATUS -ne 0 ]; then
 fi
 
 if echo "$OUT" | grep -qE 'ADULTE RESULT: [0-9]+ OK / 0 KO'; then
-  echo "✅ Spec #20 (lots 1, 3, 4, 5 et gel des équipes) : toutes les assertions BDD passent."
+  echo "✅ Spec #20 (lots 1, 3, 4, 5, gel des équipes, épreuves désactivables) : toutes les assertions BDD passent."
   exit 0
 else
-  echo "❌ Spec #20 (lots 1, 3, 4, 5 et gel des équipes) : au moins une assertion BDD a échoué (voir le détail ci-dessus)." >&2
+  echo "❌ Spec #20 (lots 1, 3, 4, 5, gel des équipes, épreuves désactivables) : au moins une assertion BDD a échoué (voir le détail ci-dessus)." >&2
   exit 1
 fi

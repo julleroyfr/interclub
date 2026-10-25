@@ -69,8 +69,10 @@ export default async function PageCapitaine() {
             />
           </div>
           <p className="mt-3 rounded-2xl border border-accent/25 bg-accent/5 p-3 text-xs text-accent-doux">
-            Vous saisissez les voies et les blocs des membres de votre équipe. La vitesse est
-            saisie par les juges (lecture seule).
+            {/* Sans les épreuves désactivées (spec #20 R38). */}
+            Vous saisissez {saisie.blocActif ? 'les voies et les blocs' : 'les voies'} des
+            membres de votre équipe.
+            {saisie.vitesseActive && ' La vitesse est saisie par les juges (lecture seule).'}
           </p>
         </div>
 

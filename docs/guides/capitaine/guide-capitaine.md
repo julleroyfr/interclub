@@ -23,14 +23,17 @@ remis par l'organisateur.
 
 ## 2. Saisir les résultats
 
-- L'écran liste **les membres de votre équipe**, avec leurs voies (sur 6),
-  leurs blocs et leur score.
+- L'écran liste **les membres de votre équipe** par ordre alphabétique (nom
+  puis prénom), avec leurs voies (sur 6), leurs blocs et leur score.
 - Touchez un grimpeur, puis :
   - **Voies** : « Ajouter une voie », choisissez la voie, puis l'issue — **Top**
     (en tête), **Top en moulinette** (moitié des points du top), **Zone 2**,
     **Zone 1** ou **Échec**. Six voies au plus par grimpeur.
   - **Blocs** : choisissez le palier atteint (zone, bloc complet) ou « Échec ».
 - La **vitesse** est saisie par les juges : elle s'affiche en lecture seule.
+- Selon les personnes présentes, l'organisateur peut avoir **désactivé** le bloc
+  ou la vitesse : l'épreuve n'apparaît alors nulle part et ne compte pas dans le
+  score.
 - Sans réseau, vos saisies sont gardées sur le téléphone et envoyées dès le
   retour de la connexion (bandeau en haut de l'écran).
 - Vous ne pouvez pas saisir pour un grimpeur d'une autre équipe.

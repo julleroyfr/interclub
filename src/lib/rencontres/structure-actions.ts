@@ -10,7 +10,12 @@ import {
   validerPoints,
 } from '@/domaine/gabarit'
 import type { TypeEpreuve, TypeVoie } from '@/domaine/gabarit'
-import type { Categorie, Phase } from '@/domaine/rencontre'
+import {
+  epreuveDesactivable,
+  etatEpreuveModifiable,
+  type Categorie,
+  type Phase,
+} from '@/domaine/rencontre'
 import {
   LibelleVoieVitesseInvalideError,
   RepereVoieInvalideError,
@@ -460,4 +465,45 @@ export async function mettreAJourBaremeVitesse(
 
   revalidatePath(`/admin/rencontres/${rencontreId}`)
   return { succes: 'Barème de vitesse mis à jour.' }
+}
+
+/**
+ * Active ou désactive l'épreuve de bloc ou de vitesse d'une rencontre adulte
+ * (spec #20 R36–R39), en ① ou ② seulement. Ses blocs, voies de vitesse et
+ * barème sont conservés ; la base révoque les jetons juges si la vitesse est
+ * désactivée (R39) et reste la frontière (trigger `verifier_etat_epreuve`).
+ */
+export async function changerEtatEpreuve(
+  _etatPrecedent: EtatStructure,
+  formData: FormData,
+): Promise<EtatStructure> {
+  const refus = await refuserSiNonAdmin()
+  if (refus) return refus
+
+  const rencontreId = String(formData.get('rencontreId') ?? '')
+  const epreuveId = String(formData.get('epreuveId') ?? '')
+  const active = formData.get('active') === 'true'
+
+  const supabase = await createClient()
+  const [rencontreRes, epreuveRes] = await Promise.all([
+    supabase.from('rencontre').select('categorie, phase').eq('id', rencontreId).maybeSingle(),
+    supabase.from('epreuve').select('type').eq('id', epreuveId).eq('rencontre_id', rencontreId).maybeSingle(),
+  ])
+  const rencontre = verifierLecture(rencontreRes, 'de la rencontre')
+  const epreuve = verifierLecture(epreuveRes, "de l'épreuve")
+  if (!rencontre || !epreuve) return { erreur: 'Épreuve introuvable.' }
+  if (!epreuveDesactivable(rencontre.categorie as Categorie, epreuve.type as TypeEpreuve)) {
+    return { erreur: 'Seules les épreuves de bloc et de vitesse d’une rencontre adulte se désactivent.' }
+  }
+  if (!etatEpreuveModifiable(rencontre.phase as Phase)) {
+    return { erreur: 'Une épreuve ne s’active ou ne se désactive qu’en pré-compétition ou en préparation.' }
+  }
+
+  const { error } = await supabase.from('epreuve').update({ active }).eq('id', epreuveId)
+  if (error) return { erreur: 'Le changement a échoué. Réessayez.' }
+
+  revalidatePath(`/admin/rencontres/${rencontreId}`)
+  revalidatePath('/admin/jetons')
+  const nom = epreuve.type === 'bloc' ? 'de bloc' : 'de vitesse'
+  return { succes: active ? `Épreuve ${nom} réactivée.` : `Épreuve ${nom} désactivée.` }
 }

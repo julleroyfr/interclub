@@ -10,8 +10,9 @@
 - **Pré-requis** :
   - Migrations **`202610231000_categorie_adulte`**,
     **`202610231100_equipes_adultes`**, **`202610231200_top_moulinette`** puis
-    **`202610231300_jeton_capitaine`** puis **`202610251000_gel_equipes_adultes`**
-    appliquées à la main, dans cet ordre
+    **`202610231300_jeton_capitaine`**, **`202610251000_gel_equipes_adultes`**
+    puis **`202610251100_epreuves_desactivables`** appliquées à la main, dans
+    cet ordre
     (recette seulement tant que la branche n'est pas fusionnée).
   - Scripts de retour arrière disponibles dans `supabase/retours-arriere/`, à
     exécuter dans l'**ordre inverse** (lot 5, lot 4, lot 3, puis lot 1).
@@ -262,7 +263,9 @@ main, `[mixte]` partie automatisée + vérification à l'œil.
 - **Pré-condition** : rencontre en ③, jeton de CT-20.
 - **Étapes** : scanner le QR (ou ouvrir l'URL `/scan?jeton=…`).
 - **Résultat attendu** : arrivée sur **`/capitaine`** (« capitaine de « Équipe 1
-  » ») ; seuls les membres de l'Équipe 1 sont listés ; la vitesse est en lecture
+  » ») ; seuls les membres de l'Équipe 1 sont listés, par ordre alphabétique
+  (« Foxtrot Sarah »), sans bascule « Par équipe / Alphabétique » ni étiquette
+  d'équipe ; la vitesse est en lecture
   seule ; « Voir le classement » ouvre `/capitaine/classement`.
 
 ### CT-22 — Le capitaine saisit voies et blocs ; l'auteur est « capitaine » (couvre : R18, R20bis, R21) `[auto]`
@@ -319,6 +322,27 @@ main, `[mixte]` partie automatisée + vérification à l'œil.
   l'écran de la rencontre. À toute phase, la carte affiche « N grimpeurs », nombre de
   grimpeurs du club composés (Club A : Lucie, Karim, Hugo → « 3 grimpeurs »),
   et aucun nombre d'équipes (R19ter).
+
+### CT-31 — Désactiver le bloc et la vitesse selon les présents (couvre : R36–R41) `[auto]`
+
+- **Rôle / compte** : `JD-ADMIN`, rencontre adulte en ② préparation, avec un
+  jeton juge actif sur « Voie 1 ».
+- **Étapes** :
+  1. Tableau de bord → onglet **Blocs** → « Désactiver l'épreuve de bloc » ;
+     onglet **Vitesse** → « Désactiver l'épreuve de vitesse ».
+  2. Ouvrir **Jetons QR**.
+  3. Passer en ③ ; ouvrir la saisie admin d'un grimpeur, la session capitaine et
+     le classement (décomposition d'un score).
+  4. Passer en ④ clôture.
+  5. Local : `npm run test:adulte`, assertions `R36-*` à `R40-*`.
+- **Résultat attendu** : (1) onglets « Blocs · 2 · désactivée » et « Vitesse ·
+  2 · désactivée », message de succès ; (2) « Épreuve de vitesse désactivée :
+  aucun jeton juge », l'ancien jeton juge est révoqué ; (3) ni section ni pastille Bloc
+  ou Vitesse, ni mention « ⚡ Vitesse : saisie par le juge », score « voie »
+  seul, plus de bouton de réactivation ; (4) aucun NP de
+  bloc posé. En base : voies et épreuves ado non désactivables, état figé en ③,
+  aucun résultat de bloc ni temps sur une épreuve désactivée, réactivation en ②
+  à l'identique (blocs conservés), nouveau jeton juge possible.
 
 ### CT-26 — Classement adulte : pas de vue club, équipe par son nom (couvre : R30, R31) `[auto]`
 
@@ -384,4 +408,5 @@ main, `[mixte]` partie automatisée + vérification à l'œil.
 | 2026-10-25 | agent (local) | feature/categorie-adulte | CT-26, CT-28 (admin, coach Club A) | ✅ | E2E `categorie-adulte.spec.ts` 11/11 ; non-régression classement, export PDF, vitesse, volume 30/30 |
 | 2026-10-25 | agent (local) | feature/categorie-adulte | CT-29 | ✅ | E2E 12/12 ; `test:adulte` 53/53 ; `db:verifier-retours` 5 migrations ✅ |
 | 2026-10-25 | agent (local) | feature/categorie-adulte | CT-30 | ✅ | E2E `categorie-adulte.spec.ts` 13/13 ; navigation et temps réel coach sans régression |
-| | | | CT-01 → CT-30 (recette) | | |
+| 2026-10-25 | agent (local) | feature/categorie-adulte | CT-31 | ✅ | E2E `categorie-adulte.spec.ts` 14/14 ; `test:adulte` 63/63 ; `db:verifier-retours` 6 migrations ✅ ; non-régression saisie, contrôle, juges, classement, export |
+| | | | CT-01 → CT-31 (recette) | | |

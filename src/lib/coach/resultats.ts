@@ -111,7 +111,11 @@ export type SaisieRencontre = {
   /** Vrai en ③ compétition : la saisie est ouverte (R5). */
   ouverteSaisie: boolean
   voiesEpreuve: VoieOption[]
+  /** Blocs des épreuves actives seulement (spec #20 R38). */
   blocsConfig: BlocConfig[]
+  /** Faux si l'épreuve de bloc / de vitesse est désactivée (adulte, spec #20 R38) : rien à afficher. */
+  blocActif: boolean
+  vitesseActive: boolean
   grimpeurs: GrimpeurSaisie[]
 }
 
@@ -208,6 +212,7 @@ async function chargerSaisie(
     rbLignes,
     tvLignes,
     pvLignes,
+    epreuvesRes,
   ] = await Promise.all([
     supabase
       .from('rencontre')
@@ -224,13 +229,15 @@ async function chargerSaisie(
       .order('ordre'),
     supabase
       .from('bloc')
-      .select('id, code, ordre, epreuve!inner(rencontre_id)')
+      .select('id, code, ordre, epreuve!inner(rencontre_id, active)')
       .eq('epreuve.rencontre_id', rencontreId)
+      .eq('epreuve.active', true)
       .order('ordre'),
     supabase
       .from('bloc_palier')
-      .select('id, bloc_id, libelle, ordre, points, bloc!inner(epreuve!inner(rencontre_id))')
+      .select('id, bloc_id, libelle, ordre, points, bloc!inner(epreuve!inner(rencontre_id, active))')
       .eq('bloc.epreuve.rencontre_id', rencontreId)
+      .eq('bloc.epreuve.active', true)
       .order('ordre'),
     // Compositions, grimpeur embarqué (nom, prénom, club d'origine et son nom).
     pagine((debut, fin) => {
@@ -285,10 +292,16 @@ async function chargerSaisie(
           .range(debut, fin),
       'des points de vitesse',
     ),
+    // État des épreuves (spec #20 R38) : la vitesse désactivée n'est pas affichée.
+    supabase.from('epreuve').select('type, active').eq('rencontre_id', rencontreId),
   ])
 
   const rencontre = verifierLecture(rencRes, 'de la rencontre')
   if (!rencontre) return null
+  const etatsEpreuves = verifierLecture(epreuvesRes, 'des épreuves') ?? []
+  const desactivee = (type: string) => etatsEpreuves.some((e) => e.type === type && e.active === false)
+  const blocActif = !desactivee('bloc')
+  const vitesseActive = !desactivee('vitesse')
 
   const categorie = rencontre.categorie as Categorie
   const phase = rencontre.phase as Phase
@@ -543,6 +556,8 @@ async function chargerSaisie(
     ouverteSaisie: phase === 'competition',
     voiesEpreuve: voies,
     blocsConfig,
+    blocActif,
+    vitesseActive,
     grimpeursParClub,
   }
 }

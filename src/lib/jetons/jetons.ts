@@ -132,21 +132,29 @@ export async function listerClubsEngages(): Promise<ClubEngage[]> {
   return (data ?? []).map((c) => ({ id: c.id as string, nom: c.nom as string }))
 }
 
-/** Voies de vitesse d'une rencontre. */
-export async function listerVoies(rencontreId: string): Promise<VoieVue[]> {
+/**
+ * Voies de vitesse d'une rencontre, et si l'épreuve de vitesse est désactivée
+ * (adulte, spec #20 R39) : aucun jeton juge n'est alors proposé.
+ */
+export async function listerVoies(
+  rencontreId: string,
+): Promise<{ voies: VoieVue[]; vitesseDesactivee: boolean }> {
   await exigerLectureAdmin('voies de vitesse')
   const admin = createAdminClient()
-  const { data, error } = await admin
-    .from('voie_vitesse')
-    .select('id, numero, libelle')
-    .eq('rencontre_id', rencontreId)
-    .order('numero')
-  if (error) throw error
-  return (data ?? []).map((v) => ({
-    id: v.id as string,
-    numero: v.numero as number,
-    libelle: (v.libelle as string | null) ?? null,
-  }))
+  const [voiesRes, epreuveRes] = await Promise.all([
+    admin.from('voie_vitesse').select('id, numero, libelle').eq('rencontre_id', rencontreId).order('numero'),
+    admin.from('epreuve').select('active').eq('rencontre_id', rencontreId).eq('type', 'vitesse').maybeSingle(),
+  ])
+  if (voiesRes.error) throw voiesRes.error
+  if (epreuveRes.error) throw epreuveRes.error
+  return {
+    voies: (voiesRes.data ?? []).map((v) => ({
+      id: v.id as string,
+      numero: v.numero as number,
+      libelle: (v.libelle as string | null) ?? null,
+    })),
+    vitesseDesactivee: epreuveRes.data?.active === false,
+  }
 }
 
 /** Équipes adultes (sans club) d'une rencontre, par nom (spec #20 R16). */

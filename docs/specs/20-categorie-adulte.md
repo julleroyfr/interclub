@@ -1,6 +1,6 @@
 # Spec : Catégorie adulte
 
-- **Statut** : validée (2026-10-23) ; révisée le 2026-10-25 (R19bis, R19ter, à la demande du produit)
+- **Statut** : validée (2026-10-23) ; révisée le 2026-10-25 (R19bis, R19ter, R36–R41, à la demande du produit)
 - **Sources** :
   - **Règlement** : *Règlement des interclubs d'escalade — Addendum règlement
     Adultes*, CT 33 FFME 2025-2026 (`docs/reglement/2025 Interclubs - Reglement
@@ -165,6 +165,9 @@ catégories **enfant** et **ado** reste **inchangé**.
 - **R19.** La session capitaine **consulte** les résultats et le score des
   grimpeurs de son équipe, ainsi que le classement de la rencontre (lecture dès
   la ③, spec #7 R11).
+  Les membres de son équipe sont listés par **ordre alphabétique**, sans bascule
+  « Par équipe / Alphabétique » (spec #6 R24 sans objet : une seule équipe).
+  *(Rév. 2026-10-25.)*
 - **R19bis.** Côté **coach** (permanent ou temporaire), une rencontre adulte n'a
   **pas d'écran de résultats** : ses équipes n'ont pas de club, il n'y saisit ni
   ne consulte rien de propre à son club. Dès la ③, la carte de la rencontre
@@ -239,6 +242,38 @@ catégories **enfant** et **ado** reste **inchangé**.
   - le nombre de rencontres de la saison est donné pour **enfant, ado,
     adulte** et au total (R13).
 
+### Épreuves désactivables
+
+```mermaid
+flowchart LR
+  C["Création : épreuve active (gabarit)"] --> A["Active"]
+  A -- "admin, phase ① ou ② (R36)" --> D["Désactivée"]
+  D -- "admin, phase ① ou ② (R37)" --> A
+  D --> E["Masquée, aucune saisie, aucun NP, jetons juges révoqués (R38–R40)"]
+```
+
+- **R36.** Dans une rencontre **adulte**, l'admin peut **désactiver** l'épreuve de
+  **bloc** et/ou l'épreuve de **vitesse**, selon les personnes présentes (pas de
+  juge de vitesse, salle sans blocs…). L'épreuve de **voies de difficulté** ne se
+  désactive pas. En **enfant et ado**, aucune épreuve ne se désactive.
+  *(Décision 2026-10-25.)*
+- **R37.** L'activation et la désactivation se font en **① pré-compétition** et
+  **② préparation** seulement ; dès la ③, l'état est **figé**. Une épreuve
+  désactivée se **réactive** à l'identique : ses blocs, paliers, voies de
+  vitesse et barème sont **conservés**.
+- **R38.** Une épreuve désactivée **n'apparaît plus** : ni à la saisie (admin,
+  capitaine), ni à l'écran de contrôle, ni dans la décomposition d'un score au
+  classement. L'écran de structure de la rencontre la montre comme
+  **désactivée**.
+- **R39.** Désactiver l'épreuve de vitesse **révoque** ses jetons juges actifs ;
+  aucun jeton juge n'est proposé tant qu'elle est désactivée. Après
+  réactivation, l'admin génère de nouveaux jetons.
+- **R40.** Aucun résultat ne s'écrit sur une épreuve désactivée (bloc ou temps
+  de vitesse), ni à la saisie ni en base ; à la clôture, ses blocs ne reçoivent
+  **aucun NP** (R27).
+- **R41.** Le score individuel ne compte que les épreuves **actives** (R29) ;
+  classements et export PDF sont inchangés par ailleurs.
+
 ### Réversibilité
 
 - **R34.** Chaque migration de la catégorie adulte est **additive** : appliquée,
@@ -311,6 +346,10 @@ sequenceDiagram
 - Génération d'un jeton capitaine sur une rencontre ado → refusée (R20).
 - Libellé de voie de vitesse vidé à la modification → refusé, l'ancien libellé
   est conservé (R9bis).
+- Désactiver l'épreuve de vitesse d'une rencontre adulte en ③ → refusé (R37).
+- Désactiver l'épreuve de voies, ou une épreuve d'une rencontre ado → refusé
+  (R36).
+- Temps de vitesse envoyé sur une épreuve désactivée → refusé (R40).
 - Retour arrière exécuté sur la base de recette → plus aucune rencontre adulte,
   les écrans enfant et ado fonctionnent comme avant (R35).
 
@@ -324,6 +363,9 @@ sequenceDiagram
 - La base refuse l'issue « Top en moulinette » hors catégorie adulte (R26).
 - Écritures d'équipe et de composition d'une rencontre adulte : **admin
   seulement**, garanti par la RLS (R10).
+- `epreuve.active` (vrai par défaut) : faux seulement pour une épreuve de bloc
+  ou de vitesse d'une rencontre adulte, modifiable en ①/② ; écritures de
+  résultats de bloc et de temps refusées sur une épreuve inactive (R36–R40).
 - Un jeton QR de nature **capitaine** référence **une équipe** d'une rencontre
   adulte ; au plus un jeton capitaine actif par équipe (R16, R20).
 - RLS : une session capitaine n'écrit que les résultats de voie et de bloc des
@@ -345,9 +387,9 @@ enfant/ado :
 | #2 | R9b–R23 | nouvelle nature de jeton **capitaine** (R16–R20) |
 | #9 | R14 | rôle d'auteur `capitaine` (R20bis) |
 | #12 | R9 | redirection du scan capitaine vers `/capitaine` (R17–R19) |
-| #3 | R29, R32, R33 | gabarit adulte (R6–R9) ; libellé de voie de vitesse modifiable (R9bis) |
+| #3 | R29, R32, R33, R43, R44 | gabarit adulte (R6–R9) ; libellé de voie de vitesse modifiable (R9bis) ; épreuves bloc/vitesse désactivables en adulte, en ①/② (R36–R38) |
 | #5 | R6, R7, R13, R15, R16 | en adulte : équipes admin, sans club, 4 au plus (R10–R14) ; coach mené au classement dès la ③, sans écran de résultats (R19bis) ; carte d'accueil sans nombre d'équipes, avec les grimpeurs du club composés (R19ter) |
-| #6 | R11, R12, R14 | issues adultes dont Top en moulinette, plafond 6 (R22–R27) |
+| #6 | R11, R12, R14, R24 | issues adultes dont Top en moulinette, plafond 6 (R22–R27) ; capitaine : liste alphabétique sans bascule de vue (R19) |
 | #7 | R6 | pas de classement club en adulte (R30/R31) |
 | #13 | R6, R7, R8, R18 | import sans limite d'âge, ni année de référence, ni « ignorés hors âge » (R5) |
 | #18 | R11, R16, R17 | idem pour l'import CSV sans licence (R5) |

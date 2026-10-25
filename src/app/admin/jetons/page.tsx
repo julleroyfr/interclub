@@ -91,7 +91,7 @@ async function SectionsRencontre({
   estAdulte: boolean
 }) {
   // Adulte : capitaines d'équipe, pas de coach temporaire (spec #20 R16, R20).
-  const [clubs, equipes, voies, jetons] = await Promise.all([
+  const [clubs, equipes, { voies, vitesseDesactivee }, jetons] = await Promise.all([
     estAdulte ? Promise.resolve([]) : listerClubsEngages(),
     estAdulte ? listerEquipesAdultes(rencontreId) : Promise.resolve([]),
     listerVoies(rencontreId),
@@ -162,7 +162,12 @@ async function SectionsRencontre({
 
       <section className="flex flex-col gap-3">
         <TitreSection>Juge (par voie de vitesse)</TitreSection>
-        {voies.length === 0 ? (
+        {vitesseDesactivee ? (
+          // Épreuve de vitesse désactivée (adulte) : aucun jeton juge (spec #20 R39).
+          <p className="text-sm text-texte-attenue">
+            Épreuve de vitesse désactivée : aucun jeton juge.
+          </p>
+        ) : voies.length === 0 ? (
           <p className="text-sm text-texte-attenue">
             Aucune voie de vitesse pour cette rencontre.
           </p>

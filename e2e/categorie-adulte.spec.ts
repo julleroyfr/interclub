@@ -246,11 +246,12 @@ test.describe('Catégorie adulte — lot 1 (spec #20)', () => {
       await page.goto(`/scan?jeton=${valeur}`)
       await page.waitForURL('**/capitaine')
       await expect(page.getByText(/capitaine de « Équipe 1 »/)).toBeVisible()
-      // Membres de son équipe seulement (R18/R19).
-      await expect(page.getByRole('button', { name: /^Sarah Foxtrot/ })).toBeVisible()
-      await expect(page.getByRole('button', { name: /^Inès Foxtrot/ })).toHaveCount(0)
+      // Membres de son équipe seulement, en ordre alphabétique, sans bascule de vue (R18/R19).
+      await expect(page.getByRole('button', { name: /^Foxtrot Sarah/ })).toBeVisible()
+      await expect(page.getByRole('button', { name: /^Foxtrot Inès/ })).toHaveCount(0)
+      await expect(page.getByRole('button', { name: 'Par équipe' })).toHaveCount(0)
 
-      await page.getByRole('button', { name: /^Sarah Foxtrot/ }).click()
+      await page.getByRole('button', { name: /^Foxtrot Sarah/ }).click()
       const ajout = page.locator('form', { has: page.locator('select[name="voieDifficulteId"]') })
       await ajout.locator('select[name="voieDifficulteId"]').selectOption({ label: 'T3 (5b)' })
       await ajout.getByRole('button', { name: 'Top', exact: true }).click()
@@ -328,6 +329,47 @@ test.describe('Catégorie adulte — lot 1 (spec #20)', () => {
       }
     } finally {
       execSql(`update interclub.rencontre set phase = 'pre_competition' where id = '${id}';`)
+    }
+  })
+
+  test('l’admin désactive bloc et vitesse en ② ; masqués en ③ (R36–R40)', async ({ page }) => {
+    const id = idRencontre()
+    execSql(`update interclub.rencontre set phase = 'preparation' where id = '${id}';`)
+    try {
+      await commeAdmin(page)
+      await page.goto(`/admin/rencontres/${id}`)
+      await page.getByRole('button', { name: /^Blocs · 2/ }).click()
+      await expect(page.getByText('Épreuve de bloc active.')).toBeVisible()
+      await page.getByRole('button', { name: 'Désactiver l’épreuve de bloc' }).click()
+      await expect(page.getByText('Épreuve de bloc désactivée.')).toBeVisible()
+      await expect(page.getByRole('button', { name: /^Blocs · 2 · désactivée/ })).toBeVisible()
+
+      await page.getByRole('button', { name: /^Vitesse · 2/ }).click()
+      await page.getByRole('button', { name: 'Désactiver l’épreuve de vitesse' }).click()
+      await expect(page.getByText('Épreuve de vitesse désactivée.')).toBeVisible()
+      expect(
+        execSql(
+          `select string_agg(type || ':' || active, ',' order by type) from interclub.epreuve where rencontre_id = '${id}';`,
+        ),
+      ).toBe('bloc:false,vitesse:false,voie:true')
+      await page.goto(`/admin/jetons?rencontre=${id}`)
+      await expect(page.getByText('Épreuve de vitesse désactivée : aucun jeton juge.')).toBeVisible()
+
+      // ③ : état figé, plus de section Bloc à la saisie.
+      execSql(`update interclub.rencontre set phase = 'competition' where id = '${id}';`)
+      await page.goto(`/admin/rencontres/${id}`)
+      await page.getByRole('button', { name: /^Blocs · 2 · désactivée/ }).click()
+      await expect(page.getByRole('button', { name: /Réactiver l’épreuve/ })).toHaveCount(0)
+      await page.goto(`/admin/rencontres/${id}/resultats`)
+      await page.getByRole('button', { name: /^Lucie Echo/ }).click()
+      await expect(page.getByText('au fil de l’eau · non officiel')).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'Bloc', exact: true })).toHaveCount(0)
+    } finally {
+      execSql(
+        `update interclub.rencontre set phase = 'preparation' where id = '${id}';
+         update interclub.epreuve set active = true where rencontre_id = '${id}';
+         update interclub.rencontre set phase = 'pre_competition' where id = '${id}';`,
+      )
     }
   })
 

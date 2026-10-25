@@ -280,6 +280,16 @@
   .seg button.sel-moul { background: rgba(251,191,36,.16); color: var(--moulinette); border-color: rgba(251,191,36,.5); }
   .aide { color: var(--moulinette); font-size: 11px; margin-top: 5px; }
   .score.zero { color: var(--texte-doux); }
+  /* --- épreuves désactivables (R36–R41) --- */
+  .epreuve-ligne { display: flex; align-items: center; gap: 10px; }
+  .epreuve-ligne .info { flex: 1; min-width: 0; }
+  .etat-ep { font-size: 11px; font-weight: 700; border-radius: 999px; padding: 2px 9px; white-space: nowrap; }
+  .etat-ep.on { color: var(--secondaire); background: rgba(190,242,100,.12); border: 1px solid rgba(190,242,100,.3); }
+  .etat-ep.off { color: var(--texte-attenue); background: rgba(148,163,184,.10); border: 1px dashed var(--bordure); }
+  .etat-ep.fixe { color: var(--texte-doux); border: 1px solid var(--bordure); }
+  .carte.desactivee { border-style: dashed; }
+  .carte.desactivee .info { opacity: .6; }
+  .btn-petit { width: auto; min-height: 44px; padding: 0 14px; font-size: 12.5px; }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 </head>
@@ -604,6 +614,100 @@
       </div>
     </section>
 
+    <!-- ============ 8 · ÉPREUVES DÉSACTIVABLES (ADMIN, ②) ============ -->
+    <section class="colonne">
+      <p class="titre-option">8 · Épreuves de la rencontre — admin (R36, R37, R39)</p>
+      <p class="desc-option">En ① ou ②, selon les présents : bloc et vitesse se désactivent et se réactivent. Les voies restent toujours actives.</p>
+      <div class="tel tel-admin">
+        <div class="barre-haut">
+          <div class="lien-retour">← Rencontre</div>
+          <div class="titre-ecran">Structure — épreuves</div>
+          <div class="meta">Catégorie adulte · 17 janv. 2026</div>
+          <div class="badge-phase verif">② Préparation</div>
+        </div>
+        <div class="corps">
+          <div class="carte">
+            <div class="epreuve-ligne">
+              <div class="info"><div class="carte-titre">Voies de difficulté</div><div class="carte-sous">10 voies · T1 à T10</div></div>
+              <span class="etat-ep fixe">Toujours active</span>
+            </div>
+          </div>
+          <div class="carte desactivee">
+            <div class="epreuve-ligne">
+              <div class="info"><div class="carte-titre">Bloc</div><div class="carte-sous">2 blocs conservés · masqués à la saisie</div></div>
+              <span class="etat-ep off">Désactivée</span>
+            </div>
+            <div class="ligne-btns"><button class="btn btn-fantome">Réactiver l'épreuve de bloc</button></div>
+          </div>
+          <div class="carte">
+            <div class="epreuve-ligne">
+              <div class="info"><div class="carte-titre">Vitesse</div><div class="carte-sous">Voie 1 — dalle · Voie 2 · barème 100 → 10</div></div>
+              <span class="etat-ep on">Active</span>
+            </div>
+            <div class="ligne-btns"><button class="btn btn-danger">Désactiver l'épreuve de vitesse</button></div>
+          </div>
+          <div class="note-lecture">Désactiver la vitesse révoque ses jetons juges ; après réactivation, générez-en de
+          nouveaux (R39). Blocs, paliers, voies de vitesse et barème sont conservés (R37).</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 9 · EFFETS EN ③ ============ -->
+    <section class="colonne">
+      <p class="titre-option">9 · En compétition, bloc désactivé (R38, R40)</p>
+      <p class="desc-option">La saisie du capitaine et de l'admin ne montre que les épreuves actives ; aucun NP à la clôture.</p>
+      <div class="tel">
+        <div class="barre-haut">
+          <div class="lien-retour">← Équipe 1</div>
+          <div class="titre-rencontre">MARTIN Hugo</div>
+          <div class="meta">Adulte · Roc'n Bloc</div>
+          <div class="badge-phase comp">● Compétition — saisie</div>
+        </div>
+        <div class="corps">
+          <div class="score-bloc"><div><div class="lbl">Score</div><div class="sub">voies + vitesse</div></div><span class="score">25<span class="u">pts</span></span></div>
+          <div class="carte">
+            <div class="carte-entete">
+              <span class="epreuve-titre" style="margin:0">Voie de difficulté</span>
+              <span class="prog"><span class="part"><span class="lbl">réalisées</span> <span class="n">3</span>/6</span></span>
+            </div>
+            <div class="saisie"><span class="voie-id">T3</span><span class="cotation">5b</span><span class="issue top pousse">Top · 8</span></div>
+            <div class="saisie"><span class="voie-id">T4</span><span class="cotation">5c</span><span class="issue partiel pousse">Moulinette · 5</span></div>
+            <div class="saisie"><span class="voie-id">T6</span><span class="cotation">6b</span><span class="issue partiel pousse">Zone 2 · 12</span></div>
+          </div>
+          <div class="carte">
+            <span class="epreuve-titre">Vitesse</span>
+            <div class="saisie"><span class="voie-id">⚡</span><span class="issue vide pousse">À saisir par le juge</span></div>
+          </div>
+          <div class="note-lecture">Pas de section « Bloc » : l'épreuve est désactivée pour cette rencontre (R38).</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 10 · FIGÉ DÈS LA ③ ============ -->
+    <section class="colonne">
+      <p class="titre-option">10 · État figé dès la ③ (R37)</p>
+      <p class="desc-option">En compétition, clôture et résultats : l'état des épreuves se consulte, ne se modifie plus.</p>
+      <div class="tel tel-admin">
+        <div class="barre-haut">
+          <div class="lien-retour">← Rencontre</div>
+          <div class="titre-ecran">Structure — épreuves</div>
+          <div class="meta">Catégorie adulte · 17 janv. 2026</div>
+          <div class="badge-phase comp">● Compétition</div>
+        </div>
+        <div class="corps">
+          <div class="note-lecture">Structure verrouillée : les épreuves ne s'activent ou ne se désactivent qu'en
+          pré-compétition ou en préparation.</div>
+          <div class="carte"><div class="epreuve-ligne"><div class="info"><div class="carte-titre">Voies de difficulté</div></div><span class="etat-ep fixe">Toujours active</span></div></div>
+          <div class="carte desactivee"><div class="epreuve-ligne"><div class="info"><div class="carte-titre">Bloc</div></div><span class="etat-ep off">Désactivée</span></div></div>
+          <div class="carte"><div class="epreuve-ligne"><div class="info"><div class="carte-titre">Vitesse</div></div><span class="etat-ep on">Active</span></div></div>
+          <div class="epreuve-titre">Jetons QR — juges de vitesse</div>
+          <div class="carte"><div class="carte-entete"><span class="carte-titre">Voie 1 — dalle</span><span class="etat-jeton actif">Actif</span></div></div>
+          <div class="note-lecture">Si la vitesse était désactivée, cette section indiquerait « Épreuve de vitesse
+          désactivée : aucun jeton juge » (R39).</div>
+        </div>
+      </div>
+    </section>
+
   </div>
 
   <div class="legende">
@@ -611,6 +715,7 @@
     <ul>
       <li>Écran 1 : R1, R6–R9 · Écran 2 : R2, R10–R15 · Écran 3 : R16, R17, R20 · Écran 3bis : R9, R9bis.</li>
       <li>Écrans 4 à 6 : R17–R19, R21–R28 · Écran 7 : R29–R31.</li>
+      <li>Écran 8 : R36, R37, R39 · Écran 9 : R38, R40, R41 · Écran 10 : R37, R39.</li>
       <li>La maquette illustre la spec #20, qui fait foi en cas d'écart.</li>
     </ul>
   </div>

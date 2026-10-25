@@ -4,6 +4,8 @@
 // saisie et l'ordre des phases, reflets des contraintes SQL de `rencontre`
 // (`categorie in ('enfant','ado','adulte')`, `phase in (...)`, `date_rencontre date`).
 
+import type { TypeEpreuve } from './gabarit'
+
 /**
  * Catégorie d'une rencontre (tranche d'âge, R34 ; adulte : spec #20 R1).
  * Valeurs = contrainte SQL.
@@ -32,6 +34,19 @@ export function aVoiesLibres(categorie: Categorie): boolean {
  */
 export function aClassementClub(categorie: Categorie): boolean {
   return categorie !== 'adulte'
+}
+
+/**
+ * L'épreuve peut-elle être désactivée ? En adulte, le bloc et la vitesse, selon
+ * les personnes présentes ; jamais les voies, ni en enfant et ado (spec #20 R36).
+ */
+export function epreuveDesactivable(categorie: Categorie, type: TypeEpreuve): boolean {
+  return categorie === 'adulte' && (type === 'bloc' || type === 'vitesse')
+}
+
+/** L'état actif/désactivé d'une épreuve se change en ① et ② seulement (spec #20 R37). */
+export function etatEpreuveModifiable(phase: Phase): boolean {
+  return phase === 'pre_competition' || phase === 'preparation'
 }
 
 /** Phases successives d'une rencontre, dans l'ordre du cycle de vie (R5). */

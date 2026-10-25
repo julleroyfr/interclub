@@ -5,6 +5,8 @@ import {
   PHASES,
   SaisieRencontreInvalideError,
   aClassementClub,
+  epreuveDesactivable,
+  etatEpreuveModifiable,
   anneeSaison,
   bornesAnneeNaissance,
   bornesSaison,
@@ -373,5 +375,30 @@ describe('spec #20 — Classement club selon la catégorie (R30)', () => {
 
   it("l'adulte n'a pas de classement club (R30)", () => {
     expect(aClassementClub('adulte')).toBe(false)
+  })
+})
+
+describe('spec #20 — Épreuves désactivables (R36, R37)', () => {
+  it('en adulte, bloc et vitesse se désactivent (R36)', () => {
+    expect(epreuveDesactivable('adulte', 'bloc')).toBe(true)
+    expect(epreuveDesactivable('adulte', 'vitesse')).toBe(true)
+  })
+
+  it('l’épreuve de voies ne se désactive jamais (R36)', () => {
+    expect(epreuveDesactivable('adulte', 'voie')).toBe(false)
+  })
+
+  it.each(['enfant', 'ado'] as const)('en %s, aucune épreuve ne se désactive (R36)', (categorie) => {
+    for (const type of ['voie', 'bloc', 'vitesse'] as const) {
+      expect(epreuveDesactivable(categorie, type)).toBe(false)
+    }
+  })
+
+  it.each(['pre_competition', 'preparation'] as const)('état modifiable en %s (R37)', (phase) => {
+    expect(etatEpreuveModifiable(phase)).toBe(true)
+  })
+
+  it.each(['competition', 'cloture', 'resultats_publics'] as const)('état figé en %s (R37)', (phase) => {
+    expect(etatEpreuveModifiable(phase)).toBe(false)
   })
 })

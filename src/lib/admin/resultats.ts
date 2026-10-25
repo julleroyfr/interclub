@@ -34,6 +34,8 @@ export type SaisieAdminRencontre = {
   ouverteSaisie: boolean
   voiesEpreuve: VoieOption[]
   blocsConfig: BlocConfig[]
+  /** Faux si l'épreuve de bloc est désactivée (adulte, spec #20 R38). */
+  blocActif: boolean
   clubs: SaisieClub[]
 }
 
@@ -76,6 +78,7 @@ export async function getSaisieAdminRencontre(
     ouverteSaisie: saisie.phase === 'competition' || saisie.phase === 'cloture',
     voiesEpreuve: saisie.voiesEpreuve,
     blocsConfig: saisie.blocsConfig,
+    blocActif: saisie.blocActif,
     clubs,
   }
 }

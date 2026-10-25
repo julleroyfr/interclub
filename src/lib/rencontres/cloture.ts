@@ -41,11 +41,14 @@ export async function materialiserNpCloture(
   const categorie = renc.categorie as Categorie
 
   const epreuves = verifierLecture(
-    await supabase.from('epreuve').select('id, type').eq('rencontre_id', rencontreId),
+    await supabase.from('epreuve').select('id, type, active').eq('rencontre_id', rencontreId),
     'des épreuves',
   )
   const epreuveVoie = (epreuves ?? []).find((e) => e.type === 'voie')?.id as string | undefined
-  const epreuveBloc = (epreuves ?? []).find((e) => e.type === 'bloc')?.id as string | undefined
+  // Épreuve de bloc désactivée (adulte) : aucun NP sur ses blocs (spec #20 R40).
+  const epreuveBloc = (epreuves ?? []).find((e) => e.type === 'bloc' && e.active !== false)?.id as
+    | string
+    | undefined
 
   // Structure : voies (id, niveau, ordre) et blocs (id).
   const [voiesRes, blocsRes] = await Promise.all([

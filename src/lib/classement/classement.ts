@@ -126,6 +126,9 @@ export type ClassementRencontre = {
   equipes: LigneEquipe[]
   /** Vide en adulte : pas de classement club (spec #20 R30). */
   clubs: LigneClub[]
+  /** Épreuves de bloc / vitesse actives ; désactivées en adulte, elles sont masquées (spec #20 R38). */
+  blocActif: boolean
+  vitesseActive: boolean
 }
 
 /** Ligne brute d'une lecture PostgREST. */
@@ -160,7 +163,7 @@ export async function getClassementRencontre(
   const pagine = (requete: (debut: number, fin: number) => unknown, quoi: string) =>
     lireToutesLesPages((debut, fin) => requete(debut, fin) as PromiseLike<Reponse>, quoi)
 
-  const [rencRes, voiesRes, blocsRes, paliersRes, equipesRes, compos, rvLignes, rbLignes, pvLignes, tvLignes] =
+  const [rencRes, voiesRes, blocsRes, paliersRes, equipesRes, compos, rvLignes, rbLignes, pvLignes, tvLignes, epreuvesRes] =
     await Promise.all([
       admin
         .from('rencontre')
@@ -176,13 +179,15 @@ export async function getClassementRencontre(
         .order('ordre'),
       admin
         .from('bloc')
-        .select('id, code, ordre, epreuve!inner(rencontre_id)')
+        .select('id, code, ordre, epreuve!inner(rencontre_id, active)')
         .eq('epreuve.rencontre_id', rencontreId)
+        .eq('epreuve.active', true)
         .order('ordre'),
       admin
         .from('bloc_palier')
-        .select('id, points, libelle, bloc!inner(epreuve!inner(rencontre_id))')
-        .eq('bloc.epreuve.rencontre_id', rencontreId),
+        .select('id, points, libelle, bloc!inner(epreuve!inner(rencontre_id, active))')
+        .eq('bloc.epreuve.rencontre_id', rencontreId)
+        .eq('bloc.epreuve.active', true),
       admin.from('equipe').select('id, nom, club_id, club:club_id(nom)').eq('rencontre_id', rencontreId),
       pagine(
         (debut, fin) =>
@@ -237,6 +242,7 @@ export async function getClassementRencontre(
             .range(debut, fin),
         'des temps de vitesse',
       ),
+      admin.from('epreuve').select('type, active').eq('rencontre_id', rencontreId),
     ])
 
   const rencontre = verifierLecture(rencRes, 'de la rencontre')
@@ -244,6 +250,8 @@ export async function getClassementRencontre(
 
   const categorie = rencontre.categorie as Categorie
   const phase = rencontre.phase as Phase
+  const epreuves = verifierLecture(epreuvesRes, 'des épreuves') ?? []
+  const desactivee = (type: string) => epreuves.some((e) => e.type === type && e.active === false)
   const base = {
     id: rencontre.id as string,
     dateRencontre: rencontre.date_rencontre as string,
@@ -251,6 +259,8 @@ export async function getClassementRencontre(
     phase,
     visible: PHASES_VISIBLES.includes(phase),
     officiel: phase === 'resultats_publics',
+    blocActif: !desactivee('bloc'),
+    vitesseActive: !desactivee('vitesse'),
   }
   // Rien avant la ③ : aucun résultat à classer (R11).
   if (!base.visible) {

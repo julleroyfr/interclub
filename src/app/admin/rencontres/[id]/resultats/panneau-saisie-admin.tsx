@@ -181,8 +181,10 @@ export function PanneauSaisieAdmin({ saisie }: { saisie: SaisieAdminRencontre })
                                 </span>
                               )}
                               <span className="font-bold">
-                                🧗 {g.progression.voiesFaites}/{g.voiesTotal} · 🧱{' '}
-                                {g.progression.blocsFaites}/{g.progression.blocsTotal}
+                                🧗 {g.progression.voiesFaites}/{g.voiesTotal}
+                                {/* Épreuve de bloc désactivée : pas de compteur (spec #20 R38). */}
+                                {saisie.blocActif &&
+                                  ` · 🧱 ${g.progression.blocsFaites}/${g.progression.blocsTotal}`}
                               </span>
                             </div>
                           </div>
@@ -297,7 +299,7 @@ function DetailGrimpeur({
 
       <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
         <SectionVoies saisie={saisie} grimpeur={grimpeur} />
-        <SectionBlocs saisie={saisie} grimpeur={grimpeur} />
+        {saisie.blocActif && <SectionBlocs saisie={saisie} grimpeur={grimpeur} />}
       </div>
     </div>
   )

@@ -285,6 +285,15 @@ L'écran central de la préparation d'une rencontre : phase, structure, prêts e
 ajouter une 2ᵉ voie d'un niveau très demandé. Ensuite, elle est verrouillée,
 sauf le **repère** des voies (voir ci-dessous).
 
+**Désactiver le bloc ou la vitesse (adulte)** : selon les personnes présentes
+(pas de juge de vitesse, pas de blocs…), les onglets **Blocs** et **Vitesse**
+d'une rencontre adulte proposent « Désactiver l'épreuve », en ① pré-compétition
+et en ② préparation. L'épreuve disparaît alors de la saisie, du contrôle et du
+classement ; son onglet indique « désactivée ». Ses blocs, voies et barème sont
+conservés : « Réactiver l'épreuve » la remet à l'identique. Désactiver la
+vitesse révoque ses jetons juges ; après réactivation, générez-en de nouveaux.
+Dès la ③, l'état est figé. Les voies de difficulté ne se désactivent pas.
+
 ### Voies doublées et repères
 
 En Ado, un même niveau peut compter plusieurs voies (deux T5, par exemple). Le

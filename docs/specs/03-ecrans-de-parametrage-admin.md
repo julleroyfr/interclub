@@ -513,6 +513,8 @@ flowchart TD
   L'ajout est le **seul** geste d'édition de structure (ni modification ni
   suppression — hors périmètre), à l'exception du **repère**, modifiable selon
   R49.
+  *(Catégorie adulte, rév. 2026-10-25 : en ① et ②, l'admin peut aussi
+  désactiver ou réactiver l'épreuve de bloc ou de vitesse — spec #20 R36–R38.)*
 - **R44.** **Hors phase pré-compétition** (préparation, compétition, clôture,
   résultats publics), l'écran est en **lecture seule** : aucun formulaire n'est affiché et un
   **message** indique que la structure est **verrouillée** et ne peut être
