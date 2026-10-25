@@ -4,6 +4,7 @@ import {
   CATEGORIES,
   PHASES,
   SaisieRencontreInvalideError,
+  aClassementClub,
   anneeSaison,
   bornesAnneeNaissance,
   bornesSaison,
@@ -361,5 +362,16 @@ describe('libellePhase — libellé affiché d’une phase (spec #1 R5)', () => 
 
   it('renvoie la valeur brute d’une phase inconnue', () => {
     expect(libellePhase('inconnue')).toBe('inconnue')
+  })
+})
+
+describe('spec #20 — Classement club selon la catégorie (R30)', () => {
+  it('enfant et ado ont un classement club (spec #7 R6)', () => {
+    expect(aClassementClub('enfant')).toBe(true)
+    expect(aClassementClub('ado')).toBe(true)
+  })
+
+  it("l'adulte n'a pas de classement club (R30)", () => {
+    expect(aClassementClub('adulte')).toBe(false)
   })
 })

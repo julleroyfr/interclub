@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 
 import { Carte } from '@/composants'
+import { aClassementClub } from '@/domaine/rencontre'
 import type { IssueVoie } from '@/domaine/resultat'
 import type {
   ClassementRencontre,
@@ -54,7 +55,8 @@ type FiltreClub = 'tous' | 'mien'
 
 /**
  * Panneau de classement (spec #7). Trois vues (individuel par sexe, équipe, club,
- * R12), avec pour l'individuel : recherche, filtres (tous / mon club / équipe),
+ * R12) — sans la vue club en adulte, où l'équipe est présentée par son nom seul
+ * (spec #20 R30/R31) —, avec pour l'individuel : recherche, filtres (tous / mon club / équipe),
  * mise en évidence du club consulté, compteur et pagination bas de liste (R12b).
  * Toucher un grimpeur ouvre la décomposition de son score (R13).
  */
@@ -72,6 +74,7 @@ export function PanneauClassement({
   const [equipeFiltre, setEquipeFiltre] = useState('')
   const [page, setPage] = useState(1)
   const [detail, setDetail] = useState<LigneIndividuel | null>(null)
+  const avecClubs = aClassementClub(classement.categorie)
 
   const listeSexe = sexe === 'F' ? classement.individuel.filles : classement.individuel.garcons
 
@@ -137,7 +140,7 @@ export function PanneauClassement({
           [
             ['individuel', 'Individuel'],
             ['equipe', 'Par équipe'],
-            ['club', 'Par club'],
+            ...(avecClubs ? [['club', 'Par club']] : []),
           ] as [Vue, string][]
         ).map(([v, label]) => (
           <button
@@ -332,7 +335,8 @@ export function PanneauClassement({
                   <td className="px-1.5 py-2">
                     <span className="font-semibold text-texte-fort">{e.equipeNom}</span>
                     <span className="mt-0.5 block text-[11.5px] text-texte-doux">
-                      {e.clubNom} · {e.nbGrimpeurs} grimpeur(s)
+                      {e.clubNom ? `${e.clubNom} · ` : ''}
+                      {e.nbGrimpeurs} grimpeur(s)
                     </span>
                   </td>
                   <td className="whitespace-nowrap px-1.5 py-2 text-right font-extrabold text-secondaire">
@@ -349,7 +353,7 @@ export function PanneauClassement({
         </Carte>
       )}
 
-      {vue === 'club' && (
+      {vue === 'club' && avecClubs && (
         <Carte className="p-2">
           <table className="w-full border-collapse text-sm">
             <thead>

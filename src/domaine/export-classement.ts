@@ -4,7 +4,7 @@
 // lignes — R10–R16) à partir du classement déjà calculé par la spec #7, sans
 // recalculer ni rang ni score (R13). Le rendu PDF (R17–R20) consomme ce modèle.
 
-import { CATEGORIES, type Categorie, type Phase } from './rencontre'
+import { CATEGORIES, aClassementClub, type Categorie, type Phase } from './rencontre'
 
 /** Qui demande l'export — rôles de spec #1, vus du point d'accès (R3–R5). */
 export type DemandeurExport =
@@ -17,8 +17,22 @@ export type DemandeurExport =
 /** État de la rencontre utile à la décision d'export. */
 export type ContexteRencontreExport = {
   phase: Phase
-  /** Clubs ayant au moins une équipe dans la rencontre (« club engagé »). */
+  /** Clubs engagés dans la rencontre (cf. `clubsEngagesExport`). */
   clubsEngages: readonly string[]
+}
+
+/**
+ * Clubs « engagés » au sens de l'export : en enfant et ado, les clubs ayant au
+ * moins une équipe (R4) ; en adulte, où les équipes n'ont pas de club, les clubs
+ * d'origine des grimpeurs composés (spec #20 R32). Dédoublonnés, sans valeur vide.
+ */
+export function clubsEngagesExport(
+  categorie: Categorie,
+  clubsDesEquipes: readonly (string | null)[],
+  clubsDesGrimpeursComposes: readonly (string | null)[],
+): string[] {
+  const clubs = aClassementClub(categorie) ? clubsDesEquipes : clubsDesGrimpeursComposes
+  return [...new Set(clubs.filter((c): c is string => !!c))]
 }
 
 /**
@@ -51,7 +65,8 @@ export type LigneIndividuelSource = {
   clubOrigineNom: string
   score: number
 }
-export type LigneEquipeSource = { rang: number; equipeNom: string; clubNom: string; score: number }
+/** `clubNom` est `null` pour une équipe adulte, sans club (spec #20 R11/R31). */
+export type LigneEquipeSource = { rang: number; equipeNom: string; clubNom: string | null; score: number }
 export type LigneClubSource = { rang: number; clubNom: string; score: number }
 
 /** Classement officiel d'une rencontre, tel que calculé par la spec #7. */
@@ -159,6 +174,7 @@ export function construireDocumentExport(source: SourceExport, genereLe: Date): 
   const categorie =
     CATEGORIES.find((c) => c.value === source.categorie)?.labelCourt ?? source.categorie
   const { filles, garcons } = source.individuel
+  const avecClubs = aClassementClub(source.categorie)
 
   return {
     entete: {
@@ -182,27 +198,44 @@ export function construireDocumentExport(source: SourceExport, genereLe: Date): 
         COLONNES_INDIVIDUEL,
         lignesIndividuel(garcons),
       ),
-      section(
-        'Équipes',
-        compter(source.equipes.length, 'équipe', 'équipes'),
-        [
-          { libelle: 'Rang', alignement: 'gauche' },
-          { libelle: 'Équipe', alignement: 'gauche' },
-          { libelle: 'Club', alignement: 'gauche' },
-          { libelle: 'Score', alignement: 'droite' },
-        ],
-        source.equipes.map((e) => [String(e.rang), e.equipeNom, e.clubNom, formaterScore(e.score)]),
-      ),
-      section(
-        'Clubs',
-        compter(source.clubs.length, 'club', 'clubs'),
-        [
-          { libelle: 'Rang', alignement: 'gauche' },
-          { libelle: 'Club', alignement: 'gauche' },
-          { libelle: 'Score', alignement: 'droite' },
-        ],
-        source.clubs.map((c) => [String(c.rang), c.clubNom, formaterScore(c.score)]),
-      ),
+      // En adulte, l'équipe est présentée par son nom seul et il n'y a pas de
+      // section Clubs (spec #20 R30/R31).
+      avecClubs
+        ? section(
+            'Équipes',
+            compter(source.equipes.length, 'équipe', 'équipes'),
+            [
+              { libelle: 'Rang', alignement: 'gauche' },
+              { libelle: 'Équipe', alignement: 'gauche' },
+              { libelle: 'Club', alignement: 'gauche' },
+              { libelle: 'Score', alignement: 'droite' },
+            ],
+            source.equipes.map((e) => [String(e.rang), e.equipeNom, e.clubNom ?? '', formaterScore(e.score)]),
+          )
+        : section(
+            'Équipes',
+            compter(source.equipes.length, 'équipe', 'équipes'),
+            [
+              { libelle: 'Rang', alignement: 'gauche' },
+              { libelle: 'Équipe', alignement: 'gauche' },
+              { libelle: 'Score', alignement: 'droite' },
+            ],
+            source.equipes.map((e) => [String(e.rang), e.equipeNom, formaterScore(e.score)]),
+          ),
+      ...(avecClubs
+        ? [
+            section(
+              'Clubs',
+              compter(source.clubs.length, 'club', 'clubs'),
+              [
+                { libelle: 'Rang', alignement: 'gauche' },
+                { libelle: 'Club', alignement: 'gauche' },
+                { libelle: 'Score', alignement: 'droite' },
+              ],
+              source.clubs.map((c) => [String(c.rang), c.clubNom, formaterScore(c.score)]),
+            ),
+          ]
+        : []),
     ],
   }
 }

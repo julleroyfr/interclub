@@ -5,8 +5,8 @@ import { commeAdmin, commeCoach } from './helpers/auth'
 import { execSql } from './helpers/sql'
 
 /**
- * Cahier 33 — catégorie adulte, lots 1, 3, 4 et 5 (spec #20 R1, R6–R9, R9bis,
- * R10–R14, R16–R20bis, R23, R25).
+ * Cahier 33 — catégorie adulte, lots 1, 3, 4, 5 et 6 (spec #20 R1, R6–R9, R9bis,
+ * R10–R14, R16–R20bis, R23, R25, R30–R32).
  * L'admin crée une rencontre adulte depuis l'IHM : le gabarit adulte est copié
  * (T1–T10, B1/B2, « Voie 1 »/« Voie 2 »). Il renomme une voie de vitesse dans la
  * rencontre et dans le gabarit ; un libellé blanc est refusé. Il compose des
@@ -248,6 +248,41 @@ test.describe('Catégorie adulte — lot 1 (spec #20)', () => {
       execSql(`update interclub.jeton_qr set actif = false where valeur = '${valeur}';`)
       const reponse = await page.goto('/capitaine')
       expect(reponse?.status()).toBe(404)
+    } finally {
+      execSql(`update interclub.rencontre set phase = 'pre_competition' where id = '${id}';`)
+    }
+  })
+
+  test('classement et PDF adultes : pas de club, équipe par son nom (R30–R32)', async ({ page, browser }) => {
+    const id = idRencontre()
+    execSql(`update interclub.rencontre set phase = 'resultats_publics' where id = '${id}';`)
+    try {
+      await commeAdmin(page)
+      await page.goto(`/admin/rencontres/${id}/classement`)
+      // Deux vues seulement, pas de « Par club » (R30).
+      await expect(page.getByRole('button', { name: 'Par équipe' })).toBeVisible()
+      await expect(page.getByRole('button', { name: 'Par club' })).toHaveCount(0)
+      await page.getByRole('button', { name: 'Par équipe' }).click()
+      await expect(page.getByText('Équipe 1', { exact: true })).toBeVisible()
+      await expect(page.getByText(/club inconnu/)).toHaveCount(0)
+
+      // Export PDF admin (R30/R31 dans le domaine, Vitest).
+      const pdf = await page.request.get(`/admin/rencontres/${id}/classement/pdf`)
+      expect(pdf.status()).toBe(200)
+      expect(pdf.headers()['content-disposition']).toContain(`classement-${DATE}-adulte.pdf`)
+
+      // Coach du club A, dont des grimpeurs sont composés : export proposé (R32).
+      // Autre contexte : la session admin y est absente.
+      const ctxCoach = await browser.newContext()
+      try {
+        const pageCoach = await ctxCoach.newPage()
+        await commeCoach(pageCoach)
+        await pageCoach.goto(`/coach/rencontres/${id}/classement`)
+        await expect(pageCoach.getByRole('link', { name: /Exporter en PDF/ })).toBeVisible()
+        await expect(pageCoach.getByRole('button', { name: 'Par club' })).toHaveCount(0)
+      } finally {
+        await ctxCoach.close()
+      }
     } finally {
       execSql(`update interclub.rencontre set phase = 'pre_competition' where id = '${id}';`)
     }

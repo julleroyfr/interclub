@@ -1,7 +1,7 @@
 import 'server-only'
 
 import type { Sexe } from '@/domaine/grimpeur'
-import type { Categorie, Phase } from '@/domaine/rencontre'
+import { aClassementClub, type Categorie, type Phase } from '@/domaine/rencontre'
 import type { IssueBloc, IssueVoie } from '@/domaine/resultat'
 import {
   classer,
@@ -98,7 +98,8 @@ export type LigneEquipe = {
   rang: number
   equipeId: string
   equipeNom: string
-  clubNom: string
+  /** Club porteur ; `null` pour une équipe adulte, présentée par son nom seul (spec #20 R31). */
+  clubNom: string | null
   nbGrimpeurs: number
   score: number
 }
@@ -123,6 +124,7 @@ export type ClassementRencontre = {
   officiel: boolean
   individuel: ClassementIndividuel
   equipes: LigneEquipe[]
+  /** Vide en adulte : pas de classement club (spec #20 R30). */
   clubs: LigneClub[]
 }
 
@@ -290,9 +292,10 @@ export async function getClassementRencontre(
   // Noms des clubs (porteurs d'équipes + clubs d'origine des grimpeurs), embarqués.
   const nomClub = new Map<string, string>()
   const equipes = (verifierLecture(equipesRes, 'des équipes') ?? []).map((e) => {
-    const clubId = e.club_id as string
+    // Équipe adulte : sans club (spec #20 R11).
+    const clubId = (e.club_id as string | null) ?? null
     const nom = nomEmbarque(e.club)
-    if (nom != null) nomClub.set(clubId, nom)
+    if (clubId != null && nom != null) nomClub.set(clubId, nom)
     return { equipeId: e.id as string, equipeNom: e.nom as string, clubId }
   })
 
@@ -481,7 +484,7 @@ export async function getClassementRencontre(
     const membres = membresParEquipe.get(e.equipeId) ?? []
     return {
       ...e,
-      clubNom: nomClub.get(e.clubId) ?? '(club inconnu)',
+      clubNom: e.clubId == null ? null : (nomClub.get(e.clubId) ?? '(club inconnu)'),
       nbGrimpeurs: membres.length,
       score: scoreEquipe(membres, scoreParGrimpeur),
     }
@@ -501,12 +504,13 @@ export async function getClassementRencontre(
     }),
   )
 
-  // Classement par club (R6 + R8).
-  const compositionsClub: EquipeComposition[] = equipes.map((e) => ({
-    equipeId: e.equipeId,
-    clubId: e.clubId,
-    membresIds: membresParEquipe.get(e.equipeId) ?? [],
-  }))
+  // Classement par club (R6 + R8) ; aucun en adulte (spec #20 R30).
+  if (!aClassementClub(categorie)) {
+    return { ...base, individuel, equipes: equipes_, clubs: [] }
+  }
+  const compositionsClub: EquipeComposition[] = equipes.flatMap((e) =>
+    e.clubId == null ? [] : [{ equipeId: e.equipeId, clubId: e.clubId, membresIds: membresParEquipe.get(e.equipeId) ?? [] }],
+  )
   const scoreParClub = scoresParClub(compositionsClub, scoreParGrimpeur)
   const clubsAvecScore = [...scoreParClub.entries()].map(([clubId, score]) => ({
     clubId,

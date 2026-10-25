@@ -25,6 +25,15 @@ export function aVoiesLibres(categorie: Categorie): boolean {
   return categorie !== 'enfant'
 }
 
+/**
+ * Vrai si la rencontre a un **classement par club** (spec #7 R6). Faux en
+ * adulte : les équipes n'ont pas de club, ni à l'écran, ni sur l'écran
+ * secondaire, ni dans l'export PDF (spec #20 R30).
+ */
+export function aClassementClub(categorie: Categorie): boolean {
+  return categorie !== 'adulte'
+}
+
 /** Phases successives d'une rencontre, dans l'ordre du cycle de vie (R5). */
 export const PHASES = [
   { value: 'pre_competition', label: 'Pré-compétition' },

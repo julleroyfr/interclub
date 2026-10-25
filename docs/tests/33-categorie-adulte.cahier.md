@@ -5,8 +5,8 @@
   R9bis, R22, R24, R26 côté base, R33, R34/R35) ; **lot 2** — import sans
   limite d'âge (R5) ; **lot 3** — équipes adultes (R10–R15, R28 côté écran
   juge) ; **lot 4** — top en moulinette (R23, R25, R26) ; **lot 5** — jeton
-  capitaine (R16–R21, R20bis) et libellé de voie sur l'écran juge (R9bis). Le
-  lot 6 (classement sans club) complétera ce cahier.
+  capitaine (R16–R21, R20bis) et libellé de voie sur l'écran juge (R9bis) ;
+  **lot 6** — classements et export PDF sans club (R29–R32).
 - **Pré-requis** :
   - Migrations **`202610231000_categorie_adulte`**,
     **`202610231100_equipes_adultes`**, **`202610231200_top_moulinette`** puis
@@ -294,6 +294,41 @@ main, `[mixte]` partie automatisée + vérification à l'œil.
 - **Résultat attendu** : l'en-tête de l'écran juge affiche le libellé (« Voie 1
   — dalle ») au lieu de « couloir 1 ».
 
+### CT-26 — Classement adulte : pas de vue club, équipe par son nom (couvre : R30, R31) `[auto]`
+
+- **Rôle / compte** : `JD-ADMIN`, rencontre adulte en ③ avec les résultats de
+  CT-18/CT-22.
+- **Étapes** : Classement de la rencontre → vues **Individuel** puis **Par
+  équipe** ; refaire depuis `/capitaine/classement`.
+- **Résultat attendu** : deux vues seulement (**Individuel**, **Par équipe**),
+  pas de « Par club » ; à l'individuel, chaque grimpeur porte son club
+  d'origine ; à l'équipe, « Équipe 1 » est affichée avec son seul nombre de
+  grimpeurs, sans « (club inconnu) ». Une rencontre ado garde ses trois vues.
+
+### CT-27 — Écran secondaire adulte (couvre : R30, R31) `[manuel]`
+
+- **Étapes** : depuis la rencontre adulte en ③, ouvrir **Affichage écran
+  secondaire**.
+- **Résultat attendu** : classement individuel mixte avec le club d'origine de
+  chaque grimpeur ; aucun classement club.
+
+### CT-28 — Export PDF adulte : sans club ; accès du coach (couvre : R30, R31, R32) `[mixte]`
+
+- **Pré-condition** : rencontre adulte passée en ⑤, « Équipe 1 » composée de
+  grimpeurs du Club A et du Club B ; un troisième club C sans grimpeur composé.
+- **Étapes** :
+  1. `JD-ADMIN` : Classement → **Exporter en PDF**.
+  2. Coach permanent du Club B : Classement de la rencontre → **Exporter en
+     PDF**.
+  3. Coach permanent du Club C : ouvrir le classement, puis l'URL
+     `/coach/rencontres/{id}/classement/pdf`.
+- **Résultat attendu** : (1) le PDF `classement-<date>-adulte.pdf` contient
+  trois sections (Individuel Filles, Individuel Garçons, Équipes), la section
+  Équipes a les colonnes Rang, Équipe, Score ; aucune section Clubs. (2)
+  l'action est proposée et le fichier se télécharge. (3) aucune action
+  d'export, l'URL directe renvoie 404. Domaine : Vitest
+  (`export-classement.test.ts`, `rencontre.test.ts`).
+
 ## Couverture hors cahier
 
 - R2, R3 (éligibilité dès 16 ans), R23 (issues proposées), R33 (rapport) et la
@@ -320,4 +355,5 @@ main, `[mixte]` partie automatisée + vérification à l'œil.
 | 2026-10-23 | agent (local) | feature/categorie-adulte | CT-14 (1), CT-16 (2), CT-17 (base) | ✅ | `npm run test:adulte` 21/21 ; retour arrière lot 3 identique à l'état lot 1 |
 | 2026-10-23 | agent (local) | feature/categorie-adulte | CT-18, CT-19 | ✅ | E2E 8/8 ; `test:adulte` 24/24 ; `db:verifier-retours` lots 1, 3, 4 ✅ |
 | 2026-10-23 | agent (local) | feature/categorie-adulte | CT-20, CT-21, CT-22, CT-24 | ✅ | E2E `categorie-adulte.spec.ts` 10/10 ; `test:adulte` 41/41 |
-| | | | CT-01 → CT-25 (recette) | | |
+| 2026-10-25 | agent (local) | feature/categorie-adulte | CT-26, CT-28 (admin, coach Club A) | ✅ | E2E `categorie-adulte.spec.ts` 11/11 ; non-régression classement, export PDF, vitesse, volume 30/30 |
+| | | | CT-01 → CT-28 (recette) | | |

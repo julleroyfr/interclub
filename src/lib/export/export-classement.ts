@@ -1,12 +1,13 @@
 import 'server-only'
 
 import {
+  clubsEngagesExport,
   construireDocumentExport,
   nomFichierExport,
   peutExporter,
   type DemandeurExport,
 } from '@/domaine/export-classement'
-import type { Phase } from '@/domaine/rencontre'
+import type { Categorie, Phase } from '@/domaine/rencontre'
 import { getContexteCoach, getUtilisateurCourant } from '@/lib/auth/session'
 import { getClassementRencontre } from '@/lib/classement/classement'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -38,27 +39,44 @@ export async function demandeurCoach(): Promise<DemandeurExport> {
 
 type EtatRencontre = { phase: Phase; clubPorteurNom: string; clubsEngages: string[] }
 
-/** Phase, club porteur et clubs engagés de la rencontre ; `null` si introuvable. */
+/**
+ * Phase, club porteur et clubs engagés de la rencontre ; `null` si introuvable.
+ * En adulte, les clubs engagés sont ceux des grimpeurs composés (spec #20 R32) :
+ * les deux sont lus dans la même vague, la catégorie n'étant connue qu'au retour.
+ */
 async function lireEtatRencontre(rencontreId: string): Promise<EtatRencontre | null> {
   const admin = createAdminClient()
-  const [rencontreRes, equipesRes] = await Promise.all([
+  const [rencontreRes, equipesRes, compositionsRes] = await Promise.all([
     admin
       .from('rencontre')
-      .select('phase, club:club_porteur_id (nom)')
+      .select('phase, categorie, club:club_porteur_id (nom)')
       .eq('id', rencontreId)
       .maybeSingle(),
     admin.from('equipe').select('club_id').eq('rencontre_id', rencontreId),
+    admin.from('composition').select('grimpeur:grimpeur_id (club_id)').eq('rencontre_id', rencontreId),
   ])
   if (rencontreRes.error) throw new Error(`Lecture de la rencontre impossible : ${rencontreRes.error.message}`)
   if (equipesRes.error) throw new Error(`Lecture des équipes impossible : ${equipesRes.error.message}`)
+  if (compositionsRes.error) {
+    throw new Error(`Lecture des compositions impossible : ${compositionsRes.error.message}`)
+  }
   if (!rencontreRes.data) return null
+
+  const clubsDesGrimpeurs = (compositionsRes.data ?? []).map((c) => {
+    const g = c.grimpeur as { club_id: string | null } | { club_id: string | null }[] | null
+    return (Array.isArray(g) ? g[0]?.club_id : g?.club_id) ?? null
+  })
 
   const club = rencontreRes.data.club as { nom: string } | { nom: string }[] | null
   const clubPorteurNom = (Array.isArray(club) ? club[0]?.nom : club?.nom) ?? ''
   return {
     phase: rencontreRes.data.phase as Phase,
     clubPorteurNom,
-    clubsEngages: [...new Set((equipesRes.data ?? []).map((e) => e.club_id as string))],
+    clubsEngages: clubsEngagesExport(
+      rencontreRes.data.categorie as Categorie,
+      (equipesRes.data ?? []).map((e) => (e.club_id as string | null) ?? null),
+      clubsDesGrimpeurs,
+    ),
   }
 }
 
