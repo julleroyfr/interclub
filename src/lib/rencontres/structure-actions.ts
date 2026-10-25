@@ -23,6 +23,15 @@ import {
   normaliserRepereVoie,
   repereModifiable,
 } from '@/domaine/voie'
+import {
+  LibelleStructureInvalideError,
+  editionStructurePossible,
+  normaliserCodeBloc,
+  normaliserLibellePalier,
+  refusBaremeVitesse,
+  refusModificationVoie,
+  refusSuppression,
+} from '@/domaine/structure'
 import { BaremeVitesseInvalideError, type EchelonBareme } from '@/domaine/vitesse'
 import { getUtilisateurCourant } from '@/lib/auth/session'
 import { lireEchelonsSoumis } from '@/lib/bareme-vitesse'
@@ -32,10 +41,10 @@ import { createClient } from '@/lib/supabase/server'
 /** Client Supabase du projet (schéma `interclub`), tel que renvoyé par `createClient`. */
 type Client = Awaited<ReturnType<typeof createClient>>
 
-// Configuration de la structure d'une rencontre (R36) : ajout de voies de
-// difficulté, blocs et voies de vitesse — uniquement par l'admin et uniquement
-// en phase pré-compétition. Aucune édition/suppression (hors périmètre), sauf le
-// repère d'une voie, modifiable de ① à ③ (spec #3 R49d).
+// Configuration de la structure d'une rencontre (R36) : ajout, modification et
+// suppression des voies de difficulté, blocs et voies de vitesse, et barème de
+// vitesse — uniquement par l'admin, en ① et ② (spec #3 R51–R55) ; repère d'une
+// voie modifiable de ① à ③ (R49d).
 
 export type EtatStructure = { erreur?: string; succes?: string } | undefined
 
@@ -64,27 +73,15 @@ async function refuserSiNonAdmin(): Promise<EtatStructure | null> {
 }
 
 /**
- * Vérifie que la rencontre est en phase pré-compétition (R36). Renvoie un état
- * d'erreur si non, sinon `null`.
+ * Vérifie que la structure de la rencontre est éditable (① ou ②, R51). Renvoie
+ * un état d'erreur si non, sinon `null`.
  */
-async function refuserSiPasPreCompetition(
+async function refuserSiStructureVerrouillee(
   supabase: Client,
   rencontreId: string,
 ): Promise<EtatStructure | null> {
-  const rencontre = verifierLecture(
-    await supabase
-      .from('rencontre')
-      .select('phase')
-      .eq('id', rencontreId)
-      .maybeSingle(),
-    'de la rencontre',
-  )
-
-  if (!rencontre) return { erreur: 'Rencontre introuvable.' }
-  if (rencontre.phase !== 'pre_competition') {
-    return { erreur: "La structure ne peut être modifiée qu'en phase pré-compétition." }
-  }
-  return null
+  const rencontre = await lireRencontreEditable(supabase, rencontreId)
+  return 'erreur' in rencontre ? rencontre : null
 }
 
 /** Prochain `ordre` pour une colonne enfant d'un parent donné. */
@@ -123,7 +120,7 @@ export async function ajouterEpreuveRencontre(
   if (!['voie', 'bloc', 'vitesse'].includes(type)) return { erreur: 'Type d’épreuve invalide.' }
 
   const supabase = await createClient()
-  const refusPhase = await refuserSiPasPreCompetition(supabase, rencontreId)
+  const refusPhase = await refuserSiStructureVerrouillee(supabase, rencontreId)
   if (refusPhase) return refusPhase
 
   const existante = verifierLecture(
@@ -191,7 +188,7 @@ export async function ajouterVoieDifficulteRencontre(
   }
 
   const supabase = await createClient()
-  const refusPhase = await refuserSiPasPreCompetition(supabase, rencontreId)
+  const refusPhase = await refuserSiStructureVerrouillee(supabase, rencontreId)
   if (refusPhase) return refusPhase
 
   const ordre = await prochainOrdre(supabase, 'voie_difficulte', 'epreuve_id', epreuveId)
@@ -302,7 +299,7 @@ export async function ajouterBlocRencontre(
   if (!code) return { erreur: 'Le code du bloc est obligatoire.' }
 
   const supabase = await createClient()
-  const refusPhase = await refuserSiPasPreCompetition(supabase, rencontreId)
+  const refusPhase = await refuserSiStructureVerrouillee(supabase, rencontreId)
   if (refusPhase) return refusPhase
 
   const ordre = await prochainOrdre(supabase, 'bloc', 'epreuve_id', epreuveId)
@@ -333,7 +330,7 @@ export async function ajouterVoieVitesseRencontre(
   if (!libelle) return { erreur: 'Le libellé de la voie de vitesse est obligatoire.' }
 
   const supabase = await createClient()
-  const refusPhase = await refuserSiPasPreCompetition(supabase, rencontreId)
+  const refusPhase = await refuserSiStructureVerrouillee(supabase, rencontreId)
   if (refusPhase) return refusPhase
 
   const derniere = verifierLecture(
@@ -359,7 +356,7 @@ export async function ajouterVoieVitesseRencontre(
 
 /**
  * Modifie le libellé d'une voie de vitesse de la rencontre (spec #20 R9bis), aux
- * mêmes phases que l'édition de la structure (pré-compétition, R44). Libellé
+ * mêmes phases que l'édition de la structure (① et ②, spec #3 R51). Libellé
  * normalisé et obligatoire : une saisie vide est refusée et l'ancien libellé
  * conservé.
  */
@@ -382,8 +379,8 @@ export async function modifierLibelleVoieVitesseRencontre(
   }
 
   const supabase = await createClient()
-  const refusPhase = await refuserSiPasPreCompetition(supabase, rencontreId)
-  if (refusPhase) return refusPhase
+  const rencontre = await lireRencontreEditable(supabase, rencontreId)
+  if ('erreur' in rencontre) return rencontre
 
   const { error } = await supabase
     .from('voie_vitesse')
@@ -401,9 +398,9 @@ export async function modifierLibelleVoieVitesseRencontre(
  * fixes de chute / non-présentation (sur l'épreuve) et le **jeu complet d'échelons**
  * — rangs, points, décrément, ajout/suppression. Le jeu soumis est **validé** (R48)
  * avant écriture ; en cas de violation, rien n'est modifié et un message précis est
- * renvoyé. L'écriture **remplace** l'ensemble des échelons (R47). Réservé à l'admin
- * et à la phase pré-competition (R44) — donc avant toute saisie de temps : aucun
- * `points_vitesse` dérivé à préserver.
+ * renvoyé. L'écriture **remplace** l'ensemble des échelons (R47). Réservé à l'admin,
+ * en ① et ② (R51), et refusé dès qu'une saisie de vitesse existe (R55e) : les
+ * `points_vitesse` matérialisés ne seraient pas recalculés.
  */
 export async function mettreAJourBaremeVitesse(
   _etat: EtatStructure,
@@ -431,8 +428,17 @@ export async function mettreAJourBaremeVitesse(
   }
 
   const supabase = await createClient()
-  const refusPhase = await refuserSiPasPreCompetition(supabase, rencontreId)
+  const [refusPhase, saisies] = await Promise.all([
+    refuserSiStructureVerrouillee(supabase, rencontreId),
+    supabase
+      .from('points_vitesse')
+      .select('id', { count: 'exact', head: true })
+      .eq('epreuve_id', epreuveId),
+  ])
   if (refusPhase) return refusPhase
+  if (saisies.error) throw saisies.error
+  const refusSaisies = refusBaremeVitesse(saisies.count ?? 0)
+  if (refusSaisies) return { erreur: refusSaisies }
 
   const { error: errEp } = await supabase
     .from('epreuve')
@@ -444,8 +450,8 @@ export async function mettreAJourBaremeVitesse(
   if (errEp) return { erreur: 'La mise à jour du barème a échoué. Réessayez.' }
 
   // Remplacement du jeu d'échelons (R47) : suppression puis insertion du set validé.
-  // Édition possible seulement en pré-compétition, avant toute saisie de temps : pas
-  // de `points_vitesse` matérialisé à préserver, la fenêtre delete→insert est sûre.
+  // Aucune saisie de vitesse (R55e) : pas de `points_vitesse` matérialisé à
+  // préserver, la fenêtre delete→insert est sûre.
   const { error: errDel } = await supabase
     .from('bareme_vitesse_echelon')
     .delete()
@@ -506,4 +512,409 @@ export async function changerEtatEpreuve(
   revalidatePath('/admin/jetons')
   const nom = epreuve.type === 'bloc' ? 'de bloc' : 'de vitesse'
   return { succes: active ? `Épreuve ${nom} réactivée.` : `Épreuve ${nom} désactivée.` }
+}
+
+// ---------------------------------------------------------------------------
+// Modification et suppression des éléments existants (spec #3 R51–R55)
+// ---------------------------------------------------------------------------
+
+/**
+ * Lit la rencontre et vérifie que sa structure est modifiable (① ou ②, R51).
+ * Renvoie un état d'erreur, ou la catégorie de la rencontre.
+ */
+async function lireRencontreEditable(
+  supabase: Client,
+  rencontreId: string,
+): Promise<{ erreur: string } | { categorie: Categorie }> {
+  const rencontre = verifierLecture(
+    await supabase
+      .from('rencontre')
+      .select('phase, categorie')
+      .eq('id', rencontreId)
+      .maybeSingle(),
+    'de la rencontre',
+  )
+  if (!rencontre) return { erreur: 'Rencontre introuvable.' }
+  if (!editionStructurePossible(rencontre.phase as Phase)) {
+    return {
+      erreur: 'La structure ne peut plus être modifiée une fois la compétition commencée.',
+    }
+  }
+  return { categorie: rencontre.categorie as Categorie }
+}
+
+/** Nombre de résultats rattachés à un élément de la structure (R55). */
+async function compterResultats(
+  supabase: Client,
+  table: 'resultat_voie' | 'resultat_bloc',
+  colonne: 'voie_difficulte_id' | 'bloc_id' | 'palier_id',
+  id: string,
+): Promise<number> {
+  const { count, error } = await supabase
+    .from(table)
+    .select('id', { count: 'exact', head: true })
+    .eq(colonne, id)
+  if (error) throw error
+  return count ?? 0
+}
+
+/** Voie de difficulté de la rencontre (bornée à la rencontre), ou `null`. */
+async function lireVoieDeRencontre(supabase: Client, voieId: string, rencontreId: string) {
+  return verifierLecture(
+    await supabase
+      .from('voie_difficulte')
+      .select('id, niveau, type_voie, repere, epreuve!inner(rencontre_id)')
+      .eq('id', voieId)
+      .eq('epreuve.rencontre_id', rencontreId)
+      .maybeSingle(),
+    'de la voie',
+  )
+}
+
+/** Bloc de la rencontre (borné à la rencontre), ou `null`. */
+async function lireBlocDeRencontre(supabase: Client, blocId: string, rencontreId: string) {
+  return verifierLecture(
+    await supabase
+      .from('bloc')
+      .select('id, epreuve!inner(rencontre_id)')
+      .eq('id', blocId)
+      .eq('epreuve.rencontre_id', rencontreId)
+      .maybeSingle(),
+    'du bloc',
+  )
+}
+
+/** Palier d'un bloc de la rencontre (borné à la rencontre), ou `null`. */
+async function lirePalierDeRencontre(supabase: Client, palierId: string, rencontreId: string) {
+  return verifierLecture(
+    await supabase
+      .from('bloc_palier')
+      .select('id, bloc!inner(epreuve!inner(rencontre_id))')
+      .eq('id', palierId)
+      .eq('bloc.epreuve.rencontre_id', rencontreId)
+      .maybeSingle(),
+    'du palier',
+  )
+}
+
+/**
+ * Modifie une voie de difficulté (R52) : niveau, type, cotation et points, mêmes
+ * contraintes qu'à l'ajout (R37, R38) ; les champs de points non applicables au
+ * type sont vidés. Niveau et type figés si la voie porte des résultats (R55b).
+ */
+export async function modifierVoieDifficulteRencontre(
+  _etat: EtatStructure,
+  formData: FormData,
+): Promise<EtatStructure> {
+  const refus = await refuserSiNonAdmin()
+  if (refus) return refus
+
+  const rencontreId = String(formData.get('rencontreId') ?? '')
+  const voieId = String(formData.get('voieId') ?? '')
+  const niveau = String(formData.get('niveau') ?? '').trim()
+  const typeVoie = String(formData.get('typeVoie') ?? '') as TypeVoie
+  const cotation = String(formData.get('cotation') ?? '').trim()
+  if (!voieId) return { erreur: 'Voie introuvable.' }
+  if (!cotation) return { erreur: 'La cotation est obligatoire.' }
+
+  const supabase = await createClient()
+  const [rencontre, voie, nbResultats] = await Promise.all([
+    lireRencontreEditable(supabase, rencontreId),
+    lireVoieDeRencontre(supabase, voieId, rencontreId),
+    compterResultats(supabase, 'resultat_voie', 'voie_difficulte_id', voieId),
+  ])
+  if ('erreur' in rencontre) return rencontre
+  if (!voie) return { erreur: 'Voie introuvable.' }
+
+  const refusResultats = refusModificationVoie({
+    avant: { niveau: voie.niveau as string, typeVoie: voie.type_voie as TypeVoie },
+    apres: { niveau, typeVoie },
+    nbResultats,
+  })
+  if (refusResultats) return { erreur: refusResultats }
+
+  let maj: {
+    niveau: string
+    type_voie: TypeVoie
+    cotation: string
+    points: number
+    points_prise_valorisee: number | null
+    points_zone1: number | null
+    points_zone2: number | null
+  }
+  try {
+    validerNiveauVoie(niveau, typeVoie, rencontre.categorie)
+    const champs = champsPointsVoie(rencontre.categorie, typeVoie)
+    maj = {
+      niveau,
+      type_voie: typeVoie,
+      cotation,
+      points: lirePointsObligatoire(formData, 'points'),
+      points_prise_valorisee: champs.priseValorisee
+        ? lirePointsOptionnel(formData, 'pointsPriseValorisee')
+        : null,
+      points_zone1: champs.zones ? lirePointsOptionnel(formData, 'pointsZone1') : null,
+      points_zone2: champs.zones ? lirePointsOptionnel(formData, 'pointsZone2') : null,
+    }
+  } catch (e) {
+    if (e instanceof NiveauVoieInvalideError || e instanceof PointsInvalideError) {
+      return { erreur: e.message }
+    }
+    throw e
+  }
+
+  const { error } = await supabase.from('voie_difficulte').update(maj).eq('id', voieId)
+  if (error) {
+    // Le nouveau niveau porte déjà le même repère (R49c).
+    if (error.code === '23505') {
+      return { erreur: messageRepereEnDoublon(niveau, voie.repere as string | null) }
+    }
+    return { erreur: 'La modification a échoué. Réessayez.' }
+  }
+
+  revalidatePath(`/admin/rencontres/${rencontreId}`)
+  return { succes: 'Voie modifiée.' }
+}
+
+/** Supprime une voie de difficulté sans résultat (R54, R55a). */
+export async function supprimerVoieDifficulteRencontre(
+  _etat: EtatStructure,
+  formData: FormData,
+): Promise<EtatStructure> {
+  const refus = await refuserSiNonAdmin()
+  if (refus) return refus
+
+  const rencontreId = String(formData.get('rencontreId') ?? '')
+  const voieId = String(formData.get('id') ?? '')
+  if (!voieId) return { erreur: 'Voie introuvable.' }
+
+  const supabase = await createClient()
+  const [rencontre, voie, nbResultats] = await Promise.all([
+    lireRencontreEditable(supabase, rencontreId),
+    lireVoieDeRencontre(supabase, voieId, rencontreId),
+    compterResultats(supabase, 'resultat_voie', 'voie_difficulte_id', voieId),
+  ])
+  if ('erreur' in rencontre) return rencontre
+  if (!voie) return { erreur: 'Voie introuvable.' }
+  const refusResultats = refusSuppression('voie', nbResultats)
+  if (refusResultats) return { erreur: refusResultats }
+
+  const { error } = await supabase.from('voie_difficulte').delete().eq('id', voieId)
+  if (error) return { erreur: 'La suppression a échoué. Réessayez.' }
+
+  revalidatePath(`/admin/rencontres/${rencontreId}`)
+  return { succes: 'Voie supprimée.' }
+}
+
+/** Modifie le code d'un bloc (R53) : normalisé, obligatoire, unique dans l'épreuve. */
+export async function modifierCodeBlocRencontre(
+  _etat: EtatStructure,
+  formData: FormData,
+): Promise<EtatStructure> {
+  const refus = await refuserSiNonAdmin()
+  if (refus) return refus
+
+  const rencontreId = String(formData.get('rencontreId') ?? '')
+  const blocId = String(formData.get('id') ?? '')
+  if (!blocId) return { erreur: 'Bloc introuvable.' }
+  let code: string
+  try {
+    code = normaliserCodeBloc(String(formData.get('code') ?? ''))
+  } catch (e) {
+    if (e instanceof LibelleStructureInvalideError) return { erreur: e.message }
+    throw e
+  }
+
+  const supabase = await createClient()
+  const [rencontre, bloc] = await Promise.all([
+    lireRencontreEditable(supabase, rencontreId),
+    lireBlocDeRencontre(supabase, blocId, rencontreId),
+  ])
+  if ('erreur' in rencontre) return rencontre
+  if (!bloc) return { erreur: 'Bloc introuvable.' }
+
+  const { error } = await supabase.from('bloc').update({ code }).eq('id', blocId)
+  if (error) {
+    if (error.code === '23505') return { erreur: `Le bloc « ${code} » existe déjà.` }
+    return { erreur: 'La modification a échoué. Réessayez.' }
+  }
+
+  revalidatePath(`/admin/rencontres/${rencontreId}`)
+  return { succes: 'Code enregistré.' }
+}
+
+/** Supprime un bloc et ses paliers, s'il ne porte aucun résultat (R54, R55a). */
+export async function supprimerBlocRencontre(
+  _etat: EtatStructure,
+  formData: FormData,
+): Promise<EtatStructure> {
+  const refus = await refuserSiNonAdmin()
+  if (refus) return refus
+
+  const rencontreId = String(formData.get('rencontreId') ?? '')
+  const blocId = String(formData.get('id') ?? '')
+  if (!blocId) return { erreur: 'Bloc introuvable.' }
+
+  const supabase = await createClient()
+  const [rencontre, bloc, nbResultats] = await Promise.all([
+    lireRencontreEditable(supabase, rencontreId),
+    lireBlocDeRencontre(supabase, blocId, rencontreId),
+    compterResultats(supabase, 'resultat_bloc', 'bloc_id', blocId),
+  ])
+  if ('erreur' in rencontre) return rencontre
+  if (!bloc) return { erreur: 'Bloc introuvable.' }
+  const refusResultats = refusSuppression('bloc', nbResultats)
+  if (refusResultats) return { erreur: refusResultats }
+
+  const { error } = await supabase.from('bloc').delete().eq('id', blocId)
+  if (error) return { erreur: 'La suppression a échoué. Réessayez.' }
+
+  revalidatePath(`/admin/rencontres/${rencontreId}`)
+  return { succes: 'Bloc supprimé.' }
+}
+
+/** Lit le libellé (normalisé, obligatoire) et les points d'un palier (R53, R39). */
+function lirePalier(formData: FormData): { libelle: string; points: number } {
+  return {
+    libelle: normaliserLibellePalier(String(formData.get('libelle') ?? '')),
+    points: lirePointsObligatoire(formData, 'points'),
+  }
+}
+
+/** Ajoute un palier en dernière position d'un bloc de la rencontre (R53). */
+export async function ajouterPalierBlocRencontre(
+  _etat: EtatStructure,
+  formData: FormData,
+): Promise<EtatStructure> {
+  const refus = await refuserSiNonAdmin()
+  if (refus) return refus
+
+  const rencontreId = String(formData.get('rencontreId') ?? '')
+  const blocId = String(formData.get('blocId') ?? '')
+  if (!blocId) return { erreur: 'Bloc introuvable.' }
+  let palier: { libelle: string; points: number }
+  try {
+    palier = lirePalier(formData)
+  } catch (e) {
+    if (e instanceof LibelleStructureInvalideError || e instanceof PointsInvalideError) {
+      return { erreur: e.message }
+    }
+    throw e
+  }
+
+  const supabase = await createClient()
+  const [rencontre, bloc] = await Promise.all([
+    lireRencontreEditable(supabase, rencontreId),
+    lireBlocDeRencontre(supabase, blocId, rencontreId),
+  ])
+  if ('erreur' in rencontre) return rencontre
+  if (!bloc) return { erreur: 'Bloc introuvable.' }
+
+  const ordre = await prochainOrdre(supabase, 'bloc_palier', 'bloc_id', blocId)
+  const { error } = await supabase
+    .from('bloc_palier')
+    .insert({ bloc_id: blocId, libelle: palier.libelle, points: palier.points, ordre })
+  if (error) return { erreur: "L'ajout a échoué. Réessayez." }
+
+  revalidatePath(`/admin/rencontres/${rencontreId}`)
+  return { succes: 'Palier ajouté.' }
+}
+
+/** Modifie le libellé et les points d'un palier (R53, R55d). */
+export async function modifierPalierBlocRencontre(
+  _etat: EtatStructure,
+  formData: FormData,
+): Promise<EtatStructure> {
+  const refus = await refuserSiNonAdmin()
+  if (refus) return refus
+
+  const rencontreId = String(formData.get('rencontreId') ?? '')
+  const palierId = String(formData.get('id') ?? '')
+  if (!palierId) return { erreur: 'Palier introuvable.' }
+  let palier: { libelle: string; points: number }
+  try {
+    palier = lirePalier(formData)
+  } catch (e) {
+    if (e instanceof LibelleStructureInvalideError || e instanceof PointsInvalideError) {
+      return { erreur: e.message }
+    }
+    throw e
+  }
+
+  const supabase = await createClient()
+  const [rencontre, existant] = await Promise.all([
+    lireRencontreEditable(supabase, rencontreId),
+    lirePalierDeRencontre(supabase, palierId, rencontreId),
+  ])
+  if ('erreur' in rencontre) return rencontre
+  if (!existant) return { erreur: 'Palier introuvable.' }
+
+  const { error } = await supabase.from('bloc_palier').update(palier).eq('id', palierId)
+  if (error) return { erreur: 'La modification a échoué. Réessayez.' }
+
+  revalidatePath(`/admin/rencontres/${rencontreId}`)
+  return { succes: 'Palier enregistré.' }
+}
+
+/** Supprime un palier qu'aucun résultat ne retient (R53, R55c). */
+export async function supprimerPalierBlocRencontre(
+  _etat: EtatStructure,
+  formData: FormData,
+): Promise<EtatStructure> {
+  const refus = await refuserSiNonAdmin()
+  if (refus) return refus
+
+  const rencontreId = String(formData.get('rencontreId') ?? '')
+  const palierId = String(formData.get('id') ?? '')
+  if (!palierId) return { erreur: 'Palier introuvable.' }
+
+  const supabase = await createClient()
+  const [rencontre, palier, nbResultats] = await Promise.all([
+    lireRencontreEditable(supabase, rencontreId),
+    lirePalierDeRencontre(supabase, palierId, rencontreId),
+    compterResultats(supabase, 'resultat_bloc', 'palier_id', palierId),
+  ])
+  if ('erreur' in rencontre) return rencontre
+  if (!palier) return { erreur: 'Palier introuvable.' }
+  const refusResultats = refusSuppression('palier', nbResultats)
+  if (refusResultats) return { erreur: refusResultats }
+
+  const { error } = await supabase.from('bloc_palier').delete().eq('id', palierId)
+  if (error) return { erreur: 'La suppression a échoué. Réessayez.' }
+
+  revalidatePath(`/admin/rencontres/${rencontreId}`)
+  return { succes: 'Palier supprimé.' }
+}
+
+/**
+ * Supprime une voie de vitesse de la rencontre (R54) ; ses jetons juges suivent
+ * en cascade. Les temps sont rattachés à l'épreuve, pas à la voie (R55).
+ */
+export async function supprimerVoieVitesseRencontre(
+  _etat: EtatStructure,
+  formData: FormData,
+): Promise<EtatStructure> {
+  const refus = await refuserSiNonAdmin()
+  if (refus) return refus
+
+  const rencontreId = String(formData.get('rencontreId') ?? '')
+  const id = String(formData.get('id') ?? '')
+  if (!id) return { erreur: 'Voie de vitesse introuvable.' }
+
+  const supabase = await createClient()
+  const rencontre = await lireRencontreEditable(supabase, rencontreId)
+  if ('erreur' in rencontre) return rencontre
+
+  const { data, error } = await supabase
+    .from('voie_vitesse')
+    .delete()
+    .eq('id', id)
+    .eq('rencontre_id', rencontreId)
+    .select('id')
+  if (error) return { erreur: 'La suppression a échoué. Réessayez.' }
+  if (!data?.length) return { erreur: 'Voie de vitesse introuvable.' }
+
+  revalidatePath(`/admin/rencontres/${rencontreId}`)
+  revalidatePath('/admin/jetons')
+  return { succes: 'Voie de vitesse supprimée.' }
 }

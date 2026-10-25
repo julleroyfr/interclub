@@ -38,8 +38,8 @@ fait évoluer, une étape à la fois, en avant ou en arrière.
 
 | Phase | Coachs | Juges | Administrateur |
 | --- | --- | --- | --- |
-| ① Pré-compétition | Le coach permanent engage ses équipes | — | Modifie la structure (voies, blocs, vitesse) |
-| ② Préparation (jour J) | Coachs permanent et temporaire ajustent les équipes | — | Structure verrouillée |
+| ① Pré-compétition | Le coach permanent engage ses équipes | — | Ajoute, modifie et supprime des éléments de la structure (voies, blocs, vitesse) |
+| ② Préparation (jour J) | Coachs permanent et temporaire ajustent les équipes | — | Ajoute, modifie et supprime encore des éléments de la structure |
 | ③ Compétition (jour J) | Saisie des voies et blocs ; équipes figées | Saisie de la vitesse | Saisit et corrige tous les résultats |
 | ④ Clôture | Saisie fermée | Saisie fermée | Corrige et contrôle les résultats |
 | ⑤ Résultats publics | Classement officiel | — | Exporte le classement en PDF |
@@ -267,7 +267,8 @@ membres de son équipe, et consulte le classement ; ses saisies sont tracées av
 le rôle « capitaine ». La vitesse reste aux juges. Voir le guide du capitaine.
 
 Dans l'onglet **Vitesse** de la structure d'une rencontre, les voies se
-renomment en ① pré-compétition (champ « Libellé (voie N) », toutes catégories).
+renomment en ① pré-compétition et en ② préparation (champ « Libellé (voie N) »,
+toutes catégories).
 
 **Attention** : supprimer une rencontre supprime aussi ses équipes, ses épreuves
 et tous ses résultats ; la confirmation le signale.
@@ -284,13 +285,35 @@ L'écran central de la préparation d'une rencontre : phase, structure, prêts e
 | 1 | Bouton de phase | Fait avancer la rencontre ; « ← » la fait reculer |
 | 2 | Jetons QR | Ouvre les QR des coachs temporaires (capitaines en adulte) et des juges |
 | 3 | Onglets de structure | Voies de difficulté, Blocs, Vitesse |
-| 4 | + Voie | Ajoute une voie (ou un bloc, une voie de vitesse selon l'onglet) |
-| 5 | Créer le prêt | Prête un grimpeur à un autre club pour cette rencontre |
-| 6 | Bloc d'un club | Déplie les équipes de ce club |
+| 4 | Crayon (Modifier) | Ouvre le formulaire de la voie (niveau, type, cotation, points) |
+| 5 | Croix rouge (Supprimer) | Supprime la voie, après confirmation |
+| 6 | + Voie | Ajoute une voie (ou un bloc, une voie de vitesse selon l'onglet) |
+| 7 | Créer le prêt | Prête un grimpeur à un autre club pour cette rencontre |
+| 8 | Bloc d'un club | Déplie les équipes de ce club |
 
-**Structure** : modifiable **uniquement en ① pré-compétition**, par exemple pour
-ajouter une 2ᵉ voie d'un niveau très demandé. Ensuite, elle est verrouillée,
-sauf le **repère** des voies (voir ci-dessous).
+**Structure** :
+
+- La structure est **éditable en ① pré-compétition et en ② préparation** (le jour
+  J) : **ajouter** une voie, un bloc ou une voie de vitesse (par exemple une 2ᵉ
+  voie d'un niveau très demandé), **modifier** ou **supprimer** un élément pour
+  corriger une voie mal saisie ou retirer ce qui n'est pas ouvert, et ajuster le
+  **barème de vitesse**. Les actions sont des icônes ; leur nom s'affiche au survol :
+  **coche verte** = enregistrer, **crayon** = modifier, **croix rouge** =
+  supprimer.
+  - **Voie** : le **crayon** ouvre son formulaire sous la ligne (niveau, type,
+    cotation, points) → **Enregistrer**.
+  - **Bloc** : corriger son code puis la **coche verte** ; modifier un palier
+    (libellé, points) puis sa **coche verte** ; en ajouter un avec **+ Palier** ;
+    le retirer avec sa **croix rouge**.
+  - La **croix rouge** demande une confirmation (**Oui, supprimer**). Supprimer
+    une voie de vitesse supprime aussi ses QR de juge : regénérez-en si besoin.
+- Si des **résultats** sont déjà saisis sur une voie ou un bloc (après un retour
+  de ③ à ②), on ne peut ni le supprimer ni changer le niveau ou le type de la
+  voie ; la cotation et les points restent modifiables. Un palier déjà obtenu par
+  un grimpeur ne se supprime pas non plus. De même, le **barème de vitesse** ne se
+  modifie plus dès qu'un temps (ou une chute, une absence) est saisi.
+- À partir de la ③ compétition, la structure est **verrouillée**, sauf le
+  **repère** des voies (voir ci-dessous). Une épreuve entière ne se supprime pas.
 
 ### Voies doublées et repères
 
@@ -303,7 +326,7 @@ En Ado, un même niveau peut compter plusieurs voies (deux T5, par exemple). Le
 | --- | --- | --- |
 | 1 | Libellé de la voie | Nom affiché partout : niveau + repère, ou niveau + lettre |
 | 2 | Repère d'une voie | Texte libre : numéro de relais, couleur… (30 caractères au plus) |
-| 3 | OK | Enregistre le repère ; un repère vide l'efface |
+| 3 | Coche verte | Enregistre le repère ; un repère vide l'efface |
 | 4 | Repère (ajout) | Repère de la nouvelle voie, facultatif |
 
 - **Libellé** affiché dans la saisie, le contrôle, le classement et le PDF :
@@ -562,8 +585,14 @@ Vérifier la phase : ③ pour un juge, ② ou ③ pour un coach temporaire. Si l
 été régénéré, distribuer le nouveau.
 
 **Je ne peux plus modifier la structure (voies, blocs).**
-Elle n'est modifiable qu'en ① pré-compétition. Revenir en ① si la rencontre n'a
-pas encore commencé.
+Elle est éditable en ① pré-compétition et ② préparation. À partir de la ③
+compétition, revenir en ② (le jour J) ou en ① si la compétition n'a pas
+commencé.
+
+**« Suppression impossible : … résultats sont saisis » sur une voie ou un bloc.**
+Des grimpeurs ont déjà un résultat dessus (la rencontre est revenue de ③ à ②).
+L'élément est conservé pour ne pas perdre ces résultats ; vous pouvez toujours
+corriger sa cotation et ses points.
 
 **Je ne peux plus modifier les équipes d'une rencontre adulte.**
 Elles sont figées dès la ③ compétition, y compris pour l'administrateur.

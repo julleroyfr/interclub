@@ -148,6 +148,8 @@ test('03 — tableau de bord d’une rencontre', async ({ page }) => {
     bouton(page, 'Avancer à la phase suivante'),
     lien(page, /Jetons QR/),
     bouton(page, /Voies de difficulté/),
+    page.getByRole('button', { name: /^Modifier la voie / }).first(),
+    page.getByRole('button', { name: /^Supprimer la voie / }).first(),
     bouton(page, '+ Voie'),
     bouton(page, 'Créer le prêt'),
     page.locator('summary').filter({ hasText: 'Club A' }),

@@ -2,8 +2,8 @@
 
 > Couvre l'écran **`/admin/rencontres/[id]`**, le **tableau de bord** d'une
 > rencontre : en-tête à **titre dynamique**, **pilotage de phase** (R41a), accès
-> aux **jetons QR** (R41b), **structure** en onglets (R42–R45, édition réservée à
-> la pré-compétition) et **équipes** regroupées par club en blocs repliables
+> aux **jetons QR** (R41b), **structure** en onglets (R42–R45, ajout réservé à
+> la pré-compétition ; modification et suppression en ① et ②, R51–R55) et **équipes** regroupées par club en blocs repliables
 > (R41c). Complète le cahier
 > [11-gabarit-rencontre.cahier.md](11-gabarit-rencontre.cahier.md)
 > (CT-09/CT-10) en détaillant l'IHM dédiée.
@@ -12,18 +12,27 @@
 
 - **Spec de référence** : `docs/specs/03-ecrans-de-parametrage-admin.md`
   (Configuration d'une rencontre R40–R45 ; niveaux R37 ; points R38 ; phase R36 ;
-  repère et libellé des voies R49/R50, ajout du 2026-10-16) ;
+  repère et libellé des voies R49/R50, ajout du 2026-10-16 ; modification et
+  suppression des éléments R51–R55, ajout du 2026-10-25) ;
   `docs/specs/01-roles-et-autorisations.md` (R12 : écriture réservée à l'admin).
 - **Domaine** : `src/domaine/gabarit.ts` (`validerNiveauVoie` plages R37,
   `validerPoints` R38, `champsPointsVoie` champs conditionnels R38/R43 —
   couverts par `gabarit.test.ts`, 22 tests Vitest) ; `src/domaine/voie.ts`
   (`normaliserRepereVoie` R49a/b, `repereModifiable` R49d, `libellesVoies` R50 —
-  couverts par `voie.test.ts`).
+  couverts par `voie.test.ts`) ; `src/domaine/structure.ts`
+  (`editionStructurePossible` / `ajoutStructurePossible` R51,
+  `refusModificationVoie` R55b, `refusSuppression` R55a/c, `normaliserCodeBloc` /
+  `normaliserLibellePalier` R53 — couverts par `structure.test.ts`).
 - **Data / actions** : `src/lib/rencontres/structure.ts` (`getStructureRencontre`) ;
   `src/lib/rencontres/structure-actions.ts` (`ajouterEpreuveRencontre`,
   `ajouterVoieDifficulteRencontre`, `ajouterBlocRencontre`,
   `ajouterVoieVitesseRencontre` — garde admin + phase pré-compétition ;
-  `modifierRepereVoie` — garde admin + phases ① à ③, R49d).
+  `modifierRepereVoie` — garde admin + phases ① à ③, R49d ;
+  `modifierVoieDifficulteRencontre`, `supprimerVoieDifficulteRencontre`,
+  `modifierCodeBlocRencontre`, `supprimerBlocRencontre`,
+  `ajouterPalierBlocRencontre`, `modifierPalierBlocRencontre`,
+  `supprimerPalierBlocRencontre`, `supprimerVoieVitesseRencontre`,
+  `modifierLibelleVoieVitesseRencontre` — garde admin + phases ① et ②, R51).
 - **IHM** : `src/app/admin/rencontres/[id]/page.tsx` (garde admin, chargement,
   en-tête à titre dynamique, mise en page tableau de bord — cf. maquette
   `docs/maquettes/rencontre-dashboard.html`) ; `panneau-pilotage.tsx` (phase R41a
@@ -312,6 +321,101 @@ d'ouverture du **tableau de bord** → `/admin/rencontres/<id>`.
 - **Partiellement automatisé** : `e2e/repere-voie.spec.ts` (étapes 1, 2, 3, 6
   côté coach, 7) ; le cahier reste la validation sur base réelle.
 
+### CT-19 — Modifier une voie de difficulté en ② préparation (couvre R51, R52)
+
+- **Rôle** : admin. **Pré-condition** : aucune migration (R51–R55 réutilisent les
+  tables et la RLS admin existantes) ; une rencontre **enfant** en **②
+  préparation** (le jour de la rencontre), sans résultat saisi sur la voie visée.
+- **Étapes / résultat attendu** :
+  1. **Structure éditable en ②** (R51 rév. 2026-10-25) : onglet **Voies** → **pas**
+     de note de verrouillage ; le formulaire « + Voie » est proposé (ajouter une T3
+     avec repère `E2E3` → la ligne « T3 E2E3 » apparaît) ; chaque ligne
+     porte les icônes **crayon** (« Modifier la voie … » au survol) et **croix
+     rouge** (« Supprimer la voie … ») ; le repère s'enregistre avec la **coche
+     verte**. Icônes de 44 px, sur une seule rangée avec le repère. ✅
+  2. **Crayon** d'une voie **T6** → le formulaire s'ouvre sous la ligne,
+     **pré-rempli** (niveau, type, cotation, points). Passer en **T7**, cotation
+     `6c+`, voie entière `12` → **Enregistrer** → le formulaire se ferme, la ligne
+     affiche **« T7 »**, `6c+`, `voie 12 pts`. ✅
+  3. **Champs conditionnels** (R52, R38) : sur une voie **tête enfant** avec prise
+     valorisée, passer le type en **Moulinette** et un niveau **M2** → le champ
+     « Prise valo. » disparaît ; après enregistrement la ligne n'affiche plus de
+     prise valorisée (`points_prise_valorisee` vide en base). ✅
+  4. **Niveau hors plage** (R37) : un appel direct avec `T11` → refus « Niveau tête
+     invalide… ». ✅
+  5. **Doublon de repère** (R49c) : deux voies avec le repère `Jaune`, l'une en T5,
+     l'autre en T6 ; passer la T6 en T5 → refus « Une autre voie T5 porte déjà le
+     repère « Jaune » ». ✅
+  6. **Lettres recalculées** (R50b) : passer une des deux voies « T5 a » / « T5 b »
+     en T6 → la voie restante redevient **« T5 »**. ✅
+  7. **Barème en ②** (R47, R51) : onglet **Vitesse**, sans saisie de vitesse sur
+     l'épreuve → modifier un échelon → **Enregistrer le barème** → enregistré. ✅
+  8. **Barème figé par une saisie** (R55e) : après un retour ③ → ② avec au moins
+     un temps (ou chute, non-présentation) saisi → **Enregistrer le barème** →
+     refus « Barème non modifiable : N saisie(s) de vitesse … ». ✅
+
+### CT-20 — Voie portant des résultats (couvre R55b, R55a, R55d)
+
+- **Rôle** : admin. **Pré-condition** : une rencontre revenue de **③** à **②**
+  (le jour J) avec au moins un résultat sur une voie V (ou, en recette, poser un
+  résultat par SQL Editor).
+- **Étapes / résultat attendu** :
+  1. **Crayon** de V → changer son **niveau** → **Enregistrer** → refus « Niveau et
+     type non modifiables : N résultat(s) déjà saisi(s) sur cette voie. » ; idem en
+     changeant le **type**. ✅
+  2. Remettre le niveau d'origine, changer seulement les **points** → enregistré ;
+     le **classement** reflète les nouveaux points (spec #7). ✅
+  3. **Croix rouge** de V → **Oui, supprimer** → refus « Suppression impossible : N
+     résultat(s) … sur cette voie. » ; la voie et ses résultats sont **intacts**. ✅
+
+### CT-21 — Blocs et paliers (couvre R53, R54, R55a, R55c)
+
+- **Rôle** : admin. **Pré-condition** : rencontre en ① ou ②.
+- **Étapes / résultat attendu** :
+  1. **Code** : sur un bloc, saisir ` B3  bis ` → **coche verte** → « Code enregistré. »,
+     code affiché `B3 bis` ; saisir le code d'un **autre** bloc → refus « Le bloc
+     « … » existe déjà. » ; code vide → refus. ✅
+  2. **Palier modifié** : changer les points d'un palier → **coche verte** → « Palier
+     enregistré. ». ✅
+  3. **Palier ajouté** : libellé `Zone 2`, points `25` → **+ Palier** → le palier
+     apparaît **en dernier**. Un bloc ajouté **sans palier** en ① peut ainsi en
+     recevoir. ✅
+  4. **Palier supprimé** : **croix rouge** → **Oui, supprimer** → il disparaît. Sur un
+     palier **retenu par un résultat** de bloc → refus « Suppression impossible : N
+     résultat(s) retien(nen)t ce palier. ». ✅
+  5. **Bloc supprimé** : sans résultat → **Oui, supprimer** → le bloc et ses
+     paliers disparaissent ; avec résultat → refus « … sur ce bloc. ». ✅
+
+### CT-22 — Supprimer une voie de vitesse (couvre R54)
+
+- **Rôle** : admin. **Pré-condition** : rencontre en ① ou ② ; un jeton juge
+  généré pour la voie visée (`/admin/jetons`).
+- **Étapes / résultat attendu** :
+  1. Onglet **Vitesse** → **croix rouge** de la voie → la confirmation indique « Ses
+     jetons juges seront aussi supprimés. » → **Non** : rien ne change. ✅
+  2. **Croix rouge** → **Oui, supprimer** → la voie disparaît ; sur `/admin/jetons`,
+     son jeton juge n'existe plus ; un juge qui scanne l'ancien QR est refusé. ✅
+  3. Les **temps** déjà saisis sur l'épreuve de vitesse restent en place (spec
+     #10). ✅
+
+### CT-23 — Verrouillage à partir de la ③ compétition (couvre R51, R44)
+
+- **Rôle** : admin. **Pré-condition** : rencontre en **③ compétition**.
+- **Étapes / résultat attendu** :
+  1. La note « la structure est verrouillée… » s'affiche ; **aucun** bouton
+     crayon / croix rouge, ni champ de code ou de palier ; le **repère** reste
+     modifiable (R49d). ✅
+  2. Un appel direct à `modifierVoieDifficulteRencontre`,
+     `supprimerBlocRencontre` ou `supprimerVoieVitesseRencontre` est refusé (« La
+     structure ne peut plus être modifiée une fois la compétition commencée. »). ✅
+  3. Un **coach** qui appelle ces actions est refusé (« Seul un administrateur… »,
+     R12). ✅
+- **Rétablir** : remettre les éléments modifiés à leur valeur d'origine et la
+  rencontre dans sa phase initiale.
+- **Partiellement automatisé** : `e2e/edition-structure.spec.ts` (CT-19 étapes 1, 8
+  et 2, CT-20, CT-21 étapes 1 à 5 sans résultat, CT-22 étapes 1 et 2 côté
+  structure, CT-23 étape 1) ; le cahier reste la validation sur base réelle.
+
 ## Registre d'exécution
 
 | Cas | Environnement | Date | Testeur | Verdict | Notes |
@@ -334,6 +438,11 @@ d'ouverture du **tableau de bord** → `/admin/rencontres/<id>`.
 | CT-16 | | | | ⬜ | barème par rang, édition + validation (R47/R48) |
 | CT-17 | | | | ⬜ | phase refusée depuis un écran périmé (R17) |
 | CT-18 | | | | ⬜ | repère / libellé des voies doublées (R49/R50) |
+| CT-19 | local (Docker) | 2026-10-25 | Claude (E2E) | ⬜ | modifier une voie en ② (R51/R52) — étapes 1–2 vertes en E2E |
+| CT-20 | local (Docker) | 2026-10-25 | Claude (E2E) | ⬜ | voie avec résultats (R55) — vert en E2E |
+| CT-21 | local (Docker) | 2026-10-25 | Claude (E2E) | ⬜ | blocs et paliers (R53/R54) — vert en E2E sans résultat |
+| CT-22 | local (Docker) | 2026-10-25 | Claude (E2E) | ⬜ | suppression voie de vitesse (R54) — vert en E2E |
+| CT-23 | local (Docker) | 2026-10-25 | Claude (E2E) | ⬜ | verrouillage en ③ (R51) — étape 1 verte en E2E |
 
 > Le domaine (`validerNiveauVoie` R37, `validerPoints` R38, `champsPointsVoie`
 > R38/R43) est couvert par Vitest (`npm run test`, `src/domaine/gabarit.test.ts`).
