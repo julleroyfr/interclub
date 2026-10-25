@@ -63,6 +63,9 @@ Ordre non négociable : **spec → (maquette si écrans) → tests → implémen
 
 ## Étape 5bis — Guides utilisateur coach et admin
 
+Appliquer le skill **`mettre-a-jour-guides`** (procédure détaillée ci-dessous en
+résumé).
+
 - Toute fonctionnalité visible par un coach ou un admin **met à jour son guide** :
   `docs/guides/coach/guide-coach.md`, `docs/guides/admin/guide-admin.md` (et
   `docs/guides/juge/guide-juge.md` si les écrans juge changent).

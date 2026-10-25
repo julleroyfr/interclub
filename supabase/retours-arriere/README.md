@@ -33,6 +33,7 @@ développée sur une branche dédiée et testée sur l'unique base de recette
 | `202610231200_top_moulinette` | `202610231200_top_moulinette_retour_arriere.sql` | supprime les résultats `top_moulinette` ; restaure la contrainte d'issue et `valider_resultat_voie` / `saisir_resultat_voie` dans leur version du lot 1 |
 | `202610231300_jeton_capitaine` | `202610231300_jeton_capitaine_retour_arriere.sql` | supprime les jetons capitaine (et leurs sessions) ; auteur `capitaine` → `coach` ; retire policies, fonctions, trigger, index et colonne `jeton_qr.equipe_id` ; restaure contraintes et 4 fonctions (`exiger_session_coach`, `peut_ecrire_resultat`, `proteger_audit_resultat`, `contexte_juge`) |
 | `202610251100_epreuves_desactivables` | `202610251100_epreuves_desactivables_retour_arriere.sql` | retire les 5 triggers et fonctions et la colonne `epreuve.active` (les épreuves désactivées redeviennent ordinaires ; les jetons juges révoqués le restent) |
+| `202610251200_ajout_grimpeur_licence_generee` | `202610251200_ajout_grimpeur_licence_generee_retour_arriere.sql` | retire la RPC `creer_grimpeur_licence_generee` (indépendante de l'évolution adulte) ; les grimpeurs créés avec une licence générée sont conservés |
 | `202610251000_gel_equipes_adultes` | `202610251000_gel_equipes_adultes_retour_arriere.sql` | retire les triggers de gel des équipes adultes (`equipe`, `composition`) et leur fonction ; aucune donnée |
 
 Ordre d'annulation : épreuves désactivables (`202610251100`), gel des équipes

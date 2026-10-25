@@ -11,6 +11,9 @@
 #   - CT-07 : rapprochement limité au club cible ; ambiguïté signalée (R13).
 #   - CT-08 : licence_generee dérivée (vraie licence → false) (R15).
 #   - CT-10 : club inexistant → refus sans écriture (R16).
+#   - Ajout unitaire sans licence (spec #3 R21d) : RPC
+#     `creer_grimpeur_licence_generee` — admin seul, licence = suite de la
+#     plage partagée avec l'import, club inexistant refusé.
 #
 # Rejouable : un club dédié « Club test import CSV » est supprimé (cascade) puis
 # recréé à chaque exécution.
@@ -137,6 +140,28 @@ verifie "grimpeur à vraie licence toujours reconnu" "$(champ "$r" deja_presents
 
 echo "== CT-10 Club inexistant (R16) =="
 r=$(rpc "$TA" "$NIL" "$LOT")
+case "$r" in *club_introuvable*) ok "club inexistant → club_introuvable" ;; *) ko "club inexistant : $r" ;; esac
+
+echo "== Ajout unitaire sans licence (spec #3 R21d, spec #18 R14) =="
+# ajout <bearer> <club_id> <nom>  -> corps de la réponse (licence ou erreur).
+ajout() {
+  printf '{"p_club_id":"%s","p_nom":"%s","p_prenom":"Zoe","p_annee_naissance":2015,"p_sexe":"F"}' "$2" "$3"     | curl -s -X POST "$API/rest/v1/rpc/creer_grimpeur_licence_generee"       -H "apikey: $KEY" -H "Authorization: Bearer $1"       -H "Content-Profile: interclub" -H "Content-Type: application/json; charset=utf-8"       --data-binary @-
+}
+r=$(ajout "$TC" "$CLUB_T" "UNITAIRE")
+case "$r" in *acces_refuse*) ok "coach → acces_refuse" ;; *) ko "coach : $r" ;; esac
+code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$API/rest/v1/rpc/creer_grimpeur_licence_generee"   -H "apikey: $KEY" -H "Content-Profile: interclub" -H "Content-Type: application/json"   -d "{\"p_club_id\":\"$CLUB_T\",\"p_nom\":\"X\",\"p_prenom\":\"Y\",\"p_annee_naissance\":2015,\"p_sexe\":\"F\"}")
+if [ "$code" = "401" ] || [ "$code" = "403" ] || [ "$code" = "404" ]; then
+  ok "anon → refusé (HTTP $code)"
+else
+  ko "anon HTTP $code (attendu 401/403/404)"
+fi
+MAX_PLAGE=$(sql "select max(licence) from interclub.grimpeur where licence >= 2000000000;")
+r=$(ajout "$TA" "$CLUB_T" "UNITAIRE")
+verifie "licence renvoyée = plus grande licence de la plage + 1" "$r" "$((MAX_PLAGE + 1))"
+verifie "grimpeur créé avec cette licence, licence_generee vraie"   "$(sql "select licence || ':' || licence_generee from interclub.grimpeur where club_id = '$CLUB_T' and nom = 'UNITAIRE';")"   "$((MAX_PLAGE + 1)):true"
+r=$(rpc "$TA" "$CLUB_T" '[{"ligne":9,"nom":"APRES","prenom":"AJOUT","sexe":"H","annee_naissance":2016}]')
+verifie "import suivant : licence suivante, sans collision"   "$(sql "select licence from interclub.grimpeur where club_id = '$CLUB_T' and nom = 'APRES';")" "$((MAX_PLAGE + 2))"
+r=$(ajout "$TA" "$NIL" "UNITAIRE")
 case "$r" in *club_introuvable*) ok "club inexistant → club_introuvable" ;; *) ko "club inexistant : $r" ;; esac
 
 # Nettoyage.

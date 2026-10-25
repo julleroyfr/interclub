@@ -1,6 +1,7 @@
 # Spec : Import CSV sans licence (format Marsas)
 
-- **Statut** : validée (2026-10-10)
+- **Statut** : validée (2026-10-10). **R14 étendue le 2026-10-25** : la même
+  génération sert à l'ajout unitaire d'un grimpeur sans licence (spec #3 R21d).
 - **Sources** :
   - Décision produit du **2026-10-10** : le club de **Marsas** fournit la liste
     de ses grimpeurs en CSV **sans numéro de licence** (référence de structure :
@@ -130,7 +131,10 @@ second import du même fichier ne crée aucun doublon.
   petit entier de la plage strictement supérieur** à la plus grande licence de
   la plage déjà attribuée (ou `2 000 000 000` si aucune). Deux grimpeurs
   créés reçoivent des licences **distinctes** ; une licence générée n'est
-  **jamais réattribuée** par l'import à un autre grimpeur.
+  **jamais réattribuée** par l'import à un autre grimpeur. L'**ajout unitaire**
+  sans licence (spec #3 R21d) applique la **même règle** sous le **même
+  verrou** : un ajout concurrent d'un import ne peut recevoir une licence déjà
+  attribuée par celui-ci. (Extension : décision produit 2026-10-25.)
 - **R15.** Un grimpeur **porte une licence générée si et seulement si** sa
   licence appartient à la plage réservée. Cet indicateur (`licence_generee`)
   est **dérivé** de la licence : remplacer la licence par un vrai numéro (spec

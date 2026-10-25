@@ -14,7 +14,8 @@
   Le champ **sexe** (obligatoire, `F`/`G`) est un **prérequis de la spec #7
   Classement** (`docs/specs/07-classement.md`, R8b : classement individuel séparé
   Filles / Garçons).
-- **Domaine** : `src/domaine/grimpeur.ts` (`normaliserSaisieGrimpeur`, 12 tests
+- **Domaine** : `src/domaine/grimpeur.ts` (`normaliserSaisieGrimpeur`,
+  `normaliserAjoutGrimpeur` — licence facultative à l'ajout, R21d ; 12 tests
   Vitest — dont la validation du **sexe** `F`/`G`).
 - **Migration** : `202609181000_grimpeur_sexe.sql` (ajout de `grimpeur.sexe`
   `not null check (sexe in ('F','G'))`, avec fenêtre de backfill). La table
@@ -75,6 +76,32 @@ Depuis l'accueil (connecté **admin**) : bouton **« Grimpeurs »** →
 - **Attendu** : erreur (« année à 4 chiffres » / « comprise entre 1900 et
   2100 ») ; aucune création. Le champ `number` limite déjà la saisie côté
   navigateur — vérifier aussi le rejet serveur (contournement API).
+
+### CT-04b — Ajouter un grimpeur sans licence (spec #3 R21d ; spec #18 R14)
+
+- **Pré-requis** : migration `202610251200_ajout_grimpeur_licence_generee`
+  appliquée (ligne présente dans `interclub.version`).
+- **Étapes** :
+  1. Noter la plus grande licence générée existante :
+     `select max(licence) from interclub.grimpeur where licence >= 2000000000;`
+     (aucune → `1999999999`).
+  2. Ouvrir **Nouveau grimpeur** : le champ s'intitule « Numéro de licence
+     (facultatif) » avec l'indice « Laisser vide pour générer un numéro ».
+  3. Remplir club, prénom, nom, année, sexe, **laisser la licence vide** →
+     **Ajouter le grimpeur**.
+  4. Ajouter un second grimpeur **avec** un numéro de licence réel (ex. `918274`).
+  5. Ouvrir **Modifier** sur le premier grimpeur, **vider** la licence →
+     **Enregistrer**.
+- **Attendu** :
+  1. Message « Grimpeur « Prénom Nom » ajouté avec la licence générée N. », où
+     N = valeur notée + 1 ; dans la liste, « licence N » suivie de la mention
+     **« générée »** (R26).
+  2. Le second grimpeur est créé avec sa licence saisie, sans mention.
+  3. Modification avec licence vide → **refus** « Le numéro de licence est
+     obligatoire. » (R21b) ; la licence générée reste inchangée.
+- **Automatisé** : `e2e/import-csv-sans-licence.spec.ts` (ajout unitaire) et
+  `npm run test:import-csv` (RPC : admin seul, suite de la plage partagée avec
+  l'import, club inexistant refusé).
 
 ### CT-05 — Modifier un grimpeur (R18)
 
@@ -146,6 +173,7 @@ Depuis l'accueil (connecté **admin**) : bouton **« Grimpeurs »** →
 | CT-03 | | | | ⬜ | |
 | CT-03b | | | | ⬜ | |
 | CT-04 | | | | ⬜ | |
+| CT-04b | local | 2026-10-25 | Claude (E2E + test:import-csv) | ✅ | étapes 1–3 attendu 1 automatisés ; attendus 2–3 à vérifier en recette |
 | CT-05 | | | | ⬜ | |
 | CT-06 | | | | ⬜ | |
 | CT-07 | | | | ⬜ | |

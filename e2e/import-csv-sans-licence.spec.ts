@@ -141,4 +141,33 @@ test.describe('Import CSV sans licence (spec #18)', () => {
     await expect(carteMaj).toContainText('licence 918273')
     await expect(carteMaj).not.toContainText('générée')
   })
+
+  test('ajout unitaire sans licence : licence générée attribuée (spec #3 R21d, R26)', async ({
+    page,
+  }) => {
+    await commeAdmin(page)
+    const max = Number(
+      execSql(
+        `select coalesce(max(licence), 1999999999) from interclub.grimpeur where licence >= 2000000000;`,
+      ),
+    )
+
+    await page.goto('/admin/grimpeurs')
+    await page.getByText('Nouveau grimpeur').click()
+    const ajout = page.locator('form', { has: page.getByLabel('Numéro de licence (facultatif)') })
+    await ajout.getByLabel('Club', { exact: true }).selectOption({ label: CLUB_NOM })
+    await ajout.getByLabel('Prénom').fill('Zoé')
+    await ajout.getByLabel('Nom', { exact: true }).fill('ZZUNITAIRE')
+    await ajout.getByLabel('Année de naissance').fill('2015')
+    await ajout.getByLabel('Sexe').selectOption('F')
+    await ajout.getByRole('button', { name: 'Ajouter le grimpeur' }).click()
+    await expect(ajout.locator('p[role="status"]')).toHaveText(
+      new RegExp(`licence générée ${max + 1}`),
+    )
+
+    await page.goto('/admin/grimpeurs?recherche=ZZUNITAIRE')
+    const carte = page.locator('li', { hasText: 'ZZUNITAIRE' })
+    await expect(carte).toContainText(`licence ${max + 1}`)
+    await expect(carte).toContainText('générée')
+  })
 })

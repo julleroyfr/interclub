@@ -82,10 +82,10 @@ export function FormulaireGrimpeur({ clubs }: { clubs: OptionClub[] }) {
         name="licence"
         type="number"
         inputMode="numeric"
-        label="Numéro de licence"
-        required
+        label="Numéro de licence (facultatif)"
         min={1}
         placeholder="Ex. 123456"
+        indice="Laisser vide pour générer un numéro (grimpeur sans licence)."
       />
 
       {etat?.erreur && (

@@ -131,14 +131,16 @@ correspondant. En l'ouvrant, un coach crée son compte, qui est
 | 6 | Supprimer | Supprime le grimpeur |
 
 Un grimpeur porte un **club**, un **nom**, un **prénom**, une **année de
-naissance**, un **sexe** et un **numéro de licence**, obligatoire et unique. La
-catégorie (Enfant, Ado ou Adulte) n'est pas saisie : elle découle de l'âge.
+naissance**, un **sexe** et un **numéro de licence** unique. À la création,
+le numéro est **facultatif** : laissé vide, l'application **génère** un numéro
+(grimpeur sans licence) et l'indique dans le message de confirmation. En
+modification, il reste obligatoire. La catégorie (Enfant, Ado ou Adulte) n'est pas saisie : elle découle de l'âge.
 
 **Attention** : supprimer un grimpeur supprime aussi ses engagements et tous ses
 résultats ; la confirmation le signale.
 
 Les numéros de licence à partir de **2 000 000 000** sont réservés aux licences
-**générées** par l'import CSV sans licence ; ils sont suivis de la mention
+**générées** (import CSV sans licence ou création sans numéro) ; ils sont suivis de la mention
 « générée » dans la liste.
 
 ### Importer les licenciés de la fédération
@@ -575,8 +577,8 @@ Désactiver l'épreuve en ① ou ② depuis l'onglet de la structure (voir
 Le corriger via **Corriger les résultats** en ④ clôture. En ⑤, revenir d'abord
 en ④.
 
-**Un grimpeur importé a une « licence générée ».**
-Il vient de l'import CSV sans licence. Remplacer le numéro par sa vraie licence
+**Un grimpeur a une « licence générée ».**
+Il vient de l'import CSV sans licence ou a été créé sans numéro. Remplacer le numéro par sa vraie licence
 avec **Modifier** dès qu'elle est connue.
 
 ## Mettre à jour les captures
