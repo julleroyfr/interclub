@@ -88,6 +88,7 @@ export default async function PageTableauDeBordRencontre({
               rencontreId={id}
               phase={structure.phase}
               dateRencontre={structure.dateRencontre}
+              categorie={structure.categorie}
             />
             <Carte className="flex justify-between gap-3 p-4 text-center">
               <Stat k="Équipes" v={nbEquipes} />
