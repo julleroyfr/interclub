@@ -19,6 +19,8 @@
   ou triplées d'un même niveau (ex. deux T5 en ado).
   **Tri des voies de la structure par niveau puis libellé (R42) : demandé et
   validé le 2026-10-16.**
+  **Licence facultative à l'ajout d'un grimpeur (R21b, R21d) : demandé et
+  validé le 2026-10-25** — licence vide → licence générée (spec #18 R14).
 - **Sources** : décision produit du 2026-07-25 (tranche T8 — premiers écrans
   d'administration). S'appuie sur la **spec #1 — Rôles & autorisations**
   (`01-roles-et-autorisations.md`), qui reste la vérité pour « qui peut faire
@@ -168,15 +170,24 @@ saisie, les flux CRUD, et les règles de suppression (dépendances / cascade).
   `grimpeur_*` l'autorise déjà.
 - **R21.** Un grimpeur porte : un **club** de rattachement (obligatoire), un
   **nom**, un **prénom**, une **année de naissance** et un **numéro de licence**
-  (optionnel). (Source : modèle socle + décision produit 2026-09-25.)
-- **R21b.** Le numéro de licence est **obligatoire** : entier strictement
+  (toujours renseigné en base, facultatif à la saisie d'ajout — R21b, R21d).
+  (Source : modèle socle + décisions produit 2026-09-25 et 2026-10-25.)
+- **R21b.** Tout grimpeur porte un numéro de licence : entier strictement
   positif, **unique** parmi tous les grimpeurs. Contrainte SQL :
-  `licence integer not null check (licence > 0) unique`.
+  `licence integer not null check (licence > 0) unique`. À la **modification**,
+  le champ est **obligatoire** (le vider est refusé). À l'**ajout**, il est
+  **facultatif** (R21d). (Ajout facultatif : décision produit 2026-10-25.)
 - **R21c.** La plage `[2 000 000 000, 2 147 483 647]` est **réservée** aux
   licences **générées** par l'import CSV sans licence (spec #18 R14). La saisie
   unitaire **refuse** un numéro dans cette plage, sauf à **conserver** la licence
   générée déjà portée par le grimpeur modifié. Remplacer une licence générée par
   un vrai numéro est autorisé. (Source : décision produit 2026-10-10, spec #18.)
+- **R21d.** À l'**ajout**, si le numéro de licence est **laissé vide**, le
+  grimpeur reçoit une **licence générée** selon la règle de la spec #18 R14
+  (plus grande licence de la plage réservée + 1, sous le même verrou que
+  l'import CSV) ; la plage épuisée → refus. Le message de succès indique le
+  numéro attribué. S'il est renseigné, R21b–R21c s'appliquent inchangées.
+  (Source : décision produit 2026-10-25.)
 - **R22.** Nom et prénom sont obligatoires, d'au plus **100** caractères
   (normalisés, R4).
 - **R23.** L'année de naissance est un **entier à 4 chiffres** compris entre
@@ -595,7 +606,11 @@ année à 4 chiffres valide, alors le grimpeur est ajouté au roster de ce club
 - Suppression d'un club portant une rencontre ou un grimpeur → bloquée (R11).
 - Date de rencontre impossible (30 février) → refus (R14).
 - Année de naissance non numérique ou hors bornes → refus (R23).
-- Numéro de licence absent, non entier ou ≤ 0 → refus (R21b).
+- Numéro de licence absent à l'ajout → licence générée attribuée, affichée
+  « générée » dans la liste (R21d, R26).
+- Numéro de licence vidé à la modification → refus (R21b).
+- Numéro de licence non entier ou ≤ 0 → refus (R21b).
+- Plus aucune licence générée disponible à l'ajout sans licence → refus (R21d).
 - Numéro de licence déjà utilisé par un autre grimpeur → refus (unicité R21b).
 - Un coach appelle directement une Server Action de paramétrage → refus (R2).
 - Suppression d'une rencontre / d'un grimpeur avec dépendances → confirmée, puis
@@ -634,6 +649,11 @@ année à 4 chiffres valide, alors le grimpeur est ajouté au roster de ce club
 - Bornes de saisie : `club.nom` ≤ 100 ; `grimpeur.nom`/`prenom` ≤ 100 ;
   `annee_naissance` ∈ [1900, 2100] ; `licence` entier > 0, obligatoire, unique (R21b) ; plage ≥ 2 000 000 000
   réservée aux licences générées (R21c, colonne dérivée `licence_generee`).
+- **Ajout sans licence (R21d)** : RPC **SECURITY INVOKER**
+  `creer_grimpeur_licence_generee(club, nom, prénom, année, sexe)` — garde
+  `est_admin()`, **même verrou transactionnel** (même clé) et **même calcul**
+  de la prochaine licence que `importer_grimpeurs_csv` (spec #18 R14), qui
+  reste inchangée. Aucune nouvelle policy RLS.
 - La **saison** d'une rencontre est une valeur **calculée** à partir de la date
   (spec #1 R37) — pas de colonne `saison` en base.
 - **Entités gabarit** (schéma à créer par migration) :
