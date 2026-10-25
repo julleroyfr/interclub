@@ -32,6 +32,13 @@ Règles : [docs/conventions/09-environnements-et-donnees.md](../../docs/conventi
   T5, T6, T7), avec et sans **repère**, pour tester le libellé des voies (spec #3
   R49/R50, cahier 12 CT-18). Nora et Owen Delta engagés. Rejouable : supprime
   d'abord ses deux rencontres (UUID `aeaeaeae-…`). À appliquer après `01`.
+- `05-demo-adulte.sql` — **opt-in**. Une rencontre **adulte** du jour portée
+  par le Club B, créée depuis le gabarit adulte, en ③ compétition : deux équipes
+  inter-clubs (grimpeurs adultes du seed 01), quelques résultats (dont des tops
+  en moulinette), un jeton capitaine par équipe et un jeton juge. Sert aux
+  captures des guides (admin, coach, capitaine) et aux essais (spec #20).
+  Rejouable : supprime d'abord les rencontres adultes portées par le Club B. À
+  appliquer après `01` et les migrations adultes.
 - `99-purge-jeu-de-test.sql` — DELETE borné aux seules données de test
   (rejouable). **Jamais chargé automatiquement** (exclu de `config.toml`) pour
   ne pas effacer le seed au reset.

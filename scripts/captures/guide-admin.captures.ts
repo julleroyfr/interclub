@@ -88,8 +88,13 @@ function chargerDemoReperes(): void {
   execSql(readFileSync('supabase/seed/04-demo-repere-voies.sql', 'utf8'))
 }
 
+/** Rencontre adulte de démonstration (seed opt-in 05) : du jour, Club B, en ③. */
+const DEMO_ADULTE = `categorie = 'adulte' and club_porteur_id = '22222222-2222-2222-2222-222222222222'`
+const idDemoAdulte = () => execSql(`select id from interclub.rencontre where ${DEMO_ADULTE};`)
+
 function etatSeed(): void {
   execSql(`delete from interclub.rencontre where id::text like 'aeaeaeae-%';`)
+  execSql(`delete from interclub.rencontre where ${DEMO_ADULTE};`)
   purgerResultatsAdo()
   phaseAdo('competition')
   reinitialiserEngagement()
@@ -322,4 +327,38 @@ test('09 — saisie, affichage, contrôle, classement (rencontre Ado)', async ({
   await page.goto(`/admin/rencontres/${ADO}/classement`)
   await numeroter(page, [lien(page, /Exporter en PDF/), bouton(page, 'Individuel')])
   await capturer(page, '17-classement-officiel')
+})
+
+test('10 — rencontre adulte : équipes, épreuves, capitaines', async ({ page }) => {
+  execSql(readFileSync('supabase/seed/05-demo-adulte.sql', 'utf8'))
+  const id = idDemoAdulte()
+  // ② préparation : équipes et état des épreuves encore modifiables (spec #20 R10, R37).
+  execSql(`update interclub.rencontre set phase = 'preparation' where id = '${id}';`)
+  // Inès Foxtrot libre : le formulaire d'ajout reste proposé (tous les adultes du seed sont composés).
+  execSql(
+    `delete from interclub.composition where rencontre_id = '${id}' and grimpeur_id = 'ad000000-0000-0000-0000-0000000000d6';`,
+  )
+
+  await page.goto(`/admin/rencontres/${id}`)
+  await bouton(page, /^Blocs · 2/).click()
+  const equipe1 = page.locator('[data-equipe="Équipe 1"]')
+  await expect(equipe1).toBeVisible()
+  await numeroter(page, [
+    lien(page, /Jetons QR/),
+    bouton(page, /^Blocs · 2/),
+    bouton(page, 'Désactiver l’épreuve de bloc'),
+    equipe1.getByRole('combobox').first(),
+    page.getByLabel('Ajouter un grimpeur (tous clubs, 16 ans et plus)').first(),
+    page.getByLabel('Nouvelle équipe'),
+  ])
+  await capturer(page, '19-rencontre-adulte')
+
+  await page.goto(`/admin/jetons?rencontre=${id}`)
+  await expect(page.getByRole('heading', { name: 'Capitaines d’équipe' })).toBeVisible()
+  await numeroter(page, [
+    page.getByRole('heading', { name: 'Capitaines d’équipe' }),
+    bouton(page, 'Régénérer'),
+    bouton(page, 'Révoquer'),
+  ])
+  await capturer(page, '20-jetons-capitaines')
 })
