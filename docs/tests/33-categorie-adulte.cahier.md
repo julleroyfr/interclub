@@ -308,7 +308,7 @@ main, `[mixte]` partie automatisée + vérification à l'œil.
   pour l'admin ; permis en ②. Une rencontre enfant reste corrigeable par l'admin
   en ③. La suppression d'une rencontre adulte en ⑤ passe (cascade).
 
-### CT-30 — Coach : directement au classement, sans écran de résultats (couvre : R19bis) `[auto]`
+### CT-30 — Coach : directement au classement, sans écran de résultats (couvre : R19bis, R19ter) `[auto]`
 
 - **Rôle / compte** : `coach@test.local`, rencontre adulte en ③ puis en ④.
 - **Étapes** : accueil coach → carte de la rencontre adulte ; ouvrir l'écran de
@@ -316,7 +316,9 @@ main, `[mixte]` partie automatisée + vérification à l'œil.
 - **Résultat attendu** : la carte mène au **classement** ; l'écran de la
   rencontre propose « Voir le classement → » et aucun lien de résultats ;
   l'URL des résultats renvoie au classement. Avant la ③, la carte mène à
-  l'écran de la rencontre.
+  l'écran de la rencontre. À toute phase, la carte affiche « N grimpeurs », nombre de
+  grimpeurs du club composés (Club A : Lucie, Karim, Hugo → « 3 grimpeurs »),
+  et aucun nombre d'équipes (R19ter).
 
 ### CT-26 — Classement adulte : pas de vue club, équipe par son nom (couvre : R30, R31) `[auto]`
 

@@ -4,6 +4,7 @@
 // lignes — R10–R16) à partir du classement déjà calculé par la spec #7, sans
 // recalculer ni rang ni score (R13). Le rendu PDF (R17–R20) consomme ce modèle.
 
+import { compter } from './accord'
 import { CATEGORIES, aClassementClub, type Categorie, type Phase } from './rencontre'
 
 /** Qui demande l'export — rôles de spec #1, vus du point d'accès (R3–R5). */
@@ -141,10 +142,6 @@ function formaterGeneration(instant: Date): string {
  * polices PDF.
  */
 const formaterScore = (score: number): string => String(score).replace('.', ',')
-
-/** En français, 0 et 1 prennent le singulier. */
-const compter = (n: number, singulier: string, pluriel: string): string =>
-  `${n} ${n <= 1 ? singulier : pluriel}`
 
 const COLONNES_INDIVIDUEL: ColonneExport[] = [
   { libelle: 'Rang', alignement: 'gauche' },

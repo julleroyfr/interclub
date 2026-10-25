@@ -167,14 +167,18 @@ test.describe('Catégorie adulte — lot 1 (spec #20)', () => {
     await expect(page.getByLabel('Nouvelle équipe')).toHaveCount(0)
   })
 
-  test('le coach va droit au classement dès la ③, sans écran de résultats (R19bis)', async ({ page }) => {
+  test('le coach va droit au classement dès la ③, sans écran de résultats (R19bis, R19ter)', async ({ page }) => {
     const id = idRencontre()
     try {
       for (const phase of ['competition', 'cloture']) {
         execSql(`update interclub.rencontre set phase = '${phase}' where id = '${id}';`)
         await commeCoach(page)
         await page.goto('/coach')
-        await expect(page.locator(`a[href="/coach/rencontres/${id}/classement"]`)).toBeVisible()
+        const carte = page.locator(`a[href="/coach/rencontres/${id}/classement"]`)
+        await expect(carte).toBeVisible()
+        // Grimpeurs du club composés, pas de nombre d'équipes (R19ter).
+        await expect(carte).toContainText(/\d+ grimpeurs?/)
+        await expect(carte).not.toContainText('équipe')
         await page.goto(`/coach/rencontres/${id}`)
         await expect(page.getByRole('link', { name: 'Voir le classement →' })).toBeVisible()
         await expect(page.getByRole('link', { name: /les résultats/ })).toHaveCount(0)

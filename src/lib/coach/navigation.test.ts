@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
-import { cibleCarteRencontreCoach, lienSuiteRencontreCoach, liensCoach } from './navigation'
+import {
+  cibleCarteRencontreCoach,
+  lienSuiteRencontreCoach,
+  liensCoach,
+  resumeCarteRencontreCoach,
+} from './navigation'
 
 /**
  * Navigation de l'espace coach (spec #12 R10/R11, spec #5).
@@ -105,5 +110,18 @@ describe('cibleCarteRencontreCoach — carte de l’accueil coach (spec #5 R7)',
     for (const phase of ['competition', 'cloture', 'resultats_publics'] as const) {
       expect(cibleCarteRencontreCoach('r1', 'adulte', phase)).toBe('/coach/rencontres/r1/classement')
     }
+  })
+})
+
+describe('resumeCarteRencontreCoach — effectifs de la carte (spec #5 R6)', () => {
+  it('enfant/ado : équipes et grimpeurs du club, accordés', () => {
+    expect(resumeCarteRencontreCoach('ado', 2, 9)).toBe('2 équipes · 9 grimpeurs')
+    expect(resumeCarteRencontreCoach('enfant', 0, 0)).toBe('0 équipe · 0 grimpeur')
+    expect(resumeCarteRencontreCoach('ado', 1, 1)).toBe('1 équipe · 1 grimpeur')
+  })
+
+  it('adulte : grimpeurs du club composés, sans nombre d’équipes (spec #20 R19ter)', () => {
+    expect(resumeCarteRencontreCoach('adulte', 0, 3)).toBe('3 grimpeurs')
+    expect(resumeCarteRencontreCoach('adulte', 0, 0)).toBe('0 grimpeur')
   })
 })

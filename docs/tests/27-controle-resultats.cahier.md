@@ -142,7 +142,7 @@ Devi, B1/B2 manquants).
   1. Saisir une partie du prénom en minuscules sans accent (ex. `cleo`).
   2. Effacer, activer **« Non contrôlées seulement »**.
   3. Cocher une ligne restante.
-- **Résultat attendu** : (1) seule Cléo reste, compteur « 1 affiché(s) sur m » ;
+- **Résultat attendu** : (1) seule Cléo reste, compteur « 1 affiché sur m » ;
   (2) les lignes cochées disparaissent ; (3) la ligne cochée disparaît de la
   liste filtrée ; la progression du support compte toujours **toutes** les
   lignes.

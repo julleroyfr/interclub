@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 
+import { accorder } from '@/domaine/accord'
 import { aVoiesLibres, type Categorie } from '@/domaine/rencontre'
 import { issuesVoieSaisissables, type IssueVoie } from '@/domaine/resultat'
 import {
@@ -138,8 +139,8 @@ export function PanneauSaisieAdmin({ saisie }: { saisie: SaisieAdminRencontre })
             ))}
           </div>
           <p className="mb-2 px-1 text-[11px] font-semibold text-texte-doux">
-            <b className="text-texte-fort">{total}</b> grimpeur(s) ·{' '}
-            <b className="text-texte-fort">{saisie.clubs.length}</b> club(s)
+            <b className="text-texte-fort">{total}</b> {accorder(total, 'grimpeur')} ·{' '}
+            <b className="text-texte-fort">{saisie.clubs.length}</b> {accorder(saisie.clubs.length, 'club')}
           </p>
 
           {clubsFiltres.length === 0 ? (

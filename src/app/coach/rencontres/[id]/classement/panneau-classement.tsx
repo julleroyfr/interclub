@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 
 import { Carte } from '@/composants'
+import { accorder, compter } from '@/domaine/accord'
 import { aClassementClub } from '@/domaine/rencontre'
 import type { IssueVoie } from '@/domaine/resultat'
 import type {
@@ -234,7 +235,7 @@ export function PanneauClassement({
           {/* Compteur (R12b) */}
           <p className="text-xs font-semibold text-texte-doux">
             <b className="text-texte-fort">{filtree.length}</b>{' '}
-            {sexe === 'F' ? 'grimpeuse(s)' : 'grimpeur(s)'}
+            {accorder(filtree.length, sexe === 'F' ? 'grimpeuse' : 'grimpeur')}
             {nbMonClub > 0 && (
               <>
                 {' · '}
@@ -336,7 +337,7 @@ export function PanneauClassement({
                     <span className="font-semibold text-texte-fort">{e.equipeNom}</span>
                     <span className="mt-0.5 block text-[11.5px] text-texte-doux">
                       {e.clubNom ? `${e.clubNom} · ` : ''}
-                      {e.nbGrimpeurs} grimpeur(s)
+                      {compter(e.nbGrimpeurs, 'grimpeur')}
                     </span>
                   </td>
                   <td className="whitespace-nowrap px-1.5 py-2 text-right font-extrabold text-secondaire">

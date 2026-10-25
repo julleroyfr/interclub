@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useActionState, useId, useState } from 'react'
 
 import { Bouton, ChampSelect, ChampTexte, Etiquette, variantePhase } from '@/composants'
+import { compter } from '@/domaine/accord'
 import {
   CATEGORIES,
   PHASES,
@@ -165,7 +166,7 @@ function LigneRencontre({
               </p>
               <p className="mt-1 text-xs text-texte-doux">
                 Saison {labelSaison(rencontre.saison)} ·{' '}
-                {rencontre.nbEquipes} équipe(s) · {rencontre.nbEpreuves} épreuve(s)
+                {compter(rencontre.nbEquipes, 'équipe')} · {compter(rencontre.nbEpreuves, 'épreuve')}
               </p>
             </div>
             <Etiquette variante={variantePhase[rencontre.phase]}>

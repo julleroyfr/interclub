@@ -126,6 +126,8 @@ cette spec. (Spec #1 R6/R27, rév. 2026-09-01.)
   être ou est engagé**. Chaque ligne rappelle les infos publiques de la rencontre
   (date, catégorie, club organisateur, **phase** courante) et le **nombre
   d'équipes déjà engagées par le club** pour cette rencontre.
+  *(Catégorie adulte, rév. 2026-10-25 : pas de nombre d'équipes ; nombre de
+  grimpeurs du club composés — spec #20 R19ter.)*
 - **R7.** Depuis chaque ligne, le coach accède à l'**écran d'engagement** de la
   rencontre (composition des équipes du club pour cette rencontre). **Exception en
   ③ compétition** : la composition y étant **figée** (R16/R17) et la tâche du coach

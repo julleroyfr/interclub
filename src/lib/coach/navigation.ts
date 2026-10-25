@@ -1,4 +1,5 @@
 import { type LienNav } from '@/composants'
+import { compter } from '@/domaine/accord'
 import type { Categorie, Phase } from '@/domaine/rencontre'
 import { type ContexteCoach } from '@/lib/auth/session'
 
@@ -57,4 +58,14 @@ export function cibleCarteRencontreCoach(rencontreId: string, categorie: Categor
   if (categorie === 'adulte' && !avantCompetition(phase)) return `/coach/rencontres/${rencontreId}/classement`
   if (phase === 'competition') return `/coach/rencontres/${rencontreId}/resultats`
   return `/coach/rencontres/${rencontreId}`
+}
+
+/**
+ * Effectifs affichés sur la carte d'une rencontre (spec #5 R6) : équipes et
+ * grimpeurs du club ; en adulte, où les équipes n'ont pas de club, seulement les
+ * grimpeurs du club composés (spec #20 R19ter).
+ */
+export function resumeCarteRencontreCoach(categorie: Categorie, nbEquipes: number, nbGrimpeurs: number): string {
+  if (categorie === 'adulte') return compter(nbGrimpeurs, 'grimpeur')
+  return `${compter(nbEquipes, 'équipe')} · ${compter(nbGrimpeurs, 'grimpeur')}`
 }

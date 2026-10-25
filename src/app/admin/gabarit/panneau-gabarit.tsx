@@ -3,6 +3,7 @@
 import { useActionState, useId, useRef, useState } from 'react'
 
 import { Bouton, Carte, Etiquette, FormLibelleVoieVitesse, TitreSection } from '@/composants'
+import { compter } from '@/domaine/accord'
 import { NIVEAUX_MOULINETTE, NIVEAUX_TETE } from '@/domaine/gabarit'
 import { aVoiesLibres, type Categorie } from '@/domaine/rencontre'
 import {
@@ -655,7 +656,7 @@ export function PanneauGabarit({
     <Carte className="flex flex-col gap-5 p-5">
       <div className="flex items-center gap-3">
         <TitreSection>Gabarit {label}</TitreSection>
-        <Etiquette variante="neutre">{epreuves.length} épreuve(s)</Etiquette>
+        <Etiquette variante="neutre">{compter(epreuves.length, 'épreuve')}</Etiquette>
       </div>
 
       {epreuves.length === 0 ? (

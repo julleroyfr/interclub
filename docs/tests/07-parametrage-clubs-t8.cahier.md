@@ -66,7 +66,7 @@ Depuis l'accueil (connecté **admin**) : bouton **« Clubs »** → `/admin/club
 - **Pré-condition** : **Club A** (seed) porte une rencontre et des grimpeurs.
 - **Étapes** : observer le bouton **Supprimer** de Club A.
 - **Attendu** : bouton **désactivé** (infobulle « Club référencé… »). Le compteur
-  « n rencontre(s) · n grimpeur(s) » est non nul.
+  « n rencontres · n grimpeurs » (accordés) est non nul.
 - **Contournement (facultatif)** : forcer la suppression par appel direct →
   refus, message « Ce club est référencé … : suppression impossible. »
 

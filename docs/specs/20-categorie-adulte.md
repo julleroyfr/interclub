@@ -1,6 +1,6 @@
 # Spec : Catégorie adulte
 
-- **Statut** : validée (2026-10-23) ; révisée le 2026-10-25 (R19bis, à la demande du produit)
+- **Statut** : validée (2026-10-23) ; révisée le 2026-10-25 (R19bis, R19ter, à la demande du produit)
 - **Sources** :
   - **Règlement** : *Règlement des interclubs d'escalade — Addendum règlement
     Adultes*, CT 33 FFME 2025-2026 (`docs/reglement/2025 Interclubs - Reglement
@@ -171,6 +171,10 @@ catégories **enfant** et **ado** reste **inchangé**.
   (accueil coach) et l'écran de la rencontre mènent **directement au
   classement** (lecture, spec #7) ; l'adresse de l'écran de résultats renvoie au
   classement. *(Remplace, en adulte, spec #5 R7 ; décision 2026-10-25.)*
+- **R19ter.** Sur l'accueil coach, la carte d'une rencontre adulte n'affiche
+  **pas** de nombre d'équipes ; elle affiche le **nombre de grimpeurs du club**
+  du coach composés dans les équipes de la rencontre, quelle que soit la phase.
+  *(Remplace, en adulte, spec #5 R6 ; décision 2026-10-25.)*
 - **R20.** Un jeton capitaine ne peut pas être généré pour une équipe d'une
   rencontre **enfant ou ado**. Les jetons « coach temporaire » d'une rencontre
   adulte ne sont pas proposés (R10).
@@ -342,7 +346,7 @@ enfant/ado :
 | #9 | R14 | rôle d'auteur `capitaine` (R20bis) |
 | #12 | R9 | redirection du scan capitaine vers `/capitaine` (R17–R19) |
 | #3 | R29, R32, R33 | gabarit adulte (R6–R9) ; libellé de voie de vitesse modifiable (R9bis) |
-| #5 | R7, R13, R15, R16 | en adulte : équipes admin, sans club, 4 au plus (R10–R14) ; coach mené au classement dès la ③, sans écran de résultats (R19bis) |
+| #5 | R6, R7, R13, R15, R16 | en adulte : équipes admin, sans club, 4 au plus (R10–R14) ; coach mené au classement dès la ③, sans écran de résultats (R19bis) ; carte d'accueil sans nombre d'équipes, avec les grimpeurs du club composés (R19ter) |
 | #6 | R11, R12, R14 | issues adultes dont Top en moulinette, plafond 6 (R22–R27) |
 | #7 | R6 | pas de classement club en adulte (R30/R31) |
 | #13 | R6, R7, R8, R18 | import sans limite d'âge, ni année de référence, ni « ignorés hors âge » (R5) |
