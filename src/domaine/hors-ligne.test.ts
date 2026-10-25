@@ -30,6 +30,12 @@ describe('spec #17 — Périmètre de file (R3/R4)', () => {
     expect(clePerimetre({ role: 'juge', rencontreId: 'r1' })).toBe('juge:r1:')
   })
 
+  it('isole la file d’un capitaine par équipe (R4, spec #20 R18)', () => {
+    expect(clePerimetre({ role: 'capitaine', rencontreId: 'r1', equipeId: 'eq1' })).toBe(
+      'capitaine:r1:eq1',
+    )
+  })
+
   it('deux clubs sur la même rencontre ont des files distinctes (R4)', () => {
     expect(clePerimetre({ role: 'coach', rencontreId: 'r1', clubId: 'cA' })).not.toBe(
       clePerimetre({ role: 'coach', rencontreId: 'r1', clubId: 'cB' }),

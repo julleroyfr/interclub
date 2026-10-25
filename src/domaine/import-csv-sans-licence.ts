@@ -1,7 +1,7 @@
 // Domaine pur — import CSV sans licence, format Marsas (spec #18). Aucun accès
 // Supabase ici : découpage du texte CSV, contrôle des en-têtes, normalisation et
-// validation d'une ligne, forme comparable et clé d'identité, filtre d'âge et
-// consolidation des doublons internes. Le rapprochement avec la base et
+// validation d'une ligne, forme comparable et clé d'identité et consolidation
+// des doublons internes. Aucun filtre d'âge (spec #20 R5). Le rapprochement avec la base et
 // l'attribution des licences générées se font dans la RPC (R13, R14, R16).
 
 import {
@@ -10,7 +10,7 @@ import {
   ANNEE_NAISSANCE_MAX,
   type Sexe,
 } from './grimpeur'
-import { seuilAnneeNaissance, type ErreurImport } from './import-licencies'
+import type { ErreurImport } from './import-licencies'
 
 /** En-têtes attendus, dans cet ordre (R6). */
 export const COLONNES_CSV = ['QUALITE', 'NOM', 'PRENOM', 'DATNAISS'] as const
@@ -59,10 +59,7 @@ export type DoublonCsv = {
 
 /** Résultat de l'analyse pure d'un fichier CSV (R16). */
 export type AnalyseImportCsv = {
-  anneeReference: number
-  seuilAnneeNaissance: number
   aImporter: GrimpeurCsv[]
-  ignoresHorsAge: number
   erreurs: ErreurImport[]
   doublons: DoublonCsv[]
 }
@@ -241,15 +238,14 @@ function identiteAuMieux(l: LigneCsv): string {
 
 /**
  * Analyse pure d'un fichier CSV (R16) : normalise chaque ligne (R8), écarte les
- * invalides en erreurs (R8b, R10), ignore les hors-âge (R11), puis consolide les
- * lignes de même clé d'identité — dernière occurrence retenue (R12).
+ * invalides en erreurs (R8b, R10), puis consolide les lignes de même clé
+ * d'identité — dernière occurrence retenue (R12). Tout âge est importé (spec #20
+ * R5).
  */
-export function analyserImportCsv(lignes: LigneCsv[], anneeReference: number): AnalyseImportCsv {
-  const seuil = seuilAnneeNaissance(anneeReference)
+export function analyserImportCsv(lignes: LigneCsv[]): AnalyseImportCsv {
   const erreurs: ErreurImport[] = []
   const doublons: DoublonCsv[] = []
   const parCle = new Map<string, GrimpeurCsv>()
-  let ignoresHorsAge = 0
 
   for (const l of lignes) {
     let grimpeur: GrimpeurCsv
@@ -263,11 +259,6 @@ export function analyserImportCsv(lignes: LigneCsv[], anneeReference: number): A
       throw e
     }
 
-    if (grimpeur.anneeNaissance < seuil) {
-      ignoresHorsAge++
-      continue
-    }
-
     const cle = cleIdentite(grimpeur)
     const existant = parCle.get(cle)
     if (existant) {
@@ -277,10 +268,7 @@ export function analyserImportCsv(lignes: LigneCsv[], anneeReference: number): A
   }
 
   return {
-    anneeReference,
-    seuilAnneeNaissance: seuil,
     aImporter: [...parCle.values()],
-    ignoresHorsAge,
     erreurs,
     doublons,
   }

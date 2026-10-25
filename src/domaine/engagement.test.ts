@@ -1,11 +1,17 @@
 import { describe, it, expect } from 'vitest'
 
 import {
+  EFFECTIF_EQUIPE_ADULTE_MAX,
   EFFECTIF_EQUIPE_MAX,
+  effectifMaxEquipe,
+  nomEquipeAdulteParDefaut,
+  verifierAjoutCompositionAdulte,
   GROUPES_DEPART,
   EngagementInvalideError,
   GroupeDepartInvalideError,
   compositionModifiableParCoach,
+  equipesAdultesModifiables,
+  MESSAGE_EQUIPES_ADULTES_FIGEES,
   filtrerGrimpeursRecherche,
   nomEquipeParDefaut,
   normaliserNomEquipe,
@@ -278,5 +284,87 @@ describe('spec #5 — Composition modifiable par le coach (R16)', () => {
       expect(compositionModifiableParCoach(phase, 'permanent')).toBe(false)
       expect(compositionModifiableParCoach(phase, 'temporaire')).toBe(false)
     }
+  })
+})
+
+describe('spec #20 — Équipes adultes (R11–R14)', () => {
+  it('une équipe adulte compte au plus 4 grimpeurs ; enfant et ado restent à 8 (R12)', () => {
+    expect(EFFECTIF_EQUIPE_ADULTE_MAX).toBe(4)
+    expect(effectifMaxEquipe('adulte')).toBe(4)
+    expect(effectifMaxEquipe('ado')).toBe(EFFECTIF_EQUIPE_MAX)
+    expect(effectifMaxEquipe('enfant')).toBe(EFFECTIF_EQUIPE_MAX)
+  })
+
+  it('accepte un grimpeur de n’importe quel club, sans prêt (R11)', () => {
+    expect(() =>
+      verifierAjoutCompositionAdulte({
+        grimpeurId: 'g1',
+        membresActuels: ['g2', 'g3'],
+        dejaEngagesRencontre: ['g2', 'g3'],
+      }),
+    ).not.toThrow()
+  })
+
+  it('refuse un 5ᵉ grimpeur (R12)', () => {
+    expect(() =>
+      verifierAjoutCompositionAdulte({
+        grimpeurId: 'g5',
+        membresActuels: ['g1', 'g2', 'g3', 'g4'],
+        dejaEngagesRencontre: ['g1', 'g2', 'g3', 'g4'],
+      }),
+    ).toThrow(/au plus 4/)
+  })
+
+  it('refuse un grimpeur déjà composé dans une autre équipe de la rencontre (R13)', () => {
+    expect(() =>
+      verifierAjoutCompositionAdulte({
+        grimpeurId: 'g1',
+        membresActuels: [],
+        dejaEngagesRencontre: ['g1'],
+      }),
+    ).toThrow(EngagementInvalideError)
+  })
+
+  it('propose « Équipe N », N = plus grand numéro existant + 1 (R14)', () => {
+    expect(nomEquipeAdulteParDefaut([])).toBe('Équipe 1')
+    expect(nomEquipeAdulteParDefaut(['Équipe 1', ' Équipe  3 ', 'Les rapides'])).toBe('Équipe 4')
+  })
+
+  it('changement d’équipe adulte : autorisé entre équipes sans club de la rencontre (R11)', () => {
+    expect(() =>
+      verifierChangementEquipe(
+        {
+          equipeSource: { id: 'e1', clubId: null, rencontreId: 'r' },
+          equipeCible: { id: 'e2', clubId: null, rencontreId: 'r', effectif: 3 },
+        },
+        EFFECTIF_EQUIPE_ADULTE_MAX,
+      ),
+    ).not.toThrow()
+  })
+
+  it('changement d’équipe adulte : refusé vers une équipe déjà à 4 (R12)', () => {
+    expect(() =>
+      verifierChangementEquipe(
+        {
+          equipeSource: { id: 'e1', clubId: null, rencontreId: 'r' },
+          equipeCible: { id: 'e2', clubId: null, rencontreId: 'r', effectif: 4 },
+        },
+        EFFECTIF_EQUIPE_ADULTE_MAX,
+      ),
+    ).toThrow(/plafonné à 4/)
+  })
+})
+
+describe('spec #20 — Équipes adultes figées hors ① et ② (R10)', () => {
+  it.each(['pre_competition', 'preparation'] as const)('modifiables en %s', (phase) => {
+    expect(equipesAdultesModifiables(phase)).toBe(true)
+  })
+
+  it.each(['competition', 'cloture', 'resultats_publics'] as const)('figées en %s', (phase) => {
+    expect(equipesAdultesModifiables(phase)).toBe(false)
+  })
+
+  it('le message de refus nomme les phases permises', () => {
+    expect(MESSAGE_EQUIPES_ADULTES_FIGEES).toMatch(/pré-compétition.*préparation/)
   })
 })

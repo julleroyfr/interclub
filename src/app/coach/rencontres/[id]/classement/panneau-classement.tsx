@@ -3,6 +3,8 @@
 import { useMemo, useState } from 'react'
 
 import { Carte } from '@/composants'
+import { accorder, compter } from '@/domaine/accord'
+import { aClassementClub } from '@/domaine/rencontre'
 import type { IssueVoie } from '@/domaine/resultat'
 import type {
   ClassementRencontre,
@@ -13,6 +15,7 @@ const PAGE_SIZE = 20
 
 const LIBELLE_ISSUE_VOIE: Record<IssueVoie, string> = {
   top: 'Top',
+  top_moulinette: 'Top en moulinette',
   prise_valorisee: 'Prise valorisée',
   zone2: 'Zone 2',
   zone1: 'Zone 1',
@@ -26,6 +29,8 @@ function classeIssue(issue: string): string {
     case 'top':
     case 'palier':
       return 'bg-secondaire/15 text-secondaire border-secondaire/30'
+    case 'top_moulinette':
+      return 'bg-attention/15 text-attention border-attention/40'
     case 'prise_valorisee':
     case 'zone1':
     case 'zone2':
@@ -51,7 +56,8 @@ type FiltreClub = 'tous' | 'mien'
 
 /**
  * Panneau de classement (spec #7). Trois vues (individuel par sexe, équipe, club,
- * R12), avec pour l'individuel : recherche, filtres (tous / mon club / équipe),
+ * R12) — sans la vue club en adulte, où l'équipe est présentée par son nom seul
+ * (spec #20 R30/R31) —, avec pour l'individuel : recherche, filtres (tous / mon club / équipe),
  * mise en évidence du club consulté, compteur et pagination bas de liste (R12b).
  * Toucher un grimpeur ouvre la décomposition de son score (R13).
  */
@@ -69,6 +75,7 @@ export function PanneauClassement({
   const [equipeFiltre, setEquipeFiltre] = useState('')
   const [page, setPage] = useState(1)
   const [detail, setDetail] = useState<LigneIndividuel | null>(null)
+  const avecClubs = aClassementClub(classement.categorie)
 
   const listeSexe = sexe === 'F' ? classement.individuel.filles : classement.individuel.garcons
 
@@ -121,6 +128,8 @@ export function PanneauClassement({
       <DecompositionScore
         ligne={detail}
         officiel={classement.officiel}
+        blocActif={classement.blocActif}
+        vitesseActive={classement.vitesseActive}
         onRetour={() => setDetail(null)}
       />
     )
@@ -134,7 +143,7 @@ export function PanneauClassement({
           [
             ['individuel', 'Individuel'],
             ['equipe', 'Par équipe'],
-            ['club', 'Par club'],
+            ...(avecClubs ? [['club', 'Par club']] : []),
           ] as [Vue, string][]
         ).map(([v, label]) => (
           <button
@@ -228,7 +237,7 @@ export function PanneauClassement({
           {/* Compteur (R12b) */}
           <p className="text-xs font-semibold text-texte-doux">
             <b className="text-texte-fort">{filtree.length}</b>{' '}
-            {sexe === 'F' ? 'grimpeuse(s)' : 'grimpeur(s)'}
+            {accorder(filtree.length, sexe === 'F' ? 'grimpeuse' : 'grimpeur')}
             {nbMonClub > 0 && (
               <>
                 {' · '}
@@ -285,8 +294,9 @@ export function PanneauClassement({
                           {l.score}
                           <span className="ml-0.5 text-[9.5px] font-bold text-texte-doux">pts</span>
                           <span className="block text-[10px] font-semibold text-texte-doux">
-                            voie {l.decomposition.totalVoie} · bloc {l.decomposition.totalBloc} ·
-                            vit {l.decomposition.vitesse}
+                            voie {l.decomposition.totalVoie}
+                            {classement.blocActif && ` · bloc ${l.decomposition.totalBloc}`}
+                            {classement.vitesseActive && ` · vit ${l.decomposition.vitesse}`}
                           </span>
                         </td>
                         <td className="w-4 pr-1 text-right text-texte-doux">›</td>
@@ -329,7 +339,8 @@ export function PanneauClassement({
                   <td className="px-1.5 py-2">
                     <span className="font-semibold text-texte-fort">{e.equipeNom}</span>
                     <span className="mt-0.5 block text-[11.5px] text-texte-doux">
-                      {e.clubNom} · {e.nbGrimpeurs} grimpeur(s)
+                      {e.clubNom ? `${e.clubNom} · ` : ''}
+                      {compter(e.nbGrimpeurs, 'grimpeur')}
                     </span>
                   </td>
                   <td className="whitespace-nowrap px-1.5 py-2 text-right font-extrabold text-secondaire">
@@ -346,7 +357,7 @@ export function PanneauClassement({
         </Carte>
       )}
 
-      {vue === 'club' && (
+      {vue === 'club' && avecClubs && (
         <Carte className="p-2">
           <table className="w-full border-collapse text-sm">
             <thead>
@@ -486,10 +497,15 @@ function BoutonPage({
 function DecompositionScore({
   ligne,
   officiel,
+  blocActif,
+  vitesseActive,
   onRetour,
 }: {
   ligne: LigneIndividuel
   officiel: boolean
+  /** Épreuves désactivées (adulte) : sections masquées (spec #20 R38). */
+  blocActif: boolean
+  vitesseActive: boolean
   onRetour: () => void
 }) {
   const d = ligne.decomposition
@@ -543,45 +559,49 @@ function DecompositionScore({
         )}
       </SectionDecomp>
 
-      <SectionDecomp titre="Blocs" sousTotal={d.totalBloc}>
-        {d.blocs.length === 0 ? (
-          <p className="px-1 py-2 text-sm text-texte-doux">Aucun bloc saisi.</p>
-        ) : (
-          d.blocs.map((b, i) => (
-            <LigneDecomp
-              key={`${b.code}-${i}`}
-              code={b.code}
-              cotation={null}
-              issue={b.issue}
-              issueLibelle={b.issueLibelle}
-              points={b.points}
-            />
-          ))
-        )}
-      </SectionDecomp>
+      {blocActif && (
+        <SectionDecomp titre="Blocs" sousTotal={d.totalBloc}>
+          {d.blocs.length === 0 ? (
+            <p className="px-1 py-2 text-sm text-texte-doux">Aucun bloc saisi.</p>
+          ) : (
+            d.blocs.map((b, i) => (
+              <LigneDecomp
+                key={`${b.code}-${i}`}
+                code={b.code}
+                cotation={null}
+                issue={b.issue}
+                issueLibelle={b.issueLibelle}
+                points={b.points}
+              />
+            ))
+          )}
+        </SectionDecomp>
+      )}
 
-      <SectionDecomp titre="Vitesse" sousTotal={d.vitesse}>
-        <div className="flex items-center gap-2 px-1.5 py-2 text-sm">
-          <span className="min-w-9 font-bold text-texte-fort">
-            {d.rangVitesse != null ? `#${d.rangVitesse}` : '—'}
-          </span>
-          <span
-            className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10.5px] font-bold ${
-              d.rangVitesse != null
-                ? 'border-secondaire/30 bg-secondaire/10 text-secondaire'
-                : 'border-white/10 bg-white/5 text-texte-doux'
-            }`}
-          >
-            {d.vitesseLibelle}
-          </span>
-          <span
-            className={`ml-auto font-bold ${d.vitesse > 0 ? 'text-secondaire' : 'text-texte-doux'}`}
-          >
-            {d.vitesse}
-            <span className="ml-0.5 text-[10px] font-semibold text-texte-doux">pts</span>
-          </span>
-        </div>
-      </SectionDecomp>
+      {vitesseActive && (
+        <SectionDecomp titre="Vitesse" sousTotal={d.vitesse}>
+          <div className="flex items-center gap-2 px-1.5 py-2 text-sm">
+            <span className="min-w-9 font-bold text-texte-fort">
+              {d.rangVitesse != null ? `#${d.rangVitesse}` : '—'}
+            </span>
+            <span
+              className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10.5px] font-bold ${
+                d.rangVitesse != null
+                  ? 'border-secondaire/30 bg-secondaire/10 text-secondaire'
+                  : 'border-white/10 bg-white/5 text-texte-doux'
+              }`}
+            >
+              {d.vitesseLibelle}
+            </span>
+            <span
+              className={`ml-auto font-bold ${d.vitesse > 0 ? 'text-secondaire' : 'text-texte-doux'}`}
+            >
+              {d.vitesse}
+              <span className="ml-0.5 text-[10px] font-semibold text-texte-doux">pts</span>
+            </span>
+          </div>
+        </SectionDecomp>
+      )}
     </div>
   )
 }

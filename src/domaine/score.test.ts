@@ -347,3 +347,35 @@ describe('spec #7 — Classement individuel par sexe (R8b/R7)', () => {
     expect(filles[0].element.clubOrigineId).toBe('clubB')
   })
 })
+
+describe('spec #20 — Top en moulinette (R25)', () => {
+  const T5 = { points: 12, pointsPriseValorisee: null, pointsZone1: 9, pointsZone2: 10 }
+
+  it('vaut la moitié des points du top (R25)', () => {
+    expect(scoreVoie('top_moulinette', T5)).toBe(6)
+  })
+
+  it('arrondit à l’entier supérieur un top impair (R25)', () => {
+    expect(scoreVoie('top_moulinette', { ...T5, points: 7 })).toBe(4)
+  })
+
+  it('ne compte jamais les zones (R25)', () => {
+    expect(scoreVoie('top_moulinette', { ...T5, points: 0 })).toBe(0)
+  })
+
+  it('exemple de la spec : T3 top 8 + T6 zone 2 (12) + T4 moulinette (10 → 5) = 25 (R24, R25)', () => {
+    const t3 = { points: 8, pointsPriseValorisee: null, pointsZone1: 5, pointsZone2: 6 }
+    const t6 = { points: 14, pointsPriseValorisee: null, pointsZone1: 11, pointsZone2: 12 }
+    const t4 = { points: 10, pointsPriseValorisee: null, pointsZone1: 7, pointsZone2: 8 }
+    expect(
+      scoreIndividuel(
+        [
+          { issue: 'top', bareme: t3 },
+          { issue: 'zone2', bareme: t6 },
+          { issue: 'top_moulinette', bareme: t4 },
+        ],
+        [],
+      ),
+    ).toBe(25)
+  })
+})

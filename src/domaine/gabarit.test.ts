@@ -84,6 +84,28 @@ describe('spec #3 — Validation du niveau de voie (R37)', () => {
   })
 })
 
+describe('spec #20 — Niveaux de voie en catégorie adulte (R7)', () => {
+  it('accepte tous les niveaux tête T1–T10 (R7)', () => {
+    for (const niveau of NIVEAUX_TETE) {
+      expect(() => validerNiveauVoie(niveau, 'tete', 'adulte')).not.toThrow()
+    }
+  })
+
+  it('refuse toute voie moulinette dédiée (pas de M1–M4) (R7)', () => {
+    for (const niveau of NIVEAUX_MOULINETTE) {
+      expect(() => validerNiveauVoie(niveau, 'moulinette', 'adulte')).toThrow(NiveauVoieInvalideError)
+    }
+  })
+
+  it('refuse un niveau tête hors T1–T10 (R7)', () => {
+    expect(() => validerNiveauVoie('T11', 'tete', 'adulte')).toThrow(NiveauVoieInvalideError)
+  })
+
+  it('voie tête adulte : zones, pas de prise valorisée (R7)', () => {
+    expect(champsPointsVoie('adulte', 'tete')).toEqual({ priseValorisee: false, zones: true })
+  })
+})
+
 describe('spec #3 — Validation des points (R38, R39)', () => {
   it('accepte 0 et les entiers positifs', () => {
     for (const n of [0, 1, 4, 22, 60]) {

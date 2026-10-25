@@ -20,7 +20,7 @@ export default async function PageImportLicencies() {
       <div className="flex flex-col gap-6">
         <EnTetePage
           titre="Importer des licenciés"
-          sousTitre="Déposez un export FFME (.xlsx). Seuls les licenciés de 18 ans au plus sont importés ; les clubs manquants sont créés, les grimpeurs déjà connus (licence) sont mis à jour."
+          sousTitre="Déposez un export FFME (.xlsx). Les licenciés de tout âge sont importés ; les clubs manquants sont créés, les grimpeurs déjà connus (licence) sont mis à jour."
         />
         <FormulaireImport />
         {/* Import CSV sans licence (spec #18 R2). */}

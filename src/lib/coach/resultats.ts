@@ -111,7 +111,11 @@ export type SaisieRencontre = {
   /** Vrai en ③ compétition : la saisie est ouverte (R5). */
   ouverteSaisie: boolean
   voiesEpreuve: VoieOption[]
+  /** Blocs des épreuves actives seulement (spec #20 R38). */
   blocsConfig: BlocConfig[]
+  /** Faux si l'épreuve de bloc / de vitesse est désactivée (adulte, spec #20 R38) : rien à afficher. */
+  blocActif: boolean
+  vitesseActive: boolean
   grimpeurs: GrimpeurSaisie[]
 }
 
@@ -133,6 +137,26 @@ export async function getSaisieRencontre(
   if (!saisie) return null
   const { grimpeursParClub, ...rencontre } = saisie
   return { ...rencontre, grimpeurs: grimpeursParClub.get(clubId) ?? [] }
+}
+
+/**
+ * Charge la saisie des membres d'UNE équipe adulte, pour son capitaine (spec #20
+ * R18/R19). Sous session capitaine, la RLS ne laisse lire que son équipe et ses
+ * membres ; le filtre sur `equipeId` est une défense en profondeur. Renvoie
+ * `null` si la rencontre est introuvable. À appeler derrière la garde capitaine.
+ */
+export async function getSaisieEquipe(
+  rencontreId: string,
+  equipeId: string,
+): Promise<SaisieRencontre | null> {
+  const saisie = await chargerSaisie(rencontreId, null)
+  if (!saisie) return null
+  const { grimpeursParClub, ...rencontre } = saisie
+  const grimpeurs = [...grimpeursParClub.values()]
+    .flat()
+    .filter((g) => g.equipeId === equipeId)
+    .sort((a, b) => a.nom.localeCompare(b.nom, 'fr') || a.prenom.localeCompare(b.prenom, 'fr'))
+  return { ...rencontre, grimpeurs }
 }
 
 /**
@@ -188,6 +212,7 @@ async function chargerSaisie(
     rbLignes,
     tvLignes,
     pvLignes,
+    epreuvesRes,
   ] = await Promise.all([
     supabase
       .from('rencontre')
@@ -204,13 +229,15 @@ async function chargerSaisie(
       .order('ordre'),
     supabase
       .from('bloc')
-      .select('id, code, ordre, epreuve!inner(rencontre_id)')
+      .select('id, code, ordre, epreuve!inner(rencontre_id, active)')
       .eq('epreuve.rencontre_id', rencontreId)
+      .eq('epreuve.active', true)
       .order('ordre'),
     supabase
       .from('bloc_palier')
-      .select('id, bloc_id, libelle, ordre, points, bloc!inner(epreuve!inner(rencontre_id))')
+      .select('id, bloc_id, libelle, ordre, points, bloc!inner(epreuve!inner(rencontre_id, active))')
       .eq('bloc.epreuve.rencontre_id', rencontreId)
+      .eq('bloc.epreuve.active', true)
       .order('ordre'),
     // Compositions, grimpeur embarqué (nom, prénom, club d'origine et son nom).
     pagine((debut, fin) => {
@@ -265,10 +292,16 @@ async function chargerSaisie(
           .range(debut, fin),
       'des points de vitesse',
     ),
+    // État des épreuves (spec #20 R38) : la vitesse désactivée n'est pas affichée.
+    supabase.from('epreuve').select('type, active').eq('rencontre_id', rencontreId),
   ])
 
   const rencontre = verifierLecture(rencRes, 'de la rencontre')
   if (!rencontre) return null
+  const etatsEpreuves = verifierLecture(epreuvesRes, 'des épreuves') ?? []
+  const desactivee = (type: string) => etatsEpreuves.some((e) => e.type === type && e.active === false)
+  const blocActif = !desactivee('bloc')
+  const vitesseActive = !desactivee('vitesse')
 
   const categorie = rencontre.categorie as Categorie
   const phase = rencontre.phase as Phase
@@ -276,7 +309,8 @@ async function chargerSaisie(
   const equipes = (verifierLecture(equipesRes, 'des équipes') ?? []) as {
     id: string
     nom: string
-    club_id: string
+    /** `null` pour une équipe adulte, sans club (spec #20 R11). */
+    club_id: string | null
   }[]
   const nomEquipe = new Map(equipes.map((e) => [e.id, e.nom]))
   const clubEquipe = new Map(equipes.map((e) => [e.id, e.club_id]))
@@ -387,8 +421,10 @@ async function chargerSaisie(
 
   const grimpeursParClub = new Map<string, GrimpeurSaisie[]>()
   for (const c of lignesCompo) {
-    const clubDeLEquipe = clubEquipe.get(c.equipeId) as string
     const info = infoGrimpeur.get(c.grimpeurId)
+    // Équipe adulte sans club (spec #20 R11) : le grimpeur est rattaché à son club
+    // d'origine — pas de prêt en adulte.
+    const clubDeLEquipe = clubEquipe.get(c.equipeId) ?? info?.clubId ?? ''
     const prete = !!info && info.clubId !== clubDeLEquipe
     const issuesVoie = issueVoieParGrimpeur.get(c.grimpeurId) ?? new Map<string, IssueVoie>()
 
@@ -520,6 +556,8 @@ async function chargerSaisie(
     ouverteSaisie: phase === 'competition',
     voiesEpreuve: voies,
     blocsConfig,
+    blocActif,
+    vitesseActive,
     grimpeursParClub,
   }
 }

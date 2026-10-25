@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 
-import { type Phase } from '@/domaine/rencontre'
+import { aVoiesLibres, type Phase } from '@/domaine/rencontre'
 import {
   MESSAGE_PLAFOND_VOIES_ADO,
   type IssueBloc,
@@ -90,8 +90,9 @@ export async function saisirResultatVoieAdmin(
     throw e
   }
 
-  // Ado : plafond 6 + unicité, uniquement à l'AJOUT d'une voie non encore saisie.
-  if (ctx.categorie === 'ado') {
+  // Ado et adulte : plafond 6 + unicité, uniquement à l'AJOUT d'une voie non
+  // encore saisie (spec #6 R14, spec #20 R22).
+  if (aVoiesLibres(ctx.categorie)) {
     const dejaSaisies = await voiesDejaSaisiesAdo(supabase, ctx.epreuveId, grimpeurId)
     if (!dejaSaisies.includes(voieId)) {
       try {

@@ -1,0 +1,723 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Maquettes — Catégorie adulte (spec #20)</title>
+<style>
+  :root {
+    --fond: #020617;
+    --surface: rgba(255, 255, 255, 0.04);
+    --surface-forte: rgba(255, 255, 255, 0.08);
+    --bordure: rgba(255, 255, 255, 0.12);
+    --accent: #22d3ee;
+    --accent-doux: #67e8f9;
+    --secondaire: #bef264;
+    --prete: #c084fc;
+    --danger: #fb7185;
+    --texte-fort: #ffffff;
+    --texte: #e2e8f0;
+    --texte-attenue: #94a3b8;
+    --texte-doux: #64748b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--fond);
+    color: var(--texte);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.4;
+    padding: 24px 16px 80px;
+  }
+  h1 { color: var(--texte-fort); font-size: 20px; text-align: center; }
+  .intro { text-align: center; color: var(--texte-attenue); max-width: 660px; margin: 0 auto 32px; font-size: 14px; }
+  .grille { display: flex; flex-wrap: wrap; gap: 28px; justify-content: center; align-items: flex-start; }
+  .colonne { width: 340px; max-width: 100%; }
+  .colonne > .titre-option {
+    color: var(--accent); font-size: 13px; text-transform: uppercase; letter-spacing: .08em;
+    font-weight: 700; margin: 0 0 4px;
+  }
+  .colonne > .desc-option { color: var(--texte-doux); font-size: 12.5px; margin: 0 0 12px; min-height: 34px; }
+
+  /* --- cadre "téléphone" --- */
+  .tel {
+    border: 1px solid var(--bordure); border-radius: 22px; overflow: hidden;
+    background: linear-gradient(180deg, rgba(34,211,238,0.06), rgba(2,6,23,0) 220px), var(--fond);
+    box-shadow: 0 12px 40px rgba(0,0,0,.5);
+  }
+  .barre-haut { padding: 12px 16px 14px; border-bottom: 1px solid var(--bordure); }
+  .lien-retour { color: var(--texte-attenue); font-size: 12.5px; }
+  .titre-ecran { color: var(--texte-fort); font-weight: 600; font-size: 16px; margin-top: 6px; }
+  .titre-rencontre { color: var(--texte-fort); font-weight: 600; font-size: 15px; margin-top: 6px; }
+  .meta { color: var(--texte-attenue); font-size: 12.5px; margin-top: 2px; }
+  .sous { color: var(--texte-doux); font-size: 12px; margin-top: 2px; }
+
+  .badge-phase {
+    display: inline-flex; align-items: center; gap: 6px; margin-top: 8px;
+    background: rgba(190,242,100,.12); color: var(--secondaire);
+    border: 1px solid rgba(190,242,100,.3); border-radius: 999px;
+    padding: 3px 10px; font-size: 11.5px; font-weight: 600;
+  }
+  .badge-phase.comp { background: rgba(34,211,238,.12); color: var(--accent-doux); border-color: rgba(34,211,238,.3); }
+  .badge-phase.verif { background: rgba(251,191,36,.12); color: #fbbf24; border-color: rgba(251,191,36,.32); }
+  .badge-phase.verrou { background: rgba(148,163,184,.12); color: var(--texte-attenue); border-color: var(--bordure); }
+
+  .corps { padding: 14px; }
+
+  /* cartes */
+  .carte { background: var(--surface); border: 1px solid var(--bordure); border-radius: 14px; padding: 12px 14px; margin-bottom: 12px; }
+  .carte-entete { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; gap: 8px; }
+  .carte-titre { color: var(--texte-fort); font-size: 13px; font-weight: 700; }
+  .carte-sous { color: var(--texte-doux); font-size: 11.5px; margin-top: 1px; }
+  .epreuve-titre { color: var(--accent); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin: 4px 0 8px; }
+
+  ul.liste { list-style: none; margin: 0; padding: 0; }
+  ul.liste li { display: flex; align-items: center; gap: 8px; padding: 8px 8px; border-radius: 8px; font-size: 13px; }
+  ul.liste li + li { border-top: 1px solid rgba(255,255,255,.05); }
+  ul.liste li:hover { background: var(--surface-forte); }
+  .grimpeur { color: var(--texte-fort); }
+  .pousse { margin-left: auto; }
+  .chev { color: var(--texte-doux); font-size: 18px; }
+
+  .badge-prete {
+    display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 700;
+    color: var(--prete); background: rgba(192,132,252,.12); border: 1px solid rgba(192,132,252,.35);
+    border-radius: 999px; padding: 1px 8px; text-transform: uppercase; letter-spacing: .04em;
+  }
+
+  /* --- compteur de progression (n/3 voies · n/2 blocs) --- */
+  .prog { display: inline-flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 700; color: var(--texte-attenue); }
+  .prog .part { display: inline-flex; align-items: center; gap: 4px; }
+  .prog .n { color: var(--texte-fort); }
+  .prog .part.complet .n { color: var(--secondaire); }
+  .prog .lbl { color: var(--texte-doux); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; font-size: 10px; }
+
+  /* --- lignes de saisie voie / bloc --- */
+  .saisie { display: flex; align-items: center; gap: 8px; padding: 9px 8px; border-radius: 8px; }
+  .saisie + .saisie { border-top: 1px solid rgba(255,255,255,.05); }
+  .voie-id { color: var(--texte-fort); font-weight: 700; font-size: 13px; min-width: 34px; }
+  .cotation { color: var(--texte-doux); font-size: 11px; }
+  .voie-pts { color: var(--texte-doux); font-size: 10.5px; }
+
+  /* pastille d'issue courante */
+  .issue {
+    display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700;
+    border-radius: 999px; padding: 2px 10px; border: 1px solid transparent; white-space: nowrap;
+  }
+  .issue.top     { color: #04222a; background: var(--secondaire); }
+  .issue.partiel { color: var(--accent-doux); background: rgba(34,211,238,.12); border-color: rgba(34,211,238,.32); }
+  .issue.echec   { color: var(--danger); background: rgba(251,113,133,.10); border-color: rgba(251,113,133,.3); }
+  .issue.np      { color: var(--texte-attenue); background: rgba(148,163,184,.12); border-color: var(--bordure); }
+  .issue.vide    { color: var(--texte-doux); background: transparent; border-style: dashed; border-color: var(--bordure); font-weight: 600; }
+
+  /* sélecteur segmenté d'issue */
+  .seg { display: flex; flex-wrap: wrap; gap: 5px; margin-left: auto; }
+  .seg button {
+    background: rgba(0,0,0,.28); color: var(--texte-attenue); border: 1px solid var(--bordure);
+    border-radius: 8px; padding: 5px 9px; font-size: 11.5px; font-weight: 600; cursor: pointer;
+  }
+  .seg button.sel-top     { background: var(--secondaire); color: #04222a; border-color: var(--secondaire); }
+  .seg button.sel-partiel { background: rgba(34,211,238,.16); color: var(--accent-doux); border-color: rgba(34,211,238,.5); }
+  .seg button.sel-echec   { background: rgba(251,113,133,.16); color: var(--danger); border-color: rgba(251,113,133,.5); }
+  .seg button:hover { background: var(--surface-forte); }
+  .bloc-seg { flex-direction: column; align-items: stretch; margin-left: 0; margin-top: 6px; gap: 5px; }
+  .bloc-seg button { text-align: left; }
+
+  /* formulaire "ajouter une voie" (ado) */
+  .form-ajout { margin-top: 10px; border: 1px dashed var(--bordure); border-radius: 12px; padding: 12px; background: rgba(34,211,238,0.03); }
+  .form-ajout .lbl { color: var(--accent); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; display:block; }
+  .ligne-champs { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+  .champ { flex: 1 1 auto; }
+  .champ label { display:block; color: var(--texte-doux); font-size: 10.5px; margin-bottom: 3px; }
+  select {
+    width: 100%; background: rgba(0,0,0,.3); color: var(--texte-fort);
+    border: 1px solid var(--bordure); border-radius: 8px; padding: 8px 9px; font-size: 13px; color-scheme: dark;
+  }
+  select option { background: var(--fond); color: var(--texte); }
+  option[disabled] { color: var(--texte-doux); }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    border-radius: 9px; padding: 9px 14px; font-size: 13px; font-weight: 600; cursor: pointer;
+    border: 1px solid transparent; width: 100%;
+  }
+  .btn-primaire { background: var(--accent); color: #04222a; }
+  .btn-primaire:disabled { background: rgba(34,211,238,.25); color: rgba(4,34,42,.6); cursor: not-allowed; }
+  .btn-fantome { background: transparent; color: var(--accent); border-color: rgba(34,211,238,.35); }
+  .btn-fantome:hover { background: var(--surface-forte); }
+
+  /* messages */
+  .erreur { color: var(--danger); font-size: 12px; background: rgba(251,113,133,.09); border:1px solid rgba(251,113,133,.3); border-radius: 10px; padding: 9px 11px; margin-top: 8px; }
+  .note-lecture { color: var(--texte-attenue); font-size: 12px; background: rgba(148,163,184,.08); border:1px solid var(--bordure); border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; }
+  .note-public { color: var(--accent-doux); font-size: 12px; background: rgba(34,211,238,.07); border:1px solid rgba(34,211,238,.25); border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; }
+  .vide { color: var(--texte-doux); font-size: 12.5px; font-style: italic; padding: 10px 8px; text-align:center; }
+
+  /* badge officiel / non officiel */
+  .officiel { display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:700; border-radius:999px; padding:2px 10px; }
+  .officiel.non { color: var(--texte-attenue); background: rgba(148,163,184,.12); border:1px solid var(--bordure); }
+  .officiel.oui { color: var(--secondaire); background: rgba(190,242,100,.12); border:1px solid rgba(190,242,100,.3); }
+
+  /* mini-classement (consultation) */
+  table.clsmt { width:100%; border-collapse: collapse; font-size: 12.5px; }
+  table.clsmt th { color: var(--texte-doux); font-weight:600; text-align:left; font-size:10.5px; text-transform:uppercase; letter-spacing:.04em; padding:4px 6px; }
+  table.clsmt td { padding:6px 6px; border-top:1px solid rgba(255,255,255,.06); color: var(--texte); }
+  table.clsmt td.rang { color: var(--texte-doux); font-weight:700; width:24px; }
+  table.clsmt td.nom { color: var(--texte-fort); }
+  table.clsmt td.pts { text-align:right; color: var(--secondaire); font-weight:700; }
+
+  /* --- item grimpeur (écran 1) : nom + score + chips épreuves --- */
+  .gr-item { display: block; padding: 10px 8px; border-radius: 8px; }
+  .gr-item + .gr-item { border-top: 1px solid rgba(255,255,255,.05); }
+  .gr-item:hover { background: var(--surface-forte); }
+  .gr-head { display: flex; align-items: center; gap: 8px; }
+  .gr-nom { color: var(--texte-fort); font-weight: 600; font-size: 13.5px; }
+  .gr-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+
+  .chip {
+    display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700;
+    border-radius: 999px; padding: 2px 9px; border: 1px solid var(--bordure);
+    background: rgba(0,0,0,.25); color: var(--texte-attenue);
+  }
+  .chip .ic { font-size: 12px; filter: grayscale(.2); }
+  .chip .n { color: var(--texte-fort); }
+  .chip.ok { border-color: rgba(190,242,100,.3); }
+  .chip.ok .n { color: var(--secondaire); }
+  .chip.vit-temps { color: var(--accent-doux); border-color: rgba(34,211,238,.32); background: rgba(34,211,238,.10); }
+  .chip.vit-temps .n { color: var(--accent-doux); }
+  .chip.vit-chute { color: var(--danger); border-color: rgba(251,113,133,.3); background: rgba(251,113,133,.08); }
+  .chip.vit-np { color: var(--texte-attenue); }
+  .chip.vit-attente { border-style: dashed; color: var(--texte-doux); }
+
+  /* score (lecture seule) */
+  .score { display: inline-flex; align-items: baseline; gap: 3px; font-weight: 800; color: var(--secondaire); font-size: 15px; }
+  .score .u { font-size: 10px; color: var(--texte-doux); font-weight: 700; }
+  .score.mini { font-size: 13px; }
+  .score-bloc {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    background: rgba(190,242,100,.06); border: 1px solid rgba(190,242,100,.22);
+    border-radius: 12px; padding: 10px 12px; margin-bottom: 12px;
+  }
+  .score-bloc .lbl { color: var(--texte-attenue); font-size: 11.5px; font-weight: 600; }
+  .score-bloc .sub { color: var(--texte-doux); font-size: 10.5px; }
+  .verrou-lecture { color: var(--texte-doux); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+
+  /* --- bascule de vue (par équipe / alphabétique) --- */
+  .tabs { display: flex; gap: 6px; margin-top: 10px; }
+  .tabs button {
+    flex: 1; background: rgba(0,0,0,.28); color: var(--texte-attenue);
+    border: 1px solid var(--bordure); border-radius: 9px; padding: 7px 8px;
+    font-size: 12px; font-weight: 600; cursor: pointer;
+  }
+  .tabs button.actif { background: var(--accent); color: #04222a; border-color: var(--accent); }
+
+  /* en-tête de groupe d'équipe (vue par équipe) */
+  .groupe-eq {
+    color: var(--accent); font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .06em; margin: 10px 4px 4px; display: flex; align-items: center; gap: 6px;
+  }
+  .groupe-eq .cpt { color: var(--texte-doux); font-weight: 600; text-transform: none; letter-spacing: 0; }
+  /* tag d'équipe (vue alphabétique) */
+  .tag-eq {
+    display: inline-flex; align-items: center; font-size: 10px; font-weight: 700;
+    color: var(--accent-doux); background: rgba(34,211,238,.10);
+    border: 1px solid rgba(34,211,238,.28); border-radius: 999px; padding: 1px 7px;
+  }
+  .initiale { color: var(--texte-doux); font-weight: 800; font-size: 12px; min-width: 16px; }
+
+  /* --- navigation grimpeur précédent / suivant (swipe) --- */
+  .nav-gr {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 8px 10px; border: 1px solid var(--bordure); border-radius: 12px;
+    background: rgba(255,255,255,.03); margin-bottom: 6px;
+  }
+  .nav-gr button {
+    background: rgba(0,0,0,.28); color: var(--accent-doux); border: 1px solid rgba(34,211,238,.3);
+    border-radius: 8px; padding: 6px 11px; font-size: 15px; font-weight: 700; cursor: pointer; line-height: 1;
+  }
+  .nav-gr button:disabled { color: var(--texte-doux); border-color: var(--bordure); cursor: default; }
+  .nav-gr .centre { text-align: center; flex: 1; }
+  .nav-gr .centre .qui { color: var(--texte-fort); font-weight: 700; font-size: 13.5px; }
+  .nav-gr .pos { color: var(--texte-doux); font-size: 10.5px; margin-top: 2px; }
+  .swipe-hint { text-align: center; color: var(--texte-doux); font-size: 10.5px; margin: 0 0 12px; }
+
+  .legende { max-width: 940px; margin: 44px auto 0; color: var(--texte-attenue); font-size: 13px; }
+  .legende h2 { color: var(--texte-fort); font-size: 15px; margin-bottom: 6px; }
+  .legende h3 { color: var(--accent-doux); font-size: 13px; margin: 16px 0 4px; }
+  .legende li { margin-bottom: 6px; }
+  .legende code { background: var(--surface-forte); padding: 1px 5px; border-radius: 5px; color: var(--texte-fort); font-size: 12px; }
+
+  /* --- spécifique catégorie adulte (spec #20) --- */
+  :root { --admin: #f472b6; --attention: #fbbf24; --moulinette: #fbbf24; }
+  .tel-admin { background: linear-gradient(180deg, rgba(244,114,182,0.06), rgba(2,6,23,0) 220px), var(--fond); }
+  .badge-admin { display: inline-flex; margin-top: 8px; background: rgba(244,114,182,.12); color: var(--admin);
+    border: 1px solid rgba(244,114,182,.35); border-radius: 999px; padding: 3px 10px; font-size: 11.5px; font-weight: 700; }
+  .champ-form { margin-bottom: 10px; }
+  .champ-form label { display: block; color: var(--texte-attenue); font-size: 12px; margin-bottom: 4px; }
+  .champ-form input, .champ-form select, .rech {
+    width: 100%; background: rgba(0,0,0,.3); color: var(--texte-fort); border: 1px solid var(--bordure);
+    border-radius: 8px; padding: 10px; font-size: 16px; color-scheme: dark; min-height: 44px;
+  }
+  .rech { margin-bottom: 6px; }
+  .tag-club { font-size: 10.5px; font-weight: 700; color: var(--accent-doux); background: rgba(34,211,238,.10);
+    border: 1px solid rgba(34,211,238,.28); border-radius: 999px; padding: 1px 8px; white-space: nowrap; }
+  .sexe { color: var(--texte-doux); font-size: 11px; white-space: nowrap; }
+  ul.liste li.inactif { opacity: .55; }
+  ul.liste li { flex-wrap: wrap; }
+  .mini-btn { background: var(--accent); color: #04222a; border: 0; border-radius: 8px; padding: 0 12px;
+    min-height: 36px; font-size: 12px; font-weight: 700; cursor: pointer; }
+  .btn-danger { background: rgba(251,113,133,.14); color: var(--danger); border-color: rgba(251,113,133,.45); }
+  .ligne-btns { display: flex; gap: 8px; margin-top: 10px; }
+  .etat-jeton { font-size: 11px; font-weight: 700; border-radius: 999px; padding: 2px 9px; }
+  .etat-jeton.actif { color: var(--secondaire); background: rgba(190,242,100,.12); border: 1px solid rgba(190,242,100,.3); }
+  .etat-jeton.aucun { color: var(--texte-doux); border: 1px dashed var(--bordure); }
+  .qr { width: 140px; height: 140px; margin: 6px auto 8px; border-radius: 10px; background:
+    repeating-linear-gradient(90deg, #fff 0 8px, #0f172a 8px 14px),
+    repeating-linear-gradient(0deg, transparent 0 9px, rgba(15,23,42,.85) 9px 15px); background-blend-mode: multiply; }
+  .qr-carte .carte-sous { text-align: center; }
+  .saisie.col { flex-direction: column; align-items: stretch; }
+  .ligne-voie { display: flex; align-items: center; gap: 8px; }
+  .seg.large { margin-left: 0; margin-top: 6px; }
+  .seg.large button { min-height: 40px; flex: 1 1 auto; }
+  .seg button.sel-moul { background: rgba(251,191,36,.16); color: var(--moulinette); border-color: rgba(251,191,36,.5); }
+  .aide { color: var(--moulinette); font-size: 11px; margin-top: 5px; }
+  .score.zero { color: var(--texte-doux); }
+  /* --- épreuves désactivables (R36–R41) --- */
+  .epreuve-ligne { display: flex; align-items: center; gap: 10px; }
+  .epreuve-ligne .info { flex: 1; min-width: 0; }
+  .etat-ep { font-size: 11px; font-weight: 700; border-radius: 999px; padding: 2px 9px; white-space: nowrap; }
+  .etat-ep.on { color: var(--secondaire); background: rgba(190,242,100,.12); border: 1px solid rgba(190,242,100,.3); }
+  .etat-ep.off { color: var(--texte-attenue); background: rgba(148,163,184,.10); border: 1px dashed var(--bordure); }
+  .etat-ep.fixe { color: var(--texte-doux); border: 1px solid var(--bordure); }
+  .carte.desactivee { border-style: dashed; }
+  .carte.desactivee .info { opacity: .6; }
+  .btn-petit { width: auto; min-height: 44px; padding: 0 14px; font-size: 12.5px; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+  <h1>Catégorie adulte — maquettes (spec #20)</h1>
+  <p class="intro">Une rencontre <strong>adulte</strong> part du gabarit adulte (T1–T10, 2 blocs, vitesse 100 → 10).
+  L'<strong>admin</strong> crée et compose des équipes <strong>sans club</strong> (clubs mélangés, 4 au plus) et
+  délivre un <strong>jeton QR capitaine</strong> par équipe. En ③, le capitaine saisit voies et blocs
+  <strong>de son équipe</strong> ; une voie peut être réussie <strong>en moulinette</strong> (moitié du top, sans zone).
+  Pas de classement club. Design « Nuit », mobile-first. Les catégories enfant et ado ne changent pas.</p>
+
+  <div class="grille">
+
+    <!-- ============ 1 · CRÉATION DE LA RENCONTRE ============ -->
+    <section class="colonne">
+      <p class="titre-option">1 · Créer une rencontre adulte (R1, R6)</p>
+      <p class="desc-option">La liste des catégories propose « Adulte ». Le gabarit adulte est copié à la création.</p>
+      <div class="tel tel-admin">
+        <div class="barre-haut">
+          <div class="lien-retour">← Rencontres</div>
+          <div class="titre-ecran">Nouvelle rencontre</div>
+          <span class="badge-admin">Admin</span>
+        </div>
+        <div class="corps">
+          <div class="carte">
+            <div class="champ-form"><label for="d">Date</label><input id="d" type="date" value="2026-01-17"></div>
+            <div class="champ-form"><label for="c">Club porteur</label>
+              <select id="c"><option>Roc'n Bloc Mérignac</option></select></div>
+            <div class="champ-form"><label for="k">Catégorie</label>
+              <select id="k">
+                <option>Enfant — matin (moins de 13 ans)</option>
+                <option>Ado — après-midi (13 à 19 ans)</option>
+                <option selected>Adulte (16 ans et plus)</option>
+              </select></div>
+            <button class="btn btn-primaire">Créer la rencontre</button>
+          </div>
+          <div class="note-lecture">Gabarit adulte copié : <strong>T1 à T10</strong> (zones et top comme en ado),
+          <strong>B1</strong> (zone 15 / top 30), <strong>B2</strong> (20 / 50 / 70), vitesse sur
+          <strong>Voie 1</strong> et <strong>Voie 2</strong> : <strong>100, 95, 90, 85, 80</strong> puis 75 / 60 / 45 / 30 / 15 par tranches de 5, au-delà 10,
+          chute 5, NP 0. Tout reste modifiable dans la structure (R6–R9).</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 2 · ÉQUIPES ADULTES (ADMIN) ============ -->
+    <section class="colonne">
+      <p class="titre-option">2 · Équipes adultes — admin (R10–R15)</p>
+      <p class="desc-option">Équipes sans club, composées avec des grimpeurs de tous clubs, 4 au plus. Pas de prêt.</p>
+      <div class="tel tel-admin">
+        <div class="barre-haut">
+          <div class="lien-retour">← Rencontre</div>
+          <div class="titre-rencontre">17 janv. 2026 — Roc'n Bloc Mérignac</div>
+          <div class="meta">Catégorie adulte</div>
+          <div class="badge-phase verif">② Préparation — composition ouverte</div>
+        </div>
+        <div class="corps">
+          <div class="carte">
+            <div class="carte-entete">
+              <span class="carte-titre">Équipe 1</span>
+              <span class="prog"><span class="part complet"><span class="n">4</span>/4</span></span>
+            </div>
+            <ul class="liste">
+              <li><span class="grimpeur">BERNARD Lucie</span><span class="tag-club">CAF Bègles</span><span class="pousse sexe">F · 34 ans</span></li>
+              <li><span class="grimpeur">MARTIN Hugo</span><span class="tag-club">Roc'n Bloc</span><span class="pousse sexe">H · 17 ans</span></li>
+              <li><span class="grimpeur">PETIT Sarah</span><span class="tag-club">Vertical'Art</span><span class="pousse sexe">F · 22 ans</span></li>
+              <li><span class="grimpeur">ROUX Karim</span><span class="tag-club">CAF Bègles</span><span class="pousse sexe">H · 45 ans</span></li>
+            </ul>
+            <div class="erreur">Équipe complète : une équipe adulte compte au plus 4 grimpeurs (R12).</div>
+          </div>
+
+          <div class="carte">
+            <div class="carte-entete">
+              <span class="carte-titre">Équipe 2</span>
+              <span class="prog"><span class="part"><span class="n">2</span>/4</span></span>
+            </div>
+            <ul class="liste">
+              <li><span class="grimpeur">DUPONT Emma</span><span class="tag-club">Vertical'Art</span><span class="pousse sexe">F · 28 ans</span></li>
+              <li><span class="grimpeur">LEROY Tom</span><span class="tag-club">Roc'n Bloc</span><span class="pousse sexe">H · 31 ans</span></li>
+            </ul>
+            <div class="form-ajout">
+              <span class="lbl">Ajouter un grimpeur (tous clubs, 16 ans et plus)</span>
+              <input class="rech" type="search" placeholder="Nom ou prénom…" value="gar">
+              <ul class="liste">
+                <li><span class="grimpeur">GARCIA Inès</span><span class="tag-club">CAF Bègles</span><span class="pousse"><button class="mini-btn">Ajouter</button></span></li>
+                <li class="inactif"><span class="grimpeur">GARNIER Léo</span><span class="tag-club">Roc'n Bloc</span><span class="pousse sexe">15 ans — non éligible (R2)</span></li>
+              </ul>
+            </div>
+          </div>
+
+          <button class="btn btn-fantome">+ Nouvelle équipe (« Équipe 3 », R14)</button>
+          <div class="note-lecture" style="margin-top:12px">Mixité et mélange des clubs recommandés, non contrôlés (R15).
+          Les coachs n'ont aucun droit d'écriture sur les équipes adultes (R10).</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 3 · JETON CAPITAINE ============ -->
+    <section class="colonne">
+      <p class="titre-option">3 · Jetons capitaine — admin (R16, R17, R20)</p>
+      <p class="desc-option">Un jeton QR par équipe, au plus un actif. Il n'ouvre de session qu'en ③ compétition.</p>
+      <div class="tel tel-admin">
+        <div class="barre-haut">
+          <div class="lien-retour">← Rencontre</div>
+          <div class="titre-ecran">Jetons QR</div>
+          <div class="meta">Catégorie adulte · 17 janv. 2026</div>
+        </div>
+        <div class="corps">
+          <div class="epreuve-titre">Capitaines d'équipe</div>
+          <div class="carte qr-carte">
+            <div class="carte-entete"><span class="carte-titre">Équipe 1</span><span class="etat-jeton actif">Actif</span></div>
+            <div class="qr" aria-label="QR code du capitaine de l'Équipe 1"></div>
+            <div class="carte-sous">Valable en ③ compétition seulement.</div>
+            <div class="ligne-btns">
+              <button class="btn btn-fantome">Régénérer</button>
+              <button class="btn btn-danger">Révoquer</button>
+            </div>
+          </div>
+          <div class="carte">
+            <div class="carte-entete"><span class="carte-titre">Équipe 2</span><span class="etat-jeton aucun">Aucun jeton</span></div>
+            <button class="btn btn-primaire">Générer le jeton capitaine</button>
+          </div>
+          <div class="epreuve-titre">Juges de vitesse</div>
+          <div class="carte"><div class="carte-entete"><span class="carte-titre">Voie 1 — dalle</span><span class="etat-jeton actif">Actif</span></div></div>
+          <div class="carte"><div class="carte-entete"><span class="carte-titre">Voie 2</span><span class="etat-jeton aucun">Aucun jeton</span></div></div>
+          <div class="note-lecture">Pas de jeton « coach temporaire » en adulte (R20).</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 3bis · LIBELLÉ DES VOIES DE VITESSE ============ -->
+    <section class="colonne">
+      <p class="titre-option">3bis · Libellé des voies de vitesse (R9, R9bis)</p>
+      <p class="desc-option">Voies nommées « Voie 1 » et « Voie 2 » par défaut ; l'admin peut renommer chaque voie.</p>
+      <div class="tel tel-admin">
+        <div class="barre-haut">
+          <div class="lien-retour">← Rencontre</div>
+          <div class="titre-ecran">Structure — vitesse</div>
+          <div class="meta">Catégorie adulte · 17 janv. 2026</div>
+        </div>
+        <div class="corps">
+          <div class="carte">
+            <div class="carte-entete"><span class="carte-titre">Voie 1</span><span class="carte-sous">n° 1</span></div>
+            <div class="champ-form"><label for="lv1">Libellé</label><input id="lv1" type="text" value="Voie 1 — dalle"></div>
+            <button class="btn btn-primaire">Enregistrer le libellé</button>
+          </div>
+          <div class="carte">
+            <div class="carte-entete"><span class="carte-titre">Voie 2</span><span class="carte-sous">n° 2</span></div>
+            <div class="champ-form"><label for="lv2">Libellé</label><input id="lv2" type="text" value=""></div>
+            <button class="btn btn-primaire">Enregistrer le libellé</button>
+            <div class="erreur">Le libellé de la voie de vitesse est obligatoire : « Voie 2 » est conservé (R9bis).</div>
+          </div>
+          <div class="note-lecture">Le libellé s'affiche sur les jetons QR, l'écran juge et la saisie. Modification possible
+          dans le gabarit et dans chaque rencontre, toutes catégories.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 4 · CAPITAINE : SON ÉQUIPE ============ -->
+    <section class="colonne">
+      <p class="titre-option">4 · Capitaine — son équipe (R18, R19)</p>
+      <p class="desc-option">Après le scan du QR en ③ : seuls les membres de son équipe, avec progression et score.</p>
+      <div class="tel">
+        <div class="barre-haut">
+          <div class="titre-rencontre">17 janv. 2026 — Roc'n Bloc Mérignac</div>
+          <div class="meta">Adulte · Capitaine de l'<strong>Équipe 1</strong></div>
+          <div class="badge-phase comp">● Compétition — saisie des résultats</div>
+        </div>
+        <div class="corps">
+          <div class="note-public">Vous saisissez les voies et blocs de votre équipe. La vitesse vient des juges (lecture seule).</div>
+          <div class="gr-item">
+            <div class="gr-head"><span class="gr-nom">BERNARD Lucie</span><span class="score mini pousse">87<span class="u">pts</span></span><span class="chev">›</span></div>
+            <div class="gr-chips"><span class="chip ok"><span class="n">4</span>/6 voies</span><span class="chip ok"><span class="n">2</span>/2 blocs</span><span class="chip vit-temps">⚡ <span class="n">9,412 s</span></span></div>
+          </div>
+          <div class="gr-item">
+            <div class="gr-head"><span class="gr-nom">MARTIN Hugo</span><span class="score mini pousse">25<span class="u">pts</span></span><span class="chev">›</span></div>
+            <div class="gr-chips"><span class="chip ok"><span class="n">3</span>/6 voies</span><span class="chip"><span class="n">0</span>/2 blocs</span><span class="chip vit-attente">⚡ à saisir</span></div>
+          </div>
+          <div class="gr-item">
+            <div class="gr-head"><span class="gr-nom">PETIT Sarah</span><span class="score mini pousse zero">0<span class="u">pts</span></span><span class="chev">›</span></div>
+            <div class="gr-chips"><span class="chip"><span class="n">0</span>/6 voies</span><span class="chip"><span class="n">0</span>/2 blocs</span><span class="chip vit-attente">⚡ à saisir</span></div>
+          </div>
+          <div class="gr-item">
+            <div class="gr-head"><span class="gr-nom">ROUX Karim</span><span class="score mini pousse">142<span class="u">pts</span></span><span class="chev">›</span></div>
+            <div class="gr-chips"><span class="chip ok"><span class="n">6</span>/6 voies</span><span class="chip ok"><span class="n">2</span>/2 blocs</span><span class="chip vit-chute">⚡ chute</span></div>
+          </div>
+          <button class="btn btn-fantome" style="margin-top:12px">Voir le classement</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 5 · CAPITAINE : SAISIE AVEC MOULINETTE ============ -->
+    <section class="colonne">
+      <p class="titre-option">5 · Saisie d'un grimpeur — moulinette (R22–R27)</p>
+      <p class="desc-option">Issues : Top, Top en moulinette, Zone 2, Zone 1, Échec. La moulinette vaut la moitié du top, sans zone.</p>
+      <div class="tel">
+        <div class="barre-haut">
+          <div class="lien-retour">← Équipe 1</div>
+          <div class="titre-rencontre">MARTIN Hugo</div>
+          <div class="meta">Adulte · Roc'n Bloc · 3 voies réalisées</div>
+          <div class="badge-phase comp">● Compétition — saisie</div>
+        </div>
+        <div class="corps">
+          <div class="score-bloc"><div><div class="lbl">Score</div><div class="sub">voies + blocs + vitesse</div></div><span class="score">25<span class="u">pts</span></span></div>
+
+          <div class="carte">
+            <div class="carte-entete">
+              <span class="epreuve-titre" style="margin:0">Voie de difficulté</span>
+              <span class="prog"><span class="part"><span class="lbl">réalisées</span> <span class="n">3</span>/6</span></span>
+            </div>
+            <div class="saisie col">
+              <div class="ligne-voie"><span class="voie-id">T3</span><span class="cotation">5b</span><span class="voie-pts pousse">8 pts</span></div>
+              <div class="seg large">
+                <button class="sel-top">Top</button><button>Moulinette</button><button>Zone 2</button><button>Zone 1</button><button>Échec</button>
+              </div>
+            </div>
+            <div class="saisie col">
+              <div class="ligne-voie"><span class="voie-id">T4</span><span class="cotation">5c</span><span class="voie-pts pousse">5 pts</span></div>
+              <div class="seg large">
+                <button>Top</button><button class="sel-moul">Moulinette</button><button>Zone 2</button><button>Zone 1</button><button>Échec</button>
+              </div>
+              <div class="aide">Moulinette : moitié du top (10 → 5), zones non comptées (R25).</div>
+            </div>
+            <div class="saisie col">
+              <div class="ligne-voie"><span class="voie-id">T6</span><span class="cotation">6b</span><span class="voie-pts pousse">12 pts</span></div>
+              <div class="seg large">
+                <button>Top</button><button>Moulinette</button><button class="sel-partiel">Zone 2</button><button>Zone 1</button><button>Échec</button>
+              </div>
+            </div>
+            <div class="form-ajout">
+              <span class="lbl">Ajouter une voie</span>
+              <div class="ligne-champs">
+                <div class="champ"><label for="v">Voie</label><select id="v"><option>T5 (6a)</option><option>T5 bis (6a)</option></select></div>
+              </div>
+              <button class="btn btn-primaire">Ajouter</button>
+            </div>
+          </div>
+
+          <div class="carte">
+            <span class="epreuve-titre">Bloc</span>
+            <div class="saisie col"><div class="ligne-voie"><span class="voie-id">B1</span><span class="issue vide pousse">À saisir</span></div>
+              <div class="seg bloc-seg"><button>Zone — 15 pts</button><button>Bloc complet — 30 pts</button><button>Échec</button></div></div>
+            <div class="saisie col"><div class="ligne-voie"><span class="voie-id">B2</span><span class="issue vide pousse">À saisir</span></div>
+              <div class="seg bloc-seg"><button>Zone 1 — 20 pts</button><button>Zone 2 — 50 pts</button><button>Bloc complet — 70 pts</button><button>Échec</button></div></div>
+          </div>
+
+          <div class="carte">
+            <span class="epreuve-titre">Vitesse</span>
+            <div class="saisie"><span class="voie-id">⚡</span><span class="issue vide pousse">À saisir par le juge</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 6 · REFUS ============ -->
+    <section class="colonne">
+      <p class="titre-option">6 · Refus côté capitaine (R17, R18, R22)</p>
+      <p class="desc-option">Jeton hors ③, grimpeur d'une autre équipe, 7ᵉ voie.</p>
+      <div class="tel">
+        <div class="barre-haut">
+          <div class="titre-ecran">Session capitaine</div>
+          <div class="meta">Adulte · Équipe 1</div>
+        </div>
+        <div class="corps">
+          <div class="carte">
+            <div class="carte-entete"><span class="carte-titre">QR scanné en ② préparation</span></div>
+            <div class="erreur" style="margin-top:0">Ce QR capitaine n'est valable que pendant la compétition. Réessayez quand la rencontre aura démarré (R17).</div>
+          </div>
+          <div class="carte">
+            <div class="carte-entete"><span class="carte-titre">Autre équipe</span></div>
+            <div class="erreur" style="margin-top:0">Vous ne pouvez saisir que les résultats des grimpeurs de votre équipe (R18).</div>
+          </div>
+          <div class="carte">
+            <div class="carte-entete">
+              <span class="epreuve-titre" style="margin:0">Voie de difficulté</span>
+              <span class="prog"><span class="part complet"><span class="lbl">réalisées</span> <span class="n">6</span>/6</span></span>
+            </div>
+            <button class="btn btn-primaire" disabled>Maximum atteint (6/6)</button>
+            <div class="erreur">Impossible d'ajouter une 7ᵉ voie : un grimpeur réalise au plus 6 voies (R22).</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 7 · CLASSEMENT ADULTE ============ -->
+    <section class="colonne">
+      <p class="titre-option">7 · Classement adulte (R29–R31)</p>
+      <p class="desc-option">Individuel séparé par sexe et par équipe. Pas d'onglet « Club ».</p>
+      <div class="tel">
+        <div class="barre-haut">
+          <div class="lien-retour">← Rencontre</div>
+          <div class="titre-rencontre">Classement — 17 janv. 2026</div>
+          <div class="meta">Adulte · <span class="officiel non">Non officiel</span></div>
+          <div class="tabs">
+            <button class="actif">Individuel</button>
+            <button>Équipes</button>
+          </div>
+        </div>
+        <div class="corps">
+          <div class="carte">
+            <span class="epreuve-titre">Femmes</span>
+            <table class="clsmt">
+              <thead><tr><th scope="col">#</th><th scope="col">Grimpeuse</th><th scope="col">Club</th><th scope="col" style="text-align:right">Pts</th></tr></thead>
+              <tbody>
+                <tr><td class="rang">1</td><td class="nom">BERNARD Lucie</td><td>CAF Bègles</td><td class="pts">187</td></tr>
+                <tr><td class="rang">2</td><td class="nom">DUPONT Emma</td><td>Vertical'Art</td><td class="pts">164</td></tr>
+                <tr><td class="rang">3</td><td class="nom">PETIT Sarah</td><td>Vertical'Art</td><td class="pts">121</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="carte">
+            <span class="epreuve-titre">Équipes</span>
+            <table class="clsmt">
+              <thead><tr><th scope="col">#</th><th scope="col">Équipe</th><th scope="col" style="text-align:right">Pts</th></tr></thead>
+              <tbody>
+                <tr><td class="rang">1</td><td class="nom">Équipe 1</td><td class="pts">612</td></tr>
+                <tr><td class="rang">2</td><td class="nom">Équipe 2</td><td class="pts">498</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="note-lecture">Pas de classement club en adulte (R30). Chaque grimpeur est affiché avec son club d'origine ; une équipe par son nom seul (R31).</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 8 · ÉPREUVES DÉSACTIVABLES (ADMIN, ②) ============ -->
+    <section class="colonne">
+      <p class="titre-option">8 · Épreuves de la rencontre — admin (R36, R37, R39)</p>
+      <p class="desc-option">En ① ou ②, selon les présents : bloc et vitesse se désactivent et se réactivent. Les voies restent toujours actives.</p>
+      <div class="tel tel-admin">
+        <div class="barre-haut">
+          <div class="lien-retour">← Rencontre</div>
+          <div class="titre-ecran">Structure — épreuves</div>
+          <div class="meta">Catégorie adulte · 17 janv. 2026</div>
+          <div class="badge-phase verif">② Préparation</div>
+        </div>
+        <div class="corps">
+          <div class="carte">
+            <div class="epreuve-ligne">
+              <div class="info"><div class="carte-titre">Voies de difficulté</div><div class="carte-sous">10 voies · T1 à T10</div></div>
+              <span class="etat-ep fixe">Toujours active</span>
+            </div>
+          </div>
+          <div class="carte desactivee">
+            <div class="epreuve-ligne">
+              <div class="info"><div class="carte-titre">Bloc</div><div class="carte-sous">2 blocs conservés · masqués à la saisie</div></div>
+              <span class="etat-ep off">Désactivée</span>
+            </div>
+            <div class="ligne-btns"><button class="btn btn-fantome">Réactiver l'épreuve de bloc</button></div>
+          </div>
+          <div class="carte">
+            <div class="epreuve-ligne">
+              <div class="info"><div class="carte-titre">Vitesse</div><div class="carte-sous">Voie 1 — dalle · Voie 2 · barème 100 → 10</div></div>
+              <span class="etat-ep on">Active</span>
+            </div>
+            <div class="ligne-btns"><button class="btn btn-danger">Désactiver l'épreuve de vitesse</button></div>
+          </div>
+          <div class="note-lecture">Désactiver la vitesse révoque ses jetons juges ; après réactivation, générez-en de
+          nouveaux (R39). Blocs, paliers, voies de vitesse et barème sont conservés (R37).</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 9 · EFFETS EN ③ ============ -->
+    <section class="colonne">
+      <p class="titre-option">9 · En compétition, bloc désactivé (R38, R40)</p>
+      <p class="desc-option">La saisie du capitaine et de l'admin ne montre que les épreuves actives ; aucun NP à la clôture.</p>
+      <div class="tel">
+        <div class="barre-haut">
+          <div class="lien-retour">← Équipe 1</div>
+          <div class="titre-rencontre">MARTIN Hugo</div>
+          <div class="meta">Adulte · Roc'n Bloc</div>
+          <div class="badge-phase comp">● Compétition — saisie</div>
+        </div>
+        <div class="corps">
+          <div class="score-bloc"><div><div class="lbl">Score</div><div class="sub">voies + vitesse</div></div><span class="score">25<span class="u">pts</span></span></div>
+          <div class="carte">
+            <div class="carte-entete">
+              <span class="epreuve-titre" style="margin:0">Voie de difficulté</span>
+              <span class="prog"><span class="part"><span class="lbl">réalisées</span> <span class="n">3</span>/6</span></span>
+            </div>
+            <div class="saisie"><span class="voie-id">T3</span><span class="cotation">5b</span><span class="issue top pousse">Top · 8</span></div>
+            <div class="saisie"><span class="voie-id">T4</span><span class="cotation">5c</span><span class="issue partiel pousse">Moulinette · 5</span></div>
+            <div class="saisie"><span class="voie-id">T6</span><span class="cotation">6b</span><span class="issue partiel pousse">Zone 2 · 12</span></div>
+          </div>
+          <div class="carte">
+            <span class="epreuve-titre">Vitesse</span>
+            <div class="saisie"><span class="voie-id">⚡</span><span class="issue vide pousse">À saisir par le juge</span></div>
+          </div>
+          <div class="note-lecture">Pas de section « Bloc » : l'épreuve est désactivée pour cette rencontre (R38).</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 10 · FIGÉ DÈS LA ③ ============ -->
+    <section class="colonne">
+      <p class="titre-option">10 · État figé dès la ③ (R37)</p>
+      <p class="desc-option">En compétition, clôture et résultats : l'état des épreuves se consulte, ne se modifie plus.</p>
+      <div class="tel tel-admin">
+        <div class="barre-haut">
+          <div class="lien-retour">← Rencontre</div>
+          <div class="titre-ecran">Structure — épreuves</div>
+          <div class="meta">Catégorie adulte · 17 janv. 2026</div>
+          <div class="badge-phase comp">● Compétition</div>
+        </div>
+        <div class="corps">
+          <div class="note-lecture">Structure verrouillée : les épreuves ne s'activent ou ne se désactivent qu'en
+          pré-compétition ou en préparation.</div>
+          <div class="carte"><div class="epreuve-ligne"><div class="info"><div class="carte-titre">Voies de difficulté</div></div><span class="etat-ep fixe">Toujours active</span></div></div>
+          <div class="carte desactivee"><div class="epreuve-ligne"><div class="info"><div class="carte-titre">Bloc</div></div><span class="etat-ep off">Désactivée</span></div></div>
+          <div class="carte"><div class="epreuve-ligne"><div class="info"><div class="carte-titre">Vitesse</div></div><span class="etat-ep on">Active</span></div></div>
+          <div class="epreuve-titre">Jetons QR — juges de vitesse</div>
+          <div class="carte"><div class="carte-entete"><span class="carte-titre">Voie 1 — dalle</span><span class="etat-jeton actif">Actif</span></div></div>
+          <div class="note-lecture">Si la vitesse était désactivée, cette section indiquerait « Épreuve de vitesse
+          désactivée : aucun jeton juge » (R39).</div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <div class="legende">
+    <h3>Règles illustrées</h3>
+    <ul>
+      <li>Écran 1 : R1, R6–R9 · Écran 2 : R2, R10–R15 · Écran 3 : R16, R17, R20 · Écran 3bis : R9, R9bis.</li>
+      <li>Écrans 4 à 6 : R17–R19, R21–R28 · Écran 7 : R29–R31.</li>
+      <li>Écran 8 : R36, R37, R39 · Écran 9 : R38, R40, R41 · Écran 10 : R37, R39.</li>
+      <li>La maquette illustre la spec #20, qui fait foi en cas d'écart.</li>
+    </ul>
+  </div>
+</body>
+</html>

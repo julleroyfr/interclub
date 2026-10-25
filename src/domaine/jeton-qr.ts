@@ -2,13 +2,13 @@
 // R15–R23).
 //
 // Un jeton QR ouvre des sessions éphémères d'un rôle et d'un périmètre pour une
-// rencontre. Deux natures (R9) : `coach_temporaire` (périmètre = un club) ou
-// `juge` (périmètre = une voie de vitesse). Ici : nature/périmètre, matrice
+// rencontre. Trois natures (R9 ; spec #20 R16) : `coach_temporaire` (périmètre =
+// un club), `juge` (une voie de vitesse) ou `capitaine` (une équipe adulte). Ici : nature/périmètre, matrice
 // « qui peut gérer », révocation (R22) et régénération (R23). Pas d'accès
 // Supabase ni de génération de secret (la `valeur` est fournie par la base).
 
-/** Nature d'un jeton QR (R9). */
-export type NatureJeton = 'coach_temporaire' | 'juge'
+/** Nature d'un jeton QR (R9 ; capitaine : spec #20 R16). */
+export type NatureJeton = 'coach_temporaire' | 'juge' | 'capitaine'
 
 /** Périmètre demandé pour un nouveau jeton, avant validation. */
 export type DemandeJeton = {
@@ -16,6 +16,8 @@ export type DemandeJeton = {
   nature: NatureJeton
   clubId: string | null
   voieVitesseId: string | null
+  /** Équipe du capitaine (spec #20 R16) ; absente pour les autres natures. */
+  equipeId?: string | null
 }
 
 /** Périmètre validé d'un jeton (reflète `chk_jeton_nature_perimetre`). */
@@ -24,6 +26,8 @@ export type PerimetreJeton = {
   nature: NatureJeton
   clubId: string | null
   voieVitesseId: string | null
+  /** Équipe du capitaine (spec #20 R16), `null` sinon. */
+  equipeId: string | null
 }
 
 /** Acteur permanent qui tente de gérer un jeton (spec #1 R4 : une session = un rôle). */
@@ -47,12 +51,30 @@ export class JetonQrInvalideError extends Error {
  * Valide et normalise le périmètre d'un nouveau jeton (R9, R17), reflet de la
  * contrainte SQL `chk_jeton_nature_perimetre` :
  * - `coach_temporaire` ⇒ un club, sans voie ;
- * - `juge` ⇒ une voie de vitesse, sans club.
+ * - `juge` ⇒ une voie de vitesse, sans club ;
+ * - `capitaine` ⇒ une équipe, sans club ni voie (spec #20 R16).
+ * Seul le capitaine porte une équipe.
  */
 export function creerJetonQr(demande: DemandeJeton): PerimetreJeton {
   const rencontreId = demande.rencontreId?.trim() ?? ''
   if (!rencontreId) {
     throw new JetonQrInvalideError('Un jeton doit être lié à une rencontre.')
+  }
+
+  const equipeId = demande.equipeId?.trim() ?? ''
+  if (demande.nature === 'capitaine') {
+    if (!equipeId) {
+      throw new JetonQrInvalideError('Un jeton capitaine doit porter une équipe.')
+    }
+    if (demande.clubId || demande.voieVitesseId) {
+      throw new JetonQrInvalideError(
+        'Un jeton capitaine ne porte ni club ni voie de vitesse.',
+      )
+    }
+    return { rencontreId, nature: 'capitaine', clubId: null, voieVitesseId: null, equipeId }
+  }
+  if (equipeId) {
+    throw new JetonQrInvalideError('Seul un jeton capitaine porte une équipe.')
   }
 
   if (demande.nature === 'coach_temporaire') {
@@ -67,7 +89,7 @@ export function creerJetonQr(demande: DemandeJeton): PerimetreJeton {
         'Un jeton coach temporaire ne porte pas de voie de vitesse.',
       )
     }
-    return { rencontreId, nature: 'coach_temporaire', clubId, voieVitesseId: null }
+    return { rencontreId, nature: 'coach_temporaire', clubId, voieVitesseId: null, equipeId: null }
   }
 
   if (demande.nature === 'juge') {
@@ -82,7 +104,7 @@ export function creerJetonQr(demande: DemandeJeton): PerimetreJeton {
         'Un jeton juge ne porte pas de club.',
       )
     }
-    return { rencontreId, nature: 'juge', clubId: null, voieVitesseId }
+    return { rencontreId, nature: 'juge', clubId: null, voieVitesseId, equipeId: null }
   }
 
   throw new JetonQrInvalideError(
@@ -95,7 +117,8 @@ export function creerJetonQr(demande: DemandeJeton): PerimetreJeton {
  * (R15, R16, R20, R21) :
  * - **admin** : tout jeton, tout périmètre (R15, R20) ;
  * - **coach permanent** : uniquement le jeton `coach_temporaire` de **son** club
- *   (R16, R21) — jamais un jeton `juge` (R17) ni un autre club ;
+ *   (R16, R21) — jamais un jeton `juge` (R17), `capitaine` (spec #20 R16) ni un
+ *   autre club ;
  * - **sans rôle** : rien (R5 fail-closed).
  */
 export function peutGererJeton(acteur: Acteur, cible: CibleJeton): boolean {
@@ -136,6 +159,7 @@ export function regenererJeton(
       nature: ancien.nature,
       clubId: ancien.clubId,
       voieVitesseId: ancien.voieVitesseId,
+      equipeId: ancien.equipeId,
       valeur: nouvelleValeur,
       actif: true,
     },

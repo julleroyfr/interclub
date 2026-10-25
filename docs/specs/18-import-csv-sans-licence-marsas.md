@@ -103,6 +103,8 @@ second import du même fichier ne crée aucun doublon.
   FFME** (spec #13 R6–R8) : seuls les grimpeurs nés en
   `année de référence − 18` ou après sont importés ; les autres sont **ignorés**
   (comptés à part, pas en erreur). Aucun âge minimal n'est appliqué.
+  *(Catégorie adulte, rév. 2026-10-23 : aucun filtre d'âge, tous les grimpeurs
+  du fichier sont importés — spec #20 R5.)*
 
 ### Rapprochement & doublons
 
@@ -148,6 +150,8 @@ second import du même fichier ne crée aucun doublon.
   **doublons dans le fichier**, et les **lignes en erreur** ou **ambiguës**
   (numéro de ligne, identité, raison), ainsi que l'année de référence. Après un
   import réussi, l'écran Grimpeurs (spec #3 R26) reflète l'état à jour.
+  *(Catégorie adulte, rév. 2026-10-23 : ni « ignorés (hors âge) » ni année de
+  référence — spec #20 R5.)*
 
 ## Déroulé (vue d'ensemble)
 

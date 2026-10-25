@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  clubsEngagesExport,
   construireDocumentExport,
   nomFichierExport,
   peutExporter,
@@ -235,5 +236,68 @@ describe('spec #15 — Sections (R11–R16)', () => {
 
   it('ne modifie pas les données source (accents, apostrophes conservés) (R20)', () => {
     expect(doc.sections[0]!.lignes[1]![1]).toBe("D'Aubigné Chloé")
+  })
+})
+
+describe('spec #20 — Clubs engagés pour l’export (R32)', () => {
+  const equipes = [CLUB_A]
+  const grimpeurs = [CLUB_A, CLUB_B]
+
+  it('en enfant et ado : clubs porteurs des équipes (spec #15 R4)', () => {
+    expect(clubsEngagesExport('ado', equipes, grimpeurs)).toEqual([CLUB_A])
+    expect(clubsEngagesExport('enfant', equipes, grimpeurs)).toEqual([CLUB_A])
+  })
+
+  it('en adulte : clubs d’origine des grimpeurs composés (R32)', () => {
+    expect(clubsEngagesExport('adulte', [], grimpeurs)).toEqual([CLUB_A, CLUB_B])
+  })
+
+  it('dédoublonne et ignore les clubs vides', () => {
+    expect(clubsEngagesExport('adulte', [], [CLUB_B, null, CLUB_B])).toEqual([CLUB_B])
+    expect(clubsEngagesExport('ado', [CLUB_A, CLUB_A, null], [])).toEqual([CLUB_A])
+  })
+
+  it('le coach d’un club dont un grimpeur est composé peut exporter l’adulte (R32)', () => {
+    const clubsEngages = clubsEngagesExport('adulte', [], [CLUB_B])
+    expect(
+      peutExporter({ role: 'coach_permanent', clubId: CLUB_B }, { phase: 'resultats_publics', clubsEngages }),
+    ).toBe(true)
+    expect(
+      peutExporter({ role: 'coach_permanent', clubId: CLUB_A }, { phase: 'resultats_publics', clubsEngages }),
+    ).toBe(false)
+  })
+})
+
+describe('spec #20 — Document d’une rencontre adulte (R30/R31)', () => {
+  const adulte = construireDocumentExport(
+    source({
+      categorie: 'adulte',
+      equipes: [
+        { rang: 1, equipeNom: 'Équipe 2', clubNom: null, score: 900 },
+        { rang: 2, equipeNom: 'Équipe 1', clubNom: null, score: 850 },
+      ],
+      clubs: [],
+    }),
+    GENERE_LE,
+  )
+
+  it('n’a pas de section Clubs (R30)', () => {
+    expect(adulte.sections.map((s) => s.titre)).toEqual(['Individuel Filles', 'Individuel Garçons', 'Équipes'])
+  })
+
+  it('présente l’équipe par son nom seul : colonnes Rang, Équipe, Score (R31)', () => {
+    expect(adulte.sections[2]!.colonnes.map((c) => c.libelle)).toEqual(['Rang', 'Équipe', 'Score'])
+    expect(adulte.sections[2]!.lignes).toEqual([
+      ['1', 'Équipe 2', '900'],
+      ['2', 'Équipe 1', '850'],
+    ])
+  })
+
+  it('garde le club d’origine au classement individuel (R31)', () => {
+    expect(adulte.sections[0]!.colonnes.map((c) => c.libelle)).toContain("Club d'origine")
+  })
+
+  it('porte le libellé « Adulte » (R1)', () => {
+    expect(adulte.entete.categorie).toBe('Adulte')
   })
 })

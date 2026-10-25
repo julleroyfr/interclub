@@ -25,6 +25,7 @@ export type { TableTempsReel } from './TempsReel'
 export { EnTetePage, TitreSection } from './Typographie'
 
 export { LienExportPdf } from './LienExportPdf'
+export { FormLibelleVoieVitesse } from './FormLibelleVoieVitesse'
 
 export {
   Tableau,

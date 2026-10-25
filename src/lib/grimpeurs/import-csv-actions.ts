@@ -8,7 +8,6 @@ import {
   lireCsv,
   type GrimpeurCsv,
 } from '@/domaine/import-csv-sans-licence'
-import { anneeReferenceParDefaut } from '@/domaine/import-licencies'
 import { getUtilisateurCourant } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
 
@@ -18,13 +17,6 @@ import { type EtatImportCsv } from './import-csv'
 // direct : garde admin explicite (R1) + la RLS reste la frontière. Rapprochement
 // et licences générées sont faits dans la RPC atomique `importer_grimpeurs_csv`
 // (R13, R14, R16).
-
-/** Date du jour (calendrier local) au format ISO `AAAA-MM-JJ`. */
-function aujourdhuiISO(): string {
-  const d = new Date()
-  const p = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
-}
 
 // Traduit une erreur RPC/Postgres de l'écriture en message lisible (R16).
 function messageErreurEcriture(message: string | undefined): string {
@@ -75,8 +67,9 @@ export async function importerGrimpeursCsv(
     throw e
   }
 
-  // 4. Analyse pure : validation, filtre d'âge, doublons du fichier (R16).
-  const analyse = analyserImportCsv(lignes, anneeReferenceParDefaut(aujourdhuiISO()))
+  // 4. Analyse pure : validation, doublons du fichier (R16) ; tout âge importé
+  //    (spec #20 R5).
+  const analyse = analyserImportCsv(lignes)
 
   // 5. Écriture atomique via la RPC (R16). Rien à écrire → 0 créé.
   let crees = 0
@@ -106,12 +99,9 @@ export async function importerGrimpeursCsv(
   return {
     compteRendu: {
       club: club.nom as string,
-      anneeReference: analyse.anneeReference,
-      seuilAnneeNaissance: analyse.seuilAnneeNaissance,
       totalLignes: lignes.length,
       crees,
       dejaPresents,
-      ignoresHorsAge: analyse.ignoresHorsAge,
       doublons: analyse.doublons,
       erreurs: [...analyse.erreurs, ...ambigus].sort((a, b) => a.ligne - b.ligne),
     },

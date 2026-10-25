@@ -2,7 +2,7 @@
 // Pas d'accès Supabase : validation des niveaux réglementaires et construction
 // du payload de copie gabarit → épreuves instanciées.
 
-import type { Categorie } from './rencontre'
+import { aVoiesLibres, type Categorie } from './rencontre'
 
 /** Niveaux moulinette réglementaires — enfant uniquement (R37). */
 export const NIVEAUX_MOULINETTE = ['M1', 'M2', 'M3', 'M4'] as const
@@ -26,8 +26,8 @@ export class NiveauVoieInvalideError extends Error {
 /**
  * Valide qu'un niveau de voie de difficulté est réglementaire (R37).
  * - Enfant moulinette : M1–M4.
- * - Enfant et ado tête : T1–T10.
- * - Ado : aucune voie moulinette autorisée.
+ * - Enfant, ado et adulte tête : T1–T10.
+ * - Ado et adulte : aucune voie moulinette dédiée (spec #20 R7).
  * Lance `NiveauVoieInvalideError` si le niveau est invalide.
  */
 export function validerNiveauVoie(
@@ -36,9 +36,9 @@ export function validerNiveauVoie(
   categorie: Categorie,
 ): void {
   if (typeVoie === 'moulinette') {
-    if (categorie === 'ado') {
+    if (aVoiesLibres(categorie)) {
       throw new NiveauVoieInvalideError(
-        `Les voies moulinette ne sont pas autorisées pour la catégorie ado.`,
+        `Les voies moulinette ne sont pas autorisées pour la catégorie ${categorie}.`,
       )
     }
     if (!(NIVEAUX_MOULINETTE as readonly string[]).includes(niveau)) {
@@ -81,7 +81,7 @@ export function validerPoints(points: number, libelle = 'Les points'): void {
 export type ChampsPointsVoie = {
   /** Prise valorisée — voies tête enfant uniquement (R38). */
   priseValorisee: boolean
-  /** Zones 1 et 2 — voies ado uniquement (R38). */
+  /** Zones 1 et 2 — voies ado et adulte (R38, spec #20 R7). */
   zones: boolean
 }
 
@@ -91,8 +91,9 @@ export type ChampsPointsVoie = {
  * formulaire d'ajout de voie (R43). Le champ « points voie entière » est
  * toujours requis et n'apparaît donc pas ici.
  * - Enfant tête → prise valorisée.
- * - Ado (tête) → zones 1/2.
- * - Enfant moulinette / ado moulinette (interdit R37) → aucun champ conditionnel.
+ * - Ado et adulte (tête) → zones 1/2 (spec #20 R7).
+ * - Enfant moulinette / moulinette ado ou adulte (interdit R37) → aucun champ
+ *   conditionnel.
  */
 export function champsPointsVoie(
   categorie: Categorie,
@@ -100,7 +101,7 @@ export function champsPointsVoie(
 ): ChampsPointsVoie {
   return {
     priseValorisee: categorie === 'enfant' && typeVoie === 'tete',
-    zones: categorie === 'ado' && typeVoie === 'tete',
+    zones: aVoiesLibres(categorie) && typeVoie === 'tete',
   }
 }
 

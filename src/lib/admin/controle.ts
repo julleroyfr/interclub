@@ -101,13 +101,16 @@ export async function getControleRencontre(
       .order('ordre'),
     supabase
       .from('bloc')
-      .select('id, code, ordre, epreuve!inner(rencontre_id)')
+      // Épreuve de bloc désactivée (adulte) : pas de support (spec #20 R38).
+      .select('id, code, ordre, epreuve!inner(rencontre_id, active)')
       .eq('epreuve.rencontre_id', rencontreId)
+      .eq('epreuve.active', true)
       .order('ordre'),
     supabase
       .from('bloc_palier')
-      .select('id, libelle, bloc!inner(epreuve!inner(rencontre_id))')
-      .eq('bloc.epreuve.rencontre_id', rencontreId),
+      .select('id, libelle, bloc!inner(epreuve!inner(rencontre_id, active))')
+      .eq('bloc.epreuve.rencontre_id', rencontreId)
+      .eq('bloc.epreuve.active', true),
     // Équipe d'accueil (club et son nom) de chaque grimpeur composé (R6).
     pagine(
       (debut, fin) =>

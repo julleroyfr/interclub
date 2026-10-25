@@ -2,11 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 
-import {
-  analyserImport,
-  anneeReferenceParDefaut,
-  type GrimpeurImport,
-} from '@/domaine/import-licencies'
+import { analyserImport, type GrimpeurImport } from '@/domaine/import-licencies'
 import { getUtilisateurCourant } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
 
@@ -16,13 +12,6 @@ import { type EtatImport } from './import'
 // Import des licenciés (spec #13). Server Action = surface joignable par POST
 // direct : garde admin explicite (R1) + la RLS reste la frontière. L'écriture
 // (clubs + upsert) passe par la RPC atomique `importer_licencies` (R16).
-
-/** Date du jour (calendrier local) au format ISO `AAAA-MM-JJ`. */
-function aujourdhuiISO(): string {
-  const d = new Date()
-  const p = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
-}
 
 /** Refuse l'appelant non-admin (R1), ou `null` si admin. */
 async function refuserSiNonAdmin(): Promise<EtatImport | null> {
@@ -63,10 +52,7 @@ export async function importerLicencies(
     return { erreur: 'Le fichier doit être au format .xlsx.' }
   }
 
-  // 2. Année de référence — toujours l'année de fin de la saison courante (R6).
-  const anneeReference = anneeReferenceParDefaut(aujourdhuiISO())
-
-  // 3. Lecture du .xlsx en lignes (R4).
+  // 2. Lecture du .xlsx en lignes (R4).
   let lignes
   try {
     lignes = await lireLignesXlsx(await fichier.arrayBuffer())
@@ -75,10 +61,11 @@ export async function importerLicencies(
     throw e
   }
 
-  // 4. Analyse pure : filtre d'âge, validation, consolidation doublons (R15).
-  const analyse = analyserImport(lignes, anneeReference)
+  // 3. Analyse pure : validation, consolidation doublons (R15) ; tout âge
+  //    importé (spec #20 R5).
+  const analyse = analyserImport(lignes)
 
-  // 5. Écriture atomique via la RPC (R16). Rien à écrire → 0 créé / 0 maj.
+  // 4. Écriture atomique via la RPC (R16). Rien à écrire → 0 créé / 0 maj.
   let crees = 0
   let misAJour = 0
   let clubsCrees: string[] = []
@@ -101,12 +88,9 @@ export async function importerLicencies(
 
   return {
     compteRendu: {
-      anneeReference: analyse.anneeReference,
-      seuilAnneeNaissance: analyse.seuilAnneeNaissance,
       totalLignes: lignes.length,
       crees,
       misAJour,
-      ignoresHorsAge: analyse.ignoresHorsAge,
       clubsCrees,
       erreurs: analyse.erreurs,
       doublons: analyse.doublons,

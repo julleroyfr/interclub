@@ -255,7 +255,7 @@ test.describe('Cahier 27 — contrôle des résultats (spec #16)', () => {
 
     await page.getByPlaceholder(/Rechercher un grimpeur/).fill('cleo')
     await expect(page.getByRole('checkbox')).toHaveCount(1)
-    await expect(page.getByText('1 affiché(s) sur 4')).toBeVisible()
+    await expect(page.getByText('1 affiché sur 4')).toBeVisible()
     await page.getByPlaceholder(/Rechercher un grimpeur/).fill('bravo devi')
     await expect(page.getByRole('checkbox')).toHaveCount(1)
     await page.getByPlaceholder(/Rechercher un grimpeur/).fill('')

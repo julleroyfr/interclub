@@ -58,3 +58,5 @@ next-env.d.ts
 
 # PDF des guides utilisateur : générés à la demande (npm run doc:pdf), distribués hors dépôt.
 docs/guides/**/*.pdf
+docs/reglement/listing marsas - corrige.csv
+docs/reglement/listing marsas.csv

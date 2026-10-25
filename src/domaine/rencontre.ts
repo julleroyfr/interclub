@@ -2,15 +2,52 @@
 // rencontre réservé à l'admin ; R5 : cycle de vie en cinq phases successives).
 // Ici, pas d'accès Supabase : uniquement la validation/normalisation de la
 // saisie et l'ordre des phases, reflets des contraintes SQL de `rencontre`
-// (`categorie in ('enfant','ado')`, `phase in (...)`, `date_rencontre date`).
+// (`categorie in ('enfant','ado','adulte')`, `phase in (...)`, `date_rencontre date`).
 
-/** Catégorie d'une rencontre (tranche d'âge, R34). Valeurs = contrainte SQL. */
+import type { TypeEpreuve } from './gabarit'
+
+/**
+ * Catégorie d'une rencontre (tranche d'âge, R34 ; adulte : spec #20 R1).
+ * Valeurs = contrainte SQL.
+ */
 export const CATEGORIES = [
   { value: 'enfant', label: 'Enfant — matin (moins de 13 ans)', labelCourt: 'Enfant' },
   { value: 'ado', label: 'Ado — après-midi (13 à 19 ans)', labelCourt: 'Ado' },
+  { value: 'adulte', label: 'Adulte (16 ans et plus)', labelCourt: 'Adulte' },
 ] as const
 
 export type Categorie = (typeof CATEGORIES)[number]['value']
+
+/**
+ * Vrai si les grimpeurs de la catégorie choisissent **librement** leurs voies
+ * (ado, adulte : zones, plafond de 6 voies, pas de groupe de départ — spec #6
+ * R11–R14, spec #20 R22–R24). Faux pour l'enfant (3 voies du groupe de départ).
+ */
+export function aVoiesLibres(categorie: Categorie): boolean {
+  return categorie !== 'enfant'
+}
+
+/**
+ * Vrai si la rencontre a un **classement par club** (spec #7 R6). Faux en
+ * adulte : les équipes n'ont pas de club, ni à l'écran, ni sur l'écran
+ * secondaire, ni dans l'export PDF (spec #20 R30).
+ */
+export function aClassementClub(categorie: Categorie): boolean {
+  return categorie !== 'adulte'
+}
+
+/**
+ * L'épreuve peut-elle être désactivée ? En adulte, le bloc et la vitesse, selon
+ * les personnes présentes ; jamais les voies, ni en enfant et ado (spec #20 R36).
+ */
+export function epreuveDesactivable(categorie: Categorie, type: TypeEpreuve): boolean {
+  return categorie === 'adulte' && (type === 'bloc' || type === 'vitesse')
+}
+
+/** L'état actif/désactivé d'une épreuve se change en ① et ② seulement (spec #20 R37). */
+export function etatEpreuveModifiable(phase: Phase): boolean {
+  return phase === 'pre_competition' || phase === 'preparation'
+}
 
 /** Phases successives d'une rencontre, dans l'ordre du cycle de vie (R5). */
 export const PHASES = [
@@ -121,6 +158,8 @@ export function labelSaison(annee: number): string {
 // « 13 à 19 ans ». Le pivot (13 ans) est éligible aux DEUX catégories.
 export const AGE_PIVOT = 13
 export const AGE_ADO_MAX = 19
+/** Âge minimal en saison de la catégorie adulte, sans âge maximal (spec #20 R2). */
+export const AGE_ADULTE_MIN = 16
 
 /**
  * Âge « de compétition » d'un grimpeur pour une saison : année de la saison moins
@@ -134,6 +173,8 @@ export function ageEnSaison(anneeNaissance: number, anneeSaison: number): number
  * Vrai si un grimpeur né en `anneeNaissance` est éligible à la `categorie` d'une
  * rencontre de la saison `anneeSaison` (R34) : **enfant** = âge ≤ 13 (moins de 13
  * ans + pivot), **ado** = 13 ≤ âge ≤ 19. Le pivot (13 ans) est dans les deux.
+ * **Adulte** = âge ≥ 16, sans maximum (spec #20 R2) : les 16–19 ans sont donc
+ * éligibles à l'ado et à l'adulte (R3).
  */
 export function estEligibleCategorie(
   anneeNaissance: number,
@@ -141,23 +182,35 @@ export function estEligibleCategorie(
   anneeSaison: number,
 ): boolean {
   const age = ageEnSaison(anneeNaissance, anneeSaison)
-  return categorie === 'enfant'
-    ? age <= AGE_PIVOT
-    : age >= AGE_PIVOT && age <= AGE_ADO_MAX
+  switch (categorie) {
+    case 'enfant':
+      return age <= AGE_PIVOT
+    case 'ado':
+      return age >= AGE_PIVOT && age <= AGE_ADO_MAX
+    case 'adulte':
+      return age >= AGE_ADULTE_MIN
+  }
 }
 
 /**
  * Bornes d'année de naissance équivalentes à `estEligibleCategorie` (R34), pour
  * filtrer une lecture en base : **enfant** = né en `saison − 13` ou après (pas de
- * borne haute) ; **ado** = né de `saison − 19` à `saison − 13`.
+ * borne haute) ; **ado** = né de `saison − 19` à `saison − 13` ; **adulte** = né
+ * en `saison − 16` ou avant (pas de borne basse, spec #20 R2). `null` = pas de
+ * borne.
  */
 export function bornesAnneeNaissance(
   categorie: Categorie,
   anneeSaison: number,
-): { min: number; max: number | null } {
-  return categorie === 'enfant'
-    ? { min: anneeSaison - AGE_PIVOT, max: null }
-    : { min: anneeSaison - AGE_ADO_MAX, max: anneeSaison - AGE_PIVOT }
+): { min: number | null; max: number | null } {
+  switch (categorie) {
+    case 'enfant':
+      return { min: anneeSaison - AGE_PIVOT, max: null }
+    case 'ado':
+      return { min: anneeSaison - AGE_ADO_MAX, max: anneeSaison - AGE_PIVOT }
+    case 'adulte':
+      return { min: null, max: anneeSaison - AGE_ADULTE_MIN }
+  }
 }
 
 /** Phase suivante dans le cycle (R5), ou `null` si déjà à la dernière. */

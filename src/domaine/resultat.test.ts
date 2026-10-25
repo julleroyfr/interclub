@@ -32,6 +32,40 @@ describe('spec #6 — issues de voie saisissables selon catégorie/type (R10/R12
   })
 })
 
+describe('spec #20 — issues de voie en catégorie adulte (R23, R26)', () => {
+  it('adulte : Top, Top en moulinette, Zone 2, Zone 1, Échec (R23)', () => {
+    expect(issuesVoieSaisissables('adulte', 'tete')).toEqual([
+      'top',
+      'top_moulinette',
+      'zone2',
+      'zone1',
+      'echec',
+    ])
+  })
+
+  it('le top en moulinette est réservé à l’adulte (R26)', () => {
+    expect(() => validerIssueVoie('top_moulinette', 'adulte', 'tete')).not.toThrow()
+    expect(() => validerIssueVoie('top_moulinette', 'ado', 'tete')).toThrow(ResultatInvalideError)
+    expect(() => validerIssueVoie('top_moulinette', 'enfant', 'tete')).toThrow(ResultatInvalideError)
+    expect(() => validerIssueVoie('top_moulinette', 'enfant', 'moulinette')).toThrow(
+      ResultatInvalideError,
+    )
+    expect(issuesVoieSaisissables('ado', 'tete')).not.toContain('top_moulinette')
+  })
+
+  it('adulte : accepte une zone (R24, R26)', () => {
+    expect(() => validerIssueVoie('zone2', 'adulte', 'tete')).not.toThrow()
+  })
+
+  it('adulte : refuse la prise valorisée (R26)', () => {
+    expect(() => validerIssueVoie('prise_valorisee', 'adulte', 'tete')).toThrow(ResultatInvalideError)
+  })
+
+  it('adulte : affiche directement les voies, sans groupe de départ (R22)', () => {
+    expect(affichageVoiesBlocs('competition', 'adulte', null)).toBe('voies')
+  })
+})
+
 describe("spec #6 — validation d'une issue de voie saisie (R10/R12)", () => {
   it('refuse la prise valorisée sur une voie moulinette (R10)', () => {
     expect(() => validerIssueVoie('prise_valorisee', 'enfant', 'moulinette')).toThrow(

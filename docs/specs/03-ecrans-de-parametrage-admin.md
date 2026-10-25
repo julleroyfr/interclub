@@ -217,6 +217,8 @@ saisie, les flux CRUD, et les règles de suppression (dépendances / cascade).
   persistent en base. Chaque gabarit définit les **épreuves** (voie de
   difficulté, bloc, vitesse) et leurs **voies** associées. L'admin peut
   consulter et modifier ces gabarits via l'IHM.
+  *(Catégorie adulte, rév. 2026-10-23 : un **gabarit adulte** existe aussi — spec
+  #20 R6–R9.)*
 - **R30.** À la **création** d'une rencontre, le gabarit de sa catégorie est
   **copié** dans la rencontre : épreuves, voies, **points de voies** (R38),
   **paliers de blocs** (R39) et **barème de vitesse** (R46) sont instanciés tels
@@ -235,6 +237,9 @@ saisie, les flux CRUD, et les règles de suppression (dépendances / cascade).
   un **libellé** indiquant le classement concerné (ex. « Filles »,
   « Garçons »). Ce libellé est utilisé dans les écrans de jetons QR et
   d'affectation juge (spec #2 R17–R18).
+  *(Rév. 2026-10-23 : l'admin peut modifier le libellé d'une voie de vitesse
+  existante, dans le gabarit comme dans une rencontre, toutes catégories — spec
+  #20 R9bis.)*
 - **R33.** Le gabarit **enfant** est pré-initialisé avec le format du règlement
   CT33 FFME 2025-2026 (§ Matin) lors du déploiement (via seed) :
 
@@ -508,6 +513,8 @@ flowchart TD
   L'ajout est le **seul** geste d'édition de structure (ni modification ni
   suppression — hors périmètre), à l'exception du **repère**, modifiable selon
   R49.
+  *(Catégorie adulte, rév. 2026-10-25 : en ① et ②, l'admin peut aussi
+  désactiver ou réactiver l'épreuve de bloc ou de vitesse — spec #20 R36–R38.)*
 - **R44.** **Hors phase pré-compétition** (préparation, compétition, clôture,
   résultats publics), l'écran est en **lecture seule** : aucun formulaire n'est affiché et un
   **message** indique que la structure est **verrouillée** et ne peut être

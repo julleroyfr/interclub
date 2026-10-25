@@ -9,6 +9,7 @@ import {
   peutEntrerEnPhase,
   phasePrecedenteEffective,
   phaseSuivante,
+  type Categorie,
   type Phase,
 } from '@/domaine/rencontre'
 import { changerPhaseRencontre } from '@/lib/rencontres/actions'
@@ -27,17 +28,20 @@ function aujourdhuiISO(): string {
 /**
  * Pilotage d'une rencontre depuis le tableau de bord (spec #3 R41a/R41b) :
  * changement de phase pas à pas — même action et même garde jour J (R5) que la
- * liste `/admin/rencontres` — et lien vers les jetons QR de la rencontre.
+ * liste `/admin/rencontres` — et lien vers les jetons QR de la rencontre (en
+ * adulte : capitaines au lieu du coach temporaire, spec #20 R16/R20).
  * La phase reçue en prop se met à jour après revalidation de l'écran.
  */
 export function PanneauPilotage({
   rencontreId,
   phase,
   dateRencontre,
+  categorie,
 }: {
   rencontreId: string
   phase: Phase
   dateRencontre: string
+  categorie: Categorie
 }) {
   const [etat, action, enCours] = useActionState(changerPhaseRencontre, etatInitial)
 
@@ -138,7 +142,9 @@ export function PanneauPilotage({
           </span>
           <span>
             <span className="block text-sm font-semibold text-texte-fort">Jetons QR</span>
-            <span className="block text-xs text-texte-doux">Coach temporaire &amp; juges</span>
+            <span className="block text-xs text-texte-doux">
+              {`${categorie === 'adulte' ? 'Capitaines' : 'Coach temporaire'} & juges`}
+            </span>
           </span>
         </span>
         <span aria-hidden className="text-accent">

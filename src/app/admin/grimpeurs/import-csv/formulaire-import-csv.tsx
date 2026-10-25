@@ -51,8 +51,7 @@ export function FormulaireImportCsv({ clubs }: { clubs: OptionClub[] }) {
             />
             <p className="mt-1 text-xs text-texte-doux">
               UTF-8, séparateur virgule ou point-virgule, en-têtes QUALITE (M / MME), NOM, PRENOM,
-              DATNAISS (AAAA-MM-JJ). Seuls les grimpeurs de 18 ans au plus à la fin de la saison en
-              cours sont importés.
+              DATNAISS (AAAA-MM-JJ). Les grimpeurs de tout âge sont importés.
             </p>
           </div>
 
@@ -78,16 +77,13 @@ function CompteRendu({ cr }: { cr: CompteRenduImportCsv }) {
     <Carte className="max-w-2xl p-6">
       <TitreSection>Compte-rendu de l’import</TitreSection>
       <p className="mt-1 text-sm text-secondaire">
-        ✅ Import terminé — club <strong>{cr.club}</strong> · année de référence{' '}
-        <strong>{cr.anneeReference}</strong> · seuil de naissance{' '}
-        <strong>{cr.seuilAnneeNaissance}</strong> · {cr.totalLignes} ligne
+        ✅ Import terminé — club <strong>{cr.club}</strong> · {cr.totalLignes} ligne
         {cr.totalLignes > 1 ? 's' : ''} traitée{cr.totalLignes > 1 ? 's' : ''}.
       </p>
 
-      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
         <Stat valeur={cr.crees} label="Créés (licence générée)" ton="text-secondaire" />
         <Stat valeur={cr.dejaPresents} label="Déjà présents" ton="text-accent" />
-        <Stat valeur={cr.ignoresHorsAge} label="Ignorés (hors âge)" ton="text-texte-attenue" />
         <Stat valeur={cr.erreurs.length} label="Lignes en erreur" ton="text-danger" />
       </div>
 

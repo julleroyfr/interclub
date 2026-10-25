@@ -3,7 +3,9 @@ import {
   REPERE_VOIE_MAX,
   RepereVoieInvalideError,
   libellesVoies,
+  normaliserLibelleVoieVitesse,
   normaliserRepereVoie,
+  LibelleVoieVitesseInvalideError,
   repereModifiable,
   trierVoiesStructure,
 } from './voie'
@@ -136,5 +138,17 @@ describe('spec #3 — Tri des voies de la structure (R42, rév. 2026-10-16)', ()
     const voies = [v('T2', 'T2'), v('T1', 'T1')]
     trierVoiesStructure(voies)
     expect(voies.map((x) => x.niveau)).toEqual(['T2', 'T1'])
+  })
+})
+
+describe('spec #20 — Libellé d’une voie de vitesse (R9bis)', () => {
+  it('normalise les espaces de bord et internes (R9bis, spec #3 R4)', () => {
+    expect(normaliserLibelleVoieVitesse('  Voie 1   —  dalle ')).toBe('Voie 1 — dalle')
+  })
+
+  it('refuse un libellé vide ou blanc (R9bis)', () => {
+    expect(() => normaliserLibelleVoieVitesse('')).toThrow(LibelleVoieVitesseInvalideError)
+    expect(() => normaliserLibelleVoieVitesse('   ')).toThrow(LibelleVoieVitesseInvalideError)
+    expect(() => normaliserLibelleVoieVitesse(null)).toThrow(LibelleVoieVitesseInvalideError)
   })
 })

@@ -53,6 +53,7 @@ describe('spec #2 — interpreterResultatScan', () => {
       nature: 'coach_temporaire',
       clubId: 'club-1',
       voieVitesseId: null,
+      equipeId: null,
       rencontreId: 'rencontre-1',
     })
   })
@@ -68,6 +69,7 @@ describe('spec #2 — interpreterResultatScan', () => {
       nature: 'juge',
       clubId: null,
       voieVitesseId: 'voie-1',
+      equipeId: null,
       rencontreId: 'rencontre-1',
     })
   })
@@ -99,6 +101,7 @@ describe('spec #2 — urlDeRedirection', () => {
         nature: 'coach_temporaire',
         clubId: '11111111-1111-1111-1111-111111111111',
         voieVitesseId: null,
+        equipeId: null,
         rencontreId: '33333333-3333-3333-3333-333333333333',
       }),
     ).toBe('/coach/rencontres/33333333-3333-3333-3333-333333333333')
@@ -110,6 +113,7 @@ describe('spec #2 — urlDeRedirection', () => {
         nature: 'juge',
         clubId: null,
         voieVitesseId: '44444444-4444-4444-4444-444444444444',
+        equipeId: null,
         rencontreId: '33333333-3333-3333-3333-333333333333',
       }),
     ).toBe('/juge')
@@ -140,5 +144,25 @@ describe('spec #2 — decisionScan', () => {
       type: 'proposer_choix',
       email: null,
     })
+  })
+})
+
+describe('spec #20 — Session capitaine (R17)', () => {
+  it('interprète une session capitaine et mène à /capitaine', () => {
+    const r = interpreterResultatScan({
+      nature: 'capitaine',
+      club_id: null,
+      voie_vitesse_id: null,
+      equipe_id: 'eq-1',
+      rencontre_id: 'r-1',
+    })
+    expect(r).toEqual({
+      nature: 'capitaine',
+      clubId: null,
+      voieVitesseId: null,
+      equipeId: 'eq-1',
+      rencontreId: 'r-1',
+    })
+    expect(urlDeRedirection(r)).toBe('/capitaine')
   })
 })

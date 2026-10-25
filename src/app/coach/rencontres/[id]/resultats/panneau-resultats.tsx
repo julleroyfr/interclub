@@ -9,6 +9,7 @@ import { indicateurCible } from '@/composants/saisie-hors-ligne/etat-cible'
 import { useFileSaisies } from '@/composants/saisie-hors-ligne/useFileSaisies'
 import { useSuiviEnvoi } from '@/composants/saisie-hors-ligne/useSuiviEnvoi'
 import type { IssueEnvoi } from '@/domaine/hors-ligne'
+import { aVoiesLibres } from '@/domaine/rencontre'
 import { affichageVoiesBlocs, issuesVoieSaisissables, type IssueVoie } from '@/domaine/resultat'
 import { formaterTempsVitesse } from '@/domaine/vitesse'
 import { enregistrerSaisieCoach } from '@/lib/coach/resultats-actions'
@@ -129,6 +130,7 @@ function MotifRejet({ cle }: { cle: string }) {
 /** Libellé lisible d'une issue de voie. */
 const LIBELLE_ISSUE: Record<IssueVoie, string> = {
   top: 'Top',
+  top_moulinette: 'Top en moulinette',
   prise_valorisee: 'Prise valorisée',
   zone2: 'Zone 2',
   zone1: 'Zone 1',
@@ -142,6 +144,8 @@ function classeIssue(issue: IssueVoie | 'palier' | null): string {
     case 'top':
     case 'palier':
       return 'bg-secondaire/15 text-secondaire border-secondaire/30'
+    case 'top_moulinette':
+      return 'bg-attention/15 text-attention border-attention/40'
     case 'prise_valorisee':
     case 'zone1':
     case 'zone2':
@@ -182,18 +186,27 @@ function libelleVitesse(vitesse: GrimpeurSaisie['vitesse']): string {
 export function PanneauResultats({
   saisie: saisieServeur,
   clubId,
+  equipeCapitaineId,
   sessionQr,
   heureServeur,
 }: {
   saisie: SaisieRencontre
   /** Club du coach : périmètre de la file d'attente (spec #17 R4). */
   clubId: string
+  /**
+   * Capitaine d'une équipe adulte (spec #20 R18) : la file d'attente est propre à
+   * son équipe ; `clubId` est alors ignoré.
+   */
+  equipeCapitaineId?: string
   /** Coach temporaire (session QR) : à rescanner si la session manque (R25). */
   sessionQr: boolean
   /** Heure du serveur au rendu (ms) : écart d'horloge de l'appareil (R6). */
   heureServeur: number
 }) {
-  const [vue, setVue] = useState<'equipe' | 'alpha'>('equipe')
+  const [vueChoisie, setVue] = useState<'equipe' | 'alpha'>('equipe')
+  // Adulte : le capitaine ne voit qu'une équipe, la liste est alphabétique (spec #20 R19).
+  const uneSeuleEquipe = saisieServeur.categorie === 'adulte'
+  const vue = uneSeuleEquipe ? 'alpha' : vueChoisie
   const [selId, setSelId] = useState<string | null>(null)
   const [listeOuverte, setListeOuverte] = useState(false)
   // Saisies CONFIRMÉES par l'enregistrement, avec le score renvoyé (spec #6 R20,
@@ -213,7 +226,9 @@ export function PanneauResultats({
 
   // File d'attente de l'appareil (spec #17 R12–R19, R28).
   const fileSaisies = useFileSaisies<ContenuSaisie, ScoreGrimpeur>({
-    perimetre: { role: 'coach', rencontreId: saisieServeur.id, clubId },
+    perimetre: equipeCapitaineId
+      ? { role: 'capitaine', rencontreId: saisieServeur.id, equipeId: equipeCapitaineId }
+      : { role: 'coach', rencontreId: saisieServeur.id, clubId },
     heureServeur,
     envoyer: (saisie, saisiLe) => envoyerSaisie(saisie.contenu, saisiLe),
     surAcceptee: (saisie, score) => {
@@ -290,7 +305,9 @@ export function PanneauResultats({
         sessionAbsente={fileSaisies.sessionAbsente}
         actionSession={
           sessionQr ? (
-            <span className="text-xs font-bold">Rescannez le QR code de votre club.</span>
+            <span className="text-xs font-bold">
+              Rescannez le QR code de votre {equipeCapitaineId ? 'équipe' : 'club'}.
+            </span>
           ) : (
             <Link href="/connexion" className="min-h-9 rounded-lg border border-current px-3 py-2 text-xs font-bold">
               Se reconnecter
@@ -315,7 +332,9 @@ export function PanneauResultats({
       )}
       <p className="rounded-xl border border-accent/25 bg-accent/[0.06] px-4 py-3 text-xs text-accent-doux">
         Résultats visibles de tous au fil de l’eau — non officiels jusqu’à la
-        publication. ⚡ Vitesse : saisie par le juge, lecture seule.
+        publication.
+        {/* Épreuve de vitesse désactivée (adulte) : rien à annoncer (spec #20 R38). */}
+        {saisie.vitesseActive && ' ⚡ Vitesse : saisie par le juge, lecture seule.'}
       </p>
 
       {selected ? (
@@ -328,7 +347,7 @@ export function PanneauResultats({
         />
       ) : (
         <>
-          <Onglets vue={vue} setVue={setVue} />
+          {!uneSeuleEquipe && <Onglets vue={vue} setVue={setVue} />}
           <ListeGrimpeurs saisie={saisie} vue={vue} ordreVue={ordreVue} onChoisir={setSelId} />
         </>
       )}
@@ -368,6 +387,13 @@ function Onglets({
   )
 }
 
+/** Composantes du score affichées : sans les épreuves désactivées (spec #20 R38). */
+function composantesScore(saisie: SaisieRencontre): string {
+  return ['voie', saisie.blocActif && 'bloc', saisie.vitesseActive && 'vitesse']
+    .filter(Boolean)
+    .join(' + ')
+}
+
 /** Compteurs de progression + état vitesse (R20/R22) ; sans compteurs avant la ③ (R21bis). */
 function Chips({ saisie, grimpeur }: { saisie: SaisieRencontre; grimpeur: GrimpeurSaisie }) {
   const { progression: p, vitesse } = grimpeur
@@ -382,14 +408,18 @@ function Chips({ saisie, grimpeur }: { saisie: SaisieRencontre; grimpeur: Grimpe
       {!avantCompetition && (
         <>
           <span className={`${chip} ${voiesOk ? ok : ''}`}>🧗 {p.voiesFaites}/{p.voiesTotal}</span>
-          <span className={`${chip} ${blocsOk ? ok : ''}`}>🧱 {p.blocsFaites}/{p.blocsTotal}</span>
+          {saisie.blocActif && (
+            <span className={`${chip} ${blocsOk ? ok : ''}`}>🧱 {p.blocsFaites}/{p.blocsTotal}</span>
+          )}
         </>
       )}
-      <span
-        className={`${chip} ${vitesse.statut === 'en_attente' ? 'border-dashed text-texte-doux' : 'border-accent/30 text-accent-doux'}`}
-      >
-        ⚡ {libelleVitesse(vitesse)}
-      </span>
+      {saisie.vitesseActive && (
+        <span
+          className={`${chip} ${vitesse.statut === 'en_attente' ? 'border-dashed text-texte-doux' : 'border-accent/30 text-accent-doux'}`}
+        >
+          ⚡ {libelleVitesse(vitesse)}
+        </span>
+      )}
       <span className={`${chip} border-secondaire/30 text-secondaire`}>
         🏆 {grimpeur.score} pts
       </span>
@@ -464,7 +494,8 @@ function LigneGrimpeur({
           <span className="font-semibold text-texte-fort">
             {alpha ? `${grimpeur.nom} ${grimpeur.prenom}` : `${grimpeur.prenom} ${grimpeur.nom}`}
           </span>
-          {alpha && (
+          {/* Adulte : une seule équipe, l'étiquette n'apporte rien (spec #20 R19). */}
+          {alpha && saisie.categorie !== 'adulte' && (
             <span className="rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-[10px] font-bold text-accent-doux">
               {grimpeur.equipeNom}
             </span>
@@ -555,7 +586,7 @@ function DetailGrimpeur({
 
       {/* Score au fil de l'eau (voie + bloc + vitesse, R23) — calcul du domaine (spec #7). */}
       <div className="flex items-center justify-between rounded-xl border border-secondaire/25 bg-secondaire/5 px-3 py-2 text-sm">
-        <span className="text-texte-attenue">Score (voie + bloc + vitesse)</span>
+        <span className="text-texte-attenue">Score ({composantesScore(saisie)})</span>
         <span className="font-extrabold text-secondaire">
           {grimpeur.score}
           <span className="ml-1 text-[11px] font-bold text-texte-doux">pts</span>
@@ -569,17 +600,19 @@ function DetailGrimpeur({
       ) : (
         <>
           <SectionVoies saisie={saisie} grimpeur={grimpeur} />
-          <SectionBlocs saisie={saisie} grimpeur={grimpeur} />
+          {/* Épreuve désactivée (adulte) : section masquée (spec #20 R38). */}
+          {saisie.blocActif && <SectionBlocs saisie={saisie} grimpeur={grimpeur} />}
         </>
       )}
-      <SectionVitesse grimpeur={grimpeur} />
+      {saisie.vitesseActive && <SectionVitesse grimpeur={grimpeur} />}
     </div>
   )
 }
 
 /** Section « voies de difficulté » : enfant (3 attendues) ou ado (réalisées + ajout). */
 function SectionVoies({ saisie, grimpeur }: { saisie: SaisieRencontre; grimpeur: GrimpeurSaisie }) {
-  const estAdo = saisie.categorie === 'ado'
+  // Voies libres : ado et adulte (spec #20 R22).
+  const estAdo = aVoiesLibres(saisie.categorie)
   const dejaSaisies = new Set(grimpeur.voies.map((v) => v.voieDifficulteId))
   const dispoAdo = saisie.voiesEpreuve.filter((v) => !dejaSaisies.has(v.voieDifficulteId))
   const peutAjouterAdo =
@@ -726,8 +759,8 @@ function FormAjoutVoieAdo({
   disponibles: VoieOption[]
 }) {
   const { surSoumission } = useEnvoi()
-  // Ado : voies tête → issues Top / Zone 2 / Zone 1 / Échec.
-  const issues = issuesVoieSaisissables('ado', 'tete')
+  // Voies libres (tête) : issues de la catégorie (ado, adulte — spec #20 R23).
+  const issues = issuesVoieSaisissables(saisie.categorie, 'tete')
   // La voie ajoutée s'affiche aussitôt dans la liste (en attente) ; un rejet
   // s'affiche ici, la voie disparaissant alors de la liste.
   const [derniereCle, setDerniereCle] = useState<string | null>(null)

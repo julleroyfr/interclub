@@ -15,7 +15,7 @@
 5. [Gabarit de rencontre](#5-gabarit-de-rencontre)
 6. [Rencontres](#6-rencontres)
 7. [Tableau de bord d'une rencontre](#7-tableau-de-bord-dune-rencontre)
-8. [Jetons QR : coachs temporaires et juges](#8-jetons-qr--coachs-temporaires-et-juges)
+8. [Jetons QR : coachs temporaires, capitaines et juges](#8-jetons-qr--coachs-temporaires-capitaines-et-juges)
 9. [Le jour J : saisie et affichage](#9-le-jour-j--saisie-et-affichage)
 10. [Après la compétition : contrôle et publication](#10-après-la-compétition--contrôle-et-publication)
 11. [Rôles et comptes](#11-rôles-et-comptes)
@@ -43,6 +43,10 @@ fait évoluer, une étape à la fois, en avant ou en arrière.
 | ③ Compétition (jour J) | Saisie des voies et blocs ; équipes figées | Saisie de la vitesse | Saisit et corrige tous les résultats |
 | ④ Clôture | Saisie fermée | Saisie fermée | Corrige et contrôle les résultats |
 | ⑤ Résultats publics | Classement officiel | — | Exporte le classement en PDF |
+
+En rencontre **adulte**, les capitaines d'équipe remplacent les coachs pour la
+saisie des voies et des blocs, et l'administrateur compose seul les équipes, en
+① et ② uniquement (voir [§ 7](#rencontre-adulte)).
 
 Deux garde-fous à connaître :
 
@@ -128,7 +132,7 @@ correspondant. En l'ouvrant, un coach crée son compte, qui est
 
 Un grimpeur porte un **club**, un **nom**, un **prénom**, une **année de
 naissance**, un **sexe** et un **numéro de licence**, obligatoire et unique. La
-catégorie (Enfant ou Ado) n'est pas saisie : elle découle de l'âge.
+catégorie (Enfant, Ado ou Adulte) n'est pas saisie : elle découle de l'âge.
 
 **Attention** : supprimer un grimpeur supprime aussi ses engagements et tous ses
 résultats ; la confirmation le signale.
@@ -150,8 +154,9 @@ Les numéros de licence à partir de **2 000 000 000** sont réservés aux licen
 - **Format** : un fichier `.xlsx`, lu sur sa première feuille, avec les colonnes
   Nom, Prénom, Date de naissance (`JJ/MM/AAAA`), Sexe, N° de licence et nom de
   la structure (le club).
-- **Âge** : seuls les licenciés de **18 ans au plus** à la fin de la saison sont
-  importés ; les autres sont ignorés, sans erreur.
+- **Âge** : les licenciés de **tout âge** sont importés, adultes compris. La
+  catégorie d'une rencontre filtre ensuite les grimpeurs proposés à
+  l'engagement.
 - **Clubs** : chaque grimpeur est rattaché au club qui porte exactement le nom
   de sa structure ; un club absent est **créé automatiquement**.
 - **Mise à jour** : un grimpeur dont la licence existe déjà est **mis à jour**
@@ -189,7 +194,8 @@ les doublons du fichier, et les lignes en erreur ou ambiguës.
 
 ## 5. Gabarit de rencontre
 
-Le gabarit est le **modèle** d'une rencontre, un par catégorie (Enfant, Ado) :
+Le gabarit est le **modèle** d'une rencontre, un par catégorie (Enfant, Ado,
+Adulte) :
 blocs et leurs paliers, voies de vitesse et barème, voies de difficulté et
 leurs points. Il est **copié** dans chaque nouvelle rencontre ; le modifier ne
 change pas les rencontres déjà créées.
@@ -203,6 +209,7 @@ change pas les rencontres déjà créées.
 | 3 | + Voie (vitesse) | Ajoute une voie de vitesse (ex. « Filles », « Garçons ») |
 | 4 | + Ajouter un échelon | Ajoute une ligne au barème de vitesse |
 | 5 | Enregistrer le barème | Enregistre le barème de vitesse |
+| 6 | Libellé (voie N) | Renomme une voie de vitesse : modifier le texte puis **Enregistrer** ; un libellé vide est refusé |
 
 **Barème de vitesse** : les points dépendent du rang dans le classement de
 vitesse de chaque sexe. Un échelon couvre une plage de rangs : `points − (rang −
@@ -213,7 +220,14 @@ champs **Chute** et **Non-présentation** fixent les points de ces deux cas.
 
 **Voies de difficulté** (bas de page) : niveau (`M1`–`M4` en moulinette pour les
 enfants, `T1`–`T10` en tête), cotation et points (voie entière, prise valorisée
-en Enfant, zones 1 et 2 en Ado).
+en Enfant, zones 1 et 2 en Ado et en Adulte).
+
+**Gabarit Adulte** (règlement Adultes du CT33) : voies `T1`–`T10` au même barème
+que l'Ado, blocs B1 (zone 15, bloc complet 30) et B2 (zone 1 20, zone 2 50, bloc
+complet 70), vitesse sur « Voie 1 » et « Voie 2 », barème 100, 95, 90, 85, 80
+puis 75, 60, 45, 30, 15 par tranches de 5 rangs, 10 au-delà, chute 5,
+non-présentation 0. Pour la variante à 5 blocs du règlement, ajouter les blocs
+et leurs paliers.
 
 ## 6. Rencontres
 
@@ -232,6 +246,27 @@ en Enfant, zones 1 et 2 en Ado).
 La saison est calculée à partir de la date ; la saison en cours est affichée par
 défaut.
 
+**Catégorie Adulte** : ouverte aux grimpeurs de **16 ans et plus** en saison
+(un grimpeur de 16 à 19 ans peut donc aussi faire l'Ado). La rencontre est créée
+à partir du gabarit Adulte. Ses équipes se gèrent dans le panneau **Équipes
+adultes** du tableau de bord : équipes **sans club**, nommées « Équipe 1 »,
+« Équipe 2 »… par défaut, de **4 grimpeurs au plus**, choisis parmi les 16 ans
+et plus de **tous les clubs** (club affiché à côté de chaque nom). Il n'y a pas
+de prêt en adulte et les coachs n'ont aucun droit sur ces équipes.
+En compétition, une voie adulte peut être réussie **en tête** (« Top ») ou **en
+moulinette** (« Top en moulinette », pastille ambre) : la moulinette rapporte la
+moitié des points du top et jamais de points de zone.
+
+**Capitaines d'équipe (adulte)** : dans **Jetons QR**, une rencontre adulte
+affiche une section « Capitaines d'équipe » (et pas de coach temporaire) : un
+jeton par équipe, à générer, afficher, régénérer ou révoquer. Le capitaine qui
+scanne le QR pendant la compétition saisit les voies et les blocs des seuls
+membres de son équipe, et consulte le classement ; ses saisies sont tracées avec
+le rôle « capitaine ». La vitesse reste aux juges. Voir le guide du capitaine.
+
+Dans l'onglet **Vitesse** de la structure d'une rencontre, les voies se
+renomment en ① pré-compétition (champ « Libellé (voie N) », toutes catégories).
+
 **Attention** : supprimer une rencontre supprime aussi ses équipes, ses épreuves
 et tous ses résultats ; la confirmation le signale.
 
@@ -245,7 +280,7 @@ L'écran central de la préparation d'une rencontre : phase, structure, prêts e
 | N° | Élément | Effet |
 | --- | --- | --- |
 | 1 | Bouton de phase | Fait avancer la rencontre ; « ← » la fait reculer |
-| 2 | Jetons QR | Ouvre les QR des coachs temporaires et des juges |
+| 2 | Jetons QR | Ouvre les QR des coachs temporaires (capitaines en adulte) et des juges |
 | 3 | Onglets de structure | Voies de difficulté, Blocs, Vitesse |
 | 4 | + Voie | Ajoute une voie (ou un bloc, une voie de vitesse selon l'onglet) |
 | 5 | Créer le prêt | Prête un grimpeur à un autre club pour cette rencontre |
@@ -289,7 +324,8 @@ classement individuel.
 ### Équipes de tous les clubs
 
 L'administrateur peut créer, composer ou corriger les équipes de n'importe quel
-club, **en toute phase** (les coachs, eux, sont bloqués dès la ③).
+club, **en toute phase** (les coachs, eux, sont bloqués dès la ③). Les équipes
+d'une rencontre adulte font exception (voir ci-dessous).
 
 <img src="captures/04-rencontre-equipes.png" alt="Équipes d'un club" width="400">
 
@@ -307,7 +343,38 @@ club, **en toute phase** (les coachs, eux, sont bloqués dès la ③).
 résultats. Le **retirer** de la rencontre **supprime définitivement** ses
 résultats, y compris sa vitesse, et recalcule les classements.
 
-## 8. Jetons QR : coachs temporaires et juges
+### Rencontre adulte
+
+Le tableau de bord d'une rencontre adulte remplace les prêts et les équipes par
+club par le panneau **Équipes adultes**, et permet de désactiver une épreuve.
+
+<img src="captures/19-rencontre-adulte.png" alt="Tableau de bord d'une rencontre adulte en préparation" width="640">
+
+| N° | Élément | Effet |
+| --- | --- | --- |
+| 1 | Jetons QR (Capitaines & juges) | Ouvre les QR des capitaines et des juges |
+| 2 | Onglet Blocs (ou Vitesse) | Affiche l'épreuve et son état « Active » ou « Désactivée » |
+| 3 | Désactiver l'épreuve | Désactive (ou réactive) l'épreuve de bloc ou de vitesse |
+| 4 | Équipe de destination | Avec **Changer d'équipe** : déplace le grimpeur vers une autre équipe |
+| 5 | Ajouter un grimpeur | Recherche parmi les 16 ans et plus de tous les clubs |
+| 6 | Nouvelle équipe | Crée une équipe, pré-nommée « Équipe N » |
+
+**Équipes adultes** : sans club, 4 grimpeurs au plus, de n'importe quel club ;
+un grimpeur n'est que dans une équipe. Elles se créent, se renomment, se
+suppriment et se composent en **① pré-compétition et ② préparation
+uniquement** : dès la ③, le panneau passe en lecture seule (« Équipes figées »),
+y compris pour l'administrateur. Les coachs n'ont aucun droit sur ces équipes.
+
+**Désactiver le bloc ou la vitesse** : selon les personnes présentes (pas de
+juge de vitesse, pas de blocs…), les onglets **Blocs** et **Vitesse** proposent
+« Désactiver l'épreuve », en ① et en ②. L'épreuve disparaît alors de la saisie,
+du contrôle et du classement ; son onglet indique « désactivée ». Ses blocs,
+voies et barème sont conservés : « Réactiver l'épreuve » la remet à
+l'identique. Désactiver la vitesse révoque ses jetons juges ; après
+réactivation, générez-en de nouveaux. Dès la ③, l'état est figé. Les voies de
+difficulté ne se désactivent pas.
+
+## 8. Jetons QR : coachs temporaires, capitaines et juges
 
 <img src="captures/05-jetons.png" alt="Jetons QR d'une rencontre" width="640">
 
@@ -325,6 +392,23 @@ Deux sortes de QR par rencontre :
 - **Juge**, un par voie de vitesse : ouvre l'écran de saisie de la vitesse,
   pendant la ③ compétition uniquement. Tous les grimpeurs engagés y sont
   proposés, quel que soit le couloir.
+
+En rencontre **adulte**, la section « Coach temporaire » est remplacée par
+**Capitaines d'équipe** :
+
+<img src="captures/20-jetons-capitaines.png" alt="Jetons QR des capitaines d'une rencontre adulte" width="640">
+
+| N° | Élément | Effet |
+| --- | --- | --- |
+| 1 | Capitaines d'équipe | Un QR par équipe adulte |
+| 2 | Régénérer | Remplace le QR du capitaine ; l'ancien ne fonctionne plus |
+| 3 | Révoquer | Désactive le QR du capitaine |
+
+- **Capitaine**, un par équipe adulte : pendant la ③ compétition uniquement, il
+  saisit les voies et les blocs des membres de son équipe et consulte le
+  classement. Remettre à chaque capitaine le QR de **son** équipe.
+- Si la vitesse est désactivée, la section des juges indique « Épreuve de
+  vitesse désactivée : aucun jeton juge ».
 
 Un QR peut être généré à l'avance ; il ne permet d'entrer que pendant sa
 fenêtre. Plusieurs personnes peuvent utiliser le même QR. Les sessions se
@@ -426,6 +510,10 @@ Le fichier `classement-AAAA-MM-JJ-categorie.pdf` contient quatre sections :
 individuel filles, individuel garçons, équipes, clubs. Il est identique pour
 tous ceux qui l'exportent (les coachs des clubs engagés y ont aussi accès).
 
+En **adulte**, il n'y a pas de classement par club : le PDF a trois sections, et
+les équipes y figurent par leur seul nom. Le coach d'un club y a accès si au
+moins un grimpeur de son club est composé dans une équipe.
+
 Revenir en ④ retire le caractère officiel et l'export jusqu'à la prochaine
 publication.
 
@@ -475,6 +563,14 @@ Vérifier la phase : ③ pour un juge, ② ou ③ pour un coach temporaire. Si l
 Elle n'est modifiable qu'en ① pré-compétition. Revenir en ① si la rencontre n'a
 pas encore commencé.
 
+**Je ne peux plus modifier les équipes d'une rencontre adulte.**
+Elles sont figées dès la ③ compétition, y compris pour l'administrateur.
+Revenir en ② si la compétition n'a pas commencé.
+
+**Le bloc ou la vitesse n'a pas lieu (rencontre adulte).**
+Désactiver l'épreuve en ① ou ② depuis l'onglet de la structure (voir
+[§ 7](#rencontre-adulte)).
+
 **Un résultat est faux après la clôture.**
 Le corriger via **Corriger les résultats** en ④ clôture. En ⑤, revenir d'abord
 en ④.
@@ -491,4 +587,6 @@ Les captures sont produites par `scripts/captures/guide-admin.captures.ts`
 1. Stack Supabase locale démarrée avec le seed (`npm run db:reset`).
 2. `npm run doc:captures` (lance l'application sur le port 3011 si besoin).
 3. Les PNG de `docs/guides/admin/captures/` sont réécrits ; les rencontres de
-   test sont remises dans leur état initial à la fin.
+   test sont remises dans leur état initial à la fin. Les captures adultes
+   s'appuient sur la rencontre de démonstration
+   `supabase/seed/05-demo-adulte.sql`, chargée puis supprimée par le script.

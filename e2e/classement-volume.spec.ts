@@ -83,7 +83,7 @@ test.describe('Classement au-delà de 1000 résultats (spec #7, J1)', () => {
 
     await page.getByRole('button', { name: 'Par équipe' }).click()
     const equipe = page.locator('tbody tr', { hasText: 'Équipe Volume' })
-    await expect(equipe).toContainText(`Club B · ${NB_GRIMPEUSES} grimpeur(s)`)
+    await expect(equipe).toContainText(`Club B · ${NB_GRIMPEUSES} grimpeurs`)
     await expect(equipe).toContainText(total)
 
     await page.getByRole('button', { name: 'Par club' }).click()

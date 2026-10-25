@@ -17,7 +17,8 @@
 6. [Saisir les résultats](#6-saisir-les-résultats)
 7. [Consulter le classement](#7-consulter-le-classement)
 8. [Coach temporaire (accès par QR)](#8-coach-temporaire-accès-par-qr)
-9. [Questions fréquentes](#9-questions-fréquentes)
+9. [Rencontres adultes](#9-rencontres-adultes)
+10. [Questions fréquentes](#10-questions-fréquentes)
 
 ## 1. Avant de commencer
 
@@ -111,15 +112,17 @@ les plus actionnables en premier.
 
 | N° | Élément | Effet |
 | --- | --- | --- |
-| 1 | Carte d'une rencontre | Ouvre l'engagement des équipes — ou directement la saisie des résultats si la rencontre est en ③ compétition |
+| 1 | Carte d'une rencontre | Ouvre l'engagement des équipes — ou directement la saisie des résultats si la rencontre est en ③ compétition (le classement pour une rencontre adulte, [§ 9](#9-rencontres-adultes)) |
 | 2 | Menu | Ouvre la navigation (voir ci-dessous) |
 | 3 | Se déconnecter | Ferme la session |
 
 Chaque carte indique :
 
-- la **catégorie** (Enfant ou Ado) et la **phase** en cours ;
+- la **catégorie** (Enfant, Ado ou Adulte) et la **phase** en cours ;
 - la **date** et le **club organisateur** ;
-- le nombre d'**équipes** et de **grimpeurs** déjà engagés par votre club.
+- le nombre d'**équipes** et de **grimpeurs** déjà engagés par votre club (« 2
+  équipes · 9 grimpeurs ») ; pour une rencontre adulte, seulement le nombre de
+  grimpeurs du club composés dans ses équipes (« 3 grimpeurs »).
 
 Les rencontres sont triées par urgence : d'abord celles en ② préparation, puis
 ③ compétition, ① pré-compétition, et enfin les rencontres terminées.
@@ -152,7 +155,9 @@ apparaissent sans recharger la page.
 
 Hors des phases ① et ②, l'écran reste consultable mais les formulaires
 disparaissent : la composition ne peut plus être modifiée que par
-l'organisateur.
+l'organisateur. L'en-tête propose alors **« Saisir / voir les résultats »** en
+③ compétition, puis **« Voir les résultats »** en ④ et ⑤, quand la saisie est
+close.
 
 ### Composer une équipe
 
@@ -391,7 +396,31 @@ en fin de journée sur un téléphone prêté ou partagé.
 | « Ce QR a été révoqué. » | Demander le nouveau QR au coach permanent |
 | « Ce QR n'est pas reconnu. » | Vérifier que le bon QR a été scanné ; sinon demander un nouveau QR |
 
-## 9. Questions fréquentes
+## 9. Rencontres adultes
+
+Une rencontre **adulte** (16 ans et plus) fonctionne autrement : les équipes
+mélangent les clubs et sont **composées par l'organisateur** ; les voies et les
+blocs sont saisis par le **capitaine** de chaque équipe (avec un QR remis par
+l'organisateur) ou par l'organisateur, la vitesse par les juges. Le coach
+**consulte** seulement.
+
+<img src="captures/14-rencontre-adulte.png" alt="Carte d'une rencontre adulte" width="320">
+
+| N° | Élément | Effet |
+| --- | --- | --- |
+| 1 | Carte d'une rencontre adulte | Avant la compétition : l'écran de la rencontre ; dès la ③, directement le classement |
+
+- La carte indique le nombre de **grimpeurs de votre club** composés dans les
+  équipes, sans nombre d'équipes.
+- L'écran de la rencontre ne propose ni formulaire ni saisie ; dès la ③, il
+  mène au **classement** (« Voir le classement »).
+- Le classement adulte a deux vues, **Individuel** (avec le club d'origine de
+  chacun) et **Par équipe** ; il n'y a pas de classement par club.
+- Il n'y a pas de coach temporaire en adulte.
+- Le coach peut exporter le classement officiel en PDF si au moins un grimpeur
+  de son club est composé dans une équipe.
+
+## 10. Questions fréquentes
 
 **Je ne vois pas ma rencontre dans « Mes rencontres ».**
 La liste ne montre que les rencontres de la saison où votre club peut être
@@ -414,6 +443,10 @@ ouvert jusqu'à ce que la mention disparaisse (voir
 **Je ne peux pas saisir la vitesse.**
 C'est normal : la vitesse est saisie par le juge. Le coach la consulte en
 lecture seule.
+
+**Je ne peux ni composer ni saisir dans une rencontre adulte.**
+C'est normal : l'organisateur compose les équipes et les capitaines saisissent
+les résultats. Le coach consulte le classement.
 
 **Je me suis trompé après la clôture.**
 Signalez l'erreur à l'organisateur : lui seul peut corriger un résultat après

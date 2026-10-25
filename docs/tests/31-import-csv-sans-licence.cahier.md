@@ -70,10 +70,10 @@
 - **Rôle** : admin. **Pré-condition** : Marsas sans grimpeur.
 - **Étapes** : club **Marsas** + **F-BRUT** → **Lancer l'import**.
 - **Résultat attendu** :
-  - compte-rendu « club **Marsas** · année de référence **2027** · seuil
-    **2009** · **102** lignes » ;
-  - **Créés : 99**, **Déjà présents : 0**, **Ignorés (hors âge) : 0**, **Lignes
-    en erreur : 2** ;
+  - compte-rendu « club **Marsas** · **102** lignes » (plus d'année de
+    référence ni de seuil, spec #20 R5) ;
+  - **Créés : 99**, **Déjà présents : 0**, **Lignes en erreur : 2** (plus de
+    compteur « ignorés ») ;
   - « 1 doublon dans le fichier … ARNAUD ROMEO (L. 4) » ;
   - tableau d'erreurs : **L. 8** BARRA et **L. 47** GERVASONI, raison « Prénom :
     caractère illisible (accent perdu), corriger le fichier. ».

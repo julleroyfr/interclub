@@ -48,7 +48,8 @@ export async function chargerEngagementTousClubs(
       .order('nom'),
     lirePretsAdmin(rencontreId),
   ])
-  if (!rencontre) return []
+  // Rencontre adulte : équipes sans club, panneau dédié (spec #20 R11).
+  if (!rencontre || rencontre.categorie === 'adulte') return []
 
   const categorie = rencontre.categorie as Categorie
   const roster = await lireGrimpeursEligibles(

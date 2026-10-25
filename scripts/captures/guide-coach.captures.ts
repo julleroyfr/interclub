@@ -68,8 +68,12 @@ function chargerDemoReperes(): void {
   )
 }
 
+/** Rencontre adulte de démonstration (seed opt-in 05) : du jour, Club B, en ③. */
+const DEMO_ADULTE = `categorie = 'adulte' and club_porteur_id = '22222222-2222-2222-2222-222222222222'`
+
 function etatSeed(): void {
   execSql(`delete from interclub.rencontre where id::text like 'aeaeaeae-%';`)
+  execSql(`delete from interclub.rencontre where ${DEMO_ADULTE};`)
   reinitialiserEngagement()
   poserPhase('pre_competition')
   poserDate(RENCONTRE_PILOTE_DATE)
@@ -231,4 +235,16 @@ test('07 — coach temporaire (scan du QR)', async ({ page }) => {
     page.getByRole('button', { name: /Terminer/ }),
   ])
   await capturer(page, '12-coach-temporaire', { pleinePage: false })
+})
+
+test('08 — rencontre adulte', async ({ page }) => {
+  execSql(readFileSync('supabase/seed/05-demo-adulte.sql', 'utf8'))
+  const id = execSql(`select id from interclub.rencontre where ${DEMO_ADULTE};`)
+  await commeCoach(page)
+  await page.goto('/coach')
+  const carte = page.locator(`a[href="/coach/rencontres/${id}/classement"]`)
+  await expect(carte).toContainText('3 grimpeurs')
+  await numeroter(page, [carte])
+  await capturer(page, '14-rencontre-adulte', { pleinePage: false })
+  execSql(`delete from interclub.rencontre where ${DEMO_ADULTE};`)
 })

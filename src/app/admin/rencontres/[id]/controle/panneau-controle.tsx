@@ -2,6 +2,7 @@
 
 import { useMemo, useOptimistic, useState, useTransition } from 'react'
 
+import { compter } from '@/domaine/accord'
 import { filtrerLignes, progression, progressionGlobale, type LigneControle } from '@/domaine/controle'
 import { basculerControle } from '@/lib/admin/controle-actions'
 import type { ControleRencontre, SupportControle } from '@/lib/admin/controle'
@@ -267,8 +268,8 @@ function DetailSupport({
         </div>
         <p className="mt-2 px-1 text-[11px] font-semibold text-texte-doux">
           {visibles.length === p.total
-            ? `${p.total} grimpeur(s)`
-            : `${visibles.length} affiché(s) sur ${p.total}`}
+            ? compter(p.total, 'grimpeur')
+            : `${compter(visibles.length, 'affiché')} sur ${p.total}`}
         </p>
       </div>
 

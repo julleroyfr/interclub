@@ -3,6 +3,7 @@
 import { useActionState, useId, useState } from 'react'
 
 import { Bouton, ChampSelect, ChampTexte } from '@/composants'
+import { compter } from '@/domaine/accord'
 import {
   ANNEE_NAISSANCE_MAX,
   ANNEE_NAISSANCE_MIN,
@@ -158,7 +159,7 @@ function LigneGrimpeur({
               <span className="uppercase">{grimpeur.nom}</span> {grimpeur.prenom}
             </p>
             <p className="mt-1 text-xs text-texte-doux">
-              {grimpeur.clubNom} · né(e) en {grimpeur.anneeNaissance} ·{' '}
+              {grimpeur.clubNom} · {grimpeur.sexe === 'F' ? 'née' : 'né'} en {grimpeur.anneeNaissance} ·{' '}
               {grimpeur.sexe === 'F' ? 'Femme' : 'Homme'} · licence{' '}
               {grimpeur.licence}
               {/* Licence de la plage réservée (spec #3 R21c/R26). */}
@@ -167,7 +168,7 @@ function LigneGrimpeur({
                   générée
                 </span>
               )}{' '}
-              · {grimpeur.nbEngagements} engagement(s)
+              · {compter(grimpeur.nbEngagements, 'engagement')}
             </p>
           </div>
 

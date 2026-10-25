@@ -5,7 +5,7 @@
 // garantis côté Supabase ; ici on valide ce qui est purement calculable.
 
 import { NIVEAUX_MOULINETTE, NIVEAUX_TETE } from './gabarit'
-import type { Phase } from './rencontre'
+import type { Categorie, Phase } from './rencontre'
 
 /** Nature de la session d'un coach (spec #2 : compte permanent ou session QR). */
 export type TypeCoach = 'permanent' | 'temporaire'
@@ -21,8 +21,30 @@ export function compositionModifiableParCoach(phase: Phase, type: TypeCoach): bo
   return phase === 'pre_competition' && type === 'permanent'
 }
 
+/**
+ * Les équipes d'une rencontre adulte se créent, se renomment, se suppriment et
+ * se composent en ① pré-compétition et ② préparation seulement ; elles sont
+ * figées dès la ③ (spec #20 R10). Même règle en base (trigger
+ * `verifier_equipes_adultes_modifiables`).
+ */
+export function equipesAdultesModifiables(phase: Phase): boolean {
+  return phase === 'pre_competition' || phase === 'preparation'
+}
+
+/** Refus d'une modification d'équipe adulte hors ① et ② (spec #20 R10). */
+export const MESSAGE_EQUIPES_ADULTES_FIGEES =
+  'Les équipes adultes ne se modifient qu’en pré-compétition ou en préparation.'
+
 /** Effectif maximal d'une équipe (règlement §6 ; spec #5 R15). */
 export const EFFECTIF_EQUIPE_MAX = 8
+
+/** Effectif maximal d'une équipe adulte (addendum Adultes §4 ; spec #20 R12). */
+export const EFFECTIF_EQUIPE_ADULTE_MAX = 4
+
+/** Effectif maximal d'une équipe selon la catégorie (spec #5 R15, spec #20 R12). */
+export function effectifMaxEquipe(categorie: Categorie): number {
+  return categorie === 'adulte' ? EFFECTIF_EQUIPE_ADULTE_MAX : EFFECTIF_EQUIPE_MAX
+}
 
 /** Nombre de voies enchaînées par un enfant à partir de son groupe (R20). */
 const NB_VOIES_GROUPE = 3
@@ -90,6 +112,19 @@ export function nomEquipeParDefaut(clubNom: string, nomsExistants: readonly stri
     max = Math.max(max, Number(suffixe))
   }
   return `${prefixe}${max + 1}`
+}
+
+/** Préfixe des noms d'équipe adulte proposés par défaut (spec #20 R14). */
+const PREFIXE_EQUIPE_ADULTE = 'Équipe'
+
+/**
+ * Nom proposé par défaut pour une nouvelle équipe adulte (spec #20 R14) :
+ * « Équipe N », N = plus grand numéro `k ≥ 1` parmi les équipes nommées
+ * exactement « Équipe k » (après normalisation R4), + 1 ; 1 si aucune. Une équipe
+ * adulte n'a pas de club : même règle que `nomEquipeParDefaut`, préfixe fixe.
+ */
+export function nomEquipeAdulteParDefaut(nomsExistants: readonly string[]): string {
+  return nomEquipeParDefaut(PREFIXE_EQUIPE_ADULTE, nomsExistants)
 }
 
 /** Minuscules sans accents, pour une comparaison tolérante (R12bis). */
@@ -173,12 +208,45 @@ export function verifierAjoutComposition(ajout: AjoutComposition): void {
   }
 }
 
+/** Contexte d'un ajout de grimpeur à une équipe adulte (spec #20 R11–R13). */
+export type AjoutCompositionAdulte = {
+  grimpeurId: string
+  /** Grimpeurs déjà membres de l'équipe visée. */
+  membresActuels: string[]
+  /** Grimpeurs déjà composés dans une équipe de la même rencontre. */
+  dejaEngagesRencontre: string[]
+}
+
+/**
+ * Vérifie qu'un grimpeur peut être ajouté à une équipe adulte (spec #20) :
+ * - R11 : aucun contrôle de club (équipes inter-clubs, pas de prêt) ;
+ * - R13 : il n'est pas déjà composé dans une équipe de la rencontre ;
+ * - R12 : l'équipe n'a pas atteint 4 grimpeurs.
+ * L'éligibilité d'âge (R2) est vérifiée par l'appelant. Lance
+ * `EngagementInvalideError` au premier invariant violé.
+ */
+export function verifierAjoutCompositionAdulte(ajout: AjoutCompositionAdulte): void {
+  if (ajout.dejaEngagesRencontre.includes(ajout.grimpeurId)) {
+    throw new EngagementInvalideError(
+      'Ce grimpeur est déjà composé dans une équipe de cette rencontre.',
+    )
+  }
+  if (ajout.membresActuels.length >= EFFECTIF_EQUIPE_ADULTE_MAX) {
+    throw new EngagementInvalideError(
+      `Une équipe adulte compte au plus ${EFFECTIF_EQUIPE_ADULTE_MAX} grimpeurs.`,
+    )
+  }
+}
+
 /** Refus d'un changement d'équipe hors club d'affectation ou hors rencontre (spec #3 R41d). */
 export const MESSAGE_CHANGEMENT_HORS_CLUB =
   "Un grimpeur ne peut changer que pour une autre équipe de son club d'affectation, dans la même rencontre."
 
-/** Équipe d'une rencontre, vue pour un changement d'équipe (spec #3 R41d). */
-export type EquipeDeRencontre = { id: string; clubId: string; rencontreId: string }
+/**
+ * Équipe d'une rencontre, vue pour un changement d'équipe (spec #3 R41d).
+ * `clubId` vaut `null` pour une équipe adulte (spec #20 R11).
+ */
+export type EquipeDeRencontre = { id: string; clubId: string | null; rencontreId: string }
 
 /** Contexte d'un changement d'équipe, à valider avant écriture (spec #3 R41d). */
 export type ChangementEquipe = {
@@ -193,10 +261,14 @@ export type ChangementEquipe = {
  * équipe de la même rencontre et du même club d'affectation (club de l'équipe
  * actuelle — club d'accueil pour un prêté ; jamais un autre club), dont
  * l'effectif reste sous le plafond (spec #5 R15). Le changement n'est pas un
- * retrait : le grimpeur reste engagé (spec #10 R18bis). Lance
- * `EngagementInvalideError` au premier invariant violé.
+ * retrait : le grimpeur reste engagé (spec #10 R18bis). En adulte, les équipes
+ * n'ont pas de club (même « club » vide) et le plafond vaut 4 (`effectifMax`,
+ * spec #20 R11/R12). Lance `EngagementInvalideError` au premier invariant violé.
  */
-export function verifierChangementEquipe({ equipeSource, equipeCible }: ChangementEquipe): void {
+export function verifierChangementEquipe(
+  { equipeSource, equipeCible }: ChangementEquipe,
+  effectifMax: number = EFFECTIF_EQUIPE_MAX,
+): void {
   if (equipeCible.id === equipeSource.id) {
     throw new EngagementInvalideError('Le grimpeur est déjà dans cette équipe.')
   }
@@ -206,9 +278,9 @@ export function verifierChangementEquipe({ equipeSource, equipeCible }: Changeme
   ) {
     throw new EngagementInvalideError(MESSAGE_CHANGEMENT_HORS_CLUB)
   }
-  if (equipeCible.effectif >= EFFECTIF_EQUIPE_MAX) {
+  if (equipeCible.effectif >= effectifMax) {
     throw new EngagementInvalideError(
-      `L'effectif d'une équipe est plafonné à ${EFFECTIF_EQUIPE_MAX} grimpeurs.`,
+      `L'effectif d'une équipe est plafonné à ${effectifMax} grimpeurs.`,
     )
   }
 }
@@ -218,7 +290,7 @@ export function verifierChangementEquipe({ equipeSource, equipeCible }: Changeme
  * équipes du club d'affectation (club de l'équipe actuelle), dans l'ordre reçu.
  * Vide si le club n'a qu'une équipe — l'action n'est alors pas proposée.
  */
-export function equipesCiblesChangement<E extends { id: string; clubId: string }>(
+export function equipesCiblesChangement<E extends { id: string; clubId: string | null }>(
   equipesRencontre: readonly E[],
   equipeActuelleId: string,
 ): E[] {
