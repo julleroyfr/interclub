@@ -253,6 +253,24 @@ test.describe('Catégorie adulte — lot 1 (spec #20)', () => {
     }
   })
 
+  test('dès la ③, les équipes adultes sont figées, admin compris (R10)', async ({ page }) => {
+    const id = idRencontre()
+    execSql(`update interclub.rencontre set phase = 'competition' where id = '${id}';`)
+    try {
+      await commeAdmin(page)
+      await page.goto(`/admin/rencontres/${id}`)
+      await expect(page.getByText(/Équipes figées/)).toBeVisible()
+      const carte = page.locator('[data-equipe="Équipe 1"]')
+      await expect(carte.getByText(/Lucie Echo/)).toBeVisible()
+      await expect(page.getByLabel('Nouvelle équipe')).toHaveCount(0)
+      await expect(carte.getByRole('button', { name: /Supprimer l'équipe/ })).toHaveCount(0)
+      await expect(carte.getByRole('button', { name: /^Retirer / })).toHaveCount(0)
+      await expect(carte.getByRole('button', { name: 'Changer d’équipe' })).toHaveCount(0)
+    } finally {
+      execSql(`update interclub.rencontre set phase = 'pre_competition' where id = '${id}';`)
+    }
+  })
+
   test('classement et PDF adultes : pas de club, équipe par son nom (R30–R32)', async ({ page, browser }) => {
     const id = idRencontre()
     execSql(`update interclub.rencontre set phase = 'resultats_publics' where id = '${id}';`)

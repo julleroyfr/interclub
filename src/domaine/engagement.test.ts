@@ -10,6 +10,8 @@ import {
   EngagementInvalideError,
   GroupeDepartInvalideError,
   compositionModifiableParCoach,
+  equipesAdultesModifiables,
+  MESSAGE_EQUIPES_ADULTES_FIGEES,
   filtrerGrimpeursRecherche,
   nomEquipeParDefaut,
   normaliserNomEquipe,
@@ -350,5 +352,19 @@ describe('spec #20 — Équipes adultes (R11–R14)', () => {
         EFFECTIF_EQUIPE_ADULTE_MAX,
       ),
     ).toThrow(/plafonné à 4/)
+  })
+})
+
+describe('spec #20 — Équipes adultes figées hors ① et ② (R10)', () => {
+  it.each(['pre_competition', 'preparation'] as const)('modifiables en %s', (phase) => {
+    expect(equipesAdultesModifiables(phase)).toBe(true)
+  })
+
+  it.each(['competition', 'cloture', 'resultats_publics'] as const)('figées en %s', (phase) => {
+    expect(equipesAdultesModifiables(phase)).toBe(false)
+  })
+
+  it('le message de refus nomme les phases permises', () => {
+    expect(MESSAGE_EQUIPES_ADULTES_FIGEES).toMatch(/pré-compétition.*préparation/)
   })
 })

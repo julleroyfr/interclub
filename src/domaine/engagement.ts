@@ -21,6 +21,20 @@ export function compositionModifiableParCoach(phase: Phase, type: TypeCoach): bo
   return phase === 'pre_competition' && type === 'permanent'
 }
 
+/**
+ * Les équipes d'une rencontre adulte se créent, se renomment, se suppriment et
+ * se composent en ① pré-compétition et ② préparation seulement ; elles sont
+ * figées dès la ③ (spec #20 R10). Même règle en base (trigger
+ * `verifier_equipes_adultes_modifiables`).
+ */
+export function equipesAdultesModifiables(phase: Phase): boolean {
+  return phase === 'pre_competition' || phase === 'preparation'
+}
+
+/** Refus d'une modification d'équipe adulte hors ① et ② (spec #20 R10). */
+export const MESSAGE_EQUIPES_ADULTES_FIGEES =
+  'Les équipes adultes ne se modifient qu’en pré-compétition ou en préparation.'
+
 /** Effectif maximal d'une équipe (règlement §6 ; spec #5 R15). */
 export const EFFECTIF_EQUIPE_MAX = 8
 

@@ -11,6 +11,7 @@
 #   - R16–R21: jeton et session capitaine (périmètre, ③, son équipe, auteur)
 #   - R10–R14: équipes adultes sans club, composées par l'admin seul, 4 au plus,
 #              nom unique (lot 3) ; R28 : roster juge avec le club d'origine
+#   - R10    : équipes adultes figées hors ① et ② (correctif 2026-10-25)
 #
 # Les règles applicatives (éligibilité ≥ 16 ans, issues proposées, libellé de voie
 # de vitesse) sont couvertes par le domaine pur (Vitest). Le reste est au cahier.
@@ -251,6 +252,50 @@ select pg_temp.essai('R17-revoque-ecriture-KO', false,
   format($$select interclub.saisir_resultat_voie(%L, 'a0000000-0000-0000-0000-0000000000a3', 'top')$$, :'v1'));
 reset role;
 
+-- ---- R10 — équipes adultes figées hors ① et ② (correctif 2026-10-25) --------
+-- Rencontre en ③ : même l'admin ne crée, ne renomme, ne supprime ni ne compose.
+update interclub.rencontre set phase = 'competition' where id = :'rid';
+select set_config('request.jwt.claims','{"sub":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"}', true); set role authenticated;
+select pg_temp.essai('R10-gel-admin-cree-equipe-KO', false,
+  format($$insert into interclub.equipe (rencontre_id, club_id, nom) values (%L, null, 'Équipe 9')$$, :'rid'));
+select pg_temp.essai('R10-gel-admin-renomme-equipe-KO', false,
+  format($$update interclub.equipe set nom = 'Renommée' where id = %L$$, :'eq2'));
+select pg_temp.essai('R10-gel-admin-supprime-equipe-KO', false,
+  format($$delete from interclub.equipe where id = %L$$, :'eq2'));
+select pg_temp.essai('R10-gel-admin-compose-KO', false,
+  format($$insert into interclub.composition (equipe_id, grimpeur_id) values (%L, 'a0000000-0000-0000-0000-0000000000a7')$$, :'eq2'));
+select pg_temp.essai('R10-gel-admin-retire-KO', false,
+  format($$delete from interclub.composition where equipe_id = %L$$, :'eq2'));
+select pg_temp.essai('R10-gel-admin-change-equipe-KO', false,
+  format($$update interclub.composition set equipe_id = %L
+             where equipe_id = %L and grimpeur_id = 'a0000000-0000-0000-0000-0000000000a3'$$, :'eq2', :'eq1'));
+reset role;
+-- ④ et ⑤ : idem (création).
+update interclub.rencontre set phase = 'cloture' where id = :'rid';
+select pg_temp.essai('R10-gel-cloture-KO', false,
+  format($$insert into interclub.equipe (rencontre_id, club_id, nom) values (%L, null, 'Équipe 9')$$, :'rid'));
+update interclub.rencontre set phase = 'resultats_publics' where id = :'rid';
+select pg_temp.essai('R10-gel-resultats-publics-KO', false,
+  format($$insert into interclub.equipe (rencontre_id, club_id, nom) values (%L, null, 'Équipe 9')$$, :'rid'));
+-- ② préparation : modifiable.
+update interclub.rencontre set phase = 'preparation' where id = :'rid';
+select set_config('request.jwt.claims','{"sub":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"}', true); set role authenticated;
+select pg_temp.essai('R10-preparation-admin-cree-equipe-OK', true,
+  format($$insert into interclub.equipe (rencontre_id, club_id, nom) values (%L, null, 'Équipe 9')$$, :'rid'));
+select pg_temp.essai('R10-preparation-admin-retire-OK', true,
+  format($$delete from interclub.composition where equipe_id = %L$$, :'eq2'));
+reset role;
+-- Enfant et ado inchangés : l'admin corrige l'engagement en toute phase (R34).
+update interclub.rencontre set phase = 'competition' where id = '33333333-3333-3333-3333-333333333333';
+select set_config('request.jwt.claims','{"sub":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"}', true); set role authenticated;
+select pg_temp.essai('R34-enfant-competition-admin-cree-equipe-OK', true,
+  $$insert into interclub.equipe (rencontre_id, club_id, nom) values ('33333333-3333-3333-3333-333333333333', '11111111-1111-1111-1111-111111111111', 'Gel X')$$);
+reset role;
+-- Suppression d'une rencontre adulte en ⑤ : la cascade passe.
+update interclub.rencontre set phase = 'resultats_publics' where id = :'rid';
+select pg_temp.essai('R10-suppression-rencontre-cascade-OK', true,
+  format($$delete from interclub.rencontre where id = %L$$, :'rid'));
+
 -- ---- Restitution --------------------------------------------------------
 \echo '--- Détail des assertions ---'
 select id, attendu, obtenu, case when ok then 'OK' else 'KO' end as verdict from pg_temp._res order by id;
@@ -270,9 +315,9 @@ if [ $STATUS -ne 0 ]; then
 fi
 
 if echo "$OUT" | grep -qE 'ADULTE RESULT: [0-9]+ OK / 0 KO'; then
-  echo "✅ Spec #20 (lots 1, 3, 4 et 5) : toutes les assertions BDD passent."
+  echo "✅ Spec #20 (lots 1, 3, 4, 5 et gel des équipes) : toutes les assertions BDD passent."
   exit 0
 else
-  echo "❌ Spec #20 (lots 1, 3, 4 et 5) : au moins une assertion BDD a échoué (voir le détail ci-dessus)." >&2
+  echo "❌ Spec #20 (lots 1, 3, 4, 5 et gel des équipes) : au moins une assertion BDD a échoué (voir le détail ci-dessus)." >&2
   exit 1
 fi

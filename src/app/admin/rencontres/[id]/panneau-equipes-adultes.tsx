@@ -5,6 +5,7 @@ import { useActionState, useId, useRef, useState } from 'react'
 import { Bouton, Carte, ChampSelect, ChampTexte, TitreSection } from '@/composants'
 import {
   EFFECTIF_EQUIPE_ADULTE_MAX,
+  equipesAdultesModifiables,
   filtrerGrimpeursRecherche,
   nomEquipeAdulteParDefaut,
 } from '@/domaine/engagement'
@@ -30,10 +31,12 @@ const etatInitial: EtatAdminEngagement = undefined
 /**
  * Équipes d'une rencontre adulte (spec #20 R10–R15) : sans club, composées par
  * l'admin avec des grimpeurs de 16 ans et plus de tous les clubs, 4 au plus.
+ * En lecture seule dès la ③ : les équipes sont figées (R10).
  */
 export function PanneauEquipesAdultes({ donnees }: { donnees: EquipesAdultesRencontre }) {
-  const { rencontreId, equipes, roster } = donnees
+  const { rencontreId, equipes, roster, phase } = donnees
   const disponibles = roster.filter((g) => !g.engage)
+  const modifiable = equipesAdultesModifiables(phase)
 
   return (
     <section className="flex flex-col gap-4">
@@ -44,6 +47,11 @@ export function PanneauEquipesAdultes({ donnees }: { donnees: EquipesAdultesRenc
           tous clubs confondus. La mixité et le mélange des clubs sont recommandés, sans contrôle.
           Les coachs n’ont aucun droit sur ces équipes.
         </p>
+        {!modifiable && (
+          <p className="mt-2 rounded-xl border border-bordure bg-white/5 px-3 py-2 text-xs text-texte-attenue">
+            Équipes figées : elles ne se modifient qu’en pré-compétition ou en préparation.
+          </p>
+        )}
       </div>
 
       <Carte className="flex flex-col gap-3 p-4">
@@ -55,6 +63,7 @@ export function PanneauEquipesAdultes({ donnees }: { donnees: EquipesAdultesRenc
               <li key={eq.id}>
                 <CarteEquipeAdulte
                   rencontreId={rencontreId}
+                  modifiable={modifiable}
                   equipe={eq}
                   disponibles={disponibles}
                   autresEquipes={equipes
@@ -70,10 +79,12 @@ export function PanneauEquipesAdultes({ donnees }: { donnees: EquipesAdultesRenc
           </ul>
         )}
 
-        <FormNouvelleEquipeAdulte
-          rencontreId={rencontreId}
-          nomParDefaut={nomEquipeAdulteParDefaut(equipes.map((e) => e.nom))}
-        />
+        {modifiable && (
+          <FormNouvelleEquipeAdulte
+            rencontreId={rencontreId}
+            nomParDefaut={nomEquipeAdulteParDefaut(equipes.map((e) => e.nom))}
+          />
+        )}
       </Carte>
     </section>
   )
@@ -83,11 +94,13 @@ type EquipeCible = { id: string; nom: string; complete: boolean }
 
 function CarteEquipeAdulte({
   rencontreId,
+  modifiable,
   equipe,
   disponibles,
   autresEquipes,
 }: {
   rencontreId: string
+  modifiable: boolean
   equipe: EquipeAdulte
   disponibles: GrimpeurAdulteOption[]
   autresEquipes: EquipeCible[]
@@ -109,6 +122,7 @@ function CarteEquipeAdulte({
             <LigneMembreAdulte
               key={m.grimpeurId}
               rencontreId={rencontreId}
+              modifiable={modifiable}
               equipeId={equipe.id}
               membre={m}
               autresEquipes={autresEquipes}
@@ -117,31 +131,36 @@ function CarteEquipeAdulte({
         </ul>
       )}
 
-      {complete ? (
-        <p className="mt-2 text-xs text-secondaire">
-          Équipe complète — {EFFECTIF_EQUIPE_ADULTE_MAX} grimpeurs au plus.
-        </p>
-      ) : (
-        <FormAjoutAdulte
-          key={equipe.membres.map((m) => m.grimpeurId).join(',')}
-          rencontreId={rencontreId}
-          equipeId={equipe.id}
-          disponibles={disponibles}
-        />
-      )}
+      {modifiable &&
+        (complete ? (
+          <p className="mt-2 text-xs text-secondaire">
+            Équipe complète — {EFFECTIF_EQUIPE_ADULTE_MAX} grimpeurs au plus.
+          </p>
+        ) : (
+          <FormAjoutAdulte
+            key={equipe.membres.map((m) => m.grimpeurId).join(',')}
+            rencontreId={rencontreId}
+            equipeId={equipe.id}
+            disponibles={disponibles}
+          />
+        ))}
 
-      <FormSupprimerEquipe rencontreId={rencontreId} equipeId={equipe.id} nom={equipe.nom} />
+      {modifiable && (
+        <FormSupprimerEquipe rencontreId={rencontreId} equipeId={equipe.id} nom={equipe.nom} />
+      )}
     </div>
   )
 }
 
 function LigneMembreAdulte({
   rencontreId,
+  modifiable,
   equipeId,
   membre,
   autresEquipes,
 }: {
   rencontreId: string
+  modifiable: boolean
   equipeId: string
   membre: MembreAdulte
   autresEquipes: EquipeCible[]
@@ -161,25 +180,27 @@ function LigneMembreAdulte({
           {membre.clubNom}
         </span>
       )}
-      <form action={actionRetrait} className="ml-auto">
-        <input type="hidden" name="rencontreId" value={rencontreId} />
-        <input type="hidden" name="equipeId" value={equipeId} />
-        <input type="hidden" name="grimpeurId" value={membre.grimpeurId} />
-        <button
-          type="submit"
-          disabled={retraitEnCours}
-          aria-label={`Retirer ${membre.prenom} ${membre.nom}`}
-          className="text-lg leading-none text-danger transition hover:opacity-100 disabled:opacity-40"
-        >
-          ×
-        </button>
-      </form>
+      {modifiable && (
+        <form action={actionRetrait} className="ml-auto">
+          <input type="hidden" name="rencontreId" value={rencontreId} />
+          <input type="hidden" name="equipeId" value={equipeId} />
+          <input type="hidden" name="grimpeurId" value={membre.grimpeurId} />
+          <button
+            type="submit"
+            disabled={retraitEnCours}
+            aria-label={`Retirer ${membre.prenom} ${membre.nom}`}
+            className="text-lg leading-none text-danger transition hover:opacity-100 disabled:opacity-40"
+          >
+            ×
+          </button>
+        </form>
+      )}
       {etatRetrait?.erreur && (
         <p role="alert" className="w-full text-xs text-danger">
           {etatRetrait.erreur}
         </p>
       )}
-      {autresEquipes.length > 0 && (
+      {modifiable && autresEquipes.length > 0 && (
         <FormChangerEquipeAdulte
           rencontreId={rencontreId}
           equipeId={equipeId}

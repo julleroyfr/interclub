@@ -10,7 +10,8 @@
 - **Pré-requis** :
   - Migrations **`202610231000_categorie_adulte`**,
     **`202610231100_equipes_adultes`**, **`202610231200_top_moulinette`** puis
-    **`202610231300_jeton_capitaine`** appliquées à la main, dans cet ordre
+    **`202610231300_jeton_capitaine`** puis **`202610251000_gel_equipes_adultes`**
+    appliquées à la main, dans cet ordre
     (recette seulement tant que la branche n'est pas fusionnée).
   - Scripts de retour arrière disponibles dans `supabase/retours-arriere/`, à
     exécuter dans l'**ordre inverse** (lot 5, lot 4, lot 3, puis lot 1).
@@ -294,6 +295,19 @@ main, `[mixte]` partie automatisée + vérification à l'œil.
 - **Résultat attendu** : l'en-tête de l'écran juge affiche le libellé (« Voie 1
   — dalle ») au lieu de « couloir 1 ».
 
+### CT-29 — Équipes adultes figées dès la ③, admin compris (couvre : R10) `[auto]`
+
+- **Rôle / compte** : `JD-ADMIN`, rencontre adulte avec « Équipe 1 », passée en
+  ③.
+- **Étapes** : ouvrir la rencontre ; puis local `npm run test:adulte`,
+  assertions `R10-gel-*`, `R10-preparation-*`, `R34-enfant-*`.
+- **Résultat attendu** : le panneau « Équipes adultes » affiche « Équipes
+  figées » ; ni « Nouvelle équipe », ni retrait (×), ni « Changer d'équipe », ni
+  « Supprimer l'équipe ». En base, création, renommage, suppression,
+  composition, retrait et changement d'équipe sont refusés en ③, ④ et ⑤, même
+  pour l'admin ; permis en ②. Une rencontre enfant reste corrigeable par l'admin
+  en ③. La suppression d'une rencontre adulte en ⑤ passe (cascade).
+
 ### CT-26 — Classement adulte : pas de vue club, équipe par son nom (couvre : R30, R31) `[auto]`
 
 - **Rôle / compte** : `JD-ADMIN`, rencontre adulte en ③ avec les résultats de
@@ -356,4 +370,5 @@ main, `[mixte]` partie automatisée + vérification à l'œil.
 | 2026-10-23 | agent (local) | feature/categorie-adulte | CT-18, CT-19 | ✅ | E2E 8/8 ; `test:adulte` 24/24 ; `db:verifier-retours` lots 1, 3, 4 ✅ |
 | 2026-10-23 | agent (local) | feature/categorie-adulte | CT-20, CT-21, CT-22, CT-24 | ✅ | E2E `categorie-adulte.spec.ts` 10/10 ; `test:adulte` 41/41 |
 | 2026-10-25 | agent (local) | feature/categorie-adulte | CT-26, CT-28 (admin, coach Club A) | ✅ | E2E `categorie-adulte.spec.ts` 11/11 ; non-régression classement, export PDF, vitesse, volume 30/30 |
-| | | | CT-01 → CT-28 (recette) | | |
+| 2026-10-25 | agent (local) | feature/categorie-adulte | CT-29 | ✅ | E2E 12/12 ; `test:adulte` 53/53 ; `db:verifier-retours` 5 migrations ✅ |
+| | | | CT-01 → CT-29 (recette) | | |
