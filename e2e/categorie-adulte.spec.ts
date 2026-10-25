@@ -167,6 +167,27 @@ test.describe('Catégorie adulte — lot 1 (spec #20)', () => {
     await expect(page.getByLabel('Nouvelle équipe')).toHaveCount(0)
   })
 
+  test('le coach va droit au classement dès la ③, sans écran de résultats (R19bis)', async ({ page }) => {
+    const id = idRencontre()
+    try {
+      for (const phase of ['competition', 'cloture']) {
+        execSql(`update interclub.rencontre set phase = '${phase}' where id = '${id}';`)
+        await commeCoach(page)
+        await page.goto('/coach')
+        await expect(page.locator(`a[href="/coach/rencontres/${id}/classement"]`)).toBeVisible()
+        await page.goto(`/coach/rencontres/${id}`)
+        await expect(page.getByRole('link', { name: 'Voir le classement →' })).toBeVisible()
+        await expect(page.getByRole('link', { name: /les résultats/ })).toHaveCount(0)
+        // L'adresse de l'écran de résultats renvoie au classement.
+        await page.goto(`/coach/rencontres/${id}/resultats`)
+        await page.waitForURL(`**/coach/rencontres/${id}/classement`)
+        await page.context().clearCookies()
+      }
+    } finally {
+      execSql(`update interclub.rencontre set phase = 'pre_competition' where id = '${id}';`)
+    }
+  })
+
   test('l’admin saisit un top en moulinette : moitié du top (R23, R25)', async ({ page }) => {
     const id = idRencontre()
     execSql(`update interclub.rencontre set phase = 'competition' where id = '${id}';`)

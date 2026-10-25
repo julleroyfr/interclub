@@ -308,6 +308,16 @@ main, `[mixte]` partie automatisée + vérification à l'œil.
   pour l'admin ; permis en ②. Une rencontre enfant reste corrigeable par l'admin
   en ③. La suppression d'une rencontre adulte en ⑤ passe (cascade).
 
+### CT-30 — Coach : directement au classement, sans écran de résultats (couvre : R19bis) `[auto]`
+
+- **Rôle / compte** : `coach@test.local`, rencontre adulte en ③ puis en ④.
+- **Étapes** : accueil coach → carte de la rencontre adulte ; ouvrir l'écran de
+  la rencontre ; saisir l'URL `/coach/rencontres/{id}/resultats`.
+- **Résultat attendu** : la carte mène au **classement** ; l'écran de la
+  rencontre propose « Voir le classement → » et aucun lien de résultats ;
+  l'URL des résultats renvoie au classement. Avant la ③, la carte mène à
+  l'écran de la rencontre.
+
 ### CT-26 — Classement adulte : pas de vue club, équipe par son nom (couvre : R30, R31) `[auto]`
 
 - **Rôle / compte** : `JD-ADMIN`, rencontre adulte en ③ avec les résultats de
@@ -371,4 +381,5 @@ main, `[mixte]` partie automatisée + vérification à l'œil.
 | 2026-10-23 | agent (local) | feature/categorie-adulte | CT-20, CT-21, CT-22, CT-24 | ✅ | E2E `categorie-adulte.spec.ts` 10/10 ; `test:adulte` 41/41 |
 | 2026-10-25 | agent (local) | feature/categorie-adulte | CT-26, CT-28 (admin, coach Club A) | ✅ | E2E `categorie-adulte.spec.ts` 11/11 ; non-régression classement, export PDF, vitesse, volume 30/30 |
 | 2026-10-25 | agent (local) | feature/categorie-adulte | CT-29 | ✅ | E2E 12/12 ; `test:adulte` 53/53 ; `db:verifier-retours` 5 migrations ✅ |
-| | | | CT-01 → CT-29 (recette) | | |
+| 2026-10-25 | agent (local) | feature/categorie-adulte | CT-30 | ✅ | E2E `categorie-adulte.spec.ts` 13/13 ; navigation et temps réel coach sans régression |
+| | | | CT-01 → CT-30 (recette) | | |

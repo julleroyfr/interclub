@@ -279,6 +279,9 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
   - L'écran d'engagement reste **accessible par URL directe** (consultation figée,
     cf. CT-10).
   - Aux autres phases, la carte mène toujours à l'écran d'engagement (CT-01/CT-12).
+  - Sur l'écran d'engagement, le lien vaut « Saisir / voir les résultats → » en
+    ③ et « Voir les résultats → » en ④/⑤ (saisie close). En rencontre adulte :
+    cahier 33 CT-30.
 
 ### CT-15 `[auto]` — Coach temporaire : navigation bornée à sa rencontre   (couvre : R8bis ; spec #1 R27/R28)
 

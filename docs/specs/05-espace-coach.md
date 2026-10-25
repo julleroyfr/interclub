@@ -133,6 +133,8 @@ cette spec. (Spec #1 R6/R27, rév. 2026-09-01.)
   l'écran de saisie des résultats** ; l'écran d'engagement reste **accessible** (URL
   directe) pour consulter la composition figée. Aux autres phases (①/②/④/⑤), la
   ligne mène à l'écran d'engagement.
+  *(Catégorie adulte, rév. 2026-10-25 : dès la ③, la ligne mène au classement ;
+  pas d'écran de résultats pour le coach — spec #20 R19bis.)*
 - **R8.** La liste affiche les rencontres **triées par priorité** : d'abord la
   **préparation** (② jour J, la plus actionnable), puis les **compétitions en
   cours** (③), puis les **pré-compétitions** (①), enfin les rencontres

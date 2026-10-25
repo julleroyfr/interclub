@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 
 import { Coquille, EnTetePage, Etiquette, TempsReel, variantePhase } from '@/composants'
 import { CATEGORIES, PHASES, phaseEnDirect, type Categorie, type Phase } from '@/domaine/rencontre'
@@ -49,6 +49,8 @@ export default async function PageResultats({
 
   const saisie = await getSaisieRencontre(id, contexte.clubId)
   if (!saisie) notFound()
+  // Adulte : pas d'écran de résultats pour le coach, renvoi au classement (spec #20 R19bis).
+  if (saisie.categorie === 'adulte') redirect(`/coach/rencontres/${id}/classement`)
 
   return (
     <Coquille liens={liensCoach(contexte)} deconnexion={contexte.type === 'permanent'} finSession={contexte.type === 'temporaire'}>

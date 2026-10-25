@@ -7,7 +7,7 @@ import { compositionModifiableParCoach } from '@/domaine/engagement'
 import { CATEGORIES, PHASES, type Categorie, type Phase } from '@/domaine/rencontre'
 import { exigerContexteCoach } from '@/lib/auth/session'
 import { getEngagementRencontre } from '@/lib/coach/engagement'
-import { liensCoach } from '@/lib/coach/navigation'
+import { lienSuiteRencontreCoach, liensCoach } from '@/lib/coach/navigation'
 
 import { PanneauEngagement } from './panneau-engagement'
 
@@ -51,6 +51,8 @@ export default async function PageEngagement({
   const estAdulte = engagement.categorie === 'adulte'
   // Édition : phases ①/② pour le permanent, ② préparation seule pour le temporaire (R16).
   const peutEditer = !estAdulte && compositionModifiableParCoach(engagement.phase, contexte.type)
+  // Résultats (enfant/ado) ou classement (adulte, spec #20 R19bis), dès la ③.
+  const lienSuite = lienSuiteRencontreCoach(id, engagement.categorie, engagement.phase)
 
   return (
     <Coquille liens={liensCoach(contexte)} deconnexion={contexte.type === 'permanent'} finSession={contexte.type === 'temporaire'}>
@@ -64,12 +66,12 @@ export default async function PageEngagement({
             <Etiquette variante={variantePhase[engagement.phase]}>
               {labelPhase(engagement.phase)}
             </Etiquette>
-            {engagement.phase !== 'pre_competition' && engagement.phase !== 'preparation' && (
+            {lienSuite && (
               <Link
-                href={`/coach/rencontres/${id}/resultats`}
+                href={lienSuite.href}
                 className="text-sm font-semibold text-accent-doux underline-offset-2 hover:underline"
               >
-                Saisir / voir les résultats →
+                {lienSuite.label}
               </Link>
             )}
             {/* Live : prêts, équipes et compositions tant que la composition est
@@ -85,7 +87,7 @@ export default async function PageEngagement({
         {estAdulte ? (
           <p className="rounded-2xl border border-bordure bg-surface p-4 text-sm text-texte-attenue">
             Rencontre adulte : les équipes, qui mélangent les clubs, sont créées et composées par
-            l’administrateur. Les résultats et le classement sont consultables dès la compétition.
+            l’administrateur. Le classement est consultable dès la compétition.
           </p>
         ) : (
           <PanneauEngagement

@@ -1,4 +1,5 @@
 import { type LienNav } from '@/composants'
+import type { Categorie, Phase } from '@/domaine/rencontre'
 import { type ContexteCoach } from '@/lib/auth/session'
 
 /**
@@ -21,4 +22,39 @@ export function liensCoach(contexte: ContexteCoach): LienNav[] {
     { href: '/coach', label: 'Mes rencontres' },
     { href: '/coach/jetons', label: 'Jetons' },
   ]
+}
+
+/** Phases où la composition est encore ouverte : rien à saisir ni à classer. */
+const avantCompetition = (phase: Phase) => phase === 'pre_competition' || phase === 'preparation'
+
+/**
+ * Lien de suite de l'écran d'une rencontre côté coach, ou `null` avant la ③.
+ * Enfant/ado : « Saisir / voir les résultats » en ③ (spec #6), « Voir les
+ * résultats » en ④/⑤ où la saisie est close. Adulte : directement le classement,
+ * le coach n'ayant pas d'écran de résultats (spec #20 R19bis).
+ */
+export function lienSuiteRencontreCoach(
+  rencontreId: string,
+  categorie: Categorie,
+  phase: Phase,
+): { href: string; label: string } | null {
+  if (avantCompetition(phase)) return null
+  if (categorie === 'adulte') {
+    return { href: `/coach/rencontres/${rencontreId}/classement`, label: 'Voir le classement →' }
+  }
+  return {
+    href: `/coach/rencontres/${rencontreId}/resultats`,
+    label: phase === 'competition' ? 'Saisir / voir les résultats →' : 'Voir les résultats →',
+  }
+}
+
+/**
+ * Cible de la carte d'une rencontre sur l'accueil coach (spec #5 R7) : saisie
+ * des résultats en ③, écran d'engagement ailleurs ; en adulte, classement dès la
+ * ③ (spec #20 R19bis).
+ */
+export function cibleCarteRencontreCoach(rencontreId: string, categorie: Categorie, phase: Phase): string {
+  if (categorie === 'adulte' && !avantCompetition(phase)) return `/coach/rencontres/${rencontreId}/classement`
+  if (phase === 'competition') return `/coach/rencontres/${rencontreId}/resultats`
+  return `/coach/rencontres/${rencontreId}`
 }

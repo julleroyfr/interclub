@@ -5,7 +5,7 @@ import { Coquille, EnTetePage, Etiquette, variantePhase } from '@/composants'
 import { CATEGORIES, PHASES, type Categorie, type Phase } from '@/domaine/rencontre'
 import { exigerContexteCoach } from '@/lib/auth/session'
 import { listerRencontresCoach, type RencontreCoach } from '@/lib/coach/engagement'
-import { liensCoach } from '@/lib/coach/navigation'
+import { cibleCarteRencontreCoach, liensCoach } from '@/lib/coach/navigation'
 
 export const metadata: Metadata = { title: 'Mes rencontres — Interclub' }
 
@@ -82,13 +82,11 @@ export default async function PageCoach() {
 /**
  * Carte-lien d'une rencontre (R7). En ③ compétition, la composition est figée et
  * la tâche du coach est la saisie : la carte mène directement à l'écran de saisie
- * des résultats ; aux autres phases, vers l'écran d'engagement.
+ * des résultats ; aux autres phases, vers l'écran d'engagement. En adulte, dès la
+ * ③, vers le classement (spec #20 R19bis).
  */
 function CarteRencontre({ rencontre: r }: { rencontre: RencontreCoach }) {
-  const href =
-    r.phase === 'competition'
-      ? `/coach/rencontres/${r.id}/resultats`
-      : `/coach/rencontres/${r.id}`
+  const href = cibleCarteRencontreCoach(r.id, r.categorie, r.phase)
   return (
     <Link
       href={href}
