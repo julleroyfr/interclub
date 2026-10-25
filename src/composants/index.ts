@@ -2,6 +2,8 @@
 // Import : `import { Bouton, Carte, ... } from '@/composants'`.
 
 export { Bouton } from './Bouton'
+export { BoutonIcone } from './BoutonIcone'
+export type { IconeBouton } from './BoutonIcone'
 export type { VarianteBouton, TailleBouton } from './Bouton'
 
 export { Carte } from './Carte'

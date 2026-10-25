@@ -21,6 +21,12 @@
   validé le 2026-10-16.**
   **Licence facultative à l'ajout d'un grimpeur (R21b, R21d) : demandé et
   validé le 2026-10-25** — licence vide → licence générée (spec #18 R14).
+  **Modification et suppression des éléments de la structure d'une rencontre
+  (R51–R55) : demandé et validé le 2026-10-25** — en ① pré-compétition et ②
+  préparation jour J ; révise R36, R43, R44 et le hors-périmètre.
+  **Ajout d'éléments et édition du barème de vitesse aussi en ② préparation
+  (R51 rév., R55e) : demandé et validé le 2026-10-25** — révise R36, R43, R44,
+  R45, R47.
 - **Sources** : décision produit du 2026-07-25 (tranche T8 — premiers écrans
   d'administration). S'appuie sur la **spec #1 — Rôles & autorisations**
   (`01-roles-et-autorisations.md`), qui reste la vérité pour « qui peut faire
@@ -282,6 +288,9 @@ saisie, les flux CRUD, et les règles de suppression (dépendances / cascade).
   l'ajout de voies sur un niveau donné (ex. : 2ᵉ voie T6 pour un groupe de
   niveau supplémentaire). La modification de structure n'est possible qu'en phase
   **pré-compétition** (avant la saisie de résultats).
+  *(Rév. 2026-10-25 : l'**ajout**, la **modification** et la **suppression** des
+  éléments sont possibles en **① pré-compétition** et **② préparation jour J** —
+  R51–R55.)*
 - **R37.** Le **niveau** d'une voie de difficulté est contraint aux valeurs
   réglementaires de la catégorie :
   - Catégorie **enfant** — moulinette : `M1`–`M4` ; tête : `T1`–`T10`.
@@ -355,7 +364,8 @@ saisie, les flux CRUD, et les règles de suppression (dépendances / cascade).
   chute / non-présentation** restent éditables au même endroit (R46). Cette édition
   fine est **propre au barème** (exception à R43, qui reste « ajout seul » pour les
   voies et blocs). L'édition **en rencontre** n'est possible qu'en
-  **pré-compétition** (R44) ; l'édition **au gabarit** suit les règles d'édition du
+  **pré-compétition** (R44) *(rév. 2026-10-25 : en ① et ② — R51 —, tant qu'aucune
+  saisie de vitesse n'existe sur l'épreuve — R55e)* ; l'édition **au gabarit** suit les règles d'édition du
   gabarit (R31). Le barème reste **identique Filles / Garçons** (R46).
 - **R48.** *(Ajout validé le 2026-09-23.)* À l'enregistrement (R47), le jeu
   d'échelons soumis est **validé avant toute écriture** ; s'il viole une seule des
@@ -440,6 +450,69 @@ flowchart TD
   D -- non --> L3["niveau seul<br/>« T7 »"]
 ```
 
+### Modification et suppression des éléments de la structure
+
+*(Ajout validé le 2026-10-25. Besoin : corriger le jour J une voie mal saisie ou
+retirer un bloc / une voie non ouverte, sans recréer la rencontre.)*
+
+- **R51.** **Phases.** L'admin peut **modifier** et **supprimer** les éléments de
+  la structure d'une rencontre (voies de difficulté, blocs et leurs paliers, voies
+  de vitesse) en **① pré-compétition** et **② préparation jour J**. À partir de la
+  **③ compétition**, ces gestes ne sont plus proposés et sont **refusés** côté
+  serveur (R44). *(Rév. 2026-10-25 : l'**ajout** d'un élément — R43 —, l'ajout
+  d'une épreuve sur une rencontre sans format — R45 — et l'**édition du barème de
+  vitesse** — R47 — sont eux aussi possibles en ① **et ②**.)* L'**épreuve**
+  elle-même n'est **pas** supprimable (hors périmètre).
+- **R52.** **Modifier une voie de difficulté.** L'admin modifie son **niveau**, son
+  **type** (moulinette / tête), sa **cotation** et ses **points**, avec les mêmes
+  contraintes qu'à l'ajout : niveau contraint par la catégorie (R37), cotation
+  obligatoire, points entiers ≥ 0 et **champs conditionnels** à la catégorie et
+  au type (R38) — un champ non applicable au nouveau type est enregistré **vide**
+  (ex. une voie tête enfant passée en moulinette perd sa prise valorisée). Le
+  **repère** se modifie toujours selon R49 ; un changement de niveau qui créerait
+  un doublon de repère est refusé (R49c). L'`ordre` est **inchangé** : les
+  libellés (R50) sont recalculés.
+- **R53.** **Modifier un bloc.** L'admin modifie son **code** (obligatoire,
+  normalisé, unique dans l'épreuve — doublon refusé avec message lisible, R5) et
+  gère ses **paliers** (R39) : **ajouter** un palier (libellé obligatoire, points
+  entiers ≥ 0, placé en dernier), **modifier** le libellé et les points d'un
+  palier, **supprimer** un palier.
+- **R54.** **Supprimer un élément.** L'admin peut supprimer une **voie de
+  difficulté**, un **bloc** (avec ses paliers) ou une **voie de vitesse**, après
+  une **confirmation** explicite. La suppression d'une voie de vitesse supprime
+  aussi les **jetons juges** qui lui sont rattachés ; la confirmation le signale.
+  La suppression d'une voie d'un niveau doublé recalcule les lettres des voies
+  restantes (R50b).
+- **R55.** **Protection des résultats.** Un retour arrière ③ → ② (R17) peut
+  laisser des résultats saisis. Tant qu'un élément porte au moins un
+  **résultat** :
+  - a. sa **suppression** (voie de difficulté, bloc) est **refusée** ;
+  - b. le **changement de niveau ou de type** d'une voie de difficulté est
+    **refusé** (les issues saisies dépendent du type, spec #6) ;
+  - c. la **suppression d'un palier** retenu par un résultat de bloc est
+    **refusée** ;
+  - d. la cotation, les points, le code du bloc et le libellé / les points d'un
+    palier restent **modifiables** (le classement les relit, spec #7) ;
+  - e. *(ajout 2026-10-25)* l'**édition du barème de vitesse** (R47) est
+    **refusée** dès qu'au moins une **saisie de vitesse** (temps, chute ou
+    non-présentation) existe sur l'épreuve : les points de vitesse sont calculés
+    à la saisie (spec #7 R20) et ne seraient pas recalculés.
+
+  Chaque refus affiche un **message lisible** indiquant le nombre de résultats en
+  cause (R5). Une voie de vitesse ne porte pas de résultat (les temps sont
+  rattachés à l'épreuve, spec #10) : sa suppression n'est pas concernée.
+
+```mermaid
+flowchart TD
+  G["Geste sur un élément existant"] --> P{"Phase ① ou ② ?"}
+  P -- non --> X["Refusé — structure verrouillée (R44, R51)"]
+  P -- oui --> T{"Suppression, ou changement<br/>de niveau / type ?"}
+  T -- non --> OK["Accepté (R52, R53)"]
+  T -- oui --> RES{"Résultats saisis<br/>sur l'élément ?"}
+  RES -- oui --> X2["Refusé, nombre de résultats indiqué (R55)"]
+  RES -- non --> OK2["Accepté après confirmation si suppression (R54)"]
+```
+
 ### Écran Tableau de bord d'une rencontre (`/admin/rencontres/[id]`)
 
 > Cet écran est le **tableau de bord** d'une rencontre : il agrège son pilotage
@@ -521,9 +594,10 @@ flowchart TD
   formulaire de voie sont **conditionnels** à la catégorie et au type (R38) :
   prise valorisée pour les voies **tête enfant**, zones 1/2 pour les voies
   **ado**. Le formulaire de voie propose un champ **Repère** facultatif (R49).
-  L'ajout est le **seul** geste d'édition de structure (ni modification ni
+  ~~L'ajout est le **seul** geste d'édition de structure (ni modification ni
   suppression — hors périmètre), à l'exception du **repère**, modifiable selon
-  R49.
+  R49.~~ *(Rév. 2026-10-25 : chaque élément listé est aussi **modifiable** et
+  **supprimable** selon R51–R55.)*
   *(Catégorie adulte, rév. 2026-10-25 : en ① et ②, l'admin peut aussi
   désactiver ou réactiver l'épreuve de bloc ou de vitesse — spec #20 R36–R38.)*
 - **R44.** **Hors phase pré-compétition** (préparation, compétition, clôture,
@@ -532,6 +606,9 @@ flowchart TD
   modifiée qu'en pré-compétition (R36). Les listes des onglets restent
   consultables. Seule exception : en **② préparation** et **③ compétition**, le
   **repère** de chaque voie reste modifiable (R49).
+  *(Rév. 2026-10-25 : en **② préparation**, toute la structure reste éditable
+  comme en ① — ajout, modification, suppression, barème (R51–R55). La lecture
+  seule s'applique à partir de la ③ compétition, repère excepté.)*
 - **R45.** **Rencontre sans format** (créée sur gabarit vide, R35) : si la
   rencontre ne comporte **aucune épreuve**, l'écran affiche un **état vide** et
   permet d'**ajouter d'abord une épreuve** en choisissant son **type** (voie,
@@ -580,6 +657,15 @@ pré-compétition (R15) avec le gabarit copié (R30).
 de configuration depuis la liste (R40), va sur l'onglet **Voies** (R41) et ajoute
 une 2ᵉ voie T6 pour un groupe de niveau supplémentaire (R43), alors cette voie est
 créée pour cette rencontre sans toucher au gabarit ni aux autres rencontres (R36).
+
+### Nominal — corriger la structure le jour J (R51–R54)
+
+Étant donné une rencontre en ② préparation sans résultat saisi, quand l'admin
+passe une voie T6 en T7 et corrige ses points, ajoute un palier au bloc B3 et
+supprime la voie de vitesse « Garçons » après confirmation, alors la voie
+s'affiche « T7 » avec ses nouveaux points, le bloc liste son nouveau palier et la
+voie de vitesse disparaît avec ses jetons juges (R52–R54). Il peut aussi ajouter
+une voie ou un bloc et ajuster le barème de vitesse (R51 rév.).
 
 ### Nominal — configurer une rencontre sans format (R35)
 
@@ -632,6 +718,14 @@ année à 4 chiffres valide, alors le grimpeur est ajouté au roster de ce club
 - Modification du repère d'une voie en ④ clôture ou ⑤ résultats publics →
   refusée (R49d) ; en ③ compétition → acceptée.
 - Repère effacé → la voie reprend sa lettre (R50b) ou son niveau seul (R50c).
+- Modification ou suppression d'un élément en ③ compétition ou après → refusée
+  (R51) ; côté écran, les boutons ne sont pas affichés (R44).
+- Suppression d'une voie ou d'un bloc portant des résultats (après un retour ③ →
+  ②) → refusée, nombre de résultats indiqué (R55a) ; changement de niveau ou de
+  type d'une telle voie → refusé (R55b) ; ses points → modifiables (R55d).
+- Suppression d'un palier retenu par un résultat de bloc → refusée (R55c).
+- Code de bloc modifié en un code déjà utilisé dans l'épreuve → refusé (R53).
+- Voie tête enfant passée en moulinette → prise valorisée enregistrée vide (R52).
 
 ## Contraintes de données
 
@@ -713,8 +807,10 @@ année à 4 chiffres valide, alors le grimpeur est ajouté au roster de ce club
 
 - Le **volet coach** du roster (écran permettant à un coach d'éditer les
   grimpeurs de son club, spec #1 R18) — tranche coach ultérieure.
-- La **suppression** de voies ou d'épreuves d'une rencontre existante (seul
-  l'ajout est couvert par R36 ; suppression = hors périmètre pour l'instant).
+- La **suppression d'une épreuve** entière d'une rencontre existante (la
+  suppression des **éléments** — voies, blocs, paliers, voies de vitesse — est
+  couverte par R54 depuis le 2026-10-25 ; en adulte, une épreuve se
+  **désactive**, spec #20 R36).
 - Un **repère dans le gabarit** (R49e) : il dépend de la salle et des voies
   ouvertes pour la rencontre.
 - La gestion des **équipes / compositions** (engagement en rencontre, spec #1

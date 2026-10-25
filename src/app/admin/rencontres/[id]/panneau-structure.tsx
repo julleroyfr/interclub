@@ -2,27 +2,48 @@
 
 import { useActionState, useId, useRef, useState } from 'react'
 
-import { Bouton, Carte, Etiquette, FormLibelleVoieVitesse, TitreSection } from '@/composants'
-import { NIVEAUX_MOULINETTE, NIVEAUX_TETE, champsPointsVoie } from '@/domaine/gabarit'
+import {
+  Bouton,
+  BoutonIcone,
+  Carte,
+  Etiquette,
+  FormLibelleVoieVitesse,
+  TitreSection,
+} from '@/composants'
+import { NIVEAUX_MOULINETTE, NIVEAUX_TETE, champsPointsVoie, type TypeVoie } from '@/domaine/gabarit'
 import { PHASES, epreuveDesactivable, etatEpreuveModifiable, type Categorie } from '@/domaine/rencontre'
+import { editionStructurePossible } from '@/domaine/structure'
 import { REPERE_VOIE_MAX, repereModifiable } from '@/domaine/voie'
 import {
   ajouterBlocRencontre,
   ajouterEpreuveRencontre,
+  ajouterPalierBlocRencontre,
   ajouterVoieDifficulteRencontre,
   ajouterVoieVitesseRencontre,
   changerEtatEpreuve,
   mettreAJourBaremeVitesse,
+  modifierCodeBlocRencontre,
   modifierLibelleVoieVitesseRencontre,
+  modifierPalierBlocRencontre,
   modifierRepereVoie,
+  modifierVoieDifficulteRencontre,
+  supprimerBlocRencontre,
+  supprimerPalierBlocRencontre,
+  supprimerVoieDifficulteRencontre,
+  supprimerVoieVitesseRencontre,
   type EtatStructure,
 } from '@/lib/rencontres/structure-actions'
 import type {
   BaremeVitesseVue,
+  BlocPalierRencontreVue,
+  BlocRencontreVue,
   EpreuveRencontreVue,
   StructureRencontre,
   VoieDifficulteRencontreVue,
 } from '@/lib/rencontres/structure'
+
+/** Signature commune des Server Actions de la structure. */
+type ActionStructure = (etat: EtatStructure, formData: FormData) => Promise<EtatStructure>
 
 const etatInitial: EtatStructure = undefined
 
@@ -52,27 +73,103 @@ function ChampPoints({
   nom,
   label,
   required = false,
+  valeur,
 }: {
   nom: string
   label: string
   required?: boolean
+  /** Valeur initiale (formulaire de modification, R52). */
+  valeur?: number | null
 }) {
   return (
     <label className="flex flex-col gap-0.5">
       <span className="text-[0.7rem] text-texte-attenue">{label}</span>
-      <input name={nom} type="number" min={0} step={1} required={required} className={champNombre} />
+      <input
+        name={nom}
+        type="number"
+        min={0}
+        step={1}
+        required={required}
+        defaultValue={valeur ?? undefined}
+        className={champNombre}
+      />
     </label>
   )
 }
 
-/** Message affiché à la place des formulaires hors phase pré-compétition (R44). */
+/** Message affiché à partir de la ③ compétition : structure verrouillée (R44, R51). */
 function NoteLectureSeule({ phase, repereEditable }: { phase: string; repereEditable: boolean }) {
   return (
     <p className="rounded-lg border border-bordure bg-black/20 px-3 py-2 text-xs text-texte-attenue">
-      Phase « {labelPhase(phase)} » : la structure est verrouillée. Elle ne peut être modifiée qu’en
-      phase pré-compétition.
+      Phase « {labelPhase(phase)} » : la structure est verrouillée. Elle ne peut être modifiée
+      qu’en pré-compétition ou en préparation jour J.
       {repereEditable && ' Le repère des voies reste modifiable.'}
     </p>
+  )
+}
+
+/** Message d'erreur / de succès d'une action de structure. */
+function RetourAction({ etat }: { etat: EtatStructure }) {
+  return (
+    <>
+      {etat?.erreur && (
+        <p role="alert" className="w-full text-xs text-danger">
+          {etat.erreur}
+        </p>
+      )}
+      {etat?.succes && <p className="w-full text-xs text-secondaire">{etat.succes}</p>}
+    </>
+  )
+}
+
+/**
+ * Suppression d'un élément de la structure avec confirmation explicite (R54) ;
+ * un refus (résultats saisis, R55) s'affiche sous le bouton.
+ */
+function BoutonSupprimer({
+  action,
+  champs,
+  question,
+  libelle,
+}: {
+  action: ActionStructure
+  /** Champs cachés transmis à l'action (id, rencontreId…). */
+  champs: Record<string, string>
+  question: string
+  /** Désignation de l'élément, pour l'accessibilité. */
+  libelle: string
+}) {
+  const [confirmation, setConfirmation] = useState(false)
+  const [etat, actionSuppr, enCours] = useActionState(action, etatInitial)
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      {confirmation ? (
+        <form action={actionSuppr} className="flex flex-wrap items-center gap-2">
+          {Object.entries(champs).map(([nom, valeur]) => (
+            <input key={nom} type="hidden" name={nom} value={valeur} />
+          ))}
+          <span className="text-xs text-texte-attenue">{question}</span>
+          <Bouton type="submit" taille="sm" variante="danger" disabled={enCours}>
+            {enCours ? 'Suppression…' : 'Oui, supprimer'}
+          </Bouton>
+          <Bouton taille="sm" variante="fantome" onClick={() => setConfirmation(false)}>
+            Non
+          </Bouton>
+        </form>
+      ) : (
+        <BoutonIcone
+          icone="supprimer"
+          libelle={`Supprimer ${libelle}`}
+          onClick={() => setConfirmation(true)}
+        />
+      )}
+      {etat?.erreur && (
+        <p role="alert" className="w-full text-xs text-danger">
+          {etat.erreur}
+        </p>
+      )}
+    </div>
   )
 }
 
@@ -88,7 +185,7 @@ function FormRepere({
 }) {
   const [etat, action, enCours] = useActionState(modifierRepereVoie, etatInitial)
   return (
-    <form action={action} className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+    <form action={action} className="flex flex-wrap items-center gap-2">
       <input type="hidden" name="rencontreId" value={rencontreId} />
       <input type="hidden" name="epreuveId" value={epreuveId} />
       <input type="hidden" name="voieId" value={voie.id} />
@@ -100,11 +197,14 @@ function FormRepere({
         maxLength={REPERE_VOIE_MAX}
         placeholder="Repère (relais, couleur)"
         aria-label={`Repère de la voie ${voie.libelle}`}
-        className={`min-h-9 w-44 ${champTexte}`}
+        className={`min-h-11 w-44 ${champTexte}`}
       />
-      <Bouton type="submit" taille="sm" variante="secondaire" disabled={enCours}>
-        OK
-      </Bouton>
+      <BoutonIcone
+        type="submit"
+        icone="valider"
+        libelle={`Enregistrer le repère (${voie.libelle})`}
+        disabled={enCours}
+      />
       {etat?.erreur && (
         <p role="alert" className="w-full text-xs text-danger">
           {etat.erreur}
@@ -208,30 +308,244 @@ function FormAjoutEpreuve({
   )
 }
 
-/** Onglet Voies de difficulté : liste + formulaire d'ajout (R42, R43). */
-function OngletVoies({
-  epreuve,
-  rencontreId,
+/**
+ * Champs communs d'une voie de difficulté — niveau, type, cotation, points (R37,
+ * R38) — pour l'ajout (R43) comme pour la modification (R52). Les champs de
+ * points conditionnels suivent le type choisi.
+ */
+function ChampsVoie({
   categorie,
-  editable,
-  repereEditable,
+  voie,
+  repere,
 }: {
-  epreuve: EpreuveRencontreVue
-  rencontreId: string
   categorie: Categorie
-  editable: boolean
-  /** Repère modifiable (① à ③, spec #3 R49d). */
-  repereEditable: boolean
+  /** Voie modifiée (valeurs initiales) ; absente à l'ajout. */
+  voie?: VoieDifficulteRencontreVue
+  /** Champ Repère (ajout seulement : en modification il a son propre formulaire, R49). */
+  repere?: boolean
 }) {
-  const [etat, action, enCours] = useActionState(ajouterVoieDifficulteRencontre, etatInitial)
+  const [typeVoie, setTypeVoie] = useState<TypeVoie>(voie?.typeVoie ?? 'tete')
   const idNiveau = useId()
   const idType = useId()
   const idCotation = useId()
   const idRepere = useId()
 
   const niveaux = [...(categorie === 'enfant' ? NIVEAUX_MOULINETTE : []), ...NIVEAUX_TETE]
-  // Champs de points conditionnels à la catégorie (R38) — pilotent le formulaire (R43).
-  const champs = champsPointsVoie(categorie, 'tete')
+  // Champs de points conditionnels à la catégorie et au type (R38).
+  const champs = champsPointsVoie(categorie, typeVoie)
+
+  return (
+    <>
+      <div className="flex flex-col gap-1">
+        <label htmlFor={idNiveau} className="text-xs text-texte-attenue">
+          Niveau
+        </label>
+        <select
+          id={idNiveau}
+          name="niveau"
+          required
+          defaultValue={voie?.niveau}
+          className={champSelect}
+        >
+          {niveaux.map((n) => (
+            <option key={n} value={n} className="bg-fond text-texte">
+              {n}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <label htmlFor={idType} className="text-xs text-texte-attenue">
+          Type
+        </label>
+        <select
+          id={idType}
+          name="typeVoie"
+          required
+          value={typeVoie}
+          onChange={(e) => setTypeVoie(e.target.value as TypeVoie)}
+          className={champSelect}
+        >
+          {categorie === 'enfant' && (
+            <option value="moulinette" className="bg-fond text-texte">
+              Moulinette
+            </option>
+          )}
+          <option value="tete" className="bg-fond text-texte">
+            Tête
+          </option>
+        </select>
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <label htmlFor={idCotation} className="text-xs text-texte-attenue">
+          Cotation
+        </label>
+        <input
+          id={idCotation}
+          name="cotation"
+          type="text"
+          placeholder="ex. 6a+"
+          required
+          defaultValue={voie?.cotation}
+          className={`w-20 ${champTexte}`}
+        />
+      </div>
+
+      {repere && (
+        <div className="flex flex-col gap-1">
+          <label htmlFor={idRepere} className="text-xs text-texte-attenue">
+            Repère
+          </label>
+          <input
+            id={idRepere}
+            name="repere"
+            type="text"
+            maxLength={REPERE_VOIE_MAX}
+            placeholder="Relais 12, Jaune…"
+            className={`w-36 ${champTexte}`}
+          />
+        </div>
+      )}
+
+      <ChampPoints nom="points" label="Voie entière" required valeur={voie?.points} />
+      {champs.priseValorisee && (
+        <ChampPoints
+          nom="pointsPriseValorisee"
+          label="Prise valo."
+          valeur={voie?.pointsPriseValorisee}
+        />
+      )}
+      {champs.zones && (
+        <>
+          <ChampPoints nom="pointsZone1" label="Zone 1" valeur={voie?.pointsZone1} />
+          <ChampPoints nom="pointsZone2" label="Zone 2" valeur={voie?.pointsZone2} />
+        </>
+      )}
+    </>
+  )
+}
+
+/** Formulaire de modification d'une voie, ouvert sous sa ligne (R52, R55b). */
+function FormModifierVoie({
+  voie,
+  rencontreId,
+  categorie,
+  onFermer,
+}: {
+  voie: VoieDifficulteRencontreVue
+  rencontreId: string
+  categorie: Categorie
+  onFermer: () => void
+}) {
+  const [etat, action, enCours] = useActionState(
+    async (prec: EtatStructure, formData: FormData): Promise<EtatStructure> => {
+      const res = await modifierVoieDifficulteRencontre(prec, formData)
+      if (res?.succes) onFermer()
+      return res
+    },
+    etatInitial,
+  )
+  return (
+    <form
+      action={action}
+      aria-label={`Modifier la voie ${voie.libelle}`}
+      className="flex w-full flex-wrap items-end gap-2 rounded-xl border border-accent/40 bg-accent/5 p-3"
+    >
+      <input type="hidden" name="rencontreId" value={rencontreId} />
+      <input type="hidden" name="voieId" value={voie.id} />
+      <ChampsVoie categorie={categorie} voie={voie} />
+      <Bouton type="submit" taille="sm" disabled={enCours}>
+        Enregistrer
+      </Bouton>
+      <Bouton taille="sm" variante="fantome" onClick={onFermer}>
+        Annuler
+      </Bouton>
+      <RetourAction etat={etat} />
+    </form>
+  )
+}
+
+/** Ligne d'une voie : libellé, détail, repère et gestes d'édition (R42, R49, R52, R54). */
+function LigneVoie({
+  voie,
+  epreuveId,
+  rencontreId,
+  categorie,
+  edition,
+  repereEditable,
+}: {
+  voie: VoieDifficulteRencontreVue
+  epreuveId: string
+  rencontreId: string
+  categorie: Categorie
+  edition: boolean
+  repereEditable: boolean
+}) {
+  const [enModification, setEnModification] = useState(false)
+  return (
+    <li className="flex flex-wrap items-baseline gap-x-2 gap-y-1.5 border-b border-bordure/40 pb-1.5 text-sm last:border-0">
+      {/* Libellé : niveau + repère, ou lettre si niveau doublé (R50). */}
+      <span className="min-w-10 font-medium text-accent-doux">{voie.libelle}</span>
+      <span className="text-texte-fort">{voie.cotation}</span>
+      <span className="text-texte-attenue">
+        {labelTypeVoie[voie.typeVoie]} · voie {voie.points} pts
+        {voie.pointsPriseValorisee != null && ` · prise ${voie.pointsPriseValorisee} pts`}
+        {voie.pointsZone1 != null && ` · Z1 ${voie.pointsZone1} pts`}
+        {voie.pointsZone2 != null && ` · Z2 ${voie.pointsZone2} pts`}
+      </span>
+      {(repereEditable || (edition && !enModification)) && (
+        <div className="flex w-full flex-wrap items-center gap-2">
+          {repereEditable && (
+            <FormRepere voie={voie} epreuveId={epreuveId} rencontreId={rencontreId} />
+          )}
+          {edition && !enModification && (
+            <>
+              <BoutonIcone
+                icone="modifier"
+                libelle={`Modifier la voie ${voie.libelle}`}
+                onClick={() => setEnModification(true)}
+              />
+              <BoutonSupprimer
+                action={supprimerVoieDifficulteRencontre}
+                champs={{ id: voie.id, rencontreId }}
+                question={`Supprimer la voie ${voie.libelle} ?`}
+                libelle={`la voie ${voie.libelle}`}
+              />
+            </>
+          )}
+        </div>
+      )}
+      {enModification && (
+        <FormModifierVoie
+          voie={voie}
+          rencontreId={rencontreId}
+          categorie={categorie}
+          onFermer={() => setEnModification(false)}
+        />
+      )}
+    </li>
+  )
+}
+
+/** Onglet Voies de difficulté : liste + modification/suppression + ajout (R42, R43, R52, R54). */
+function OngletVoies({
+  epreuve,
+  rencontreId,
+  categorie,
+  edition,
+  repereEditable,
+}: {
+  epreuve: EpreuveRencontreVue
+  rencontreId: string
+  categorie: Categorie
+  /** Ajout, modification, suppression possibles (① et ②, R51). */
+  edition: boolean
+  /** Repère modifiable (① à ③, spec #3 R49d). */
+  repereEditable: boolean
+}) {
+  const [etat, action, enCours] = useActionState(ajouterVoieDifficulteRencontre, etatInitial)
 
   return (
     <div className="flex flex-col gap-3">
@@ -240,103 +554,28 @@ function OngletVoies({
       ) : (
         <ul className="flex flex-col gap-2">
           {epreuve.voiesDifficulte.map((v) => (
-            <li
+            <LigneVoie
               key={v.id}
-              className="flex flex-wrap items-baseline gap-x-2 gap-y-1.5 border-b border-bordure/40 pb-1.5 text-sm last:border-0"
-            >
-              {/* Libellé : niveau + repère, ou lettre si niveau doublé (R50). */}
-              <span className="min-w-10 font-medium text-accent-doux">{v.libelle}</span>
-              <span className="text-texte-fort">{v.cotation}</span>
-              <span className="text-texte-attenue">
-                {labelTypeVoie[v.typeVoie]} · voie {v.points} pts
-                {v.pointsPriseValorisee != null && ` · prise ${v.pointsPriseValorisee} pts`}
-                {v.pointsZone1 != null && ` · Z1 ${v.pointsZone1} pts`}
-                {v.pointsZone2 != null && ` · Z2 ${v.pointsZone2} pts`}
-              </span>
-              {repereEditable && (
-                <FormRepere voie={v} epreuveId={epreuve.id} rencontreId={rencontreId} />
-              )}
-            </li>
+              voie={v}
+              epreuveId={epreuve.id}
+              rencontreId={rencontreId}
+              categorie={categorie}
+              edition={edition}
+              repereEditable={repereEditable}
+            />
           ))}
         </ul>
       )}
 
-      {editable && (
+      {edition && (
         <form action={action} className="flex flex-wrap items-end gap-2 pt-1">
           <input type="hidden" name="rencontreId" value={rencontreId} />
           <input type="hidden" name="epreuveId" value={epreuve.id} />
           <input type="hidden" name="categorie" value={categorie} />
-
-          <div className="flex flex-col gap-1">
-            <label htmlFor={idNiveau} className="text-xs text-texte-attenue">
-              Niveau
-            </label>
-            <select id={idNiveau} name="niveau" required className={champSelect}>
-              {niveaux.map((n) => (
-                <option key={n} value={n} className="bg-fond text-texte">
-                  {n}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label htmlFor={idType} className="text-xs text-texte-attenue">
-              Type
-            </label>
-            <select id={idType} name="typeVoie" required className={champSelect}>
-              {categorie === 'enfant' && (
-                <option value="moulinette" className="bg-fond text-texte">
-                  Moulinette
-                </option>
-              )}
-              <option value="tete" className="bg-fond text-texte">
-                Tête
-              </option>
-            </select>
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label htmlFor={idCotation} className="text-xs text-texte-attenue">
-              Cotation
-            </label>
-            <input
-              id={idCotation}
-              name="cotation"
-              type="text"
-              placeholder="ex. 6a+"
-              required
-              className={`w-20 ${champTexte}`}
-            />
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label htmlFor={idRepere} className="text-xs text-texte-attenue">
-              Repère
-            </label>
-            <input
-              id={idRepere}
-              name="repere"
-              type="text"
-              maxLength={REPERE_VOIE_MAX}
-              placeholder="Relais 12, Jaune…"
-              className={`w-36 ${champTexte}`}
-            />
-          </div>
-
-          <ChampPoints nom="points" label="Voie entière" required />
-          {champs.priseValorisee && <ChampPoints nom="pointsPriseValorisee" label="Prise valo." />}
-          {champs.zones && (
-            <>
-              <ChampPoints nom="pointsZone1" label="Zone 1" />
-              <ChampPoints nom="pointsZone2" label="Zone 2" />
-            </>
-          )}
-
+          <ChampsVoie categorie={categorie} repere />
           <Bouton type="submit" taille="sm" disabled={enCours}>
             + Voie
           </Bouton>
-
           {etat?.erreur && (
             <p role="alert" className="w-full text-xs text-danger">
               {etat.erreur}
@@ -348,15 +587,174 @@ function OngletVoies({
   )
 }
 
-/** Onglet Blocs : liste (code + paliers) + ajout d'un bloc (R42, R43). */
+/** Libellé et points d'un palier existant, modifiables, et sa suppression (R53, R55c). */
+function LignePalier({
+  palier,
+  blocCode,
+  rencontreId,
+  edition,
+}: {
+  palier: BlocPalierRencontreVue
+  /** Code du bloc, pour distinguer les paliers homonymes à l’accessibilité. */
+  blocCode: string
+  rencontreId: string
+  edition: boolean
+}) {
+  const [etat, action, enCours] = useActionState(modifierPalierBlocRencontre, etatInitial)
+  if (!edition) {
+    return (
+      <li className="text-xs text-texte-attenue">
+        {palier.libelle} {palier.points} pts
+      </li>
+    )
+  }
+  return (
+    <li className="flex flex-wrap items-center gap-2">
+      <form action={action} className="flex flex-wrap items-center gap-2">
+        <input type="hidden" name="rencontreId" value={rencontreId} />
+        <input type="hidden" name="id" value={palier.id} />
+        <input
+          name="libelle"
+          type="text"
+          required
+          defaultValue={palier.libelle}
+          aria-label={`Libellé du palier ${palier.libelle} (bloc ${blocCode})`}
+          className={`min-h-11 w-32 ${champTexte}`}
+        />
+        <input
+          name="points"
+          type="number"
+          min={0}
+          step={1}
+          required
+          defaultValue={palier.points}
+          aria-label={`Points du palier ${palier.libelle} (bloc ${blocCode})`}
+          className={`min-h-11 ${champNombre}`}
+        />
+        <BoutonIcone
+          type="submit"
+          icone="valider"
+          libelle={`Enregistrer le palier ${palier.libelle} (bloc ${blocCode})`}
+          disabled={enCours}
+        />
+        <RetourAction etat={etat} />
+      </form>
+      <BoutonSupprimer
+        action={supprimerPalierBlocRencontre}
+        champs={{ id: palier.id, rencontreId }}
+        question={`Supprimer le palier « ${palier.libelle} » ?`}
+        libelle={`le palier ${palier.libelle} du bloc ${blocCode}`}
+      />
+    </li>
+  )
+}
+
+/** Ajout d'un palier en dernière position d'un bloc (R53). */
+function FormAjoutPalier({ bloc, rencontreId }: { bloc: BlocRencontreVue; rencontreId: string }) {
+  const [etat, action, enCours] = useActionState(ajouterPalierBlocRencontre, etatInitial)
+  return (
+    <form action={action} className="flex flex-wrap items-center gap-2">
+      <input type="hidden" name="rencontreId" value={rencontreId} />
+      <input type="hidden" name="blocId" value={bloc.id} />
+      <input
+        name="libelle"
+        type="text"
+        required
+        placeholder="ex. Zone 2"
+        aria-label={`Libellé du nouveau palier (bloc ${bloc.code})`}
+        className={`min-h-11 w-32 ${champTexte}`}
+      />
+      <input
+        name="points"
+        type="number"
+        min={0}
+        step={1}
+        required
+        placeholder="pts"
+        aria-label={`Points du nouveau palier (bloc ${bloc.code})`}
+        className={`min-h-11 ${champNombre}`}
+      />
+      <Bouton type="submit" variante="secondaire" disabled={enCours}>
+        + Palier
+      </Bouton>
+      <RetourAction etat={etat} />
+    </form>
+  )
+}
+
+/** Carte d'un bloc : code, paliers et gestes d'édition (R42, R53, R54). */
+function CarteBloc({
+  bloc,
+  rencontreId,
+  edition,
+}: {
+  bloc: BlocRencontreVue
+  rencontreId: string
+  edition: boolean
+}) {
+  const [etat, action, enCours] = useActionState(modifierCodeBlocRencontre, etatInitial)
+  return (
+    <li className="flex flex-col gap-2 rounded-lg border border-bordure/50 p-3">
+      {edition ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <form action={action} className="flex flex-wrap items-center gap-2">
+            <input type="hidden" name="rencontreId" value={rencontreId} />
+            <input type="hidden" name="id" value={bloc.id} />
+            <input
+              name="code"
+              type="text"
+              required
+              defaultValue={bloc.code}
+              aria-label={`Code du bloc ${bloc.code}`}
+              className={`min-h-11 w-24 ${champTexte}`}
+            />
+            <BoutonIcone
+              type="submit"
+              icone="valider"
+              libelle={`Enregistrer le code (bloc ${bloc.code})`}
+              disabled={enCours}
+            />
+            <RetourAction etat={etat} />
+          </form>
+          <BoutonSupprimer
+            action={supprimerBlocRencontre}
+            champs={{ id: bloc.id, rencontreId }}
+            question={`Supprimer le bloc ${bloc.code} et ses paliers ?`}
+            libelle={`le bloc ${bloc.code}`}
+          />
+        </div>
+      ) : (
+        <Etiquette variante="neutre">{bloc.code}</Etiquette>
+      )}
+      {bloc.paliers.length === 0 ? (
+        <p className="text-xs text-texte-attenue">Aucun palier.</p>
+      ) : (
+        <ul className="flex flex-col gap-1.5">
+          {bloc.paliers.map((p) => (
+            <LignePalier
+              key={p.id}
+              palier={p}
+              blocCode={bloc.code}
+              rencontreId={rencontreId}
+              edition={edition}
+            />
+          ))}
+        </ul>
+      )}
+      {edition && <FormAjoutPalier bloc={bloc} rencontreId={rencontreId} />}
+    </li>
+  )
+}
+
+/** Onglet Blocs : liste (code + paliers) + édition + ajout d'un bloc (R42, R43, R53, R54). */
 function OngletBlocs({
   epreuve,
   rencontreId,
-  editable,
+  edition,
 }: {
   epreuve: EpreuveRencontreVue
   rencontreId: string
-  editable: boolean
+  edition: boolean
 }) {
   const [etat, action, enCours] = useActionState(ajouterBlocRencontre, etatInitial)
   const idCode = useId()
@@ -368,21 +766,12 @@ function OngletBlocs({
       ) : (
         <ul className="flex flex-col gap-2">
           {epreuve.blocs.map((b) => (
-            <li key={b.id} className="flex flex-col gap-1 rounded-lg border border-bordure/50 p-3">
-              <Etiquette variante="neutre">{b.code}</Etiquette>
-              {b.paliers.length === 0 ? (
-                <p className="text-xs text-texte-attenue">Aucun palier.</p>
-              ) : (
-                <p className="text-xs text-texte-attenue">
-                  {b.paliers.map((p) => `${p.libelle} ${p.points} pts`).join(' · ')}
-                </p>
-              )}
-            </li>
+            <CarteBloc key={b.id} bloc={b} rencontreId={rencontreId} edition={edition} />
           ))}
         </ul>
       )}
 
-      {editable && (
+      {edition && (
         <form action={action} className="flex flex-wrap items-end gap-2 pt-1">
           <input type="hidden" name="rencontreId" value={rencontreId} />
           <input type="hidden" name="epreuveId" value={epreuve.id} />
@@ -662,13 +1051,14 @@ function EditeurBaremeVitesse({
   )
 }
 
-/** Onglet Vitesse : liste des voies (numéro + libellé) + ajout (R42, R43, R32). */
+/** Onglet Vitesse : liste des voies (numéro + libellé) + suppression + ajout (R42, R43, R32, R54). */
 function OngletVitesse({
   structure,
-  editable,
+  edition,
 }: {
   structure: StructureRencontre
-  editable: boolean
+  /** Ajout, libellé, suppression et barème : ① et ② (R51, R47). */
+  edition: boolean
 }) {
   const [etat, action, enCours] = useActionState(ajouterVoieVitesseRencontre, etatInitial)
   const idLibelle = useId()
@@ -681,10 +1071,10 @@ function OngletVitesse({
       ) : (
         <ul className="flex flex-wrap gap-2">
           {structure.voiesVitesse.map((vv) => (
-            <li key={vv.id} className="flex items-end gap-1.5">
+            <li key={vv.id} className="flex flex-wrap items-end gap-1.5">
               <span className="pb-2 text-xs text-texte-doux">{vv.numero}</span>
-              {editable ? (
-                // Libellé modifiable en pré-compétition (spec #20 R9bis).
+              {edition ? (
+                // Libellé modifiable en ① et ② (spec #20 R9bis, spec #3 R51).
                 <FormLibelleVoieVitesse
                   action={modifierLibelleVoieVitesseRencontre}
                   libelle={vv.libelle ?? ''}
@@ -694,12 +1084,20 @@ function OngletVitesse({
               ) : (
                 <Etiquette variante="neutre">{vv.libelle ?? '(sans libellé)'}</Etiquette>
               )}
+              {edition && (
+                <BoutonSupprimer
+                  action={supprimerVoieVitesseRencontre}
+                  champs={{ id: vv.id, rencontreId: structure.id }}
+                  question={`Supprimer la voie de vitesse « ${vv.libelle ?? vv.numero} » ? Ses jetons juges seront aussi supprimés.`}
+                  libelle={`la voie de vitesse ${vv.libelle ?? vv.numero}`}
+                />
+              )}
             </li>
           ))}
         </ul>
       )}
 
-      {editable && (
+      {edition && (
         <form action={action} className="flex flex-wrap items-end gap-2 pt-1">
           <input type="hidden" name="rencontreId" value={structure.id} />
           <div className="flex flex-col gap-1">
@@ -736,7 +1134,7 @@ function OngletVitesse({
         <EditeurBaremeVitesse
           bareme={structure.baremeVitesse}
           rencontreId={structure.id}
-          editable={editable}
+          editable={edition}
         />
       )}
     </div>
@@ -746,7 +1144,8 @@ function OngletVitesse({
 /** Écran de configuration de la structure d'une rencontre (R40–R45, Option B). */
 export function PanneauStructure({ structure }: { structure: StructureRencontre }) {
   const [onglet, setOnglet] = useState<Onglet>('voie')
-  const editable = structure.phase === 'pre_competition'
+  // Ajout, modification, suppression et barème en ① et ② (R51, rév. 2026-10-25).
+  const edition = editionStructurePossible(structure.phase)
   const repereEditable = repereModifiable(structure.phase)
 
   const epreuveVoie = structure.epreuves.find((e) => e.type === 'voie')
@@ -772,7 +1171,7 @@ export function PanneauStructure({ structure }: { structure: StructureRencontre 
     <Carte className="flex flex-col gap-5 p-5">
       <TitreSection>Structure</TitreSection>
 
-      {!editable && <NoteLectureSeule phase={structure.phase} repereEditable={repereEditable} />}
+      {!edition && <NoteLectureSeule phase={structure.phase} repereEditable={repereEditable} />}
 
       <div className="flex gap-1 rounded-xl border border-bordure bg-black/20 p-1">
         {ONGLETS.map((o) => (
@@ -800,10 +1199,10 @@ export function PanneauStructure({ structure }: { structure: StructureRencontre 
               epreuve={epreuveVoie}
               rencontreId={structure.id}
               categorie={structure.categorie}
-              editable={editable}
+              edition={edition}
               repereEditable={repereEditable}
             />
-          ) : editable ? (
+          ) : edition ? (
             <FormAjoutEpreuve rencontreId={structure.id} type="voie" libelle="Voies de difficulté" />
           ) : (
             <p className="text-sm text-texte-attenue">Aucune épreuve de voies.</p>
@@ -822,14 +1221,18 @@ export function PanneauStructure({ structure }: { structure: StructureRencontre 
 
         {onglet === 'bloc' &&
           (epreuveBloc ? (
-            <OngletBlocs epreuve={epreuveBloc} rencontreId={structure.id} editable={editable} />
-          ) : editable ? (
+            <OngletBlocs
+              epreuve={epreuveBloc}
+              rencontreId={structure.id}
+              edition={edition}
+            />
+          ) : edition ? (
             <FormAjoutEpreuve rencontreId={structure.id} type="bloc" libelle="Blocs" />
           ) : (
             <p className="text-sm text-texte-attenue">Aucune épreuve de blocs.</p>
           ))}
 
-        {onglet === 'vitesse' && <OngletVitesse structure={structure} editable={editable} />}
+        {onglet === 'vitesse' && <OngletVitesse structure={structure} edition={edition} />}
       </section>
     </Carte>
   )
