@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { getContexteCoach, getUtilisateurCourant } from '@/lib/auth/session'
+import { getContexteCapitaine, getContexteCoach, getUtilisateurCourant } from '@/lib/auth/session'
 
 // Gardes de LECTURE des loaders `service_role` (ADR 0005, décision D-C de la revue
 // du 2026-10-03). Le client `service_role` contourne la RLS : chaque loader qui
@@ -29,11 +29,15 @@ export async function exigerLectureAdmin(quoi: string): Promise<void> {
   if (utilisateur?.role !== 'admin') throw new LectureNonAutoriseeError(quoi)
 }
 
-/** Administrateur, ou coach (permanent ou temporaire) — écrans de classement. */
+/**
+ * Administrateur, coach (permanent ou temporaire) ou capitaine d'équipe adulte
+ * (spec #20 R19) — écrans de classement.
+ */
 export async function exigerLectureAdminOuCoach(quoi: string): Promise<void> {
   const utilisateur = await getUtilisateurCourant()
   if (utilisateur?.role === 'admin') return
-  if (!(await getContexteCoach())) throw new LectureNonAutoriseeError(quoi)
+  if (await getContexteCoach()) return
+  if (!(await getContexteCapitaine())) throw new LectureNonAutoriseeError(quoi)
 }
 
 /** Administrateur, ou coach PERMANENT du club `clubId`. */

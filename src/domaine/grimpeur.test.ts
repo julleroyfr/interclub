@@ -8,6 +8,7 @@ import {
   LICENCE_MAX,
   NOM_GRIMPEUR_MAX,
   estLicenceGeneree,
+  normaliserAjoutGrimpeur,
   normaliserSaisieGrimpeur,
 } from './grimpeur'
 
@@ -34,7 +35,7 @@ describe("spec #1 — Saisie d'un grimpeur (R18)", () => {
     })
   })
 
-  // Licence obligatoire, entier strictement positif (spec #3 R21b).
+  // Licence obligatoire en modification, entier strictement positif (spec #3 R21b).
   it('rejette une licence absente (R21b)', () => {
     const sanslicence: Partial<typeof valide> = { ...valide }
     delete sanslicence.licence
@@ -50,6 +51,42 @@ describe("spec #1 — Saisie d'un grimpeur (R18)", () => {
     expect(() => normaliserSaisieGrimpeur({ ...valide, licence: '   ' })).toThrow(
       GrimpeurInvalideError,
     )
+  })
+
+  // Ajout : licence facultative ; vide → licence générée côté base (spec #3 R21d).
+  it('à l’ajout, une licence vide donne licence null, à générer (R21d)', () => {
+    expect(normaliserAjoutGrimpeur({ ...valide, licence: '' })).toEqual({
+      nom: 'Dupont',
+      prenom: 'Lea',
+      anneeNaissance: 2014,
+      sexe: 'F',
+      licence: null,
+    })
+    expect(normaliserAjoutGrimpeur({ ...valide, licence: '   ' }).licence).toBeNull()
+  })
+
+  it('à l’ajout, une licence renseignée suit R21b–R21c (R21d)', () => {
+    expect(normaliserAjoutGrimpeur({ ...valide, licence: ' 123456 ' }).licence).toBe(
+      123456,
+    )
+    expect(() => normaliserAjoutGrimpeur({ ...valide, licence: 'abc' })).toThrow(
+      GrimpeurInvalideError,
+    )
+    expect(() => normaliserAjoutGrimpeur({ ...valide, licence: '0' })).toThrow(
+      GrimpeurInvalideError,
+    )
+    expect(() =>
+      normaliserAjoutGrimpeur({ ...valide, licence: String(LICENCE_GENEREE_MIN) }),
+    ).toThrow(GrimpeurInvalideError)
+  })
+
+  it('à l’ajout sans licence, les autres champs restent validés (R21d)', () => {
+    expect(() =>
+      normaliserAjoutGrimpeur({ ...valide, licence: '', nom: '  ' }),
+    ).toThrow(GrimpeurInvalideError)
+    expect(() =>
+      normaliserAjoutGrimpeur({ ...valide, licence: '', anneeNaissance: '14' }),
+    ).toThrow(GrimpeurInvalideError)
   })
 
   it('rejette une licence non entiere (R21b)', () => {

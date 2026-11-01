@@ -80,18 +80,9 @@ function normaliserLibelle(valeur: string, champ: string): string {
   return normalise
 }
 
-/**
- * Normalise et valide la saisie d'un grimpeur. Rejette un nom/prénom absent ou
- * trop long, ou une année de naissance non entière / hors bornes. La catégorie
- * (enfant/ado) découle de l'année rapportée à la saison (R34) — hors de ce
- * domaine de saisie. `licenceActuelle` (modification) : seule cette licence peut
- * être conservée si elle est dans la plage réservée aux licences générées
- * (spec #3 R21c).
- */
-export function normaliserSaisieGrimpeur(
-  saisie: SaisieGrimpeur,
-  licenceActuelle?: number,
-): GrimpeurNormalise {
+// Nom, prénom, année de naissance et sexe — communs à l'ajout et à la
+// modification (R21–R23).
+function normaliserIdentite(saisie: SaisieGrimpeur): Omit<GrimpeurNormalise, 'licence'> {
   const nom = normaliserLibelle(saisie.nom, 'nom')
   const prenom = normaliserLibelle(saisie.prenom, 'prénom')
 
@@ -113,10 +104,50 @@ export function normaliserSaisieGrimpeur(
     throw new GrimpeurInvalideError('Le sexe du grimpeur doit être « F » ou « H ».')
   }
 
+  return { nom, prenom, anneeNaissance, sexe: sexe as Sexe }
+}
+
+/**
+ * Normalise et valide la saisie d'un grimpeur. Rejette un nom/prénom absent ou
+ * trop long, ou une année de naissance non entière / hors bornes. La catégorie
+ * (enfant/ado) découle de l'année rapportée à la saison (R34) — hors de ce
+ * domaine de saisie. `licenceActuelle` (modification) : seule cette licence peut
+ * être conservée si elle est dans la plage réservée aux licences générées
+ * (spec #3 R21c).
+ */
+export function normaliserSaisieGrimpeur(
+  saisie: SaisieGrimpeur,
+  licenceActuelle?: number,
+): GrimpeurNormalise {
+  const identite = normaliserIdentite(saisie)
   const brutLicence = (saisie.licence ?? '').trim()
   if (!brutLicence) {
     throw new GrimpeurInvalideError('Le numéro de licence est obligatoire.')
   }
+  return { ...identite, licence: validerLicence(brutLicence, licenceActuelle) }
+}
+
+/** Grimpeur normalisé à l'ajout : licence `null` = à générer (spec #3 R21d). */
+export type AjoutGrimpeurNormalise = Omit<GrimpeurNormalise, 'licence'> & {
+  licence: number | null
+}
+
+/**
+ * Normalise et valide la saisie d'**ajout** d'un grimpeur : comme
+ * `normaliserSaisieGrimpeur`, mais la licence est facultative — vide, elle vaut
+ * `null` et sera générée côté base (spec #3 R21d, spec #18 R14).
+ */
+export function normaliserAjoutGrimpeur(saisie: SaisieGrimpeur): AjoutGrimpeurNormalise {
+  const identite = normaliserIdentite(saisie)
+  const brutLicence = (saisie.licence ?? '').trim()
+  return {
+    ...identite,
+    licence: brutLicence ? validerLicence(brutLicence) : null,
+  }
+}
+
+// Valide une licence saisie non vide (spec #3 R21b–R21c).
+function validerLicence(brutLicence: string, licenceActuelle?: number): number {
   if (!/^\d+$/.test(brutLicence)) {
     throw new GrimpeurInvalideError('Le numéro de licence doit être un entier positif.')
   }
@@ -130,5 +161,5 @@ export function normaliserSaisieGrimpeur(
     )
   }
 
-  return { nom, prenom, anneeNaissance, sexe: sexe as Sexe, licence }
+  return licence
 }

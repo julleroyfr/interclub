@@ -4,6 +4,9 @@ import {
   CATEGORIES,
   PHASES,
   SaisieRencontreInvalideError,
+  aClassementClub,
+  epreuveDesactivable,
+  etatEpreuveModifiable,
   anneeSaison,
   bornesAnneeNaissance,
   bornesSaison,
@@ -85,8 +88,8 @@ describe('spec #1 — Saisie d’une rencontre (R12)', () => {
     ).toThrow(SaisieRencontreInvalideError)
   })
 
-  it('expose les deux catégories du référentiel', () => {
-    expect(CATEGORIES.map((c) => c.value)).toEqual(['enfant', 'ado'])
+  it('expose les trois catégories du référentiel (spec #20 R1)', () => {
+    expect(CATEGORIES.map((c) => c.value)).toEqual(['enfant', 'ado', 'adulte'])
   })
 })
 
@@ -227,13 +230,53 @@ describe('spec #1 — Éligibilité d’un grimpeur à la catégorie d’une ren
   })
 
   it('les bornes reproduisent exactement estEligibleCategorie', () => {
-    for (const categorie of ['enfant', 'ado'] as const) {
+    for (const categorie of ['enfant', 'ado', 'adulte'] as const) {
       const { min, max } = bornesAnneeNaissance(categorie, SAISON)
-      for (let annee = 1990; annee <= 2035; annee++) {
-        const dansBornes = annee >= min && (max === null || annee <= max)
+      for (let annee = 1930; annee <= 2035; annee++) {
+        const dansBornes = (min === null || annee >= min) && (max === null || annee <= max)
         expect(dansBornes).toBe(estEligibleCategorie(annee, categorie, SAISON))
       }
     }
+  })
+})
+
+describe('spec #20 — Catégorie adulte (R1–R3)', () => {
+  const SAISON = 2026
+
+  it('propose la catégorie adulte, libellée « Adulte » (R1)', () => {
+    const adulte = CATEGORIES.find((c) => c.value === 'adulte')
+    expect(adulte?.labelCourt).toBe('Adulte')
+    expect(adulte?.label).toBe('Adulte (16 ans et plus)')
+  })
+
+  it('accepte la catégorie adulte à la saisie d’une rencontre (R1)', () => {
+    expect(
+      normaliserSaisieRencontre({
+        dateRencontre: '2027-01-16',
+        clubPorteurId: 'club-1',
+        categorie: 'adulte',
+      }).categorie,
+    ).toBe('adulte')
+  })
+
+  it('adulte : éligible dès 16 ans en saison (R2)', () => {
+    expect(estEligibleCategorie(2010, 'adulte', SAISON)).toBe(true) // 16 ans
+    expect(estEligibleCategorie(2011, 'adulte', SAISON)).toBe(false) // 15 ans
+  })
+
+  it('adulte : pas d’âge maximal (R2)', () => {
+    expect(estEligibleCategorie(1950, 'adulte', SAISON)).toBe(true) // 76 ans
+  })
+
+  it('un grimpeur de 16 à 19 ans est éligible à l’ado et à l’adulte (R3)', () => {
+    for (const annee of [2007, 2008, 2009, 2010]) {
+      expect(estEligibleCategorie(annee, 'ado', SAISON)).toBe(true)
+      expect(estEligibleCategorie(annee, 'adulte', SAISON)).toBe(true)
+    }
+  })
+
+  it('bornes d’année de naissance : adulte = né en 2010 ou avant, sans borne basse (R2)', () => {
+    expect(bornesAnneeNaissance('adulte', SAISON)).toEqual({ min: null, max: 2010 })
   })
 })
 
@@ -321,5 +364,41 @@ describe('libellePhase — libellé affiché d’une phase (spec #1 R5)', () => 
 
   it('renvoie la valeur brute d’une phase inconnue', () => {
     expect(libellePhase('inconnue')).toBe('inconnue')
+  })
+})
+
+describe('spec #20 — Classement club selon la catégorie (R30)', () => {
+  it('enfant et ado ont un classement club (spec #7 R6)', () => {
+    expect(aClassementClub('enfant')).toBe(true)
+    expect(aClassementClub('ado')).toBe(true)
+  })
+
+  it("l'adulte n'a pas de classement club (R30)", () => {
+    expect(aClassementClub('adulte')).toBe(false)
+  })
+})
+
+describe('spec #20 — Épreuves désactivables (R36, R37)', () => {
+  it('en adulte, bloc et vitesse se désactivent (R36)', () => {
+    expect(epreuveDesactivable('adulte', 'bloc')).toBe(true)
+    expect(epreuveDesactivable('adulte', 'vitesse')).toBe(true)
+  })
+
+  it('l’épreuve de voies ne se désactive jamais (R36)', () => {
+    expect(epreuveDesactivable('adulte', 'voie')).toBe(false)
+  })
+
+  it.each(['enfant', 'ado'] as const)('en %s, aucune épreuve ne se désactive (R36)', (categorie) => {
+    for (const type of ['voie', 'bloc', 'vitesse'] as const) {
+      expect(epreuveDesactivable(categorie, type)).toBe(false)
+    }
+  })
+
+  it.each(['pre_competition', 'preparation'] as const)('état modifiable en %s (R37)', (phase) => {
+    expect(etatEpreuveModifiable(phase)).toBe(true)
+  })
+
+  it.each(['competition', 'cloture', 'resultats_publics'] as const)('état figé en %s (R37)', (phase) => {
+    expect(etatEpreuveModifiable(phase)).toBe(false)
   })
 })

@@ -125,6 +125,15 @@
   .note-lecture { color: var(--texte-attenue); font-size: 12px; background: rgba(148,163,184,.08); border:1px solid var(--bordure); border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; }
   .vide { color: var(--texte-doux); font-size: 12.5px; font-style: italic; padding: 6px 8px; }
 
+  /* édition / suppression (R51–R55) */
+  .actions-ligne { margin-left: auto; display: flex; gap: 6px; }
+  .mini { width: 44px; height: 44px; flex: 0 0 44px; display: inline-flex; align-items: center; justify-content: center; font-size: 18px; border-radius: 12px; border: 1px solid var(--bordure); color: var(--accent-doux); background: var(--surface); }
+  .mini.ok { border-color: rgba(190,242,100,.4); color: var(--secondaire); background: rgba(190,242,100,.1); }
+  .mini.danger { border-color: rgba(251,113,133,.4); color: var(--danger); background: rgba(251,113,133,.1); }
+  .form-edition { border: 1px solid rgba(34,211,238,.35); border-radius: 12px; padding: 10px; margin: 6px 0; background: rgba(34,211,238,0.04); }
+  .alerte { color: var(--danger); font-size: 12px; margin-top: 6px; }
+  .confirmation { border: 1px solid rgba(251,113,133,.4); border-radius: 12px; padding: 10px; margin: 6px 0; background: rgba(251,113,133,.06); font-size: 12.5px; }
+
   .legende { max-width: 900px; margin: 40px auto 0; color: var(--texte-attenue); font-size: 13px; }
   .legende h2 { color: var(--texte-fort); font-size: 15px; }
   .legende li { margin-bottom: 6px; }
@@ -316,7 +325,7 @@
   <div class="grille" style="margin-top:44px">
     <section class="colonne">
       <p class="titre-option" style="color:var(--texte-attenue)">Variante — hors pré-compétition (lecture seule)</p>
-      <p class="desc-option">Phases compétition / résultats : structure figée (R36), aucun formulaire.</p>
+      <p class="desc-option">À partir de la ③ compétition : structure figée (R44, R51), aucun formulaire ni bouton.</p>
       <div class="tel">
         <div class="barre-haut">
           <div class="lien-retour">← Rencontres</div>
@@ -361,10 +370,110 @@
     </section>
   </div>
 
+  <!-- édition / suppression (R51–R55, ajout 2026-10-25) -->
+  <h1 style="margin-top:44px">Édition et suppression des éléments — R51–R55</h1>
+  <p class="intro">Disposition retenue (onglets). Proposé en ① pré-compétition et ② préparation jour J ;
+  <em>(rév. 2026-10-25)</em> en ② tout reste éditable, ajout et barème de vitesse compris (R51) ;
+  barème figé dès qu'une saisie de vitesse existe (R55e). Actions en <strong>icônes 44 px</strong> avec
+  infobulle : ✓ vert = enregistrer, ✎ = modifier, ✕ rouge = supprimer (rév. 2026-10-25).</p>
+  <div class="grille">
+    <section class="colonne">
+      <p class="titre-option">Voie — modification (R52, R55b)</p>
+      <p class="desc-option">« Modifier » ouvre le formulaire de la voie sous sa ligne, pré-rempli.</p>
+      <div class="tel">
+        <div class="barre-haut">
+          <div class="titre-rencontre">12 oct. 2025 — CAF Bègles</div>
+          <div class="badge-phase">● Préparation jour J — modification possible</div>
+        </div>
+        <div class="corps">
+          <div class="onglets">
+            <div class="onglet actif">Voies · 10</div><div class="onglet">Blocs · 2</div><div class="onglet">Vitesse · 2</div>
+          </div>
+          <ul class="liste">
+            <li><span class="niv">T5 a</span><span class="cot">6a</span><span class="pts">voie 12</span>
+              <span class="actions-ligne"><button class="mini" title="Modifier la voie">✎</button><button class="mini danger" title="Supprimer">✕</button></span></li>
+          </ul>
+          <div class="form-edition">
+            <div class="ligne-champs">
+              <div class="champ"><label>Niveau</label><select><option>T6</option></select></div>
+              <div class="champ"><label>Type</label><select><option>Tête</option></select></div>
+              <div class="champ"><label>Cotation</label><input value="6a+"></div>
+            </div>
+            <div class="ligne-champs">
+              <div class="champ"><label>Points voie</label><input value="14"></div>
+              <div class="champ"><label>Zone 1</label><input value="11"></div>
+              <div class="champ"><label>Zone 2</label><input value="12"></div>
+            </div>
+            <div class="actions-modale"><button class="btn btn-fantome">Annuler</button><button class="btn btn-primaire">Enregistrer</button></div>
+            <div class="alerte">Niveau et type non modifiables : 3 résultats déjà saisis sur cette voie. (R55b)</div>
+          </div>
+          <ul class="liste">
+            <li><span class="niv">T5 Jaune</span><span class="cot">6a</span><span class="pts">voie 12</span>
+              <span class="actions-ligne"><button class="mini" title="Modifier la voie">✎</button><button class="mini danger" title="Supprimer">✕</button></span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="colonne">
+      <p class="titre-option">Bloc — code et paliers (R53, R55c)</p>
+      <p class="desc-option">Code modifiable, paliers ajoutés / modifiés / supprimés un par un.</p>
+      <div class="tel">
+        <div class="barre-haut">
+          <div class="titre-rencontre">12 oct. 2025 — CAF Bègles</div>
+          <div class="badge-phase">● Préparation jour J — modification possible</div>
+        </div>
+        <div class="corps">
+          <div class="onglets">
+            <div class="onglet">Voies · 10</div><div class="onglet actif">Blocs · 3</div><div class="onglet">Vitesse · 2</div>
+          </div>
+          <div class="carte">
+            <div class="carte-entete"><span class="niv">B3</span>
+              <span class="actions-ligne"><button class="mini" title="Modifier la voie">✎</button><button class="mini danger" title="Supprimer">✕</button></span></div>
+            <ul class="liste">
+              <li><input value="Zone" style="width:110px"><input value="15" style="width:56px"><span class="actions-ligne"><button class="mini ok" title="Enregistrer">✓</button><button class="mini danger" title="Supprimer le palier">✕</button></span></li>
+              <li><input value="Bloc complet" style="width:110px"><input value="40" style="width:56px"><span class="actions-ligne"><button class="mini ok" title="Enregistrer">✓</button><button class="mini danger" title="Supprimer le palier">✕</button></span></li>
+            </ul>
+            <div class="ligne-champs" style="margin-top:8px">
+              <div class="champ"><label>Libellé</label><input placeholder="Zone 2"></div>
+              <div class="champ"><label>Points</label><input placeholder="25"></div>
+            </div>
+            <button class="btn btn-fantome">+ Palier</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="colonne">
+      <p class="titre-option">Suppression — confirmation (R54, R55a)</p>
+      <p class="desc-option">Confirmation explicite ; refus lisible si l'élément porte des résultats.</p>
+      <div class="tel">
+        <div class="barre-haut">
+          <div class="titre-rencontre">12 oct. 2025 — CAF Bègles</div>
+          <div class="badge-phase">● Pré-compétition — édition possible</div>
+        </div>
+        <div class="corps">
+          <div class="onglets">
+            <div class="onglet">Voies · 10</div><div class="onglet">Blocs · 3</div><div class="onglet actif">Vitesse · 2</div>
+          </div>
+          <ul class="liste">
+            <li><span class="niv">1</span><span class="cot" style="width:auto">Filles</span></li>
+            <li><span class="niv">2</span><span class="cot" style="width:auto">Garçons</span></li>
+          </ul>
+          <div class="confirmation">
+            Supprimer la voie de vitesse « Garçons » ? Ses jetons juges seront aussi supprimés.
+            <div class="actions-modale" style="margin-top:8px"><button class="btn btn-fantome">Annuler</button><button class="btn btn-primaire" style="background:var(--danger)">Supprimer</button></div>
+          </div>
+          <div class="alerte">Exemple de refus (onglet Blocs) : « Suppression impossible : 12 résultats sont saisis sur ce bloc. » (R55a)</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
   <div class="legende">
     <h2>Notes de spec (à valider)</h2>
     <ul>
-      <li><strong>Périmètre</strong> : ajout uniquement (voies/blocs/vitesse + épreuve si R35). Édition & suppression restent hors périmètre — pas de bouton modifier/supprimer sur les lignes.</li>
+      <li><strong>Périmètre</strong> : <em>(rév. 2026-10-25)</em> ajout (voies/blocs/vitesse + épreuve si R35), modification, suppression et barème en ① et ② (R51–R55) — icônes crayon / croix sur chaque ligne. Une épreuve n'est pas supprimable.</li>
       <li><strong>Phase</strong> : formulaires visibles uniquement en pré-compétition ; sinon écran en lecture seule (variante ci-dessus).</li>
       <li><strong>Champs points</strong> conditionnels à la catégorie (R38) : prise valorisée = tête enfant ; Zone 1/2 = ado. La maquette montre le cas ado.</li>
       <li><strong>Accès</strong> : lien « Configurer » à ajouter sur chaque ligne de la liste des rencontres (section Écran Rencontres, R13–R19).</li>

@@ -3,6 +3,7 @@
 import { useActionState, useId, useRef, useState } from 'react'
 
 import { Bouton, Carte, ChampSelect, ChampTexte, TitreSection } from '@/composants'
+import { compter } from '@/domaine/accord'
 import {
   EFFECTIF_EQUIPE_MAX,
   GROUPES_DEPART,
@@ -63,7 +64,7 @@ export function PanneauEquipes({
               <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-2xl p-4 hover:bg-surface-forte">
                 <h3 className="text-sm font-bold text-texte-fort">{c.clubNom}</h3>
                 <span className="flex items-center gap-2 text-xs text-texte-attenue">
-                  {nbEquipes} équipe(s) · {nbGrimpeurs} grimpeur(s)
+                  {compter(nbEquipes, 'équipe')} · {compter(nbGrimpeurs, 'grimpeur')}
                   <span className="text-texte-doux transition group-open:rotate-180">▾</span>
                 </span>
               </summary>

@@ -125,7 +125,7 @@ describe('spec #18 — forme comparable & clé d’identité (R9)', () => {
 
 describe('spec #18 — analyse d’un import (R8–R12)', () => {
   it('normalise et retient une ligne valide, valeurs stockées = libellés normalisés (R8)', () => {
-    const a = analyserImportCsv([ligne(2, 'MME', 'ESCALONA  CHAZEAU ', ' OCEANE ', '2009-10-07')], 2027)
+    const a = analyserImportCsv([ligne(2, 'MME', 'ESCALONA  CHAZEAU ', ' OCEANE ', '2009-10-07')])
     expect(a.aImporter).toEqual([
       {
         ligne: 2,
@@ -148,7 +148,6 @@ describe('spec #18 — analyse d’un import (R8–R12)', () => {
         ligne(4, 'M', 'ARCHAT', 'TIMEO', '14/01/2015'),
         ligne(5, 'M', 'ARNAUD', 'ROMEO', '2012-07-12'),
       ],
-      2027,
     )
     expect(a.aImporter.map((g) => g.ligne)).toEqual([5])
     expect(a.erreurs.map((e) => e.ligne)).toEqual([2, 3, 4])
@@ -158,7 +157,7 @@ describe('spec #18 — analyse d’un import (R8–R12)', () => {
   })
 
   it('rejette un nom ou prénom de plus de 100 caractères (R8)', () => {
-    const a = analyserImportCsv([ligne(2, 'M', 'A'.repeat(101), 'HUGO', '2012-08-12')], 2027)
+    const a = analyserImportCsv([ligne(2, 'M', 'A'.repeat(101), 'HUGO', '2012-08-12')])
     expect(a.erreurs).toHaveLength(1)
     expect(a.erreurs[0].raison).toMatch(/trop long/)
   })
@@ -169,7 +168,6 @@ describe('spec #18 — analyse d’un import (R8–R12)', () => {
         ligne(8, 'MME', 'BARRA', 'CL�OPH�E', '2017-01-24'),
         ligne(9, 'MME', 'GERV�SONI', 'NOEMIE', '2010-04-20'),
       ],
-      2027,
     )
     expect(a.aImporter).toEqual([])
     expect(a.erreurs.map((e) => e.ligne)).toEqual([8, 9])
@@ -178,19 +176,15 @@ describe('spec #18 — analyse d’un import (R8–R12)', () => {
     expect(a.erreurs[1].raison).toMatch(/Nom/)
   })
 
-  it('ignore (sans erreur) les grimpeurs nés avant le seuil ; aucun âge minimal (R11)', () => {
-    const a = analyserImportCsv(
-      [
-        ligne(2, 'M', 'VIEUX', 'PAUL', '2008-12-31'),
-        ligne(3, 'M', 'HEURTEBIS', 'ARTHUR', '2009-01-01'),
-        ligne(4, 'M', 'MAGNE', 'LOIC', '2024-09-14'),
-      ],
-      2027,
-    )
-    expect(a.seuilAnneeNaissance).toBe(2009)
-    expect(a.ignoresHorsAge).toBe(1)
-    expect(a.aImporter.map((g) => g.ligne)).toEqual([3, 4])
+  it('importe les grimpeurs de tout âge, sans seuil (spec #20 R5)', () => {
+    const a = analyserImportCsv([
+      ligne(2, 'M', 'VIEUX', 'PAUL', '1958-12-31'),
+      ligne(3, 'M', 'HEURTEBIS', 'ARTHUR', '2009-01-01'),
+      ligne(4, 'M', 'MAGNE', 'LOIC', '2024-09-14'),
+    ])
+    expect(a.aImporter.map((g) => g.ligne)).toEqual([2, 3, 4])
     expect(a.erreurs).toEqual([])
+    expect(a).not.toHaveProperty('ignoresHorsAge')
   })
 
   it('consolide les doublons de clé : dernière occurrence retenue, doublon signalé (R12)', () => {
@@ -200,7 +194,6 @@ describe('spec #18 — analyse d’un import (R8–R12)', () => {
         ligne(5, 'M', 'Arnaud', 'Roméo', '2012-03-01'),
         ligne(6, 'M', 'AZOUZI', 'FATHI', '2013-03-13'),
       ],
-      2027,
     )
     expect(a.aImporter.map((g) => g.ligne)).toEqual([5, 6])
     expect(a.aImporter[0].prenom).toBe('Roméo')
@@ -214,7 +207,6 @@ describe('spec #18 — analyse d’un import (R8–R12)', () => {
         ligne(3, 'MME', 'MARTIN', 'CAMILLE', '2014-10-16'),
         ligne(4, 'M', 'MARTIN', 'CAMILLE', '2015-10-16'),
       ],
-      2027,
     )
     expect(a.aImporter).toHaveLength(3)
     expect(a.doublons).toEqual([])

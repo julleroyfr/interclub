@@ -354,3 +354,14 @@ insert into interclub.composition (equipe_id, grimpeur_id) values
   ('adadadad-0000-0000-0000-00000000e001', 'adadadad-0000-0000-0000-0000000000c1'),
   ('adadadad-0000-0000-0000-00000000e001', 'adadadad-0000-0000-0000-0000000000c2')
 on conflict (equipe_id, grimpeur_id) do nothing;
+
+-- Grimpeurs ADULTES (16 ans et plus en saison, spec #20 R2) — clubs A et B,
+-- pour composer des équipes adultes inter-clubs (JD-ADULTES, cahier 33).
+insert into interclub.grimpeur (id, club_id, nom, prenom, annee_naissance, sexe, licence) values
+  ('ad000000-0000-0000-0000-0000000000d1', '11111111-1111-1111-1111-111111111111', 'Echo', 'Lucie', 1990, 'F', 100015),
+  ('ad000000-0000-0000-0000-0000000000d2', '11111111-1111-1111-1111-111111111111', 'Echo', 'Karim', 1978, 'H', 100016),
+  ('ad000000-0000-0000-0000-0000000000d3', '11111111-1111-1111-1111-111111111111', 'Echo', 'Hugo',  2009, 'H', 100017),
+  ('ad000000-0000-0000-0000-0000000000d4', '22222222-2222-2222-2222-222222222222', 'Foxtrot', 'Sarah', 1995, 'F', 100018),
+  ('ad000000-0000-0000-0000-0000000000d5', '22222222-2222-2222-2222-222222222222', 'Foxtrot', 'Emma',  1988, 'F', 100019),
+  ('ad000000-0000-0000-0000-0000000000d6', '22222222-2222-2222-2222-222222222222', 'Foxtrot', 'Inès',  2001, 'F', 100020)
+on conflict (id) do nothing;

@@ -6,6 +6,7 @@ import {
   EngagementInvalideError,
   GROUPES_DEPART,
   MESSAGE_CHANGEMENT_HORS_CLUB,
+  MESSAGE_EQUIPES_ADULTES_FIGEES,
   normaliserNomEquipe,
   verifierAjoutComposition,
   verifierChangementEquipe,
@@ -76,6 +77,8 @@ export async function supprimerEquipeAdmin(
 
   const supabase = await createClient()
   const { error } = await supabase.from('equipe').delete().eq('id', equipeId)
+  // Équipe adulte figée dès la ③ (trigger, spec #20 R10).
+  if (error?.message === 'equipes_adultes_figees') return { erreur: MESSAGE_EQUIPES_ADULTES_FIGEES }
   if (error) return { erreur: 'La suppression a échoué. Réessayez.' }
   revalider(rencontreId)
   return { succes: 'Équipe supprimée.' }
@@ -168,6 +171,8 @@ export async function retirerGrimpeurAdmin(
     .delete()
     .eq('equipe_id', equipeId)
     .eq('grimpeur_id', grimpeurId)
+  // Équipe adulte figée dès la ③ (trigger, spec #20 R10).
+  if (error?.message === 'equipes_adultes_figees') return { erreur: MESSAGE_EQUIPES_ADULTES_FIGEES }
   if (error) return { erreur: 'Le retrait a échoué. Réessayez.' }
   revalider(rencontreId)
   return { succes: 'Grimpeur retiré.' }

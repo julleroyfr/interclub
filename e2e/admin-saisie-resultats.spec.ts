@@ -120,7 +120,7 @@ test.describe('Cahier 19 — saisie & correction admin des résultats (spec #9)'
   test('CT-02 · liste tous clubs, recherche, filtre club (R2, R10)', async ({ page }) => {
     await commeAdmin(page)
     await page.goto(URL_SAISIE)
-    await expect(page.getByText(/3\s*grimpeur\(s\)\s*·\s*2\s*club\(s\)/)).toBeVisible()
+    await expect(page.getByText(/3\s*grimpeurs\s*·\s*2\s*clubs/)).toBeVisible()
     for (const nom of ['Ana Alpha', 'Bob Alpha', 'Cléo Bravo']) {
       await expect(boutonGrimpeur(page, nom)).toBeVisible()
     }

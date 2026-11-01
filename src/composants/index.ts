@@ -2,6 +2,8 @@
 // Import : `import { Bouton, Carte, ... } from '@/composants'`.
 
 export { Bouton } from './Bouton'
+export { BoutonIcone } from './BoutonIcone'
+export type { IconeBouton } from './BoutonIcone'
 export type { VarianteBouton, TailleBouton } from './Bouton'
 
 export { Carte } from './Carte'
@@ -25,6 +27,7 @@ export type { TableTempsReel } from './TempsReel'
 export { EnTetePage, TitreSection } from './Typographie'
 
 export { LienExportPdf } from './LienExportPdf'
+export { FormLibelleVoieVitesse } from './FormLibelleVoieVitesse'
 
 export {
   Tableau,
@@ -36,6 +39,7 @@ export {
 } from './Tableau'
 
 export { Coquille } from './Coquille'
+export { LogoInterclub } from './LogoInterclub'
 export { EcranErreur } from './EcranErreur'
 export { IndicateurNavigation } from './IndicateurNavigation'
 export { NavPrincipale } from './NavPrincipale'

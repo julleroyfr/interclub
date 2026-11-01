@@ -13,10 +13,8 @@ export const metadata: Metadata = { title: 'Gabarit — Interclub' }
 export default async function PageGabarit() {
   await exigerAdmin()
 
-  const [gabaritEnfant, gabaritAdo] = await Promise.all([
-    listerGabarit('enfant'),
-    listerGabarit('ado'),
-  ])
+  // Un gabarit par catégorie (spec #3 R29 ; adulte : spec #20 R6).
+  const gabarits = await Promise.all(CATEGORIES.map((cat) => listerGabarit(cat.value)))
 
   return (
     <Coquille liens={liensAdmin()} largeur="large" deconnexion>
@@ -27,12 +25,12 @@ export default async function PageGabarit() {
         />
 
         <div className="grid gap-6 lg:grid-cols-2">
-          {CATEGORIES.map((cat) => (
+          {CATEGORIES.map((cat, i) => (
             <PanneauGabarit
               key={cat.value}
               categorie={cat.value}
               label={cat.labelCourt}
-              epreuves={cat.value === 'enfant' ? gabaritEnfant : gabaritAdo}
+              epreuves={gabarits[i]}
             />
           ))}
         </div>
@@ -40,7 +38,7 @@ export default async function PageGabarit() {
         <section className="flex flex-col gap-2">
           <TitreSection>Légende des niveaux</TitreSection>
           <p className="text-sm text-texte-attenue">
-            Moulinette : M1–M4 (enfant uniquement). Tête : T1–T10 (enfant et ado).
+            Moulinette : M1–M4 (enfant uniquement). Tête : T1–T10 (toutes catégories).
             Un même niveau peut apparaître plusieurs fois (voie doublée ou triplée).
           </p>
         </section>

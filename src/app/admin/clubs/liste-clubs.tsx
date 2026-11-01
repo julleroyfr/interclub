@@ -3,6 +3,7 @@
 import { useActionState, useId, useState } from 'react'
 
 import { Bouton, ChampTexte } from '@/composants'
+import { compter } from '@/domaine/accord'
 import { renommerClub, supprimerClub } from '@/lib/clubs/actions'
 import type { ClubAvecDependances, EtatClub } from '@/lib/clubs/clubs'
 import {
@@ -110,7 +111,7 @@ function LigneClub({
                 {club.nom}
               </p>
               <p className="mt-1 text-xs text-texte-doux">
-                {club.nbRencontres} rencontre(s) · {club.nbGrimpeurs} grimpeur(s)
+                {compter(club.nbRencontres, 'rencontre')} · {compter(club.nbGrimpeurs, 'grimpeur')}
               </p>
             </div>
 

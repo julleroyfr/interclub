@@ -23,12 +23,16 @@ export type BaremeVoie = {
 
 /**
  * Score de voie d'un grimpeur (R1) : points de son issue enregistrée selon le
- * barème de la voie. `echec`, `np` (et un champ de points absent) valent 0.
+ * barème de la voie. `echec`, `np` (et un champ de points absent) valent 0. Un
+ * top en moulinette vaut la moitié du top, arrondie à l'entier supérieur, sans
+ * zone (spec #20 R25).
  */
 export function scoreVoie(issue: IssueVoie, bareme: BaremeVoie): number {
   switch (issue) {
     case 'top':
       return bareme.points
+    case 'top_moulinette':
+      return Math.ceil(bareme.points / 2)
     case 'prise_valorisee':
       return bareme.pointsPriseValorisee ?? 0
     case 'zone2':

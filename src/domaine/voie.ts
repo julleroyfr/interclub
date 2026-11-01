@@ -34,6 +34,27 @@ export function normaliserRepereVoie(brut: string | null | undefined): string | 
   return normalise
 }
 
+/** Libellé de voie de vitesse invalide (vide après normalisation). */
+export class LibelleVoieVitesseInvalideError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'LibelleVoieVitesseInvalideError'
+  }
+}
+
+/**
+ * Normalise le libellé d'une voie de vitesse (spec #20 R9bis, spec #3 R4) :
+ * espaces de bord retirés, espaces internes réduits à un seul. Rejette un
+ * libellé vide après normalisation (le libellé est obligatoire).
+ */
+export function normaliserLibelleVoieVitesse(brut: string | null | undefined): string {
+  const normalise = (brut ?? '').trim().replace(/\s+/g, ' ')
+  if (!normalise) {
+    throw new LibelleVoieVitesseInvalideError('Le libellé de la voie de vitesse est obligatoire.')
+  }
+  return normalise
+}
+
 /** Phases où le repère peut être saisi ou modifié : ① à ③ (R49d). */
 const PHASES_REPERE_MODIFIABLE: Phase[] = ['pre_competition', 'preparation', 'competition']
 

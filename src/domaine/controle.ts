@@ -27,6 +27,7 @@ export function peutCocher(phase: Phase): boolean {
 
 const LIBELLES_VOIE: Record<IssueVoie, string> = {
   top: 'Top',
+  top_moulinette: 'Top en moulinette',
   prise_valorisee: 'Prise valorisée',
   zone2: 'Zone 2',
   zone1: 'Zone 1',

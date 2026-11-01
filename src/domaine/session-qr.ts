@@ -13,6 +13,8 @@ export type ResultatScan = {
   nature: NatureJeton
   clubId: string | null
   voieVitesseId: string | null
+  /** Équipe d'une session capitaine (spec #20 R16), `null` sinon. */
+  equipeId: string | null
   rencontreId: string
 }
 
@@ -47,7 +49,7 @@ export function interpreterResultatScan(data: unknown): ResultatScan {
   }
   const d = data as Record<string, unknown>
   const nature = d['nature']
-  if (nature !== 'coach_temporaire' && nature !== 'juge') {
+  if (nature !== 'coach_temporaire' && nature !== 'juge' && nature !== 'capitaine') {
     throw new SessionQrInvalideError(`Nature de session inconnue : ${JSON.stringify(nature)}.`)
   }
   const rencontreId = d['rencontre_id']
@@ -58,6 +60,7 @@ export function interpreterResultatScan(data: unknown): ResultatScan {
     nature,
     clubId: typeof d['club_id'] === 'string' ? d['club_id'] : null,
     voieVitesseId: typeof d['voie_vitesse_id'] === 'string' ? d['voie_vitesse_id'] : null,
+    equipeId: typeof d['equipe_id'] === 'string' ? d['equipe_id'] : null,
     rencontreId,
   }
 }
@@ -65,12 +68,14 @@ export function interpreterResultatScan(data: unknown): ResultatScan {
 /**
  * Retourne le chemin de redirection après ouverture de session. Le coach
  * temporaire est mené **directement à sa rencontre** (spec #5 R8bis : session
- * bornée à une seule rencontre, pas de liste) ; le juge va à `/juge`.
+ * bornée à une seule rencontre, pas de liste) ; le capitaine à `/capitaine`
+ * (spec #20 R18) ; le juge va à `/juge`.
  */
 export function urlDeRedirection(resultat: ResultatScan): string {
   if (resultat.nature === 'coach_temporaire') {
     return `/coach/rencontres/${resultat.rencontreId}`
   }
+  if (resultat.nature === 'capitaine') return '/capitaine'
   return '/juge'
 }
 

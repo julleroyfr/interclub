@@ -1,20 +1,17 @@
 // Domaine pur — import des licenciés (spec #13). Aucun accès Supabase ni lecture
 // du binaire xlsx ici : uniquement le parsing/normalisation d'une ligne déjà
-// extraite en cellules texte, le filtre d'âge (R7) et la construction du plan
-// d'import (lignes à écrire, ignorés hors âge, erreurs, doublons internes). La
+// extraite en cellules texte et la construction du plan d'import (lignes à
+// écrire, erreurs, doublons internes). Aucun filtre d'âge : les licenciés de tout
+// âge sont importés (spec #20 R5). La
 // lecture du .xlsx et l'écriture (clubs + upsert grimpeurs) sont des adaptateurs
 // hors de ce module (R15).
 
-import { anneeSaison } from './rencontre'
 import {
   NOM_GRIMPEUR_MAX,
   ANNEE_NAISSANCE_MIN,
   ANNEE_NAISSANCE_MAX,
   type Sexe,
 } from './grimpeur'
-
-/** Âge maximal (inclus) à l'année de référence pour être importé (R7). */
-export const AGE_IMPORT_MAX = 18
 
 /**
  * En-têtes attendus, dans l'ordre des colonnes A→F (R4). Les colonnes sont
@@ -69,26 +66,9 @@ export type DoublonImport = {
 
 /** Résultat de l'analyse pure d'un fichier d'import (R15). */
 export type AnalyseImport = {
-  anneeReference: number
-  seuilAnneeNaissance: number
   aImporter: GrimpeurImport[]
-  ignoresHorsAge: number
   erreurs: ErreurImport[]
   doublons: DoublonImport[]
-}
-
-/**
- * Année de référence par défaut du filtre d'âge : année de **fin** de la saison
- * courante, soit `anneeSaison(date) + 1` (R6). La saison (R37) est identifiée par
- * son année de début ; l'import raisonne sur l'année suivante.
- */
-export function anneeReferenceParDefaut(dateISO: string): number {
-  return anneeSaison(dateISO) + 1
-}
-
-/** Année de naissance minimale pour être importé : référence − 18 (R7). */
-export function seuilAnneeNaissance(anneeReference: number): number {
-  return anneeReference - AGE_IMPORT_MAX
 }
 
 /** Convertit le libellé de sexe FFME (« Homme »/« Femme ») en `H`/`F` (R9). */
@@ -187,15 +167,13 @@ function identiteAuMieux(l: LigneImport): string {
 
 /**
  * Analyse pure d'un fichier d'import (R15) : pour chaque ligne, normalise (R9),
- * écarte les invalides en erreurs (R10), ignore les hors-âge (R7/R8), puis
- * consolide les doublons de licence — dernière occurrence gagnante (R14).
+ * écarte les invalides en erreurs (R10), puis consolide les doublons de licence
+ * — dernière occurrence gagnante (R14). Tout âge est importé (spec #20 R5).
  */
-export function analyserImport(lignes: LigneImport[], anneeReference: number): AnalyseImport {
-  const seuil = seuilAnneeNaissance(anneeReference)
+export function analyserImport(lignes: LigneImport[]): AnalyseImport {
   const erreurs: ErreurImport[] = []
   const doublons: DoublonImport[] = []
   const parLicence = new Map<number, GrimpeurImport>()
-  let ignoresHorsAge = 0
 
   for (const l of lignes) {
     let grimpeur: GrimpeurImport
@@ -209,11 +187,6 @@ export function analyserImport(lignes: LigneImport[], anneeReference: number): A
       throw e
     }
 
-    if (grimpeur.anneeNaissance < seuil) {
-      ignoresHorsAge++
-      continue
-    }
-
     const existant = parLicence.get(grimpeur.licence)
     if (existant) {
       doublons.push({ ligne: existant.ligne, licence: grimpeur.licence })
@@ -222,10 +195,7 @@ export function analyserImport(lignes: LigneImport[], anneeReference: number): A
   }
 
   return {
-    anneeReference,
-    seuilAnneeNaissance: seuil,
     aImporter: [...parLicence.values()],
-    ignoresHorsAge,
     erreurs,
     doublons,
   }

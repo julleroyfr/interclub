@@ -105,7 +105,7 @@ test.describe('Cahier 13 — Espace coach : engagement', () => {
     await expect(carte).toBeVisible()
     await expect(carte).toContainText('Club A')
     await expect(carte).toContainText(/pré-compétition/i)
-    await expect(carte).toContainText('2 équipe(s) · 2 grimpeur(s)')
+    await expect(carte).toContainText('2 équipes · 2 grimpeurs')
     await expect(carte).toHaveAttribute(
       'href',
       `/coach/rencontres/${RENCONTRE_PILOTE}`,

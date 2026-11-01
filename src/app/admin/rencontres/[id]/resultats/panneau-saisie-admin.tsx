@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from 'react'
 
+import { accorder } from '@/domaine/accord'
+import { aVoiesLibres, type Categorie } from '@/domaine/rencontre'
 import { issuesVoieSaisissables, type IssueVoie } from '@/domaine/resultat'
 import {
   retirerResultatVoieAdmin,
@@ -23,6 +25,7 @@ const etatInitial: EtatSaisie = undefined
 
 const LIBELLE_ISSUE: Record<IssueVoie, string> = {
   top: 'Top',
+  top_moulinette: 'Top en moulinette',
   prise_valorisee: 'Prise valorisée',
   zone2: 'Zone 2',
   zone1: 'Zone 1',
@@ -35,6 +38,8 @@ function classeIssue(issue: IssueVoie | 'palier' | null): string {
     case 'top':
     case 'palier':
       return 'bg-secondaire/15 text-secondaire border-secondaire/30'
+    case 'top_moulinette':
+      return 'bg-attention/15 text-attention border-attention/40'
     case 'prise_valorisee':
     case 'zone1':
     case 'zone2':
@@ -134,8 +139,8 @@ export function PanneauSaisieAdmin({ saisie }: { saisie: SaisieAdminRencontre })
             ))}
           </div>
           <p className="mb-2 px-1 text-[11px] font-semibold text-texte-doux">
-            <b className="text-texte-fort">{total}</b> grimpeur(s) ·{' '}
-            <b className="text-texte-fort">{saisie.clubs.length}</b> club(s)
+            <b className="text-texte-fort">{total}</b> {accorder(total, 'grimpeur')} ·{' '}
+            <b className="text-texte-fort">{saisie.clubs.length}</b> {accorder(saisie.clubs.length, 'club')}
           </p>
 
           {clubsFiltres.length === 0 ? (
@@ -176,8 +181,10 @@ export function PanneauSaisieAdmin({ saisie }: { saisie: SaisieAdminRencontre })
                                 </span>
                               )}
                               <span className="font-bold">
-                                🧗 {g.progression.voiesFaites}/{g.voiesTotal} · 🧱{' '}
-                                {g.progression.blocsFaites}/{g.progression.blocsTotal}
+                                🧗 {g.progression.voiesFaites}/{g.voiesTotal}
+                                {/* Épreuve de bloc désactivée : pas de compteur (spec #20 R38). */}
+                                {saisie.blocActif &&
+                                  ` · 🧱 ${g.progression.blocsFaites}/${g.progression.blocsTotal}`}
                               </span>
                             </div>
                           </div>
@@ -292,7 +299,7 @@ function DetailGrimpeur({
 
       <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
         <SectionVoies saisie={saisie} grimpeur={grimpeur} />
-        <SectionBlocs saisie={saisie} grimpeur={grimpeur} />
+        {saisie.blocActif && <SectionBlocs saisie={saisie} grimpeur={grimpeur} />}
       </div>
     </div>
   )
@@ -305,7 +312,8 @@ function SectionVoies({
   saisie: SaisieAdminRencontre
   grimpeur: GrimpeurSaisie
 }) {
-  const estAdo = saisie.categorie === 'ado'
+  // Voies libres : ado et adulte (spec #20 R22).
+  const estAdo = aVoiesLibres(saisie.categorie)
   const dejaSaisies = new Set(grimpeur.voies.map((v) => v.voieDifficulteId))
   const dispoAdo = saisie.voiesEpreuve.filter((v) => !dejaSaisies.has(v.voieDifficulteId))
   const peutAjouterAdo =
@@ -341,7 +349,11 @@ function SectionVoies({
       </ul>
 
       {peutAjouterAdo && dispoAdo.length > 0 && (
-        <FormAjoutVoieAdo grimpeur={grimpeur} disponibles={dispoAdo} />
+        <FormAjoutVoieAdo
+              categorie={saisie.categorie}
+              grimpeur={grimpeur}
+              disponibles={dispoAdo}
+            />
       )}
     </div>
   )
@@ -423,14 +435,17 @@ function LigneVoie({
 }
 
 function FormAjoutVoieAdo({
+  categorie,
   grimpeur,
   disponibles,
 }: {
+  categorie: Categorie
   grimpeur: GrimpeurSaisie
   disponibles: VoieOption[]
 }) {
   const [etat, action, enCours] = useActionState(saisirResultatVoieAdmin, etatInitial)
-  const issues = issuesVoieSaisissables('ado', 'tete')
+  // Voies libres (tête) : issues de la catégorie (ado, adulte — spec #20 R23).
+  const issues = issuesVoieSaisissables(categorie, 'tete')
 
   return (
     <form

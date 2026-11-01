@@ -4,8 +4,12 @@ import Link from 'next/link'
 import { Coquille, EnTetePage, Etiquette, variantePhase } from '@/composants'
 import { CATEGORIES, PHASES, type Categorie, type Phase } from '@/domaine/rencontre'
 import { exigerContexteCoach } from '@/lib/auth/session'
-import { listerRencontresCoach, type RencontreCoach } from '@/lib/coach/engagement'
-import { liensCoach } from '@/lib/coach/navigation'
+import {
+  compterGrimpeursAdultesDuClub,
+  listerRencontresCoach,
+  type RencontreCoach,
+} from '@/lib/coach/engagement'
+import { cibleCarteRencontreCoach, liensCoach, resumeCarteRencontreCoach } from '@/lib/coach/navigation'
 
 export const metadata: Metadata = { title: 'Mes rencontres — Interclub' }
 
@@ -39,10 +43,16 @@ function aujourdhuiISO(): string {
 export default async function PageCoach() {
   const contexte = await exigerContexteCoach()
 
-  const toutes = await listerRencontresCoach({
-    clubId: contexte.clubId,
-    aujourdhui: aujourdhuiISO(),
-  })
+  const options = { clubId: contexte.clubId, aujourdhui: aujourdhuiISO() }
+  // Rencontres adultes : grimpeurs du club composés, lus à part (spec #20
+  // R19ter) ; pas de coach temporaire en adulte. Même vague que la liste.
+  const [liste, grimpeursAdultes] = await Promise.all([
+    listerRencontresCoach(options),
+    contexte.type === 'permanent' ? compterGrimpeursAdultesDuClub(options) : new Map<string, number>(),
+  ])
+  const toutes = liste.map((r) =>
+    r.categorie === 'adulte' ? { ...r, nbGrimpeursClub: grimpeursAdultes.get(r.id) ?? 0 } : r,
+  )
   // Le coach temporaire est rattaché à UNE rencontre : on ne montre que celle-ci.
   const rencontres =
     contexte.type === 'temporaire'
@@ -82,13 +92,11 @@ export default async function PageCoach() {
 /**
  * Carte-lien d'une rencontre (R7). En ③ compétition, la composition est figée et
  * la tâche du coach est la saisie : la carte mène directement à l'écran de saisie
- * des résultats ; aux autres phases, vers l'écran d'engagement.
+ * des résultats ; aux autres phases, vers l'écran d'engagement. En adulte, dès la
+ * ③, vers le classement (spec #20 R19bis).
  */
 function CarteRencontre({ rencontre: r }: { rencontre: RencontreCoach }) {
-  const href =
-    r.phase === 'competition'
-      ? `/coach/rencontres/${r.id}/resultats`
-      : `/coach/rencontres/${r.id}`
+  const href = cibleCarteRencontreCoach(r.id, r.categorie, r.phase)
   return (
     <Link
       href={href}
@@ -104,7 +112,7 @@ function CarteRencontre({ rencontre: r }: { rencontre: RencontreCoach }) {
         {formaterDate(r.dateRencontre)} — {r.clubPorteurNom}
       </p>
       <p className="mt-1 text-xs text-texte-doux">
-        {r.nbEquipesClub} équipe(s) · {r.nbGrimpeursClub} grimpeur(s)
+        {resumeCarteRencontreCoach(r.categorie, r.nbEquipesClub, r.nbGrimpeursClub)}
       </p>
     </Link>
   )

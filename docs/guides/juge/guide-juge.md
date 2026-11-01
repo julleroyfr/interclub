@@ -53,7 +53,7 @@ Les messages possibles :
 | --- | --- |
 | « Ce QR n'est pas encore ouvert (ou la rencontre est terminée). » | La rencontre n'est pas en ③ compétition : attendre que l'organisateur lance la compétition, puis scanner à nouveau |
 | « Ce QR a été révoqué. » | Demander le nouveau QR à l'organisateur |
-| « Ce QR n'est pas reconnu. » | Vérifier que le bon QR a été scanné ; sinon demander un nouveau QR |
+| « Ce QR n'est pas reconnu. » | Vérifier que le bon QR a été scanné ; sinon demander un nouveau QR (l'organisateur a pu supprimer la voie de vitesse) |
 
 ## 3. Saisir les résultats
 

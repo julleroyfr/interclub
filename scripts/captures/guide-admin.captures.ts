@@ -1,7 +1,9 @@
+import { readFileSync } from 'node:fs'
+
 import { expect, test, type Locator, type Page } from '@playwright/test'
 
 import { commeAdmin } from '../../e2e/helpers/auth'
-import { RENCONTRE_PILOTE, RENCONTRE_PILOTE_DATE } from '../../e2e/helpers/donnees'
+import { CLUB_A, RENCONTRE_PILOTE, RENCONTRE_PILOTE_DATE } from '../../e2e/helpers/donnees'
 import {
   execSql,
   nettoyerSessionsQr,
@@ -78,7 +80,21 @@ function phaseAdo(phase: 'competition' | 'cloture' | 'resultats_publics'): void 
   execSql(`update interclub.rencontre set phase = '${phase}' where id = '${ADO}';`)
 }
 
+/** Rencontre Ado en ① du seed opt-in 04 : T5 ×3 (« T5 Jaune », « T5 Relais 12 », « T5 c »). */
+const ADO_REPERES = 'aeaeaeae-0000-0000-0000-000000000001'
+
+/** Seed opt-in 04 (voies doublées et repères, spec #3 R49/R50), rejouable. */
+function chargerDemoReperes(): void {
+  execSql(readFileSync('supabase/seed/04-demo-repere-voies.sql', 'utf8'))
+}
+
+/** Rencontre adulte de démonstration (seed opt-in 05) : du jour, Club B, en ③. */
+const DEMO_ADULTE = `categorie = 'adulte' and club_porteur_id = '22222222-2222-2222-2222-222222222222'`
+const idDemoAdulte = () => execSql(`select id from interclub.rencontre where ${DEMO_ADULTE};`)
+
 function etatSeed(): void {
+  execSql(`delete from interclub.rencontre where id::text like 'aeaeaeae-%';`)
+  execSql(`delete from interclub.rencontre where ${DEMO_ADULTE};`)
   purgerResultatsAdo()
   phaseAdo('competition')
   reinitialiserEngagement()
@@ -132,6 +148,8 @@ test('03 — tableau de bord d’une rencontre', async ({ page }) => {
     bouton(page, 'Avancer à la phase suivante'),
     lien(page, /Jetons QR/),
     bouton(page, /Voies de difficulté/),
+    page.getByRole('button', { name: /^Modifier la voie / }).first(),
+    page.getByRole('button', { name: /^Supprimer la voie / }).first(),
     bouton(page, '+ Voie'),
     bouton(page, 'Créer le prêt'),
     page.locator('summary').filter({ hasText: 'Club A' }),
@@ -165,6 +183,12 @@ test('04 — jetons QR d’une rencontre', async ({ page }) => {
 })
 
 test('05 — clubs et invitation coach', async ({ page }) => {
+  // Invitation active du Club A (créée si absente) : sinon l'écran propose « Générer ».
+  execSql(
+    `insert into interclub.invitation_coach (club_id)
+       select '${CLUB_A}' where not exists (
+         select 1 from interclub.invitation_coach where club_id = '${CLUB_A}' and actif);`,
+  )
   await page.goto('/admin/clubs')
   await numeroter(page, [
     page.locator('summary').filter({ hasText: 'Nouveau club' }),
@@ -217,9 +241,12 @@ test('07 — gabarit', async ({ page }) => {
     bouton(page, '+ Palier'),
     bouton(page, '+ Bloc'),
     bouton(page, '+ Voie'),
-    // Barème : on numérote la colonne Ado, entièrement visible dans la capture.
-    page.getByRole('button', { name: '+ Ajouter un échelon' }).last(),
-    page.getByRole('button', { name: 'Enregistrer le barème' }).last(),
+    // Barème : on numérote la colonne Ado (2ᵉ carte), entièrement visible dans la
+    // capture — la carte Adulte (3ᵉ) passe sous les deux premières.
+    page.getByRole('button', { name: '+ Ajouter un échelon' }).nth(1),
+    page.getByRole('button', { name: 'Enregistrer le barème' }).nth(1),
+    // Libellé d'une voie de vitesse, modifiable (spec #20 R9bis).
+    page.getByLabel('Libellé (voie 1)').first(),
   ])
   await capturer(page, '11-gabarit', { pleinePage: false })
 })
@@ -232,8 +259,24 @@ test('08 — rôles', async ({ page }) => {
     page.getByRole('combobox').nth(1),
     bouton(page, 'Attribuer'),
     bouton(page, 'Générer une invitation'),
+    bouton(page, /^Supprimer le compte /),
   ])
   await capturer(page, '12-roles')
+})
+
+test('08b — voies doublées et repères (rencontre Ado)', async ({ page }) => {
+  chargerDemoReperes()
+  await page.goto(`/admin/rencontres/${ADO_REPERES}`)
+  await bouton(page, /Voies de difficulté/).click()
+  const repereJaune = page.getByRole('textbox', { name: 'Repère de la voie T5 Jaune' })
+  await expect(repereJaune).toBeVisible()
+  await numeroter(page, [
+    page.getByText('T5 c', { exact: true }).first(),
+    repereJaune,
+    repereJaune.locator('xpath=following-sibling::button[1]'),
+    page.getByLabel('Repère', { exact: true }),
+  ])
+  await capturer(page, '18-structure-reperes')
 })
 
 test('09 — saisie, affichage, contrôle, classement (rencontre Ado)', async ({ page }) => {
@@ -286,4 +329,38 @@ test('09 — saisie, affichage, contrôle, classement (rencontre Ado)', async ({
   await page.goto(`/admin/rencontres/${ADO}/classement`)
   await numeroter(page, [lien(page, /Exporter en PDF/), bouton(page, 'Individuel')])
   await capturer(page, '17-classement-officiel')
+})
+
+test('10 — rencontre adulte : équipes, épreuves, capitaines', async ({ page }) => {
+  execSql(readFileSync('supabase/seed/05-demo-adulte.sql', 'utf8'))
+  const id = idDemoAdulte()
+  // ② préparation : équipes et état des épreuves encore modifiables (spec #20 R10, R37).
+  execSql(`update interclub.rencontre set phase = 'preparation' where id = '${id}';`)
+  // Inès Foxtrot libre : le formulaire d'ajout reste proposé (tous les adultes du seed sont composés).
+  execSql(
+    `delete from interclub.composition where rencontre_id = '${id}' and grimpeur_id = 'ad000000-0000-0000-0000-0000000000d6';`,
+  )
+
+  await page.goto(`/admin/rencontres/${id}`)
+  await bouton(page, /^Blocs · 2/).click()
+  const equipe1 = page.locator('[data-equipe="Équipe 1"]')
+  await expect(equipe1).toBeVisible()
+  await numeroter(page, [
+    lien(page, /Jetons QR/),
+    bouton(page, /^Blocs · 2/),
+    bouton(page, 'Désactiver l’épreuve de bloc'),
+    equipe1.getByRole('combobox').first(),
+    page.getByLabel('Ajouter un grimpeur (tous clubs, 16 ans et plus)').first(),
+    page.getByLabel('Nouvelle équipe'),
+  ])
+  await capturer(page, '19-rencontre-adulte')
+
+  await page.goto(`/admin/jetons?rencontre=${id}`)
+  await expect(page.getByRole('heading', { name: 'Capitaines d’équipe' })).toBeVisible()
+  await numeroter(page, [
+    page.getByRole('heading', { name: 'Capitaines d’équipe' }),
+    bouton(page, 'Régénérer'),
+    bouton(page, 'Révoquer'),
+  ])
+  await capturer(page, '20-jetons-capitaines')
 })

@@ -1,8 +1,5 @@
 import { describe, it, expect } from 'vitest'
 import {
-  AGE_IMPORT_MAX,
-  anneeReferenceParDefaut,
-  seuilAnneeNaissance,
   convertirSexe,
   anneeDepuisDateFr,
   analyserImport,
@@ -22,21 +19,6 @@ function ligne(
 ): LigneImport {
   return { ligne: numero, cellules: [nom, prenom, dateNaissance, sexe, licence, structure] }
 }
-
-describe('spec #13 — année de référence & seuil d’âge (R6, R7)', () => {
-  it('année de référence par défaut = année de fin de la saison courante = anneeSaison + 1 (R6)', () => {
-    // 2026-09-25 → saison 2026 (2026–2027) → référence 2027
-    expect(anneeReferenceParDefaut('2026-09-25')).toBe(2027)
-    // 2026-03-10 → saison 2025 (2025–2026) → référence 2026
-    expect(anneeReferenceParDefaut('2026-03-10')).toBe(2026)
-  })
-
-  it('seuil d’année de naissance = année de référence − 18 (R7)', () => {
-    expect(AGE_IMPORT_MAX).toBe(18)
-    expect(seuilAnneeNaissance(2027)).toBe(2009)
-    expect(seuilAnneeNaissance(2028)).toBe(2010)
-  })
-})
 
 describe('spec #13 — conversion du sexe (R9)', () => {
   it('convertit « Homme » en « H » et « Femme » en « F »', () => {
@@ -78,14 +60,11 @@ describe('spec #13 — extraction de l’année depuis JJ/MM/AAAA (R9)', () => {
   })
 })
 
-describe('spec #13 — analyse de l’import (R7, R8, R9, R10, R14)', () => {
+describe('spec #13 — analyse de l’import (R9, R10, R14 ; spec #20 R5)', () => {
   it('retient une ligne valide et éligible, normalisée (R9)', () => {
     const res = analyserImport(
-      [ligne(3, '  AARNINK ', 'Naoki', '14/08/2010', 'Homme', '477725', 'S.A.G.C.  ESCALADE')],
-      2027,
-    )
+      [ligne(3, '  AARNINK ', 'Naoki', '14/08/2010', 'Homme', '477725', 'S.A.G.C.  ESCALADE')])
     expect(res.erreurs).toHaveLength(0)
-    expect(res.ignoresHorsAge).toBe(0)
     expect(res.aImporter).toHaveLength(1)
     expect(res.aImporter[0]).toMatchObject({
       nom: 'AARNINK',
@@ -98,25 +77,15 @@ describe('spec #13 — analyse de l’import (R7, R8, R9, R10, R14)', () => {
     })
   })
 
-  it('expose l’année de référence et le seuil calculé (R6, R7)', () => {
-    const res = analyserImport([], 2027)
-    expect(res.anneeReference).toBe(2027)
-    expect(res.seuilAnneeNaissance).toBe(2009)
-    expect(res.aImporter).toHaveLength(0)
-  })
-
-  it('ignore (sans erreur) un licencié né avant le seuil d’âge (R7, R8)', () => {
-    const res = analyserImport(
-      [
-        ligne(3, 'AARNINK', 'Allaric', '08/03/2008', 'Homme', '536574', 'S.A.G.C. ESCALADE'), // 2008 < 2009
-        ligne(4, 'AARNINK', 'Naoki', '14/08/2009', 'Homme', '477725', 'S.A.G.C. ESCALADE'), // 2009 = seuil, inclus
-      ],
-      2027,
-    )
-    expect(res.ignoresHorsAge).toBe(1)
+  it('importe les licenciés de tout âge, sans seuil (spec #20 R5)', () => {
+    const res = analyserImport([
+      ligne(3, 'AARNINK', 'Allaric', '08/03/1970', 'Homme', '536574', 'S.A.G.C. ESCALADE'),
+      ligne(4, 'AARNINK', 'Naoki', '14/08/2009', 'Homme', '477725', 'S.A.G.C. ESCALADE'),
+    ])
     expect(res.erreurs).toHaveLength(0)
-    expect(res.aImporter).toHaveLength(1)
-    expect(res.aImporter[0].licence).toBe(477725)
+    expect(res.aImporter.map((g) => g.licence)).toEqual([536574, 477725])
+    expect(res).not.toHaveProperty('ignoresHorsAge')
+    expect(res).not.toHaveProperty('anneeReference')
   })
 
   it('rejette une ligne invalide avec son numéro de ligne et une raison (R10)', () => {
@@ -127,7 +96,6 @@ describe('spec #13 — analyse de l’import (R7, R8, R9, R10, R14)', () => {
         ligne(5, 'MARTIN', 'Léo', '10/05/2012', 'Homme', '0', 'ALTIZEN'), // licence ≤ 0
         ligne(6, 'BERNARD', 'Anna', '10/05/2012', 'Femme', '333', ''), // structure vide
       ],
-      2027,
     )
     expect(res.aImporter).toHaveLength(0)
     expect(res.erreurs).toHaveLength(4)
@@ -140,9 +108,7 @@ describe('spec #13 — analyse de l’import (R7, R8, R9, R10, R14)', () => {
 
   it('rejette une licence non entière (R9, R10)', () => {
     const res = analyserImport(
-      [ligne(3, 'MARTIN', 'Léo', '10/05/2012', 'Homme', '12A45', 'ALTIZEN')],
-      2027,
-    )
+      [ligne(3, 'MARTIN', 'Léo', '10/05/2012', 'Homme', '12A45', 'ALTIZEN')])
     expect(res.aImporter).toHaveLength(0)
     expect(res.erreurs[0].raison).toMatch(/licence/i)
   })
@@ -153,7 +119,6 @@ describe('spec #13 — analyse de l’import (R7, R8, R9, R10, R14)', () => {
         ligne(3, 'MARTIN', 'Ancien', '10/05/2012', 'Homme', '999', 'ALTIZEN'),
         ligne(9, 'MARTIN', 'Récent', '10/05/2012', 'Homme', '999', 'GRADI-GRIMPE'),
       ],
-      2027,
     )
     expect(res.aImporter).toHaveLength(1)
     expect(res.aImporter[0]).toMatchObject({ prenom: 'Récent', club: 'GRADI-GRIMPE', licence: 999 })
@@ -161,18 +126,16 @@ describe('spec #13 — analyse de l’import (R7, R8, R9, R10, R14)', () => {
     expect(res.doublons[0]).toMatchObject({ ligne: 3, licence: 999 })
   })
 
-  it('traite un mélange réaliste : créés éligibles, ignorés, erreurs (R7, R8, R10)', () => {
+  it('traite un mélange réaliste : lignes importées et erreurs (R10, spec #20 R5)', () => {
     const res = analyserImport(
       [
         ligne(3, 'A', 'Un', '01/01/2010', 'Homme', '1', 'CLUB X'), // éligible
-        ligne(4, 'B', 'Deux', '01/01/2000', 'Femme', '2', 'CLUB X'), // hors âge
+        ligne(4, 'B', 'Deux', '01/01/2000', 'Femme', '2', 'CLUB X'), // adulte, importé
         ligne(5, 'C', 'Trois', 'xx', 'Homme', '3', 'CLUB X'), // erreur date
         ligne(6, 'D', 'Quatre', '01/01/2015', 'Femme', '4', 'CLUB Y'), // éligible
       ],
-      2027,
     )
-    expect(res.aImporter).toHaveLength(2)
-    expect(res.ignoresHorsAge).toBe(1)
+    expect(res.aImporter).toHaveLength(3)
     expect(res.erreurs).toHaveLength(1)
     expect(res.erreurs[0].ligne).toBe(5)
   })

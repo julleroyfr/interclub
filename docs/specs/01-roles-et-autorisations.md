@@ -236,6 +236,9 @@ conditionne les accès temporels.
   (composition d'équipe, y compris un prêté) est **limité aux grimpeurs éligibles à
   sa catégorie** : **enfant** = âge ≤ 13 (moins de 13 ans **et** pivot) ; **ado** =
   13 à 19 ans. Un grimpeur hors tranche d'âge ne peut y être engagé (cf. spec #5 R12).
+  *(Catégorie adulte, rév. 2026-10-23 : troisième catégorie **adulte**, éligible
+  dès 16 ans en saison, sans âge maximal ; prêts sans objet en adulte — spec #20
+  R1–R3, R11.)*
 
 ### Admin
 

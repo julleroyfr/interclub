@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Maquettes — Suppression d'un compte permanent (spec #2 R41–R46)</title>
+<style>
+  :root {
+    --fond: #020617;
+    --surface: rgba(255, 255, 255, 0.04);
+    --bordure: rgba(255, 255, 255, 0.12);
+    --accent: #22d3ee;
+    --accent-doux: #67e8f9;
+    --secondaire: #bef264;
+    --danger: #fb7185;
+    --texte-fort: #ffffff;
+    --texte: #e2e8f0;
+    --texte-attenue: #94a3b8;
+    --texte-doux: #64748b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--fond); color: var(--texte);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.4; padding: 24px 16px 80px;
+  }
+  h1 { color: var(--texte-fort); font-size: 20px; text-align: center; }
+  .intro { text-align: center; color: var(--texte-attenue); max-width: 720px; margin: 0 auto 32px; font-size: 14px; }
+  .grille { display: flex; flex-wrap: wrap; gap: 28px; justify-content: center; align-items: flex-start; }
+  .colonne { width: 340px; max-width: 100%; }
+  .titre-option { color: var(--accent); font-size: 13px; text-transform: uppercase; letter-spacing: .08em; font-weight: 700; margin: 0 0 4px; }
+  .desc-option { color: var(--texte-doux); font-size: 12.5px; margin: 0 0 12px; min-height: 34px; }
+  .tel {
+    border: 1px solid var(--bordure); border-radius: 22px; overflow: hidden;
+    background: linear-gradient(180deg, rgba(34,211,238,0.06), rgba(2,6,23,0) 220px), var(--fond);
+    box-shadow: 0 12px 40px rgba(0,0,0,.5); position: relative;
+  }
+  .barre-haut { padding: 12px 16px 14px; border-bottom: 1px solid var(--bordure); }
+  .titre-ecran { color: var(--texte-fort); font-weight: 600; font-size: 16px; }
+  .meta { color: var(--texte-attenue); font-size: 12.5px; margin-top: 2px; }
+  .corps { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .section { color: var(--texte-fort); font-weight: 600; font-size: 14px; }
+  .compte {
+    border: 1px solid var(--bordure); background: var(--surface); border-radius: 12px;
+    padding: 10px 12px; display: flex; align-items: center; gap: 10px;
+  }
+  .compte .infos { flex: 1; min-width: 0; }
+  .compte .email { color: var(--texte-fort); font-size: 13.5px; overflow-wrap: anywhere; }
+  .compte .ligne { display: flex; gap: 6px; align-items: center; margin-top: 4px; font-size: 12px; color: var(--texte-attenue); }
+  .pastille { display: inline-flex; font-size: 11px; font-weight: 700; border-radius: 999px; padding: 1px 9px; }
+  .pastille.admin { color: var(--accent-doux); background: rgba(34,211,238,.12); border: 1px solid rgba(34,211,238,.3); }
+  .pastille.coach { color: var(--secondaire); background: rgba(190,242,100,.12); border: 1px solid rgba(190,242,100,.3); }
+  .pastille.aucun { color: var(--texte-attenue); background: rgba(148,163,184,.12); border: 1px solid var(--bordure); }
+  .vous { color: var(--texte-doux); font-size: 11.5px; font-style: italic; }
+  .bouton-suppr {
+    min-height: 44px; min-width: 44px; padding: 0 12px; border-radius: 10px;
+    background: transparent; color: var(--danger); border: 1px solid rgba(251,113,133,.4);
+    font-weight: 600; font-size: 13px;
+  }
+  .annot { color: var(--texte-doux); font-size: 11.5px; border-left: 2px solid var(--accent); padding-left: 8px; }
+  .voile { position: absolute; inset: 0; background: rgba(2,6,23,.75); display: flex; align-items: flex-end; }
+  .dialogue {
+    width: 100%; background: #0b1224; border-top: 1px solid var(--bordure);
+    border-radius: 18px 18px 0 0; padding: 18px 16px 20px;
+  }
+  .dialogue h3 { color: var(--texte-fort); margin: 0 0 6px; font-size: 16px; }
+  .dialogue p { margin: 0 0 10px; font-size: 13px; color: var(--texte); }
+  .dialogue .attenue { color: var(--texte-attenue); font-size: 12px; }
+  .actions { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+  .btn { min-height: 44px; border-radius: 10px; font-weight: 700; font-size: 14px; border: 0; }
+  .btn.danger { background: var(--danger); color: #2a0710; }
+  .btn.neutre { background: var(--surface); color: var(--texte); border: 1px solid var(--bordure); }
+  .alerte { color: var(--secondaire); font-size: 13px; }
+  .regle { color: var(--accent); font-size: 11px; font-weight: 700; text-align: center; margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<h1>Suppression d'un compte permanent — spec #2 R41–R46</h1>
+<p class="intro">
+  Maquette de validation visuelle (la spec fait foi). Écran admin « Mapping de
+  rôle », section « Comptes » : tous les comptes permanents, avec ou sans rôle,
+  et l'action « Supprimer » (design « Nuit », mobile-first).
+</p>
+
+<div class="grille">
+  <div class="colonne">
+    <p class="titre-option">Liste des comptes</p>
+    <p class="desc-option">Tout compte sauf le sien est supprimable ; les comptes anonymes (sessions QR) ne sont pas listés.</p>
+    <div class="tel">
+      <div class="barre-haut">
+        <div class="titre-ecran">Mapping de rôle</div>
+        <div class="meta">Attribuez un rôle ou supprimez un compte.</div>
+      </div>
+      <div class="corps">
+        <div class="section">Comptes</div>
+        <div class="compte">
+          <div class="infos">
+            <div class="email">admin@club.fr</div>
+            <div class="ligne"><span class="pastille admin">admin</span> — <span class="vous">(vous)</span></div>
+          </div>
+        </div>
+        <div class="compte">
+          <div class="infos">
+            <div class="email">autre.admin@club.fr</div>
+            <div class="ligne"><span class="pastille admin">admin</span> —</div>
+          </div>
+          <button class="bouton-suppr" type="button">Supprimer</button>
+        </div>
+        <div class="compte">
+          <div class="infos">
+            <div class="email">coach.a@club.fr</div>
+            <div class="ligne"><span class="pastille coach">coach</span> Club A</div>
+          </div>
+          <button class="bouton-suppr" type="button">Supprimer</button>
+        </div>
+        <div class="compte">
+          <div class="infos">
+            <div class="email">inscrit@mail.fr</div>
+            <div class="ligne"><span class="pastille aucun">sans rôle</span> —</div>
+          </div>
+          <button class="bouton-suppr" type="button">Supprimer</button>
+        </div>
+        <div class="annot">Pas de bouton sur son propre compte (R41, R45). Cible tactile ≥ 44 px.</div>
+      </div>
+    </div>
+    <p class="regle">R41 · R46</p>
+  </div>
+
+  <div class="colonne">
+    <p class="titre-option">Confirmation</p>
+    <p class="desc-option">Suppression définitive : la confirmation rappelle l'e-mail visé. « Annuler » ne supprime rien.</p>
+    <div class="tel">
+      <div class="barre-haut">
+        <div class="titre-ecran">Mapping de rôle</div>
+        <div class="meta">Attribuez un rôle ou supprimez un compte.</div>
+      </div>
+      <div class="corps" style="min-height: 360px;">
+        <div class="section">Comptes</div>
+        <div class="compte"><div class="infos"><div class="email">coach.a@club.fr</div></div></div>
+      </div>
+      <div class="voile">
+        <div class="dialogue" role="dialog" aria-modal="true">
+          <h3>Supprimer ce compte ?</h3>
+          <p><strong>coach.a@club.fr</strong> ne pourra plus se connecter.</p>
+          <p class="attenue">Suppression définitive. Les résultats saisis par ce compte sont conservés, sans auteur.</p>
+          <div class="actions">
+            <button class="btn danger" type="button">Supprimer définitivement</button>
+            <button class="btn neutre" type="button">Annuler</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="regle">R42 · R43 · R44</p>
+  </div>
+
+  <div class="colonne">
+    <p class="titre-option">Après suppression</p>
+    <p class="desc-option">Message de succès ; le compte disparaît de la liste et du sélecteur d'attribution.</p>
+    <div class="tel">
+      <div class="barre-haut">
+        <div class="titre-ecran">Mapping de rôle</div>
+        <div class="meta">Attribuez un rôle ou supprimez un compte.</div>
+      </div>
+      <div class="corps">
+        <div class="section">Comptes</div>
+        <p class="alerte" role="status">Compte coach.a@club.fr supprimé.</p>
+        <div class="compte">
+          <div class="infos">
+            <div class="email">admin@club.fr</div>
+            <div class="ligne"><span class="pastille admin">admin</span> — <span class="vous">(vous)</span></div>
+          </div>
+        </div>
+        <div class="compte">
+          <div class="infos">
+            <div class="email">autre.admin@club.fr</div>
+            <div class="ligne"><span class="pastille admin">admin</span> —</div>
+          </div>
+          <button class="bouton-suppr" type="button">Supprimer</button>
+        </div>
+        <div class="compte">
+          <div class="infos">
+            <div class="email">inscrit@mail.fr</div>
+            <div class="ligne"><span class="pastille aucun">sans rôle</span> —</div>
+          </div>
+          <button class="bouton-suppr" type="button">Supprimer</button>
+        </div>
+      </div>
+    </div>
+    <p class="regle">R43</p>
+  </div>
+</div>
+
+</body>
+</html>

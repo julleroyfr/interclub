@@ -4,13 +4,16 @@ import {
   regenererJeton,
   revoquerJeton,
 } from '@/lib/jetons/actions'
+import type { NatureJeton } from '@/domaine/jeton-qr'
 import type { JetonVue } from '@/lib/jetons/jetons'
 
 type Perimetre = {
   rencontreId: string
-  nature: 'coach_temporaire' | 'juge'
+  nature: NatureJeton
   clubId?: string | null
   voieVitesseId?: string | null
+  /** Équipe d'un jeton capitaine (spec #20 R16). */
+  equipeId?: string | null
 }
 
 type Props = {
@@ -75,6 +78,9 @@ export function AfficheurJeton({ titre, chemin, perimetre, jeton }: Props) {
               name="voieVitesseId"
               value={perimetre.voieVitesseId}
             />
+          )}
+          {perimetre.equipeId != null && (
+            <input type="hidden" name="equipeId" value={perimetre.equipeId} />
           )}
           <Bouton type="submit" pleineLargeur>
             Générer le jeton

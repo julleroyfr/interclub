@@ -3,16 +3,15 @@
 import { revalidatePath } from 'next/cache'
 
 import {
-  NIVEAUX_MOULINETTE,
-  NIVEAUX_TETE,
   NiveauVoieInvalideError,
   PointsInvalideError,
   validerNiveauVoie,
   validerPoints,
 } from '@/domaine/gabarit'
 import type { TypeVoie } from '@/domaine/gabarit'
-import type { Categorie } from '@/domaine/rencontre'
+import { aVoiesLibres, type Categorie } from '@/domaine/rencontre'
 import { BaremeVitesseInvalideError, type EchelonBareme } from '@/domaine/vitesse'
+import { LibelleVoieVitesseInvalideError, normaliserLibelleVoieVitesse } from '@/domaine/voie'
 import { getUtilisateurCourant } from '@/lib/auth/session'
 import { lireEchelonsSoumis } from '@/lib/bareme-vitesse'
 import { verifierLecture } from '@/lib/supabase/lecture'
@@ -68,13 +67,14 @@ export async function ajouterVoieDifficulteGabarit(
   try {
     validerNiveauVoie(niveau, typeVoie, categorie)
     points = lirePointsObligatoire(formData, 'points')
-    // Prise valorisée : enfant tête uniquement ; zones : ado uniquement (R38).
+    // Prise valorisée : enfant tête uniquement ; zones : ado et adulte (R38,
+    // spec #20 R7).
     pointsPriseValorisee =
       categorie === 'enfant' && typeVoie === 'tete'
         ? lirePointsOptionnel(formData, 'pointsPriseValorisee')
         : null
-    pointsZone1 = categorie === 'ado' ? lirePointsOptionnel(formData, 'pointsZone1') : null
-    pointsZone2 = categorie === 'ado' ? lirePointsOptionnel(formData, 'pointsZone2') : null
+    pointsZone1 = aVoiesLibres(categorie) ? lirePointsOptionnel(formData, 'pointsZone1') : null
+    pointsZone2 = aVoiesLibres(categorie) ? lirePointsOptionnel(formData, 'pointsZone2') : null
   } catch (e) {
     if (e instanceof NiveauVoieInvalideError || e instanceof PointsInvalideError) {
       return { erreur: e.message }
@@ -141,8 +141,8 @@ export async function modifierPointsVoieGabarit(
         categorie === 'enfant' && typeVoie === 'tete'
           ? lirePointsOptionnel(formData, 'pointsPriseValorisee')
           : null,
-      points_zone1: categorie === 'ado' ? lirePointsOptionnel(formData, 'pointsZone1') : null,
-      points_zone2: categorie === 'ado' ? lirePointsOptionnel(formData, 'pointsZone2') : null,
+      points_zone1: aVoiesLibres(categorie) ? lirePointsOptionnel(formData, 'pointsZone1') : null,
+      points_zone2: aVoiesLibres(categorie) ? lirePointsOptionnel(formData, 'pointsZone2') : null,
     }
   } catch (e) {
     if (e instanceof PointsInvalideError) return { erreur: e.message }
@@ -346,6 +346,36 @@ export async function ajouterVoieVitesseGabarit(
   return { succes: 'Voie de vitesse ajoutée.' }
 }
 
+/**
+ * Modifie le libellé d'une voie de vitesse du gabarit (spec #20 R9bis). Libellé
+ * normalisé et obligatoire : une saisie vide est refusée et l'ancien libellé
+ * conservé.
+ */
+export async function modifierLibelleVoieVitesseGabarit(
+  _etat: EtatGabarit,
+  formData: FormData,
+): Promise<EtatGabarit> {
+  const refus = await refuserSiNonAdmin()
+  if (refus) return refus
+
+  const id = String(formData.get('id') ?? '')
+  if (!id) return { erreur: 'Voie de vitesse introuvable.' }
+  let libelle: string
+  try {
+    libelle = normaliserLibelleVoieVitesse(String(formData.get('libelle') ?? ''))
+  } catch (e) {
+    if (e instanceof LibelleVoieVitesseInvalideError) return { erreur: e.message }
+    throw e
+  }
+
+  const supabase = await createClient()
+  const { error } = await supabase.from('gabarit_voie_vitesse').update({ libelle }).eq('id', id)
+  if (error) return { erreur: 'La modification a échoué. Réessayez.' }
+
+  revalidatePath('/admin/gabarit')
+  return { succes: 'Libellé enregistré.' }
+}
+
 /** Supprime une voie de vitesse du gabarit (R31). */
 export async function supprimerVoieVitesseGabarit(
   _etat: EtatGabarit,
@@ -429,5 +459,3 @@ export async function mettreAJourBaremeVitesseGabarit(
   revalidatePath('/admin/gabarit')
   return { succes: 'Barème de vitesse mis à jour.' }
 }
-
-export { NIVEAUX_MOULINETTE, NIVEAUX_TETE }

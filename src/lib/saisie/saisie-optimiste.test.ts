@@ -43,6 +43,8 @@ function saisie(g: GrimpeurSaisie = grimpeur(), categorie: 'enfant' | 'ado' = 'e
     phase: 'competition',
     clubPorteurNom: 'Club',
     ouverteSaisie: true,
+    blocActif: true,
+    vitesseActive: true,
     voiesEpreuve: [
       { voieDifficulteId: 'v1', niveau: 'T1', libelle: 'T1', cotation: '5a', typeVoie: 'tete', ordre: 1 },
       { voieDifficulteId: 'v2', niveau: 'T2', libelle: 'T2', cotation: '5b', typeVoie: 'tete', ordre: 2 },

@@ -62,7 +62,7 @@ test.describe('Repère et libellé des voies (spec #3 R49/R50)', () => {
     await page.goto(URL_ADMIN)
     const champ = page.getByLabel('Repère de la voie T5 b')
     await champ.fill('  Jaune ')
-    await champ.locator('xpath=ancestor::form').getByRole('button', { name: 'OK' }).click()
+    await champ.locator('xpath=ancestor::form').getByRole('button', { name: /^Enregistrer le repère/ }).click()
     await expect(libelle(page, 'T5 Jaune')).toBeVisible()
     await expect(libelle(page, 'T5 a')).toBeVisible()
     expect(
@@ -77,7 +77,7 @@ test.describe('Repère et libellé des voies (spec #3 R49/R50)', () => {
     await page.goto(URL_ADMIN)
     const form = page.getByLabel('Repère de la voie T5 a').locator('xpath=ancestor::form')
     await page.getByLabel('Repère de la voie T5 a').fill('jaune')
-    await form.getByRole('button', { name: 'OK' }).click()
+    await form.getByRole('button', { name: /^Enregistrer le repère/ }).click()
     await expect(form.getByRole('alert')).toContainText('porte déjà le repère')
   })
 

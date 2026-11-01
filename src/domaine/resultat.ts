@@ -11,11 +11,19 @@ import { champsPointsVoie, type TypeVoie } from './gabarit'
 
 /**
  * Issue d'un résultat de voie — meilleure tentative, une seule par voie (R8) :
- * `top` (voie entière), `prise_valorisee` (voies tête enfant), `zone1`/`zone2`
- * (ado, non cumulatives), `echec` (tentée sans validation), `np` (non présenté —
- * posé automatiquement à la clôture, R18).
+ * `top` (voie entière), `top_moulinette` (voie entière grimpée en moulinette —
+ * adulte, spec #20 R25), `prise_valorisee` (voies tête enfant), `zone1`/`zone2`
+ * (ado et adulte, non cumulatives), `echec` (tentée sans validation), `np` (non
+ * présenté — posé automatiquement à la clôture, R18).
  */
-export type IssueVoie = 'top' | 'prise_valorisee' | 'zone1' | 'zone2' | 'echec' | 'np'
+export type IssueVoie =
+  | 'top'
+  | 'top_moulinette'
+  | 'prise_valorisee'
+  | 'zone1'
+  | 'zone2'
+  | 'echec'
+  | 'np'
 
 /**
  * Issue d'un résultat de bloc (R16) : `palier` (meilleur palier atteint, référencé
@@ -44,6 +52,7 @@ export class ResultatInvalideError extends Error {
  * - Enfant tête → Top, Prise valorisée, Échec.
  * - Enfant moulinette → Top, Échec (pas de prise valorisée).
  * - Ado (tête) → Top, Zone 2, Zone 1, Échec (zones non cumulatives).
+ * - Adulte (tête) → Top, Top en moulinette, Zone 2, Zone 1, Échec (spec #20 R23).
  */
 export function issuesVoieSaisissables(
   categorie: Categorie,
@@ -51,6 +60,7 @@ export function issuesVoieSaisissables(
 ): IssueVoie[] {
   const { priseValorisee, zones } = champsPointsVoie(categorie, typeVoie)
   const issues: IssueVoie[] = ['top']
+  if (categorie === 'adulte' && typeVoie === 'tete') issues.push('top_moulinette')
   if (zones) issues.push('zone2', 'zone1')
   if (priseValorisee) issues.push('prise_valorisee')
   issues.push('echec')

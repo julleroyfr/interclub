@@ -153,6 +153,8 @@ de plein droit, décision 2026-09-22) et en **④ clôture** (correction, spec #
   **admin** renseignent l'auteur. *(Prérequis de schéma : colonnes
   `auteur_utilisateur_id` (→ `auth.users`) et `auteur_role` sur `resultat_voie` /
   `resultat_bloc` — voir Contraintes de données.)*
+  *(Catégorie adulte, rév. 2026-10-23 : une session capitaine écrit avec le rôle
+  d'auteur `capitaine` — spec #20 R20bis.)*
 
 ## Scénarios
 

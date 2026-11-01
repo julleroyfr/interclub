@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 
-import { Bouton, Carte, Etiquette } from '@/composants'
+import { Bouton, Carte, Etiquette, LogoInterclub } from '@/composants'
 import { seDeconnecter } from '@/lib/auth/actions'
 import { getUtilisateurCourant } from '@/lib/auth/session'
 
@@ -19,7 +19,10 @@ export default async function Racine() {
   return (
     <div className="grid min-h-screen place-items-center bg-fond bg-[radial-gradient(60rem_40rem_at_top,#0e2a3b,transparent)] px-4 py-10 text-texte">
       <Carte className="w-full max-w-sm p-8 text-center">
-        <h1 className="text-2xl font-semibold text-texte-fort">Interclub</h1>
+        <h1 className="flex items-center justify-center gap-3 text-2xl font-semibold text-texte-fort">
+          <LogoInterclub className="size-10" />
+          Interclub
+        </h1>
         <p className="mt-4 text-sm text-texte-attenue">{utilisateur.email}</p>
         <div className="mt-2 flex items-center justify-center gap-2">
           <span className="text-sm text-texte-attenue">Rôle :</span>

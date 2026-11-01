@@ -32,6 +32,9 @@ Pour toute nouvelle fonctionnalité ou évolution :
 4. CODE     Implémenter le minimum pour faire passer les tests (GREEN).
 5. REFACTOR Nettoyer sans changer le comportement. Tests toujours verts.
 6. VÉRIF    Suite complète verte + revue vis-à-vis de la spec (et des maquettes).
+7. GUIDES   Mettre à jour les guides utilisateur coach et admin (docs/guides/,
+            et le guide juge si ses écrans changent) : texte, captures
+            (npm run doc:captures) et PDF (npm run doc:pdf).
 ```
 
 Aucune étape n'est sautée. On **n'écrit pas de code sans test**, et on **n'écrit
@@ -191,6 +194,11 @@ Une fonctionnalité est terminée quand :
       **appliquées à la main** et consignées (pas de Docker/CLI ici).
 - [ ] Les policies RLS couvrent les nouveaux accès (vérifiées par le cahier).
 - [ ] Aucune régression dans la suite complète.
+- [ ] Les **guides utilisateur coach et admin** (`docs/guides/`, et le guide
+      juge si ses écrans changent) décrivent la fonctionnalité : texte à jour,
+      captures régénérées (`npm run doc:captures`, scénario ajouté dans
+      `scripts/captures/` si un écran apparaît ou change), tableaux « N° »
+      cohérents avec les captures, PDF régénérés (`npm run doc:pdf`).
 
 ## 7. À ADAPTER pour un autre projet
 

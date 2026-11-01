@@ -92,6 +92,9 @@ menant à une impasse (404 non intentionnel).
   formulaire.
 - **R9.** Le scan QR `/scan?jeton=` redirige selon la **nature** de la session :
   `coach_temporaire` → `/coach/rencontres/{rencontreId}` ; `juge` → `/juge`.
+  *(Catégorie adulte, rév. 2026-10-23 : `capitaine` → `/capitaine`, espace
+  borné à son équipe avec `/capitaine/classement` en lecture, 404 hors ③ ou
+  jeton révoqué — spec #20 R17–R19.)*
   Ouvert par un **compte permanent déjà connecté**, `/scan` n'ouvre **aucune**
   session : il propose « Aller à mon espace » (R6) ou « Me déconnecter et ouvrir
   la session QR » (spec #2 R34).

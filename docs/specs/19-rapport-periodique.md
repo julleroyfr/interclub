@@ -80,6 +80,8 @@ sollicite la base au moins une fois par semaine.
   - **hors tranche** : âge ≥ 20.
 
   Chaque grimpeur appartient à **exactement une** tranche.
+  *(Catégorie adulte, rév. 2026-10-23 : la tranche « hors tranche » est renommée
+  **« adulte »** — spec #20 R33.)*
 - **R8.** Le rapport donne le **nombre total de clubs**.
 - **R9.** Pour **chaque club**, le rapport donne son **nom** et le nombre de
   grimpeurs **par tranche** (enfant, pivot, ado, hors tranche) ainsi que leur
@@ -94,8 +96,12 @@ sollicite la base au moins une fois par semaine.
   **nombre d'équipes engagées**.
 - **R12.** Les rencontres sont triées par **date croissante**, puis par
   **catégorie** (enfant avant ado).
+  *(Catégorie adulte, rév. 2026-10-23 : ordre enfant, ado, adulte — spec #20
+  R33.)*
 - **R13.** Le rapport donne le **nombre de rencontres de la saison** par
   catégorie (enfant, ado) et au **total**.
+  *(Catégorie adulte, rév. 2026-10-23 : décompte enfant, ado, adulte — spec #20
+  R33.)*
 
 ### Diffusion et historique
 

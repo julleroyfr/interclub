@@ -126,6 +126,8 @@ cette spec. (Spec #1 R6/R27, rév. 2026-09-01.)
   être ou est engagé**. Chaque ligne rappelle les infos publiques de la rencontre
   (date, catégorie, club organisateur, **phase** courante) et le **nombre
   d'équipes déjà engagées par le club** pour cette rencontre.
+  *(Catégorie adulte, rév. 2026-10-25 : pas de nombre d'équipes ; nombre de
+  grimpeurs du club composés — spec #20 R19ter.)*
 - **R7.** Depuis chaque ligne, le coach accède à l'**écran d'engagement** de la
   rencontre (composition des équipes du club pour cette rencontre). **Exception en
   ③ compétition** : la composition y étant **figée** (R16/R17) et la tâche du coach
@@ -133,6 +135,8 @@ cette spec. (Spec #1 R6/R27, rév. 2026-09-01.)
   l'écran de saisie des résultats** ; l'écran d'engagement reste **accessible** (URL
   directe) pour consulter la composition figée. Aux autres phases (①/②/④/⑤), la
   ligne mène à l'écran d'engagement.
+  *(Catégorie adulte, rév. 2026-10-25 : dès la ③, la ligne mène au classement ;
+  pas d'écran de résultats pour le coach — spec #20 R19bis.)*
 - **R8.** La liste affiche les rencontres **triées par priorité** : d'abord la
   **préparation** (② jour J, la plus actionnable), puis les **compétitions en
   cours** (③), puis les **pré-compétitions** (①), enfin les rencontres
@@ -200,6 +204,8 @@ cette spec. (Spec #1 R6/R27, rév. 2026-09-01.)
   les siens** : il l'**affecte**, le **retire**, le **déplace** entre équipes et
   fixe son **groupe de départ** (spec #1 R36). Le **retrait le renvoie au roster**
   (le prêt persiste) ; seul l'**admin** met fin au prêt (R35).
+  *(Catégorie adulte, rév. 2026-10-23 : en rencontre adulte, le coach ne compose
+  pas : l'admin compose des équipes sans club, inter-clubs — spec #20 R10/R11.)*
 - **R14.** Un grimpeur ne peut appartenir qu'à **une seule équipe** de son club
   **par rencontre** : le **double engagement** dans deux équipes de la même
   rencontre est **interdit**. L'ajout d'un grimpeur déjà engagé dans une autre
@@ -208,6 +214,8 @@ cette spec. (Spec #1 R6/R27, rév. 2026-09-01.)
 - **R15.** L'**effectif d'une équipe est plafonné à 8 grimpeurs** (règlement §6).
   Une équipe de moins de 8 (**incomplète**) est **autorisée** ; tout ajout qui
   porterait l'effectif **au-delà de 8** est **refusé** avec un message explicite.
+  *(Catégorie adulte, rév. 2026-10-23 : une équipe adulte compte au plus **4**
+  grimpeurs — spec #20 R12.)*
 
 ### Bornage temporel (phases)
 
@@ -221,6 +229,8 @@ cette spec. (Spec #1 R6/R27, rév. 2026-09-01.)
   QR de coach temporaire (R26). (Gating par la **RLS** — `peut_ecrire_equipe` =
   permanent en ①/② ou temporaire en ② ; cf. « Contraintes de données » ; l'IHM le
   **reflète** en masquant les formulaires hors ①/②.)
+  *(Catégorie adulte, rév. 2026-10-23 : aucun droit d'écriture du coach sur les
+  équipes d'une rencontre adulte — spec #20 R10.)*
 - **R17.** **Hors des phases d'édition** (① pré-compétition, ② préparation), la
   **composition de l'engagement** (équipes, ajout/retrait de grimpeurs, groupe de
   départ) est **figée** côté coach : elle reste **consultable** (spec #1 R21) mais

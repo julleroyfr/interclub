@@ -7,6 +7,8 @@ import {
   estEditable,
   type GrimpeurLu,
 } from '@/lib/coach/assemblage-engagement'
+import { exigerLectureCoachDuClub } from '@/lib/auth/garde-lecture'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { verifierLecture } from '@/lib/supabase/lecture'
 import { createClient } from '@/lib/supabase/server'
 
@@ -113,6 +115,35 @@ export async function listerRencontresCoach(options: {
       // À priorité égale, la plus récente d'abord.
       return b.dateRencontre.localeCompare(a.dateRencontre)
     })
+}
+
+/**
+ * Nombre de grimpeurs du club composés dans chaque rencontre adulte de la saison
+ * (spec #20 R19ter), par identifiant de rencontre. Les équipes adultes, sans club,
+ * sont illisibles par le coach (RLS) : lecture `service_role` gardée (ADR 0005),
+ * limitée aux compositions des grimpeurs DE SON CLUB. Coach permanent seulement
+ * (il n'y a pas de coach temporaire en adulte, R20).
+ */
+export async function compterGrimpeursAdultesDuClub(options: {
+  clubId: string
+  aujourdhui: string
+}): Promise<Map<string, number>> {
+  await exigerLectureCoachDuClub(options.clubId, 'grimpeurs du club en rencontre adulte')
+  const bornes = bornesSaison(anneeSaison(options.aujourdhui))
+  const { data, error } = await createAdminClient()
+    .from('composition')
+    .select('rencontre_id, grimpeur!inner(club_id), rencontre!inner(categorie, date_rencontre)')
+    .eq('grimpeur.club_id', options.clubId)
+    .eq('rencontre.categorie', 'adulte')
+    .gte('rencontre.date_rencontre', bornes.debut)
+    .lte('rencontre.date_rencontre', bornes.fin)
+  if (error) throw error
+  const nb = new Map<string, number>()
+  for (const c of data ?? []) {
+    const rid = c.rencontre_id as string
+    nb.set(rid, (nb.get(rid) ?? 0) + 1)
+  }
+  return nb
 }
 
 /**

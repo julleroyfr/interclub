@@ -38,6 +38,8 @@ export async function genererJeton(formData: FormData): Promise<void> {
   const nature = String(formData.get('nature') ?? '') as NatureJeton
   const clubId = (formData.get('clubId') as string | null) || null
   const voieVitesseId = (formData.get('voieVitesseId') as string | null) || null
+  // Équipe d'un jeton capitaine (spec #20 R16).
+  const equipeId = (formData.get('equipeId') as string | null) || null
 
   if (!peutGererJeton(acteur, { nature, clubId })) {
     redirect(`${chemin}${chemin.includes('?') ? '&' : '?'}erreur=refuse`)
@@ -48,6 +50,7 @@ export async function genererJeton(formData: FormData): Promise<void> {
     nature,
     clubId,
     voieVitesseId,
+    equipeId,
   })
 
   const supabase = await createClient()
@@ -56,6 +59,7 @@ export async function genererJeton(formData: FormData): Promise<void> {
     nature: perimetre.nature,
     club_id: perimetre.clubId,
     voie_vitesse_id: perimetre.voieVitesseId,
+    equipe_id: perimetre.equipeId,
   })
   if (error) {
     redirect(`${chemin}${chemin.includes('?') ? '&' : '?'}erreur=generation`)
@@ -118,7 +122,7 @@ export async function regenererJeton(formData: FormData): Promise<void> {
   const supabase = await createClient()
   const { data: ancien, error: eRead } = await supabase
     .from('jeton_qr')
-    .select('rencontre_id, nature, club_id, voie_vitesse_id')
+    .select('rencontre_id, nature, club_id, voie_vitesse_id, equipe_id')
     .eq('id', jetonId)
     .single()
   if (eRead || !ancien) {
@@ -138,6 +142,7 @@ export async function regenererJeton(formData: FormData): Promise<void> {
     nature: ancien.nature,
     club_id: ancien.club_id,
     voie_vitesse_id: ancien.voie_vitesse_id,
+    equipe_id: ancien.equipe_id,
   })
   if (eInsert) {
     redirect(`${chemin}${chemin.includes('?') ? '&' : '?'}erreur=regeneration`)

@@ -285,7 +285,7 @@ T1 = 5 / pv 3, T2 = 6 / pv 3, T3 = 7 / pv 4 ; B1 : 1er = 4, 2e = 3 ; B2 : 1er = 
 - **Étapes** :
   1. Ouvrir `/admin/rencontres/33333333-…-3333/classement`, onglet **Par équipe**.
   2. Onglet **Par club**.
-- **Résultat attendu** : « Équipe Volume » compte **80 grimpeur(s)** et
+- **Résultat attendu** : « Équipe Volume » compte **80 grimpeurs** et
   **8400 pts** (80 × 105) ; **Club B** affiche **8400 pts**. Un total inférieur
   signale des résultats ignorés (lecture tronquée).
 - **Nettoyage** : supprimer résultats, compositions, équipe et grimpeuses du jeu

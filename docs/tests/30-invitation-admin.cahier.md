@@ -49,7 +49,7 @@
   valider ; se connecter avec ce compte.
 - **Résultat attendu** : arrivée sur `/connexion` (message de compte créé), puis
   sur `/admin` après connexion ; le compte apparaît en **admin**, sans club, dans
-  « Mappings existants ».
+  la liste « Comptes ».
 
 ### CT-03 — Usage unique   (couvre : R36, R40 ; négatif)
 

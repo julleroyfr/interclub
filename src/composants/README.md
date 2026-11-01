@@ -30,6 +30,7 @@ template **Nuit** retenu. Thème **sombre**, verre dépoli, accents cyan / lime.
 | Composant | Rôle |
 | --- | --- |
 | `Coquille` | Shell : fond, en-tête collant, navigation |
+| `LogoInterclub` | Logo (anneaux entrelacés) affiché à côté de « Interclub » ; même dessin que le favicon `src/app/icon.svg` |
 | `NavPrincipale` | Navigation avec onglet actif (Client Component) |
 | `EnTetePage`, `TitreSection` | Titres de page et de section |
 | `Carte` | Conteneur en verre (option `interactive`) |

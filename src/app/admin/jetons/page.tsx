@@ -13,6 +13,7 @@ import { liensAdmin } from '@/lib/admin/navigation'
 import { exigerAdmin } from '@/lib/auth/session'
 import {
   listerClubsEngages,
+  listerEquipesAdultes,
   listerJetonsActifs,
   listerRencontres,
   listerVoies,
@@ -72,16 +73,27 @@ export default async function PageJetonsAdmin({
             )}
           </section>
         ) : (
-          <SectionsRencontre rencontreId={selection.id} />
+          <SectionsRencontre
+            rencontreId={selection.id}
+            estAdulte={selection.categorie === 'adulte'}
+          />
         )}
       </div>
     </Coquille>
   )
 }
 
-async function SectionsRencontre({ rencontreId }: { rencontreId: string }) {
-  const [clubs, voies, jetons] = await Promise.all([
-    listerClubsEngages(),
+async function SectionsRencontre({
+  rencontreId,
+  estAdulte,
+}: {
+  rencontreId: string
+  estAdulte: boolean
+}) {
+  // Adulte : capitaines d'équipe, pas de coach temporaire (spec #20 R16, R20).
+  const [clubs, equipes, { voies, vitesseDesactivee }, jetons] = await Promise.all([
+    estAdulte ? Promise.resolve([]) : listerClubsEngages(),
+    estAdulte ? listerEquipesAdultes(rencontreId) : Promise.resolve([]),
     listerVoies(rencontreId),
     listerJetonsActifs(rencontreId),
   ])
@@ -91,6 +103,8 @@ async function SectionsRencontre({ rencontreId }: { rencontreId: string }) {
     jetons.find((j) => j.nature === 'coach_temporaire' && j.clubId === clubId) ?? null
   const jetonJuge = (voieId: string) =>
     jetons.find((j) => j.nature === 'juge' && j.voieVitesseId === voieId) ?? null
+  const jetonCapitaine = (equipeId: string) =>
+    jetons.find((j) => j.nature === 'capitaine' && j.equipeId === equipeId) ?? null
 
   return (
     <div className="flex flex-col gap-8">
@@ -100,28 +114,60 @@ async function SectionsRencontre({ rencontreId }: { rencontreId: string }) {
         </Link>
       </div>
 
-      <section className="flex flex-col gap-3">
-        <TitreSection>Coach temporaire (par club)</TitreSection>
-        {clubs.length === 0 ? (
-          <p className="text-sm text-texte-attenue">Aucun club engagé.</p>
-        ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {clubs.map((c) => (
-              <AfficheurJeton
-                key={c.id}
-                titre={c.nom}
-                chemin={chemin}
-                perimetre={{ rencontreId, nature: 'coach_temporaire', clubId: c.id }}
-                jeton={jetonCoach(c.id)}
-              />
-            ))}
-          </div>
-        )}
-      </section>
+      {estAdulte ? (
+        <section className="flex flex-col gap-3">
+          <TitreSection>Capitaines d’équipe</TitreSection>
+          <p className="text-xs text-texte-attenue">
+            Un jeton par équipe adulte. Il n’ouvre de session qu’en compétition (③) et
+            ne permet de saisir que les voies et blocs des membres de l’équipe.
+          </p>
+          {equipes.length === 0 ? (
+            <p className="text-sm text-texte-attenue">
+              Aucune équipe : créez-les depuis le tableau de bord de la rencontre.
+            </p>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {equipes.map((e) => (
+                <AfficheurJeton
+                  key={e.id}
+                  titre={e.nom}
+                  chemin={chemin}
+                  perimetre={{ rencontreId, nature: 'capitaine', equipeId: e.id }}
+                  jeton={jetonCapitaine(e.id)}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+      ) : (
+        <section className="flex flex-col gap-3">
+          <TitreSection>Coach temporaire (par club)</TitreSection>
+          {clubs.length === 0 ? (
+            <p className="text-sm text-texte-attenue">Aucun club engagé.</p>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {clubs.map((c) => (
+                <AfficheurJeton
+                  key={c.id}
+                  titre={c.nom}
+                  chemin={chemin}
+                  perimetre={{ rencontreId, nature: 'coach_temporaire', clubId: c.id }}
+                  jeton={jetonCoach(c.id)}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+      )}
 
       <section className="flex flex-col gap-3">
         <TitreSection>Juge (par voie de vitesse)</TitreSection>
-        {voies.length === 0 ? (
+        {vitesseDesactivee ? (
+          // Épreuve de vitesse désactivée (adulte) : aucun jeton juge (spec #20 R39).
+          <p className="text-sm text-texte-attenue">
+            Épreuve de vitesse désactivée : aucun jeton juge.
+          </p>
+        ) : voies.length === 0 ? (
           <p className="text-sm text-texte-attenue">
             Aucune voie de vitesse pour cette rencontre.
           </p>
@@ -130,7 +176,8 @@ async function SectionsRencontre({ rencontreId }: { rencontreId: string }) {
             {voies.map((v) => (
               <AfficheurJeton
                 key={v.id}
-                titre={`Voie ${v.numero}`}
+                // Libellé de la voie (spec #3 R32, spec #20 R9bis).
+                titre={v.libelle ?? `Voie ${v.numero}`}
                 chemin={chemin}
                 perimetre={{ rencontreId, nature: 'juge', voieVitesseId: v.id }}
                 jeton={jetonJuge(v.id)}

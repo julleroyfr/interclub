@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
-import { liensCoach } from './navigation'
+import {
+  cibleCarteRencontreCoach,
+  lienSuiteRencontreCoach,
+  liensCoach,
+  resumeCarteRencontreCoach,
+} from './navigation'
 
 /**
  * Navigation de l'espace coach (spec #12 R10/R11, spec #5).
@@ -56,5 +61,67 @@ describe('liensCoach', () => {
     })
     const classement = liens.find((l) => l.label === 'Classement')
     expect(classement?.href).toBe('/coach/rencontres/rdv-99/classement')
+  })
+})
+
+describe('lienSuiteRencontreCoach — lien de l’écran de la rencontre', () => {
+  it.each(['pre_competition', 'preparation'] as const)('aucun lien en %s', (phase) => {
+    expect(lienSuiteRencontreCoach('r1', 'ado', phase)).toBeNull()
+    expect(lienSuiteRencontreCoach('r1', 'adulte', phase)).toBeNull()
+  })
+
+  it('enfant/ado en ③ : saisie et consultation des résultats (spec #6)', () => {
+    expect(lienSuiteRencontreCoach('r1', 'enfant', 'competition')).toEqual({
+      href: '/coach/rencontres/r1/resultats',
+      label: 'Saisir / voir les résultats →',
+    })
+  })
+
+  it.each(['cloture', 'resultats_publics'] as const)(
+    'enfant/ado en %s : consultation seule, « Voir les résultats »',
+    (phase) => {
+      expect(lienSuiteRencontreCoach('r1', 'ado', phase)).toEqual({
+        href: '/coach/rencontres/r1/resultats',
+        label: 'Voir les résultats →',
+      })
+    },
+  )
+
+  it.each(['competition', 'cloture', 'resultats_publics'] as const)(
+    'adulte en %s : directement le classement (spec #20 R19bis)',
+    (phase) => {
+      expect(lienSuiteRencontreCoach('r1', 'adulte', phase)).toEqual({
+        href: '/coach/rencontres/r1/classement',
+        label: 'Voir le classement →',
+      })
+    },
+  )
+})
+
+describe('cibleCarteRencontreCoach — carte de l’accueil coach (spec #5 R7)', () => {
+  it('enfant/ado : saisie en ③, engagement ailleurs', () => {
+    expect(cibleCarteRencontreCoach('r1', 'enfant', 'competition')).toBe('/coach/rencontres/r1/resultats')
+    expect(cibleCarteRencontreCoach('r1', 'ado', 'cloture')).toBe('/coach/rencontres/r1')
+    expect(cibleCarteRencontreCoach('r1', 'ado', 'pre_competition')).toBe('/coach/rencontres/r1')
+  })
+
+  it('adulte : classement dès la ③, engagement avant (spec #20 R19bis)', () => {
+    expect(cibleCarteRencontreCoach('r1', 'adulte', 'preparation')).toBe('/coach/rencontres/r1')
+    for (const phase of ['competition', 'cloture', 'resultats_publics'] as const) {
+      expect(cibleCarteRencontreCoach('r1', 'adulte', phase)).toBe('/coach/rencontres/r1/classement')
+    }
+  })
+})
+
+describe('resumeCarteRencontreCoach — effectifs de la carte (spec #5 R6)', () => {
+  it('enfant/ado : équipes et grimpeurs du club, accordés', () => {
+    expect(resumeCarteRencontreCoach('ado', 2, 9)).toBe('2 équipes · 9 grimpeurs')
+    expect(resumeCarteRencontreCoach('enfant', 0, 0)).toBe('0 équipe · 0 grimpeur')
+    expect(resumeCarteRencontreCoach('ado', 1, 1)).toBe('1 équipe · 1 grimpeur')
+  })
+
+  it('adulte : grimpeurs du club composés, sans nombre d’équipes (spec #20 R19ter)', () => {
+    expect(resumeCarteRencontreCoach('adulte', 0, 3)).toBe('3 grimpeurs')
+    expect(resumeCarteRencontreCoach('adulte', 0, 0)).toBe('0 grimpeur')
   })
 })

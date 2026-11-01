@@ -16,8 +16,8 @@
 - Base **sans grimpeur** (ou roster connu) pour observer créés vs mis à jour.
 - **Fichiers de test** à préparer (mêmes colonnes A→F, en-têtes ligne « Nom … ») :
   - **F-REEL** : `Licenciés 2027.xlsx` (export FFME complet, ~1137 lignes).
-  - **F-PETIT** : extrait de 5–10 lignes dont au moins un né ≥ seuil, un né avant
-    le seuil, un club nouveau, un club existant.
+  - **F-PETIT** : extrait de 5–10 lignes dont au moins un enfant, un adulte
+    (né avant 2000), un club nouveau, un club existant.
   - **F-ERREURS** : contient 1 ligne par type d'erreur (sexe « NB », date
     « 32/13/2012 », licence vide, licence « 12A », nom vide, structure vide) + 2
     lignes valides éligibles.
@@ -67,30 +67,25 @@
 - **Résultat attendu** : (1) message « En-têtes introuvables… » ; (2) compte-rendu
   avec **0 ligne traitée**, 0 créé / 0 mis à jour.
 
-### CT-04 — Import nominal, année par défaut (couvre : R6, R7, R8, R9, R12, R13, R18)
+### CT-04 — Import nominal, tout âge (couvre : R9, R12, R13, R18 ; spec #20 R5)
 
 - **Rôle** : admin, base sans grimpeur.
-- **Pré-condition** : date du jour en saison 2026-2027 → **année de référence
-  pré-remplie = 2027**, seuil de naissance affiché = **2009**.
-- **Étapes** : déposer **F-REEL**, laisser l'année par défaut, lancer.
+- **Étapes** : déposer **F-REEL**, lancer.
 - **Résultat attendu** :
-  - seuls les licenciés **nés en 2009 ou après** sont créés (R7) ; les plus âgés
-    comptent en **« Ignorés (hors âge) »** (R8), pas en erreur ;
+  - **tous** les licenciés valides sont créés, adultes compris (spec #20 R5) ;
   - les **clubs absents** sont créés et listés (R12) ;
-  - le compte-rendu affiche créés / mis à jour (0) / ignorés / erreurs, l'année
-    de référence **2027** et le seuil **2009** (R18) ;
-  - vérifier en base : un né en **2009** est présent, un né en **2008** absent.
+  - le compte-rendu affiche créés / mis à jour (0) / erreurs (R18), sans
+    compteur « ignorés » ni année de référence ;
+  - vérifier en base : un né en **2009** et un né en **1980** sont présents.
 
-### CT-05 — Année de référence automatique, non modifiable (couvre : R6, R7)
+### CT-05 — Aucun filtre d'âge (couvre : spec #20 R5, remplace R6/R7)
 
 - **Rôle** : admin.
 - **Étapes** : ouvrir `/admin/grimpeurs/import`, déposer **F-PETIT**, lancer.
 - **Résultat attendu** :
-  - l'écran ne propose **aucun champ** « année de référence » (ni saisie, ni
-    affichage éditable) ;
-  - le filtre s'applique avec l'année **calculée** = année de fin de la saison
-    courante (aujourd'hui 2026-2027 → **2027**, seuil **2009**) ;
-  - le compte-rendu rappelle l'année de référence **2027** et le seuil **2009**.
+  - l'aide sous le champ fichier indique « Les licenciés de tout âge sont
+    importés » ;
+  - l'adulte de F-PETIT est créé ; aucune ligne n'est écartée pour son âge.
 
 ### CT-06 — Rattachement club : existant réutilisé, absent créé (couvre : R11, R12)
 

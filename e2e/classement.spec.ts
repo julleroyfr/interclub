@@ -199,7 +199,7 @@ test.describe('Cahier 18 — classement (spec #7)', () => {
     await ouvrirClassement(page)
     await page.getByRole('button', { name: 'Par équipe' }).click()
     await expect(ligne(page, 'Équipe A1')).toContainText('21pts') // Ana 9 + Bob 12
-    await expect(ligne(page, 'Équipe A1')).toContainText('Club A · 2 grimpeur(s)')
+    await expect(ligne(page, 'Équipe A1')).toContainText('Club A · 2 grimpeurs')
     await expect(ligne(page, 'Équipe B1')).toContainText('9pts')
     await expect(rang(page, 'Équipe A1')).toHaveText('1')
 
@@ -241,7 +241,7 @@ test.describe('Cahier 18 — classement (spec #7)', () => {
 
     await page.getByRole('button', { name: 'Par équipe' }).click()
     await expect(ligne(page, 'Équipe A1')).toContainText('30pts') // 13 + 12 + 5
-    await expect(ligne(page, 'Équipe A1')).toContainText('3 grimpeur(s)')
+    await expect(ligne(page, 'Équipe A1')).toContainText('3 grimpeurs')
     await page.getByRole('button', { name: 'Par club' }).click()
     await expect(ligne(page, 'Club A')).toContainText('30pts')
     await expect(ligne(page, 'Club B')).toContainText('9pts') // sans Devi
@@ -269,7 +269,7 @@ test.describe('Cahier 18 — classement (spec #7)', () => {
     await commeCoach(page)
     await ouvrirClassement(page)
     // 22 grimpeuses → 2 pages de 20.
-    await expect(page.getByText(/^22\s*grimpeuse\(s\)/)).toBeVisible()
+    await expect(page.getByText(/^22\s*grimpeuses/)).toBeVisible()
     await expect(page.locator('tbody tr')).toHaveCount(20)
     await expect(page.getByText('Page 1 sur 2 · 1–20 sur 22')).toBeVisible()
     const pagination = page.getByRole('navigation', { name: 'Pagination' })
@@ -279,7 +279,7 @@ test.describe('Cahier 18 — classement (spec #7)', () => {
 
     // Recherche par nom → compteur à jour, retour en page 1.
     await page.getByPlaceholder('🔍 Rechercher un nom…').fill('cléo')
-    await expect(page.getByText(/^1\s*grimpeuse\(s\)/)).toBeVisible()
+    await expect(page.getByText(/^1\s*grimpeuse\b/)).toBeVisible()
     await expect(page.locator('tbody tr')).toHaveCount(1)
     await page.getByPlaceholder('🔍 Rechercher un nom…').fill('')
 
@@ -289,7 +289,7 @@ test.describe('Cahier 18 — classement (spec #7)', () => {
     await expect(ligne(page, 'Ana Alpha')).toBeVisible()
     await page.getByRole('button', { name: 'Tous les clubs' }).click()
     await page.locator('select').selectOption({ label: 'Équipe B2' })
-    await expect(page.getByText(/^20\s*grimpeuse\(s\)/)).toBeVisible()
+    await expect(page.getByText(/^20\s*grimpeuses/)).toBeVisible()
     await page.getByRole('button', { name: 'Mon club' }).click()
     await expect(page.getByText('Aucun grimpeur pour ce filtre.')).toBeVisible()
   })

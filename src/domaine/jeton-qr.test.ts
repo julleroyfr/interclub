@@ -26,6 +26,7 @@ describe('spec #2 — Création & périmètre d’un jeton (R9, R17)', () => {
       nature: 'coach_temporaire',
       clubId: 'club-a',
       voieVitesseId: null,
+      equipeId: null,
     })
   })
 
@@ -42,6 +43,7 @@ describe('spec #2 — Création & périmètre d’un jeton (R9, R17)', () => {
       nature: 'juge',
       clubId: null,
       voieVitesseId: 'voie-1',
+      equipeId: null,
     })
   })
 
@@ -152,6 +154,7 @@ describe('spec #2 — Révocation (R22) & régénération (R23)', () => {
     nature: 'juge' as const,
     clubId: null,
     voieVitesseId: 'voie-1',
+    equipeId: null,
     valeur: 'val-ancienne',
     actif: true,
   }
@@ -170,6 +173,7 @@ describe('spec #2 — Révocation (R22) & régénération (R23)', () => {
       nature: 'juge',
       clubId: null,
       voieVitesseId: 'voie-1',
+      equipeId: null,
       valeur: 'val-nouvelle',
       actif: true,
     })
@@ -180,5 +184,59 @@ describe('spec #2 — Révocation (R22) & régénération (R23)', () => {
     expect(() => regenererJeton(jeton, 'val-ancienne')).toThrow(
       JetonQrInvalideError,
     )
+  })
+})
+
+describe('spec #20 — Jeton capitaine (R16, R20)', () => {
+  it('accepte un jeton capitaine = une équipe, sans club ni voie (R16)', () => {
+    expect(
+      creerJetonQr({
+        rencontreId: 'r-1',
+        nature: 'capitaine',
+        clubId: null,
+        voieVitesseId: null,
+        equipeId: 'eq-1',
+      }),
+    ).toEqual({
+      rencontreId: 'r-1',
+      nature: 'capitaine',
+      clubId: null,
+      voieVitesseId: null,
+      equipeId: 'eq-1',
+    })
+  })
+
+  it('refuse un jeton capitaine sans équipe (R16)', () => {
+    expect(() =>
+      creerJetonQr({ rencontreId: 'r-1', nature: 'capitaine', clubId: null, voieVitesseId: null, equipeId: null }),
+    ).toThrow(JetonQrInvalideError)
+  })
+
+  it('refuse un jeton capitaine portant un club ou une voie (R16)', () => {
+    expect(() =>
+      creerJetonQr({ rencontreId: 'r-1', nature: 'capitaine', clubId: 'c-1', voieVitesseId: null, equipeId: 'eq-1' }),
+    ).toThrow(JetonQrInvalideError)
+    expect(() =>
+      creerJetonQr({ rencontreId: 'r-1', nature: 'capitaine', clubId: null, voieVitesseId: 'v-1', equipeId: 'eq-1' }),
+    ).toThrow(JetonQrInvalideError)
+  })
+
+  it('un jeton coach temporaire ou juge ne porte pas d’équipe (R16)', () => {
+    expect(() =>
+      creerJetonQr({ rencontreId: 'r-1', nature: 'juge', clubId: null, voieVitesseId: 'v-1', equipeId: 'eq-1' }),
+    ).toThrow(JetonQrInvalideError)
+  })
+
+  it('seul l’admin gère un jeton capitaine (R16)', () => {
+    expect(peutGererJeton({ role: 'admin', clubId: null }, { nature: 'capitaine', clubId: null })).toBe(true)
+    expect(peutGererJeton({ role: 'coach', clubId: 'c-1' }, { nature: 'capitaine', clubId: null })).toBe(false)
+  })
+
+  it('la régénération conserve l’équipe du jeton (R16)', () => {
+    const { nouveau } = regenererJeton(
+      { rencontreId: 'r-1', nature: 'capitaine', clubId: null, voieVitesseId: null, equipeId: 'eq-1', valeur: 'a', actif: true },
+      'b',
+    )
+    expect(nouveau).toMatchObject({ nature: 'capitaine', equipeId: 'eq-1', valeur: 'b', actif: true })
   })
 })

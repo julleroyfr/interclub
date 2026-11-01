@@ -72,6 +72,9 @@ manuelle ni capture d'écran.
   officielle **si et seulement si son club y est engagé** (au moins une équipe du
   club dans la rencontre). Sinon : aucune action d'export affichée, demande
   directe refusée (404).
+  *(Catégorie adulte, rév. 2026-10-23 : en rencontre adulte, le coach permanent
+  exporte si au moins un grimpeur de son club est composé dans une équipe — spec
+  #20 R32.)*
 - **R5.** Le **coach temporaire** et le **juge** n'ont **pas** accès à l'export
   (404) ; le **visiteur non authentifié** est redirigé vers `/connexion` (spec #12
   R2, rév. 2026-10-02). *(Pour le coach temporaire
@@ -107,6 +110,8 @@ manuelle ni capture d'écran.
 - **R11.** Le document contient **quatre sections**, dans cet ordre :
   **Individuel Filles**, **Individuel Garçons**, **Équipes**, **Clubs**
   (individuel séparé par sexe, équipe et club mixtes — spec #7 R8b).
+  *(Catégorie adulte, rév. 2026-10-23 : pas de section **Clubs** — spec #20
+  R30.)*
 - **R12.** Chaque section **commence sur une nouvelle page** et porte un **titre**
   (nom de la section) et le **nombre de lignes** qu'elle contient.
 - **R13.** Les lignes de chaque section reprennent **exactement** le classement
@@ -119,7 +124,9 @@ manuelle ni capture d'écran.
 - **R15.** Colonnes par section :
   - **Individuel** (Filles, Garçons) : **Rang**, **Nom Prénom**, **Club
     d'origine** (spec #7 R7 pour un grimpeur prêté), **Score** ;
-  - **Équipes** : **Rang**, **Équipe**, **Club**, **Score** ;
+  - **Équipes** : **Rang**, **Équipe**, **Club**, **Score** *(en adulte :
+    **Rang**, **Équipe**, **Score**, l'équipe n'ayant pas de club — spec #20
+    R31)* ;
   - **Clubs** : **Rang**, **Club**, **Score**.
 - **R16.** Une section **sans aucune ligne** (ex. aucune fille engagée) est
   **présente** avec son titre et la mention **« Aucun classement »** (elle n'est
