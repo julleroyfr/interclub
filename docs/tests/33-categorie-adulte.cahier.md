@@ -145,6 +145,8 @@ main, `[mixte]` partie automatisée + vérification à l'œil.
 
 - **Rôle / compte** : `postgres` (SQL Editor recette).
 - **Pré-condition** : au moins une rencontre adulte créée (CT-02).
+- **Note** : sans objet depuis la mise en prod du 2026-11-01 ; le script a été
+  supprimé à l'archivage (récupérable dans l'historique git).
 - **Étapes** :
   1. Exécuter
      `supabase/retours-arriere/202610231000_categorie_adulte_retour_arriere.sql`.

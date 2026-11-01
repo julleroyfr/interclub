@@ -1,6 +1,6 @@
 -- ============================================================================
 -- FICHIER GÉNÉRÉ par scripts/consolider-archive.sh — NE PAS MODIFIER.
--- Concaténation des 47 migrations de supabase/migrations/archive/,
+-- Concaténation des 54 migrations de supabase/migrations/archive/,
 -- déjà appliquées en recette et en prod (cf. JOURNAL.md).
 -- Usage LOCAL uniquement (supabase db reset) : ne jamais l'appliquer en
 -- recette ni en prod.
@@ -6747,6 +6747,1344 @@ insert into interclub.version (version, description, applique_par)
 values (
   '202610161100_repere_voie',
   'Repère de voie (spec #3 R49) : colonne voie_difficulte.repere (nullable, non vide, ≤ 30 car.) + index unique partiel (epreuve_id, niveau, lower(repere)).',
+  'julleroyfr'
+)
+on conflict (version) do nothing;
+
+
+-- ----------------------------------------------------------------------------
+-- archive/202610231000_categorie_adulte.sql
+-- ----------------------------------------------------------------------------
+-- ===========================================================================
+-- 202610231000_categorie_adulte
+--
+-- Objet : catégorie de rencontre « adulte » (spec #20, validée le 2026-10-23),
+--         lot 1 — catégorie et gabarit.
+--   1. Contraintes `rencontre.categorie` et `gabarit_epreuve.categorie` :
+--      ajout de la valeur 'adulte' (R1, R6).
+--   2. `creer_rencontre_avec_gabarit` accepte 'adulte' (R1).
+--   3. Zones (zone1/zone2) admises en adulte : trigger `valider_resultat_voie`
+--      et fonction `saisir_resultat_voie` (R24, R26).
+--   4. Plafond de 6 voies étendu à l'adulte : `verifier_plafond_voies_ado` (R22).
+--   5. Gabarit adulte (R7–R9) : T1–T10 au barème de l'addendum, B1 (15/30),
+--      B2 (20/50/70), vitesse « Voie 1 »/« Voie 2 », barème 100-95-90-85-80 puis
+--      75/60/45/30/15 par tranches de 5, au-delà 10, chute 5, NP 0.
+--
+-- Réversibilité (R34/R35) : migration ADDITIVE — aucun comportement enfant/ado
+-- ne change (les fonctions ne diffèrent que par l'ajout de 'adulte'). Retour
+-- arrière : supabase/retours-arriere/202610231000_categorie_adulte_retour_arriere.sql.
+-- `create or replace function` conserve les droits existants (pas de grant).
+--
+-- Idempotent. Application : MANUELLE dans le SQL Editor Supabase (recette).
+-- ===========================================================================
+
+-- 1. Valeur 'adulte' dans les contraintes de catégorie (R1, R6).
+alter table interclub.rencontre
+  drop constraint if exists rencontre_categorie_check;
+alter table interclub.rencontre
+  add constraint rencontre_categorie_check check (categorie in ('enfant', 'ado', 'adulte'));
+
+alter table interclub.gabarit_epreuve
+  drop constraint if exists gabarit_epreuve_categorie_check;
+alter table interclub.gabarit_epreuve
+  add constraint gabarit_epreuve_categorie_check check (categorie in ('enfant', 'ado', 'adulte'));
+
+-- 2. Création de rencontre (R1).
+create or replace function interclub.creer_rencontre_avec_gabarit(
+  p_date           date,
+  p_club_porteur   uuid,
+  p_categorie      text
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_rencontre_id  uuid;
+  v_epreuve_id    uuid;
+  v_bloc_id       uuid;
+  v_ge            record;
+  v_gb            record;
+begin
+  -- SECURITY DEFINER contourne la RLS `rencontre_insert_admin` : la garde
+  -- admin doit donc être portée ici (spec #3 R12).
+  if not interclub.est_admin() then
+    raise exception 'acces_refuse' using errcode = '42501';
+  end if;
+
+  if p_categorie not in ('enfant', 'ado', 'adulte') then
+    raise exception 'Catégorie invalide : %', p_categorie;
+  end if;
+
+  -- 1. Créer la rencontre (phase pré-compétition par défaut).
+  insert into interclub.rencontre (date_rencontre, club_porteur_id, categorie)
+  values (p_date, p_club_porteur, p_categorie)
+  returning id into v_rencontre_id;
+
+  -- 2. Copier chaque épreuve du gabarit (points chute/NP compris).
+  for v_ge in
+    select id, type, points_chute, points_non_presentation
+    from interclub.gabarit_epreuve
+    where categorie = p_categorie
+    order by type
+  loop
+    insert into interclub.epreuve
+      (rencontre_id, type, points_chute, points_non_presentation)
+    values
+      (v_rencontre_id, v_ge.type, v_ge.points_chute, v_ge.points_non_presentation)
+    returning id into v_epreuve_id;
+
+    -- Voies de difficulté (avec points, R38)
+    insert into interclub.voie_difficulte
+      (epreuve_id, niveau, type_voie, cotation, points,
+       points_prise_valorisee, points_zone1, points_zone2, ordre)
+    select
+      v_epreuve_id, niveau, type_voie, cotation, points,
+      points_prise_valorisee, points_zone1, points_zone2, ordre
+    from interclub.gabarit_voie_difficulte
+    where gabarit_epreuve_id = v_ge.id
+    order by ordre;
+
+    -- Blocs et leurs paliers (R39)
+    for v_gb in
+      select id, code, ordre
+      from interclub.gabarit_bloc
+      where gabarit_epreuve_id = v_ge.id
+      order by ordre
+    loop
+      insert into interclub.bloc (epreuve_id, code, ordre)
+      values (v_epreuve_id, v_gb.code, v_gb.ordre)
+      returning id into v_bloc_id;
+
+      insert into interclub.bloc_palier (bloc_id, libelle, points, ordre)
+      select v_bloc_id, libelle, points, ordre
+      from interclub.gabarit_bloc_palier
+      where gabarit_bloc_id = v_gb.id
+      order by ordre;
+    end loop;
+
+    -- Voies de vitesse (rattachées à la rencontre — modèle existant)
+    insert into interclub.voie_vitesse (rencontre_id, numero, libelle)
+    select
+      v_rencontre_id,
+      (row_number() over (order by ordre))::int,
+      libelle
+    from interclub.gabarit_voie_vitesse
+    where gabarit_epreuve_id = v_ge.id
+    order by ordre;
+
+    -- Barème de vitesse — échelons par rang (R46)
+    insert into interclub.bareme_vitesse_echelon
+      (epreuve_id, rang_min, rang_max, points, decrement, ordre)
+    select
+      v_epreuve_id, rang_min, rang_max, points, decrement, ordre
+    from interclub.gabarit_bareme_vitesse_echelon
+    where gabarit_epreuve_id = v_ge.id
+    order by ordre;
+
+  end loop;
+
+  return v_rencontre_id;
+end;
+$$;
+
+-- 3a. Cohérence issue ↔ catégorie : zones en ado et adulte (R26).
+create or replace function interclub.valider_resultat_voie()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_categorie text;
+  v_type_voie text;
+begin
+  select r.categorie, vd.type_voie
+    into v_categorie, v_type_voie
+  from interclub.voie_difficulte vd
+  join interclub.epreuve   e on e.id = vd.epreuve_id
+  join interclub.rencontre r on r.id = e.rencontre_id
+  where vd.id = new.voie_difficulte_id;
+
+  if new.issue = 'prise_valorisee'
+     and not (v_categorie = 'enfant' and v_type_voie = 'tete') then
+    raise exception
+      'Issue « prise_valorisee » réservée aux voies tête enfant (R10).';
+  end if;
+
+  if new.issue in ('zone1', 'zone2') and v_categorie not in ('ado', 'adulte') then
+    raise exception
+      'Issues « zone1 »/« zone2 » réservées aux catégories ado et adulte (R12, spec #20 R26).';
+  end if;
+
+  return new;
+end;
+$$;
+
+-- 3b. Enregistrement en un appel : zones en ado et adulte (R26).
+create or replace function interclub.saisir_resultat_voie(
+  p_voie     uuid,
+  p_grimpeur uuid,
+  p_issue    text,
+  p_saisi_le timestamptz default null
+)
+returns jsonb
+language plpgsql
+security invoker
+set search_path = ''
+as $$
+declare
+  v_epreuve   uuid;
+  v_rencontre uuid;
+  v_phase     text;
+  v_categorie text;
+  v_type_voie text;
+begin
+  perform interclub.exiger_session_coach();
+
+  select vd.epreuve_id, e.rencontre_id, r.phase::text, r.categorie::text, vd.type_voie::text
+    into v_epreuve, v_rencontre, v_phase, v_categorie, v_type_voie
+  from interclub.voie_difficulte vd
+  join interclub.epreuve   e on e.id = vd.epreuve_id
+  join interclub.rencontre r on r.id = e.rencontre_id
+  where vd.id = p_voie;
+  if not found then
+    raise exception 'voie_introuvable' using errcode = 'P0002';
+  end if;
+
+  perform interclub.controler_saisie_coach(v_epreuve, v_rencontre, v_phase, p_grimpeur);
+
+  if p_issue is null
+     or p_issue not in ('top', 'prise_valorisee', 'zone2', 'zone1', 'echec')
+     or (p_issue = 'prise_valorisee' and not (v_categorie = 'enfant' and v_type_voie = 'tete'))
+     or (p_issue in ('zone1', 'zone2') and v_categorie not in ('ado', 'adulte')) then
+    raise exception 'issue_non_admise' using errcode = '22023';
+  end if;
+
+  -- Correction = remplacement (R13) ; heure de saisie : trigger (R7–R11).
+  insert into interclub.resultat_voie (voie_difficulte_id, grimpeur_id, issue, saisi_le)
+  values (p_voie, p_grimpeur, p_issue, coalesce(p_saisi_le, now()))
+  on conflict (voie_difficulte_id, grimpeur_id) do update
+    set issue = excluded.issue, saisi_le = excluded.saisi_le;
+
+  return interclub.resultats_grimpeur_rencontre(v_rencontre, p_grimpeur);
+end;
+$$;
+
+-- 4. Plafond de 6 voies en ado et adulte (R22).
+create or replace function interclub.verifier_plafond_voies_ado()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_epreuve   uuid;
+  v_categorie text;
+  v_autres    int;
+begin
+  select vd.epreuve_id, r.categorie
+    into v_epreuve, v_categorie
+    from interclub.voie_difficulte vd
+    join interclub.epreuve e   on e.id = vd.epreuve_id
+    join interclub.rencontre r on r.id = e.rencontre_id
+   where vd.id = new.voie_difficulte_id;
+
+  if v_categorie is null or v_categorie not in ('ado', 'adulte') then
+    return new;
+  end if;
+
+  perform pg_advisory_xact_lock(
+    hashtextextended(new.grimpeur_id::text || ':' || v_epreuve::text, 0)
+  );
+
+  select count(*)
+    into v_autres
+    from interclub.resultat_voie rv
+    join interclub.voie_difficulte vd on vd.id = rv.voie_difficulte_id
+   where rv.grimpeur_id = new.grimpeur_id
+     and vd.epreuve_id = v_epreuve
+     and rv.voie_difficulte_id <> new.voie_difficulte_id;
+
+  if v_autres >= 6 then
+    raise exception 'plafond_voies_ado'
+      using errcode = '23514',
+            detail = 'Un grimpeur ado réalise au plus 6 voies (spec #6 R14).';
+  end if;
+  return new;
+end;
+$$;
+
+-- 5. Gabarit adulte (R7–R9), idempotent.
+do $$
+declare
+  ge_voie    uuid;
+  ge_bloc    uuid;
+  ge_vitesse uuid;
+  b1         uuid;
+  b2         uuid;
+begin
+  insert into interclub.gabarit_epreuve (categorie, type)
+  values ('adulte', 'voie')
+  on conflict (categorie, type) do nothing;
+  select id into ge_voie from interclub.gabarit_epreuve
+   where categorie = 'adulte' and type = 'voie';
+
+  if not exists (select 1 from interclub.gabarit_voie_difficulte where gabarit_epreuve_id = ge_voie) then
+    insert into interclub.gabarit_voie_difficulte
+      (gabarit_epreuve_id, niveau, type_voie, cotation, points, points_zone1, points_zone2, ordre)
+    values
+      (ge_voie, 'T1',  'tete', '4c',  4,  1,  2,  1),
+      (ge_voie, 'T2',  'tete', '5a',  6,  3,  4,  2),
+      (ge_voie, 'T3',  'tete', '5b',  8,  5,  6,  3),
+      (ge_voie, 'T4',  'tete', '5c', 10,  7,  8,  4),
+      (ge_voie, 'T5',  'tete', '6a', 12,  9, 10,  5),
+      (ge_voie, 'T6',  'tete', '6b', 14, 11, 12,  6),
+      (ge_voie, 'T7',  'tete', '6c', 16, 13, 14,  7),
+      (ge_voie, 'T8',  'tete', '7a', 18, 15, 16,  8),
+      (ge_voie, 'T9',  'tete', '7b', 20, 17, 18,  9),
+      (ge_voie, 'T10', 'tete', '7c', 22, 19, 20, 10);
+  end if;
+
+  insert into interclub.gabarit_epreuve (categorie, type)
+  values ('adulte', 'bloc')
+  on conflict (categorie, type) do nothing;
+  select id into ge_bloc from interclub.gabarit_epreuve
+   where categorie = 'adulte' and type = 'bloc';
+
+  insert into interclub.gabarit_bloc (gabarit_epreuve_id, code, ordre)
+  values (ge_bloc, 'B1', 1), (ge_bloc, 'B2', 2)
+  on conflict (gabarit_epreuve_id, code) do nothing;
+  select id into b1 from interclub.gabarit_bloc where gabarit_epreuve_id = ge_bloc and code = 'B1';
+  select id into b2 from interclub.gabarit_bloc where gabarit_epreuve_id = ge_bloc and code = 'B2';
+
+  if not exists (select 1 from interclub.gabarit_bloc_palier where gabarit_bloc_id = b1) then
+    insert into interclub.gabarit_bloc_palier (gabarit_bloc_id, libelle, points, ordre)
+    values (b1, 'Zone', 15, 1), (b1, 'Bloc complet', 30, 2);
+  end if;
+  if not exists (select 1 from interclub.gabarit_bloc_palier where gabarit_bloc_id = b2) then
+    insert into interclub.gabarit_bloc_palier (gabarit_bloc_id, libelle, points, ordre)
+    values (b2, 'Zone 1', 20, 1), (b2, 'Zone 2', 50, 2), (b2, 'Bloc complet', 70, 3);
+  end if;
+
+  insert into interclub.gabarit_epreuve (categorie, type, points_chute, points_non_presentation)
+  values ('adulte', 'vitesse', 5, 0)
+  on conflict (categorie, type) do nothing;
+  select id into ge_vitesse from interclub.gabarit_epreuve
+   where categorie = 'adulte' and type = 'vitesse';
+
+  if not exists (select 1 from interclub.gabarit_voie_vitesse where gabarit_epreuve_id = ge_vitesse) then
+    insert into interclub.gabarit_voie_vitesse (gabarit_epreuve_id, libelle, ordre)
+    values (ge_vitesse, 'Voie 1', 1), (ge_vitesse, 'Voie 2', 2);
+  end if;
+
+  if not exists (select 1 from interclub.gabarit_bareme_vitesse_echelon where gabarit_epreuve_id = ge_vitesse) then
+    insert into interclub.gabarit_bareme_vitesse_echelon
+      (gabarit_epreuve_id, rang_min, rang_max, points, decrement, ordre)
+    values
+      (ge_vitesse,  1,    5, 100, 5, 1),
+      (ge_vitesse,  6,   10,  75, 0, 2),
+      (ge_vitesse, 11,   15,  60, 0, 3),
+      (ge_vitesse, 16,   20,  45, 0, 4),
+      (ge_vitesse, 21,   25,  30, 0, 5),
+      (ge_vitesse, 26,   30,  15, 0, 6),
+      (ge_vitesse, 31, null,  10, 0, 7);
+  end if;
+end;
+$$;
+
+-- ===========================================================================
+-- Suivi de version
+-- ===========================================================================
+
+insert into interclub.version (version, description, applique_par)
+values (
+  '202610231000_categorie_adulte',
+  'Catégorie adulte, lot 1 (spec #20 R1, R6–R9, R22, R26) : valeur adulte dans les contraintes rencontre/gabarit_epreuve, creer_rencontre_avec_gabarit, zones et plafond 6 voies étendus à l''adulte, gabarit adulte. Retour arrière dans supabase/retours-arriere/.',
+  'julleroyfr'
+)
+on conflict (version) do nothing;
+
+
+-- ----------------------------------------------------------------------------
+-- archive/202610231100_equipes_adultes.sql
+-- ----------------------------------------------------------------------------
+-- ===========================================================================
+-- 202610231100_equipes_adultes
+--
+-- Objet : catégorie adulte (spec #20, validée le 2026-10-23), lot 3 — équipes
+--         adultes créées et composées par l'admin, sans club, 4 au plus.
+--   1. `equipe.club_id` devient facultatif (R11).
+--   2. Trigger `verifier_club_equipe_categorie` : rencontre adulte → club vide
+--      obligatoire ; enfant/ado → club obligatoire, comme avant (R11). Empêche
+--      aussi un coach de créer une équipe à son nom dans une rencontre adulte.
+--   3. Unicité du nom d'une équipe adulte dans sa rencontre (index partiel, R14).
+--   4. Trigger `verifier_effectif_equipe_adulte` : 4 grimpeurs au plus (R12).
+--   5. `liste_grimpeurs_vitesse` (écran juge) : club de l'équipe, sinon club du
+--      grimpeur — sans quoi les adultes disparaîtraient de l'écran juge (R28).
+--
+-- Droits : aucune policy modifiée. Avec un club vide, `peut_ecrire_equipe`,
+-- `peut_ecrire_composition` et `est_coach_de_club` refusent tout coach : seul
+-- l'admin écrit (R10).
+--
+-- Réversibilité (R34/R35) : additive. Retour arrière :
+-- supabase/retours-arriere/202610231100_equipes_adultes_retour_arriere.sql.
+-- Prérequis : 202610231000_categorie_adulte. Idempotent. Application MANUELLE.
+-- ===========================================================================
+
+-- 1. Club facultatif (R11).
+alter table interclub.equipe alter column club_id drop not null;
+
+-- 2. Club vide ⇔ rencontre adulte (R11).
+create or replace function interclub.verifier_club_equipe_categorie()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_categorie text;
+begin
+  select categorie into v_categorie from interclub.rencontre where id = new.rencontre_id;
+  if v_categorie = 'adulte' and new.club_id is not null then
+    raise exception 'equipe_adulte_sans_club'
+      using errcode = '23514',
+            detail = 'Une équipe adulte n''est rattachée à aucun club (spec #20 R11).';
+  end if;
+  if v_categorie is distinct from 'adulte' and new.club_id is null then
+    raise exception 'equipe_club_obligatoire'
+      using errcode = '23502',
+            detail = 'Une équipe enfant ou ado est rattachée à un club.';
+  end if;
+  return new;
+end;
+$$;
+
+comment on function interclub.verifier_club_equipe_categorie() is
+  'Trigger BEFORE INSERT/UPDATE (equipe) : club vide en rencontre adulte, club obligatoire sinon (spec #20 R11).';
+
+drop trigger if exists equipe_club_categorie on interclub.equipe;
+create trigger equipe_club_categorie
+  before insert or update of club_id, rencontre_id on interclub.equipe
+  for each row execute function interclub.verifier_club_equipe_categorie();
+
+-- 3. Nom unique d'une équipe adulte dans sa rencontre (R14).
+create unique index if not exists uq_equipe_adulte_nom
+  on interclub.equipe (rencontre_id, nom)
+  where club_id is null;
+
+-- 4. Effectif d'une équipe adulte : 4 au plus (R12).
+create or replace function interclub.verifier_effectif_equipe_adulte()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_categorie text;
+  v_autres    int;
+begin
+  -- Verrou de l'équipe : sérialise les ajouts concurrents.
+  select r.categorie into v_categorie
+    from interclub.equipe e
+    join interclub.rencontre r on r.id = e.rencontre_id
+   where e.id = new.equipe_id
+   for update of e;
+  if v_categorie is distinct from 'adulte' then
+    return new;
+  end if;
+
+  select count(*) into v_autres
+    from interclub.composition
+   where equipe_id = new.equipe_id
+     and grimpeur_id <> new.grimpeur_id;
+  if v_autres >= 4 then
+    raise exception 'effectif_equipe_adulte'
+      using errcode = '23514',
+            detail = 'Une équipe adulte compte au plus 4 grimpeurs (spec #20 R12).';
+  end if;
+  return new;
+end;
+$$;
+
+comment on function interclub.verifier_effectif_equipe_adulte() is
+  'Trigger BEFORE INSERT/UPDATE OF equipe_id (composition) : 4 grimpeurs au plus dans une équipe adulte (spec #20 R12).';
+
+drop trigger if exists composition_effectif_adulte on interclub.composition;
+create trigger composition_effectif_adulte
+  before insert or update of equipe_id on interclub.composition
+  for each row execute function interclub.verifier_effectif_equipe_adulte();
+
+-- 5. Roster de l'écran juge : club de l'équipe, sinon du grimpeur (R28).
+create or replace function interclub.liste_grimpeurs_vitesse(p_epreuve uuid)
+returns table (
+  grimpeur_id uuid,
+  nom         text,
+  prenom      text,
+  sexe        text,
+  club_nom    text,
+  issue       text,
+  temps       numeric
+)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select
+    g.id, g.nom, g.prenom, g.sexe, cl.nom,
+    tv.issue, tv.temps
+  from interclub.epreuve ep
+  join interclub.equipe      e  on e.rencontre_id = ep.rencontre_id
+  join interclub.composition c  on c.equipe_id = e.id
+  join interclub.grimpeur    g  on g.id = c.grimpeur_id
+  -- Équipe adulte sans club (spec #20 R11) : club d'origine du grimpeur.
+  join interclub.club        cl on cl.id = coalesce(e.club_id, g.club_id)
+  left join interclub.temps_vitesse tv
+         on tv.epreuve_id = ep.id and tv.grimpeur_id = g.id
+  where ep.id = p_epreuve
+    and ep.type = 'vitesse'
+    and (interclub.est_admin() or interclub.est_juge_de_rencontre(ep.rencontre_id));
+$$;
+
+-- ===========================================================================
+-- Suivi de version
+-- ===========================================================================
+
+insert into interclub.version (version, description, applique_par)
+values (
+  '202610231100_equipes_adultes',
+  'Catégorie adulte, lot 3 (spec #20 R10–R14) : equipe.club_id facultatif ; triggers club vide ⇔ rencontre adulte et effectif 4 au plus en adulte ; nom unique par rencontre adulte ; liste_grimpeurs_vitesse prend le club du grimpeur si l''équipe n''en a pas. Retour arrière dans supabase/retours-arriere/.',
+  'julleroyfr'
+)
+on conflict (version) do nothing;
+
+
+-- ----------------------------------------------------------------------------
+-- archive/202610231200_top_moulinette.sql
+-- ----------------------------------------------------------------------------
+-- ===========================================================================
+-- 202610231200_top_moulinette
+--
+-- Objet : catégorie adulte (spec #20, validée le 2026-10-23), lot 4 — voie
+--         réussie en moulinette (issue `top_moulinette`) : moitié des points du
+--         top, arrondie à l'entier supérieur, sans zone (R23, R25, R26). Le
+--         calcul des points est fait par l'application (spec #7, domaine).
+--   1. Contrainte `resultat_voie_issue_check` : ajout de 'top_moulinette'.
+--   2. Trigger `valider_resultat_voie` : 'top_moulinette' réservé aux voies
+--      tête des rencontres adultes (R26).
+--   3. `saisir_resultat_voie` : accepte 'top_moulinette' aux mêmes conditions.
+--
+-- Réversibilité (R34/R35) : additive. Retour arrière :
+-- supabase/retours-arriere/202610231200_top_moulinette_retour_arriere.sql.
+-- Prérequis : 202610231000_categorie_adulte. Idempotent. Application MANUELLE.
+-- ===========================================================================
+
+-- 1. Nouvelle valeur d'issue (R23).
+alter table interclub.resultat_voie
+  drop constraint if exists resultat_voie_issue_check;
+alter table interclub.resultat_voie
+  add constraint resultat_voie_issue_check check (issue in ('top', 'top_moulinette', 'prise_valorisee', 'zone1', 'zone2', 'echec', 'np'));
+
+-- 2. Cohérence issue ↔ catégorie : top en moulinette en adulte seulement (R26).
+create or replace function interclub.valider_resultat_voie()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_categorie text;
+  v_type_voie text;
+begin
+  select r.categorie, vd.type_voie
+    into v_categorie, v_type_voie
+  from interclub.voie_difficulte vd
+  join interclub.epreuve   e on e.id = vd.epreuve_id
+  join interclub.rencontre r on r.id = e.rencontre_id
+  where vd.id = new.voie_difficulte_id;
+
+  if new.issue = 'prise_valorisee'
+     and not (v_categorie = 'enfant' and v_type_voie = 'tete') then
+    raise exception
+      'Issue « prise_valorisee » réservée aux voies tête enfant (R10).';
+  end if;
+
+  if new.issue = 'top_moulinette'
+     and not (v_categorie = 'adulte' and v_type_voie = 'tete') then
+    raise exception
+      'Issue « top_moulinette » réservée aux voies tête adulte (spec #20 R26).';
+  end if;
+
+  if new.issue in ('zone1', 'zone2') and v_categorie not in ('ado', 'adulte') then
+    raise exception
+      'Issues « zone1 »/« zone2 » réservées aux catégories ado et adulte (R12, spec #20 R26).';
+  end if;
+
+  return new;
+end;
+$$;
+
+-- 3. Enregistrement en un appel : top en moulinette admis en adulte (R26).
+create or replace function interclub.saisir_resultat_voie(
+  p_voie     uuid,
+  p_grimpeur uuid,
+  p_issue    text,
+  p_saisi_le timestamptz default null
+)
+returns jsonb
+language plpgsql
+security invoker
+set search_path = ''
+as $$
+declare
+  v_epreuve   uuid;
+  v_rencontre uuid;
+  v_phase     text;
+  v_categorie text;
+  v_type_voie text;
+begin
+  perform interclub.exiger_session_coach();
+
+  select vd.epreuve_id, e.rencontre_id, r.phase::text, r.categorie::text, vd.type_voie::text
+    into v_epreuve, v_rencontre, v_phase, v_categorie, v_type_voie
+  from interclub.voie_difficulte vd
+  join interclub.epreuve   e on e.id = vd.epreuve_id
+  join interclub.rencontre r on r.id = e.rencontre_id
+  where vd.id = p_voie;
+  if not found then
+    raise exception 'voie_introuvable' using errcode = 'P0002';
+  end if;
+
+  perform interclub.controler_saisie_coach(v_epreuve, v_rencontre, v_phase, p_grimpeur);
+
+  if p_issue is null
+     or p_issue not in ('top', 'top_moulinette', 'prise_valorisee', 'zone2', 'zone1', 'echec')
+     or (p_issue = 'top_moulinette' and not (v_categorie = 'adulte' and v_type_voie = 'tete'))
+     or (p_issue = 'prise_valorisee' and not (v_categorie = 'enfant' and v_type_voie = 'tete'))
+     or (p_issue in ('zone1', 'zone2') and v_categorie not in ('ado', 'adulte')) then
+    raise exception 'issue_non_admise' using errcode = '22023';
+  end if;
+
+  -- Correction = remplacement (R13) ; heure de saisie : trigger (R7–R11).
+  insert into interclub.resultat_voie (voie_difficulte_id, grimpeur_id, issue, saisi_le)
+  values (p_voie, p_grimpeur, p_issue, coalesce(p_saisi_le, now()))
+  on conflict (voie_difficulte_id, grimpeur_id) do update
+    set issue = excluded.issue, saisi_le = excluded.saisi_le;
+
+  return interclub.resultats_grimpeur_rencontre(v_rencontre, p_grimpeur);
+end;
+$$;
+
+-- ===========================================================================
+-- Suivi de version
+-- ===========================================================================
+
+insert into interclub.version (version, description, applique_par)
+values (
+  '202610231200_top_moulinette',
+  'Catégorie adulte, lot 4 (spec #20 R23, R25, R26) : issue de voie top_moulinette (contrainte resultat_voie_issue_check, trigger valider_resultat_voie, saisir_resultat_voie) réservée aux voies tête adultes. Retour arrière dans supabase/retours-arriere/.',
+  'julleroyfr'
+)
+on conflict (version) do nothing;
+
+
+-- ----------------------------------------------------------------------------
+-- archive/202610231300_jeton_capitaine.sql
+-- ----------------------------------------------------------------------------
+-- ===========================================================================
+-- 202610231300_jeton_capitaine
+--
+-- Objet : catégorie adulte (spec #20, validée le 2026-10-23), lot 5 — jeton QR
+--         capitaine d'une équipe adulte (R16–R21, R20bis).
+--   1. `jeton_qr` : nature `capitaine`, colonne `equipe_id` ; périmètre :
+--      capitaine ⇒ une équipe, sans club ni voie (R16) ; un seul jeton
+--      capitaine actif par équipe (R16) ; l'équipe appartient à la rencontre du
+--      jeton, de catégorie adulte (R20, trigger).
+--   2. Fonctions `contexte_capitaine()` (garde de l'écran /capitaine) et
+--      `est_capitaine_de_equipe(equipe)` : session capitaine active, jeton
+--      actif, rencontre en ③ (R17).
+--   3. Écriture : `exiger_session_coach` accepte la session capitaine ;
+--      `peut_ecrire_resultat` autorise le capitaine de l'équipe du grimpeur
+--      (voies et blocs ; la vitesse reste aux juges) (R18, R21).
+--   4. Lecture : policies additionnelles sur equipe, composition, grimpeur pour
+--      le capitaine de l'équipe (R19).
+--   5. Auteur : rôle `capitaine` (contraintes + trigger d'audit, R20bis).
+--   6. `contexte_juge` renvoie aussi le libellé de la voie (`couloir_libelle`)
+--      pour l'écran juge (R9bis).
+--   `ouvrir_session_qr` n'a pas à changer : toute nature autre que coach
+--   temporaire n'ouvre de session qu'en ③ (R17).
+--
+-- Réversibilité (R34/R35) : additive. Retour arrière :
+-- supabase/retours-arriere/202610231300_jeton_capitaine_retour_arriere.sql.
+-- Prérequis : 202610231100_equipes_adultes. Idempotent. Application MANUELLE.
+-- ===========================================================================
+
+-- 1. Jeton capitaine (R16, R20).
+alter table interclub.jeton_qr
+  add column if not exists equipe_id uuid references interclub.equipe (id) on delete cascade;
+create index if not exists idx_jeton_qr_equipe_id on interclub.jeton_qr (equipe_id);
+
+alter table interclub.jeton_qr drop constraint if exists jeton_qr_nature_check;
+alter table interclub.jeton_qr
+  add constraint jeton_qr_nature_check check (nature in ('coach_temporaire', 'juge', 'capitaine'));
+alter table interclub.jeton_qr drop constraint if exists chk_jeton_nature_perimetre;
+alter table interclub.jeton_qr
+  add constraint chk_jeton_nature_perimetre check (
+    (nature = 'coach_temporaire' and club_id is not null and voie_vitesse_id is null and equipe_id is null)
+    or (nature = 'juge' and club_id is null and voie_vitesse_id is not null and equipe_id is null)
+    or (nature = 'capitaine' and club_id is null and voie_vitesse_id is null and equipe_id is not null)
+  );
+
+create unique index if not exists uq_jeton_capitaine_actif_par_equipe
+  on interclub.jeton_qr (equipe_id)
+  where nature = 'capitaine' and actif;
+
+create or replace function interclub.verifier_jeton_capitaine()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if new.nature <> 'capitaine' then
+    return new;
+  end if;
+  if not exists (
+    select 1
+      from interclub.equipe e
+      join interclub.rencontre r on r.id = e.rencontre_id
+     where e.id = new.equipe_id
+       and e.rencontre_id = new.rencontre_id
+       and r.categorie = 'adulte'
+  ) then
+    raise exception 'jeton_capitaine_hors_adulte'
+      using errcode = '23514',
+            detail = 'Un jeton capitaine désigne une équipe de sa rencontre, de catégorie adulte (spec #20 R20).';
+  end if;
+  return new;
+end;
+$$;
+
+comment on function interclub.verifier_jeton_capitaine() is
+  'Trigger BEFORE INSERT/UPDATE (jeton_qr) : un jeton capitaine désigne une équipe de sa rencontre adulte (spec #20 R20).';
+
+drop trigger if exists jeton_qr_capitaine on interclub.jeton_qr;
+create trigger jeton_qr_capitaine
+  before insert or update of nature, equipe_id, rencontre_id on interclub.jeton_qr
+  for each row execute function interclub.verifier_jeton_capitaine();
+
+-- 2. Contexte et périmètre de la session capitaine (R17).
+create or replace function interclub.contexte_capitaine()
+returns jsonb
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select jsonb_build_object(
+    'equipe_id',    j.equipe_id,
+    'rencontre_id', j.rencontre_id,
+    'phase',        r.phase
+  )
+  from interclub.session_qr s
+  join interclub.jeton_qr   j on j.id = s.jeton_qr_id
+  join interclub.rencontre  r on r.id = j.rencontre_id
+  where s.utilisateur_id = auth.uid()
+    and j.actif
+    and j.nature = 'capitaine'
+    and r.phase = 'competition'
+  order by s.created_at desc
+  limit 1;
+$$;
+
+comment on function interclub.contexte_capitaine() is
+  'Équipe et rencontre de la session capitaine active de l''utilisateur courant, rencontre en ③ (spec #20 R17) ; NULL sinon (fail-closed).';
+
+create or replace function interclub.est_capitaine_de_equipe(p_equipe uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1
+    from interclub.session_qr s
+    join interclub.jeton_qr  j on j.id = s.jeton_qr_id
+    join interclub.rencontre r on r.id = j.rencontre_id
+    where s.utilisateur_id = auth.uid()
+      and j.actif
+      and j.nature = 'capitaine'
+      and j.equipe_id = p_equipe
+      and r.phase = 'competition'
+  );
+$$;
+
+comment on function interclub.est_capitaine_de_equipe(uuid) is
+  'Vrai si l''utilisateur courant a une session capitaine active sur cette équipe, rencontre en ③ (spec #20 R17/R18).';
+
+-- Grimpeur visible du capitaine : membre de son équipe (R19).
+create or replace function interclub.voit_grimpeur_via_capitaine(p_grimpeur uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1 from interclub.composition c
+     where c.grimpeur_id = p_grimpeur
+       and interclub.est_capitaine_de_equipe(c.equipe_id)
+  );
+$$;
+
+revoke execute on function interclub.contexte_capitaine()                from public;
+revoke execute on function interclub.est_capitaine_de_equipe(uuid)       from public;
+revoke execute on function interclub.voit_grimpeur_via_capitaine(uuid)   from public;
+revoke execute on function interclub.verifier_jeton_capitaine()          from public;
+grant execute on function interclub.contexte_capitaine()                 to authenticated;
+grant execute on function interclub.est_capitaine_de_equipe(uuid)        to authenticated;
+grant execute on function interclub.voit_grimpeur_via_capitaine(uuid)    to authenticated;
+
+-- 3. Écriture des voies et blocs par le capitaine de l'équipe (R18, R21).
+create or replace function interclub.exiger_session_coach()
+returns void
+language plpgsql
+stable
+security invoker
+set search_path = ''
+as $$
+begin
+  -- Coach permanent (compte rattaché à un club), session QR coach active, ou
+  -- session capitaine active (spec #20 R18).
+  if interclub.club_courant() is null
+     and interclub.contexte_coach_temporaire() is null
+     and interclub.contexte_capitaine() is null then
+    raise exception 'session_absente' using errcode = '42501';
+  end if;
+end;
+$$;
+
+create or replace function interclub.peut_ecrire_resultat(p_epreuve uuid, p_grimpeur uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1
+    from interclub.epreuve     ep
+    join interclub.equipe      e on e.rencontre_id = ep.rencontre_id
+    join interclub.composition c on c.equipe_id = e.id
+    where ep.id = p_epreuve
+      and c.grimpeur_id = p_grimpeur
+      and (
+        (interclub.club_courant() = e.club_id
+         and interclub.phase_de_rencontre(ep.rencontre_id) = 'competition')
+        or interclub.est_coach_temp_de(e.club_id, ep.rencontre_id)
+        -- Capitaine de l'équipe du grimpeur, en ③ (spec #20 R18).
+        or interclub.est_capitaine_de_equipe(c.equipe_id)
+      )
+  );
+$$;
+
+-- 4. Lecture de son équipe par le capitaine (R19) — policies additionnelles.
+drop policy if exists "equipe_select_capitaine" on interclub.equipe;
+create policy "equipe_select_capitaine" on interclub.equipe for select
+  to authenticated
+  using (interclub.est_capitaine_de_equipe(id));
+
+drop policy if exists "composition_select_capitaine" on interclub.composition;
+create policy "composition_select_capitaine" on interclub.composition for select
+  to authenticated
+  using (interclub.est_capitaine_de_equipe(equipe_id));
+
+drop policy if exists "grimpeur_select_capitaine" on interclub.grimpeur;
+create policy "grimpeur_select_capitaine" on interclub.grimpeur for select
+  to authenticated
+  using (interclub.voit_grimpeur_via_capitaine(id));
+
+-- 5. Auteur « capitaine » (R20bis).
+alter table interclub.resultat_voie drop constraint if exists resultat_voie_auteur_role_check;
+alter table interclub.resultat_voie
+  add constraint resultat_voie_auteur_role_check check (auteur_role is null or auteur_role in ('admin', 'coach', 'capitaine'));
+alter table interclub.resultat_bloc drop constraint if exists resultat_bloc_auteur_role_check;
+alter table interclub.resultat_bloc
+  add constraint resultat_bloc_auteur_role_check check (auteur_role is null or auteur_role in ('admin', 'coach', 'capitaine'));
+
+create or replace function interclub.proteger_audit_resultat()
+returns trigger
+language plpgsql
+security invoker
+set search_path = ''
+as $$
+begin
+  -- Admin ou chemin serveur sans JWT utilisateur : non contraint.
+  if auth.uid() is null or interclub.est_admin() then
+    return new;
+  end if;
+
+  if tg_op = 'INSERT' then
+    new.controle_le  := null;
+    new.controle_par := null;
+  else
+    new.controle_le  := old.controle_le;
+    new.controle_par := old.controle_par;
+  end if;
+
+  new.auteur_utilisateur_id := auth.uid();
+  -- Session capitaine (spec #20 R20bis) ; sinon coach (permanent ou temporaire).
+  new.auteur_role           := case when interclub.contexte_capitaine() is not null
+                                    then 'capitaine' else 'coach' end;
+  return new;
+end;
+$$;
+
+-- 6. Libellé de la voie sur l'écran juge (R9bis).
+create or replace function interclub.contexte_juge()
+returns jsonb
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select jsonb_build_object(
+    'rencontre_id',       j.rencontre_id,
+    'epreuve_vitesse_id', ev.id,
+    'voie_vitesse_id',    j.voie_vitesse_id,
+    'couloir_numero',     vv.numero,
+    'couloir_libelle',    vv.libelle,
+    'date_rencontre',     r.date_rencontre,
+    'club_porteur_nom',   cp.nom,
+    'phase',              r.phase
+  )
+  from interclub.session_qr s
+  join interclub.jeton_qr   j  on j.id = s.jeton_qr_id
+  join interclub.rencontre  r  on r.id = j.rencontre_id
+  join interclub.club       cp on cp.id = r.club_porteur_id
+  left join interclub.epreuve ev
+         on ev.rencontre_id = r.id and ev.type = 'vitesse'
+  left join interclub.voie_vitesse vv on vv.id = j.voie_vitesse_id
+  where s.utilisateur_id = auth.uid()
+    and j.actif
+    and j.nature = 'juge'
+    and r.phase = 'competition'
+  order by s.created_at desc
+  limit 1;
+$$;
+
+-- ===========================================================================
+-- Suivi de version
+-- ===========================================================================
+
+insert into interclub.version (version, description, applique_par)
+values (
+  '202610231300_jeton_capitaine',
+  'Catégorie adulte, lot 5 (spec #20 R16–R21, R20bis) : jeton QR capitaine (nature, equipe_id, périmètre, unicité, trigger adulte) ; contexte_capitaine, est_capitaine_de_equipe, voit_grimpeur_via_capitaine ; exiger_session_coach et peut_ecrire_resultat ouverts au capitaine de l''équipe ; policies de lecture equipe/composition/grimpeur ; auteur capitaine ; contexte_juge renvoie le libellé de la voie. Retour arrière dans supabase/retours-arriere/.',
+  'julleroyfr'
+)
+on conflict (version) do nothing;
+
+
+-- ----------------------------------------------------------------------------
+-- archive/202610251000_gel_equipes_adultes.sql
+-- ----------------------------------------------------------------------------
+-- ===========================================================================
+-- 202610251000_gel_equipes_adultes
+--
+-- Objet : catégorie adulte (spec #20 R10), correctif du lot 3 — les équipes
+--         d'une rencontre adulte ne se créent, ne se renomment, ne se
+--         suppriment et ne se composent qu'en ① pré-compétition et
+--         ② préparation. Dès la ③, elles sont figées, admin compris.
+--   1. Fonction trigger `verifier_equipes_adultes_modifiables` : refuse toute
+--      écriture sur `equipe` ou `composition` d'une rencontre adulte hors ①/②.
+--      Rencontre introuvable (suppression en cascade de la rencontre) : laissé
+--      passer.
+--   2. Triggers BEFORE INSERT/UPDATE/DELETE sur `equipe` et `composition`.
+--
+-- Enfant et ado : inchangés (l'admin y corrige l'engagement en toute phase,
+-- spec #1 R6/R10) — le trigger ne s'applique qu'aux rencontres adultes (R34).
+--
+-- Réversibilité (R34/R35) : additive. Retour arrière :
+-- supabase/retours-arriere/202610251000_gel_equipes_adultes_retour_arriere.sql.
+-- Prérequis : 202610231100_equipes_adultes. Idempotent. Application MANUELLE.
+-- ===========================================================================
+
+-- 1. Gel des équipes adultes hors ①/② (R10).
+create or replace function interclub.verifier_equipes_adultes_modifiables()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_ligne     record;
+  v_rencontre uuid;
+  v_categorie text;
+  v_phase     text;
+begin
+  if tg_op = 'DELETE' then
+    v_ligne := old;
+  else
+    v_ligne := new;
+  end if;
+
+  -- La rencontre se lit par l'équipe : `composition.rencontre_id` peut ne pas
+  -- être encore renseigné quand ce trigger passe.
+  if tg_table_name = 'equipe' then
+    v_rencontre := v_ligne.rencontre_id;
+  else
+    select e.rencontre_id into v_rencontre from interclub.equipe e where e.id = v_ligne.equipe_id;
+  end if;
+
+  select r.categorie, r.phase into v_categorie, v_phase
+    from interclub.rencontre r where r.id = v_rencontre;
+
+  if v_categorie = 'adulte' and v_phase not in ('pre_competition', 'preparation') then
+    raise exception 'equipes_adultes_figees'
+      using errcode = '23514',
+            detail = 'Les équipes adultes ne se modifient qu''en pré-compétition ou en préparation (spec #20 R10).';
+  end if;
+
+  if tg_op = 'DELETE' then
+    return old;
+  end if;
+  return new;
+end;
+$$;
+
+comment on function interclub.verifier_equipes_adultes_modifiables() is
+  'Trigger BEFORE INSERT/UPDATE/DELETE (equipe, composition) : équipes adultes figées hors ① pré-compétition et ② préparation (spec #20 R10).';
+
+-- 2. Triggers.
+drop trigger if exists equipe_adulte_modifiable on interclub.equipe;
+create trigger equipe_adulte_modifiable
+  before insert or update or delete on interclub.equipe
+  for each row execute function interclub.verifier_equipes_adultes_modifiables();
+
+drop trigger if exists composition_adulte_modifiable on interclub.composition;
+create trigger composition_adulte_modifiable
+  before insert or update or delete on interclub.composition
+  for each row execute function interclub.verifier_equipes_adultes_modifiables();
+
+-- ===========================================================================
+-- Suivi de version
+-- ===========================================================================
+
+insert into interclub.version (version, description, applique_par)
+values (
+  '202610251000_gel_equipes_adultes',
+  'Catégorie adulte, correctif lot 3 (spec #20 R10) : triggers equipe et composition refusant toute écriture sur une équipe adulte hors pré-compétition et préparation. Retour arrière dans supabase/retours-arriere/.',
+  'julleroyfr'
+)
+on conflict (version) do nothing;
+
+
+-- ----------------------------------------------------------------------------
+-- archive/202610251100_epreuves_desactivables.sql
+-- ----------------------------------------------------------------------------
+-- ===========================================================================
+-- 202610251100_epreuves_desactivables
+--
+-- Objet : catégorie adulte (spec #20 R36–R40, révision du 2026-10-25) —
+--         l'admin désactive l'épreuve de bloc et/ou de vitesse d'une rencontre
+--         adulte selon les personnes présentes.
+--   1. Colonne `epreuve.active` (vrai par défaut) : toutes les épreuves
+--      existantes restent actives.
+--   2. Trigger `verifier_etat_epreuve` : une épreuve n'est inactive que si elle
+--      est de bloc ou de vitesse dans une rencontre adulte (R36), et son état
+--      ne change qu'en ① pré-compétition ou ② préparation (R37).
+--   3. Trigger `revoquer_jetons_juges_vitesse` : désactiver la vitesse révoque
+--      les jetons juges actifs de la rencontre (R39).
+--   4. Trigger `verifier_jeton_juge_vitesse_active` : pas de nouveau jeton juge
+--      tant que la vitesse est désactivée (R39).
+--   5. Triggers `verifier_epreuve_active_*` : aucun résultat de bloc ni temps de
+--      vitesse sur une épreuve désactivée (R40).
+--
+-- Droits : aucune policy modifiée (la mise à jour d'une épreuve reste réservée à
+-- l'admin, `epreuve_update_admin`). Enfant et ado : inchangés (R34).
+--
+-- Réversibilité (R34/R35) : additive. Retour arrière :
+-- supabase/retours-arriere/202610251100_epreuves_desactivables_retour_arriere.sql.
+-- Prérequis : 202610231000_categorie_adulte. Idempotent. Application MANUELLE.
+-- ===========================================================================
+
+-- 1. État de l'épreuve.
+alter table interclub.epreuve add column if not exists active boolean not null default true;
+
+comment on column interclub.epreuve.active is
+  'Faux : épreuve de bloc ou de vitesse désactivée dans une rencontre adulte (spec #20 R36–R40).';
+
+-- 2. Qui peut être désactivé, et quand (R36, R37).
+create or replace function interclub.verifier_etat_epreuve()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_categorie text;
+  v_phase     text;
+begin
+  if tg_op = 'UPDATE' and new.active is not distinct from old.active then
+    return new;
+  end if;
+  if tg_op = 'INSERT' and new.active then
+    return new;
+  end if;
+
+  select r.categorie, r.phase into v_categorie, v_phase
+    from interclub.rencontre r where r.id = new.rencontre_id;
+
+  if not new.active and (v_categorie is distinct from 'adulte' or new.type not in ('bloc', 'vitesse')) then
+    raise exception 'epreuve_non_desactivable'
+      using errcode = '23514',
+            detail = 'Seules les épreuves de bloc et de vitesse d''une rencontre adulte se désactivent (spec #20 R36).';
+  end if;
+  if v_phase not in ('pre_competition', 'preparation') then
+    raise exception 'etat_epreuve_fige'
+      using errcode = '23514',
+            detail = 'Une épreuve ne s''active ou ne se désactive qu''en pré-compétition ou en préparation (spec #20 R37).';
+  end if;
+  return new;
+end;
+$$;
+
+comment on function interclub.verifier_etat_epreuve() is
+  'Trigger BEFORE INSERT/UPDATE OF active (epreuve) : bloc ou vitesse d''une rencontre adulte, en ①/② seulement (spec #20 R36/R37).';
+
+drop trigger if exists epreuve_etat on interclub.epreuve;
+create trigger epreuve_etat
+  before insert or update of active on interclub.epreuve
+  for each row execute function interclub.verifier_etat_epreuve();
+
+-- 3. Désactiver la vitesse révoque ses jetons juges (R39).
+create or replace function interclub.revoquer_jetons_juges_vitesse()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if new.type = 'vitesse' and old.active and not new.active then
+    update interclub.jeton_qr j
+       set actif = false
+     where j.nature = 'juge'
+       and j.actif
+       and j.voie_vitesse_id in (select vv.id from interclub.voie_vitesse vv where vv.rencontre_id = new.rencontre_id);
+  end if;
+  return null;
+end;
+$$;
+
+comment on function interclub.revoquer_jetons_juges_vitesse() is
+  'Trigger AFTER UPDATE OF active (epreuve) : la désactivation de la vitesse révoque ses jetons juges (spec #20 R39).';
+
+drop trigger if exists epreuve_vitesse_revoque_juges on interclub.epreuve;
+create trigger epreuve_vitesse_revoque_juges
+  after update of active on interclub.epreuve
+  for each row execute function interclub.revoquer_jetons_juges_vitesse();
+
+-- 4. Pas de jeton juge sur une vitesse désactivée (R39).
+create or replace function interclub.verifier_jeton_juge_vitesse_active()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if new.nature = 'juge' and new.actif and exists (
+    select 1
+      from interclub.voie_vitesse vv
+      join interclub.epreuve e on e.rencontre_id = vv.rencontre_id and e.type = 'vitesse'
+     where vv.id = new.voie_vitesse_id and not e.active
+  ) then
+    raise exception 'epreuve_desactivee'
+      using errcode = '23514',
+            detail = 'L''épreuve de vitesse est désactivée : aucun jeton juge (spec #20 R39).';
+  end if;
+  return new;
+end;
+$$;
+
+comment on function interclub.verifier_jeton_juge_vitesse_active() is
+  'Trigger BEFORE INSERT/UPDATE (jeton_qr) : aucun jeton juge actif sur une épreuve de vitesse désactivée (spec #20 R39).';
+
+drop trigger if exists jeton_qr_juge_vitesse_active on interclub.jeton_qr;
+create trigger jeton_qr_juge_vitesse_active
+  before insert or update of nature, voie_vitesse_id, actif on interclub.jeton_qr
+  for each row execute function interclub.verifier_jeton_juge_vitesse_active();
+
+-- 5. Aucun résultat sur une épreuve désactivée (R40).
+create or replace function interclub.verifier_epreuve_active_bloc()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if exists (
+    select 1 from interclub.bloc b join interclub.epreuve e on e.id = b.epreuve_id
+     where b.id = new.bloc_id and not e.active
+  ) then
+    raise exception 'epreuve_desactivee'
+      using errcode = '23514',
+            detail = 'L''épreuve de bloc est désactivée pour cette rencontre (spec #20 R40).';
+  end if;
+  return new;
+end;
+$$;
+
+comment on function interclub.verifier_epreuve_active_bloc() is
+  'Trigger BEFORE INSERT/UPDATE (resultat_bloc) : refus sur une épreuve de bloc désactivée (spec #20 R40).';
+
+drop trigger if exists resultat_bloc_epreuve_active on interclub.resultat_bloc;
+create trigger resultat_bloc_epreuve_active
+  before insert or update on interclub.resultat_bloc
+  for each row execute function interclub.verifier_epreuve_active_bloc();
+
+create or replace function interclub.verifier_epreuve_active_vitesse()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if exists (select 1 from interclub.epreuve e where e.id = new.epreuve_id and not e.active) then
+    raise exception 'epreuve_desactivee'
+      using errcode = '23514',
+            detail = 'L''épreuve de vitesse est désactivée pour cette rencontre (spec #20 R40).';
+  end if;
+  return new;
+end;
+$$;
+
+comment on function interclub.verifier_epreuve_active_vitesse() is
+  'Trigger BEFORE INSERT/UPDATE (temps_vitesse) : refus sur une épreuve de vitesse désactivée (spec #20 R40).';
+
+drop trigger if exists temps_vitesse_epreuve_active on interclub.temps_vitesse;
+create trigger temps_vitesse_epreuve_active
+  before insert or update on interclub.temps_vitesse
+  for each row execute function interclub.verifier_epreuve_active_vitesse();
+
+-- Les fonctions trigger ne sont pas des RPC.
+revoke execute on function interclub.verifier_etat_epreuve() from public;
+revoke execute on function interclub.revoquer_jetons_juges_vitesse() from public;
+revoke execute on function interclub.verifier_jeton_juge_vitesse_active() from public;
+revoke execute on function interclub.verifier_epreuve_active_bloc() from public;
+revoke execute on function interclub.verifier_epreuve_active_vitesse() from public;
+
+-- ===========================================================================
+-- Suivi de version
+-- ===========================================================================
+
+insert into interclub.version (version, description, applique_par)
+values (
+  '202610251100_epreuves_desactivables',
+  'Catégorie adulte (spec #20 R36–R40) : colonne epreuve.active ; triggers d''état (bloc/vitesse adulte, en ①/②), révocation des jetons juges à la désactivation de la vitesse, refus des jetons juges et des résultats de bloc / temps sur une épreuve désactivée. Retour arrière dans supabase/retours-arriere/.',
+  'julleroyfr'
+)
+on conflict (version) do nothing;
+
+
+-- ----------------------------------------------------------------------------
+-- archive/202610251200_ajout_grimpeur_licence_generee.sql
+-- ----------------------------------------------------------------------------
+-- ===========================================================================
+-- 202610251200_ajout_grimpeur_licence_generee
+--
+-- Objet : ajout unitaire d'un grimpeur sans licence (spec #3 R21d, validée le
+--         2026-10-25 ; spec #18 R14 étendue).
+--   1. RPC `interclub.creer_grimpeur_licence_generee(uuid, text, text, int,
+--      text)` : crée le grimpeur avec la prochaine licence générée (plus
+--      grande licence de la plage réservée + 1). Même verrou transactionnel
+--      (même clé) que `importer_grimpeurs_csv` : un ajout concurrent d'un
+--      import ne peut recevoir une licence déjà attribuée par celui-ci.
+--      `importer_grimpeurs_csv` est inchangée.
+--
+-- Sécurité : SECURITY INVOKER — la RLS (`grimpeur_insert`) reste la frontière ;
+--            garde `est_admin()` en défense en profondeur (écran admin, spec #3
+--            R20). EXECUTE retiré à PUBLIC/anon, accordé à `authenticated` seul.
+--
+-- Entrée : club, nom, prénom, année de naissance, sexe (normalisés en amont par
+--          le domaine TS `normaliserAjoutGrimpeur`). Les contraintes de table
+--          (bornes, sexe) restent la vérité.
+-- Sortie : la licence attribuée.
+-- Erreurs : `acces_refuse`, `club_introuvable`, `plage_licences_epuisee`
+--           (P0001).
+--
+-- Réversibilité : additive. Retour arrière :
+-- supabase/retours-arriere/202610251200_ajout_grimpeur_licence_generee_retour_arriere.sql.
+-- Prérequis : 202610101000_import_csv_sans_licence. Idempotent (create or
+-- replace). Application MANUELLE dans le SQL Editor (recette puis prod).
+-- ===========================================================================
+
+-- 1. Ajout unitaire avec licence générée (spec #3 R21d, spec #18 R14).
+create or replace function interclub.creer_grimpeur_licence_generee(
+  p_club_id         uuid,
+  p_nom             text,
+  p_prenom          text,
+  p_annee_naissance int,
+  p_sexe            text
+)
+returns int
+language plpgsql
+set search_path = interclub, public, extensions
+as $$
+declare
+  v_prochaine bigint;
+begin
+  -- Garde applicative. La RLS refuserait déjà l'écriture d'un non-admin hors
+  -- de son club.
+  if not interclub.est_admin() then
+    raise exception 'acces_refuse' using errcode = 'P0001';
+  end if;
+
+  if not exists (select 1 from interclub.club where id = p_club_id) then
+    raise exception 'club_introuvable' using errcode = 'P0001';
+  end if;
+
+  -- Même clé que l'import CSV : ajouts et imports sont sérialisés jusqu'à la
+  -- fin de la transaction, le calcul de la prochaine licence voit un état
+  -- stable.
+  perform pg_advisory_xact_lock(hashtext('interclub.importer_grimpeurs_csv'));
+
+  -- Prochaine licence générée : plus grande licence de la plage + 1 (R14).
+  select coalesce(max(licence), 1999999999) + 1
+    into v_prochaine
+    from interclub.grimpeur
+   where licence >= 2000000000;
+
+  if v_prochaine > 2147483647 then
+    raise exception 'plage_licences_epuisee' using errcode = 'P0001';
+  end if;
+
+  insert into interclub.grimpeur
+    (club_id, nom, prenom, annee_naissance, sexe, licence)
+  values
+    (p_club_id, p_nom, p_prenom, p_annee_naissance, p_sexe, v_prochaine::int);
+
+  return v_prochaine::int;
+end;
+$$;
+
+comment on function interclub.creer_grimpeur_licence_generee(uuid, text, text, int, text) is
+  'Ajout unitaire d''un grimpeur sans licence : licence générée de la plage réservée, sous le verrou de l''import CSV (spec #3 R21d, spec #18 R14).';
+
+revoke execute on function interclub.creer_grimpeur_licence_generee(uuid, text, text, int, text) from public, anon;
+grant execute on function interclub.creer_grimpeur_licence_generee(uuid, text, text, int, text) to authenticated;
+
+-- ===========================================================================
+-- Suivi de version
+-- ===========================================================================
+
+insert into interclub.version (version, description, applique_par)
+values (
+  '202610251200_ajout_grimpeur_licence_generee',
+  'Ajout unitaire d''un grimpeur sans licence (spec #3 R21d) : RPC creer_grimpeur_licence_generee (SECURITY INVOKER, garde est_admin, verrou partagé avec importer_grimpeurs_csv). Retour arrière dans supabase/retours-arriere/.',
   'julleroyfr'
 )
 on conflict (version) do nothing;
