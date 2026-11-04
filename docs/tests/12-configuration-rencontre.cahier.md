@@ -214,10 +214,10 @@ d'ouverture du **tableau de bord** → `/admin/rencontres/<id>`.
      applique `peutTransiter`, couvert par Vitest — `rencontre.test.ts`,
      « peutTransiter (spec #3 R17) » ; scénario d'écran : CT-17.)*
 
-### CT-14 — Lien vers les jetons QR de la rencontre (couvre R41b)
+### CT-14 — Lien vers les QR codes de la rencontre (couvre R41b)
 
 - **Rôle** : admin. **Étapes** : depuis le tableau de bord, activer le lien
-  **« Jetons QR »**.
+  **« QR codes »**.
 - **Résultat attendu** : redirection vers `/admin/jetons?rencontre=<id>`, la
   rencontre étant **déjà sélectionnée** (sections coach temporaire / juge
   affichées, spec #2). Retour au tableau de bord possible.

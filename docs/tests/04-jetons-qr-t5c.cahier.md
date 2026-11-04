@@ -54,8 +54,8 @@ restent à dérouler à la main.
 
 - **Rôle / compte** : `admin@test.local`.
 - **Étapes** :
-  1. `/admin/jetons` → choisir la rencontre → section « Coach temporaire ».
-  2. Sur Club A, cliquer « Générer le jeton ».
+  1. Menu « QR codes » (`/admin/jetons`) → choisir la rencontre → section « Coach temporaire ».
+  2. Sur Club A, cliquer « Générer le QR code ».
 - **Résultat attendu** : un **QR** s'affiche pour Club A, avec sa valeur et les
   actions Régénérer / Révoquer.
 
@@ -63,7 +63,7 @@ restent à dérouler à la main.
 
 - **Rôle / compte** : `admin@test.local`.
 - **Étapes** :
-  1. Section « Juge » → sur Voie 1, « Générer le jeton ».
+  1. Section « Juge » → sur Voie 1, « Générer le QR code ».
 - **Résultat attendu** : un **QR** juge s'affiche pour Voie 1 (= affectation du
   juge à cette voie). Idem possible sur Voie 2 (un juge par voie, R18).
 
@@ -87,8 +87,10 @@ restent à dérouler à la main.
 
 - **Rôle / compte** : `coach@test.local`.
 - **Étapes** :
-  1. Depuis l'accueil, « Mes jetons QR » → `/coach/jetons`.
-  2. Générer, puis régénérer, puis révoquer le jeton coach temporaire de Club A.
+  1. Depuis le menu, « Coachs temporaires » → `/coach/jetons`.
+  2. « Générer le QR code », puis régénérer, puis révoquer le QR coach temporaire
+     de Club A.
+  3. Vérifier qu'aucun libellé de l'écran ne mentionne « jeton ».
 - **Résultat attendu** : les trois actions réussissent, **uniquement** pour Club A.
   Aucune section « Juge » ni autre club n'est présentée.
 

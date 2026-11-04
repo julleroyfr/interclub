@@ -15,7 +15,7 @@
 5. [Gabarit de rencontre](#5-gabarit-de-rencontre)
 6. [Rencontres](#6-rencontres)
 7. [Tableau de bord d'une rencontre](#7-tableau-de-bord-dune-rencontre)
-8. [Jetons QR : coachs temporaires, capitaines et juges](#8-jetons-qr--coachs-temporaires-capitaines-et-juges)
+8. [QR codes : coachs temporaires, capitaines et juges](#8-qr-codes--coachs-temporaires-capitaines-et-juges)
 9. [Le jour J : saisie et affichage](#9-le-jour-j--saisie-et-affichage)
 10. [Après la compétition : contrôle et publication](#10-après-la-compétition--contrôle-et-publication)
 11. [Rôles et comptes](#11-rôles-et-comptes)
@@ -77,9 +77,9 @@ raccourcis vers chaque écran.
 
 | N° | Élément | Effet |
 | --- | --- | --- |
-| 1 | Barre de navigation | Accès à tous les écrans : Rencontres, Clubs, Grimpeurs, Gabarit, Jetons, Rôles |
+| 1 | Barre de navigation | Accès à tous les écrans : Rencontres, Clubs, Grimpeurs, Gabarit, QR codes, Rôles |
 | 2 | Bouton de phase | Fait avancer (ou reculer) la rencontre d'une phase, sans quitter le tableau de bord |
-| 3 | Icône QR | Ouvre les jetons QR de cette rencontre |
+| 3 | Icône QR | Ouvre les QR codes de cette rencontre |
 | 4 | Gérer | Ouvre l'écran complet des rencontres |
 | 5 | Accès | Raccourcis vers les écrans de paramétrage |
 
@@ -259,9 +259,9 @@ En compétition, une voie adulte peut être réussie **en tête** (« Top ») ou
 moulinette** (« Top en moulinette », pastille ambre) : la moulinette rapporte la
 moitié des points du top et jamais de points de zone.
 
-**Capitaines d'équipe (adulte)** : dans **Jetons QR**, une rencontre adulte
+**Capitaines d'équipe (adulte)** : dans **QR codes**, une rencontre adulte
 affiche une section « Capitaines d'équipe » (et pas de coach temporaire) : un
-jeton par équipe, à générer, afficher, régénérer ou révoquer. Le capitaine qui
+QR code par équipe, à générer, afficher, régénérer ou révoquer. Le capitaine qui
 scanne le QR pendant la compétition saisit les voies et les blocs des seuls
 membres de son équipe, et consulte le classement ; ses saisies sont tracées avec
 le rôle « capitaine ». La vitesse reste aux juges. Voir le guide du capitaine.
@@ -283,7 +283,7 @@ L'écran central de la préparation d'une rencontre : phase, structure, prêts e
 | N° | Élément | Effet |
 | --- | --- | --- |
 | 1 | Bouton de phase | Fait avancer la rencontre ; « ← » la fait reculer |
-| 2 | Jetons QR | Ouvre les QR des coachs temporaires (capitaines en adulte) et des juges |
+| 2 | QR codes | Ouvre les QR des coachs temporaires (capitaines en adulte) et des juges |
 | 3 | Onglets de structure | Voies de difficulté, Blocs, Vitesse |
 | 4 | Crayon (Modifier) | Ouvre le formulaire de la voie (niveau, type, cotation, points) |
 | 5 | Croix rouge (Supprimer) | Supprime la voie, après confirmation |
@@ -377,7 +377,7 @@ club par le panneau **Équipes adultes**, et permet de désactiver une épreuve.
 
 | N° | Élément | Effet |
 | --- | --- | --- |
-| 1 | Jetons QR (Capitaines & juges) | Ouvre les QR des capitaines et des juges |
+| 1 | QR codes (Capitaines & juges) | Ouvre les QR des capitaines et des juges |
 | 2 | Onglet Blocs (ou Vitesse) | Affiche l'épreuve et son état « Active » ou « Désactivée » |
 | 3 | Désactiver l'épreuve | Désactive (ou réactive) l'épreuve de bloc ou de vitesse |
 | 4 | Équipe de destination | Avec **Changer d'équipe** : déplace le grimpeur vers une autre équipe |
@@ -395,19 +395,19 @@ juge de vitesse, pas de blocs…), les onglets **Blocs** et **Vitesse** proposen
 « Désactiver l'épreuve », en ① et en ②. L'épreuve disparaît alors de la saisie,
 du contrôle et du classement ; son onglet indique « désactivée ». Ses blocs,
 voies et barème sont conservés : « Réactiver l'épreuve » la remet à
-l'identique. Désactiver la vitesse révoque ses jetons juges ; après
+l'identique. Désactiver la vitesse révoque ses QR codes juges ; après
 réactivation, générez-en de nouveaux. Dès la ③, l'état est figé. Les voies de
 difficulté ne se désactivent pas.
 
-## 8. Jetons QR : coachs temporaires, capitaines et juges
+## 8. QR codes : coachs temporaires, capitaines et juges
 
-<img src="captures/05-jetons.png" alt="Jetons QR d'une rencontre" width="640">
+<img src="captures/05-jetons.png" alt="QR codes d'une rencontre" width="640">
 
 | N° | Élément | Effet |
 | --- | --- | --- |
 | 1 | Régénérer | Remplace le QR : l'ancien ne fonctionne plus, ses sessions sont fermées |
 | 2 | Révoquer | Désactive le QR et ferme ses sessions |
-| 3 | Générer le jeton | Crée le QR manquant |
+| 3 | Générer le QR code | Crée le QR manquant |
 
 Deux sortes de QR par rencontre :
 
@@ -421,7 +421,7 @@ Deux sortes de QR par rencontre :
 En rencontre **adulte**, la section « Coach temporaire » est remplacée par
 **Capitaines d'équipe** :
 
-<img src="captures/20-jetons-capitaines.png" alt="Jetons QR des capitaines d'une rencontre adulte" width="640">
+<img src="captures/20-jetons-capitaines.png" alt="QR codes des capitaines d'une rencontre adulte" width="640">
 
 | N° | Élément | Effet |
 | --- | --- | --- |
@@ -433,7 +433,7 @@ En rencontre **adulte**, la section « Coach temporaire » est remplacée par
   saisit les voies et les blocs des membres de son équipe et consulte le
   classement. Remettre à chaque capitaine le QR de **son** équipe.
 - Si la vitesse est désactivée, la section des juges indique « Épreuve de
-  vitesse désactivée : aucun jeton juge ».
+  vitesse désactivée : aucun QR code juge ».
 
 Un QR peut être généré à l'avance ; il ne permet d'entrer que pendant sa
 fenêtre. Plusieurs personnes peuvent utiliser le même QR. Les sessions se

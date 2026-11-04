@@ -14,7 +14,7 @@ export function liensAdmin(): LienNav[] {
     { href: '/admin/clubs', label: 'Clubs' },
     { href: '/admin/grimpeurs', label: 'Grimpeurs' },
     { href: '/admin/gabarit', label: 'Gabarit' },
-    { href: '/admin/jetons', label: 'Jetons' },
+    { href: '/admin/jetons', label: 'QR codes' },
     { href: '/admin/mapping', label: 'Rôles' },
   ]
 }

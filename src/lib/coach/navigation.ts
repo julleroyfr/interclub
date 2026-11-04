@@ -5,8 +5,8 @@ import { type ContexteCoach } from '@/lib/auth/session'
 
 /**
  * Liens de navigation de l'espace coach (spec #5, spec #12 R10/R11). Le coach
- * **permanent** voit « Mes rencontres » (R6) et ses « Jetons » QR (accès interne,
- * spec #12 R10) ; le coach **temporaire**, dont la session est bornée à une seule
+ * **permanent** voit « Mes rencontres » (R6) et « Coachs temporaires », ses QR
+ * codes coach temporaire (accès interne, spec #12 R10) ; le coach **temporaire**, dont la session est bornée à une seule
  * rencontre (R8bis, spec #1 R27/R28), a un accès direct à sa rencontre et à son
  * **classement en lecture** (spec #12 R11). Pas de lien « Accueil » : `/` n'est
  * plus un écran (spec #12 R7). La sortie se fait par « Se déconnecter »
@@ -21,7 +21,7 @@ export function liensCoach(contexte: ContexteCoach): LienNav[] {
   }
   return [
     { href: '/coach', label: 'Mes rencontres' },
-    { href: '/coach/jetons', label: 'Jetons' },
+    { href: '/coach/jetons', label: 'Coachs temporaires' },
   ]
 }
 

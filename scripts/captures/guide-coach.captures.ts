@@ -116,10 +116,10 @@ test('02 — mes rencontres et menu', async ({ page }) => {
 
   await effacerReperes(page)
   await page.getByRole('button', { name: /Menu/ }).click()
-  await expect(page.getByRole('link', { name: 'Jetons' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Coachs temporaires' })).toBeVisible()
   await numeroter(page, [
     page.getByRole('link', { name: 'Mes rencontres' }),
-    page.getByRole('link', { name: 'Jetons' }),
+    page.getByRole('link', { name: 'Coachs temporaires' }),
   ])
   await capturer(page, '04-menu', { pleinePage: false })
 })
@@ -157,11 +157,11 @@ test('03 — engagement des équipes', async ({ page }) => {
   await capturerBloc(page, nouvelle, '07-engagement-nouvelle-equipe')
 })
 
-test('04 — jetons QR du coach temporaire', async ({ page }) => {
+test('04 — QR codes des coachs temporaires', async ({ page }) => {
   await commeCoach(page)
   await page.goto('/coach/jetons')
   await numeroter(page, [
-    page.getByRole('button', { name: 'Générer le jeton' }),
+    page.getByRole('button', { name: 'Générer le QR code' }),
     page.getByRole('button', { name: 'Régénérer' }),
     page.getByRole('button', { name: 'Révoquer' }),
   ])

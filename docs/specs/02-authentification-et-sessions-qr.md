@@ -38,6 +38,11 @@
   définitivement **tout** compte permanent (coach, admin ou sans rôle) **sauf le
   sien** ; les données saisies sont conservées, sans auteur. Retire la
   suppression de compte du « Hors périmètre ».
+- **Révision** : 2026-11-04 — **vocabulaire d'affichage** (R47, demande
+  utilisateur du 2026-11-04 : « jeton » est un terme technique, trop abstrait
+  pour les utilisateurs) : les écrans parlent de **QR code**, jamais de
+  « jeton ». Le terme reste celui du modèle (table `jeton_qr`, code). Aucune
+  autre règle modifiée.
 
 ## Objectif
 
@@ -289,6 +294,14 @@ alimente le modèle de données (mapping, jetons) et les policies **RLS**.
   l'admin connecté. Les comptes **anonymes** des sessions QR éphémères (R6) ne
   sont pas des comptes permanents : ils ne sont **ni listés ni proposés** à
   l'attribution d'un rôle.
+
+### Vocabulaire d'affichage (rév. 2026-11-04)
+
+- **R47.** Aucun texte visible par un utilisateur (libellé, titre, bouton,
+  message, texte alternatif) n'emploie le mot « jeton » : on parle de **QR
+  code** (ex. « Générer le QR code », « QR code juge »). Le menu de gestion
+  s'intitule **« QR codes »** côté admin et **« Coachs temporaires »** côté coach
+  (spec #12 R10). « Jeton » reste le terme du modèle de données et du code.
 
 ## Scénarios
 

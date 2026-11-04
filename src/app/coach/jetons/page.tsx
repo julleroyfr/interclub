@@ -14,7 +14,7 @@ import { listerJetonsActifs, listerRencontresDuClub } from '@/lib/jetons/jetons'
 
 import { AfficheurJeton } from '../../admin/jetons/afficheur-jeton'
 
-export const metadata: Metadata = { title: 'Mes jetons QR — Interclub' }
+export const metadata: Metadata = { title: 'Coachs temporaires — Interclub' }
 
 export default async function PageJetonsCoach({
   searchParams,
@@ -36,8 +36,8 @@ export default async function PageJetonsCoach({
     <Coquille liens={liensCoach({ type: 'permanent', clubId })} deconnexion>
       <div className="flex flex-col gap-6">
         <EnTetePage
-          titre="Mes jetons QR"
-          sousTitre="Le jeton « coach temporaire » de votre club, pour chaque rencontre où il est engagé."
+          titre="Coachs temporaires"
+          sousTitre="Pour chaque rencontre où votre club est engagé, un QR code permet à une autre personne d’être coach de votre club le jour J, sans compte."
         />
 
         {erreur && (

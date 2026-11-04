@@ -10,6 +10,9 @@
   « Jetons » devient un **lien interne** de l'espace coach (R10) ; le coach
   **temporaire** gagne l'accès à son **classement en lecture**, borné à sa
   rencontre (R11). Détails et diagramme : `12-navigation-et-routing.md`.
+- **Révision** : 2026-11-04 — vocabulaire (spec #12 rév. 2026-11-04) : le lien
+  « Jetons » s'appelle **« Coachs temporaires »** ; l'espace coach ne parle plus
+  de « jeton » à l'affichage mais de **QR code**. Aucune règle modifiée.
 - **Révision** : 2026-10-09 — temps réel (TODO D6, spec #11 rév. 2026-10-09) :
   tant que la composition est modifiable (R16), l'écran d'engagement se met à
   jour **sans rechargement** quand un prêt (R12/R13), une équipe ou une

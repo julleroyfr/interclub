@@ -121,7 +121,7 @@ test('01 — tableau de bord', async ({ page }) => {
   await numeroter(page, [
     page.getByRole('navigation').first(),
     bouton(page, 'Préparation jour J →'),
-    lien(page, /Jetons QR de cette rencontre/),
+    lien(page, /QR codes de cette rencontre/),
     lien(page, 'Gérer →'),
     page.getByText('Accès', { exact: true }).locator('..'),
   ])
@@ -146,7 +146,7 @@ test('03 — tableau de bord d’une rencontre', async ({ page }) => {
   await page.goto(`/admin/rencontres/${RENCONTRE_PILOTE}`)
   await numeroter(page, [
     bouton(page, 'Avancer à la phase suivante'),
-    lien(page, /Jetons QR/),
+    lien(page, /QR codes.+juges/),
     bouton(page, /Voies de difficulté/),
     page.getByRole('button', { name: /^Modifier la voie / }).first(),
     page.getByRole('button', { name: /^Supprimer la voie / }).first(),
@@ -172,12 +172,12 @@ test('03 — tableau de bord d’une rencontre', async ({ page }) => {
   await capturerBloc(page, clubA, '04-rencontre-equipes')
 })
 
-test('04 — jetons QR d’une rencontre', async ({ page }) => {
+test('04 — QR codes d’une rencontre', async ({ page }) => {
   await page.goto(`/admin/jetons?rencontre=${RENCONTRE_PILOTE}`)
   await numeroter(page, [
     bouton(page, 'Régénérer'),
     bouton(page, 'Révoquer'),
-    bouton(page, 'Générer le jeton'),
+    bouton(page, 'Générer le QR code'),
   ])
   await capturer(page, '05-jetons')
 })
@@ -346,7 +346,7 @@ test('10 — rencontre adulte : équipes, épreuves, capitaines', async ({ page 
   const equipe1 = page.locator('[data-equipe="Équipe 1"]')
   await expect(equipe1).toBeVisible()
   await numeroter(page, [
-    lien(page, /Jetons QR/),
+    lien(page, /QR codes.+juges/),
     bouton(page, /^Blocs · 2/),
     bouton(page, 'Désactiver l’épreuve de bloc'),
     equipe1.getByRole('combobox').first(),

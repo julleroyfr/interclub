@@ -91,13 +91,13 @@
 - **RLS / sécurité** : après déconnexion, rouvrir un écran protégé → `/connexion`
   (R2).
 
-### CT-07 — Jetons accessibles depuis l'espace coach (couvre R10, C1)
+### CT-07 — Coachs temporaires accessibles depuis l'espace coach (couvre R10, C1)
 
 - **Rôle** : `coach@` (permanent).
-- **Étapes** : depuis `/coach`, utiliser le lien **« Jetons »** de la barre de
+- **Étapes** : depuis `/coach`, utiliser le lien **« Coachs temporaires »** de la barre de
   navigation.
 - **Résultat attendu** : `/coach/jetons` s'ouvre. **Non-régression C1** : bien que
-  l'accueil n'y mène plus, les jetons **restent joignables** via la nav coach.
+  l'accueil n'y mène plus, l'écran **reste joignable** via la nav coach.
 
 ### CT-08 — Coach temporaire : nav bornée + classement lecture (couvre R11, R22)
 
@@ -105,7 +105,7 @@
 - **Étapes** : après scan, observer la barre de navigation ; ouvrir
   **« Classement »**.
 - **Résultat attendu** : la nav contient `Ma rencontre` et `Classement`, plus une
-  action **« Terminer »** — **pas** de « Mes rencontres », « Jetons », « Accueil »
+  action **« Terminer »** — **pas** de « Mes rencontres », « Coachs temporaires », « Accueil »
   ni « Se déconnecter » (session QR, R22). Le classement de **sa** rencontre
   s'affiche en lecture (cf. cahier 18, CT-12).
 - **RLS / sécurité** : viser le classement d'une **autre** rencontre → **404**

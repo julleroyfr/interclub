@@ -247,11 +247,11 @@ main, `[mixte]` partie automatisée + vérification à l'œil.
 - **Résultat attendu** : la base refuse `top_moulinette` sur une voie enfant
   ou ado et toute issue inconnue.
 
-### CT-20 — L'admin génère le jeton capitaine d'une équipe (couvre : R16, R20) `[auto]`
+### CT-20 — L'admin génère le QR code capitaine d'une équipe (couvre : R16, R20) `[auto]`
 
 - **Rôle / compte** : `JD-ADMIN`, rencontre adulte avec « Équipe 1 ».
-- **Étapes** : Jetons QR → la rencontre adulte → section **« Capitaines
-  d'équipe »** → carte « Équipe 1 » → **Générer le jeton**.
+- **Étapes** : QR codes → la rencontre adulte → section **« Capitaines
+  d'équipe »** → carte « Équipe 1 » → **Générer le QR code**.
 - **Résultat attendu** : QR affiché, avec **Régénérer** et **Révoquer** ; la
   section « Coach temporaire » est absente ; les jetons juge portent le libellé
   de leur voie (R9bis).

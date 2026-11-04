@@ -13,7 +13,7 @@
 2. [Créer son compte et se connecter](#2-créer-son-compte-et-se-connecter)
 3. [Mes rencontres](#3-mes-rencontres)
 4. [Engager ses équipes](#4-engager-ses-équipes)
-5. [Jetons QR du coach temporaire](#5-jetons-qr-du-coach-temporaire)
+5. [Coachs temporaires](#5-coachs-temporaires)
 6. [Saisir les résultats](#6-saisir-les-résultats)
 7. [Consulter le classement](#7-consulter-le-classement)
 8. [Coach temporaire (accès par QR)](#8-coach-temporaire-accès-par-qr)
@@ -35,12 +35,12 @@ tous.
 
 | Profil | Comment il accède | Ce qu'il peut faire |
 | --- | --- | --- |
-| **Coach permanent** | Compte personnel (e-mail + mot de passe) | Toutes les rencontres de son club, engagement, jetons QR, résultats, classement |
+| **Coach permanent** | Compte personnel (e-mail + mot de passe) | Toutes les rencontres de son club, engagement, coachs temporaires (QR codes), résultats, classement |
 | **Coach temporaire** | Scan d'un QR le jour J | Sa seule rencontre : engagement (en préparation), résultats, classement |
 
 Le coach temporaire est une personne de confiance (parent, encadrant…) qui aide
 le jour de la rencontre sans avoir de compte. Le coach permanent lui transmet le
-QR de la rencontre (voir [§ 5](#5-jetons-qr-du-coach-temporaire)).
+QR de la rencontre (voir [§ 5](#5-coachs-temporaires)).
 
 ### Les phases d'une rencontre
 
@@ -134,7 +134,7 @@ Les rencontres sont triées par urgence : d'abord celles en ② préparation, pu
 | N° | Élément | Effet |
 | --- | --- | --- |
 | 1 | Mes rencontres | Retour à la liste des rencontres |
-| 2 | Jetons | Gestion des QR du coach temporaire ([§ 5](#5-jetons-qr-du-coach-temporaire)) |
+| 2 | Coachs temporaires | Gestion des QR codes du coach temporaire ([§ 5](#5-coachs-temporaires)) |
 
 ## 4. Engager ses équipes
 
@@ -209,16 +209,16 @@ votre liste, le prêt reste actif ; seul l'organisateur y met fin.
 Un club peut engager plusieurs équipes dans la même rencontre, à condition
 qu'elles aient des noms différents.
 
-## 5. Jetons QR du coach temporaire
+## 5. Coachs temporaires
 
-Réservé au coach permanent. Le jeton permet à une autre personne (parent,
+Réservé au coach permanent. Le QR code permet à une autre personne (parent,
 encadrant…) de tenir le rôle de coach **le jour de la rencontre**, sans compte.
 
-<img src="captures/08-jetons.png" alt="Écran des jetons QR" width="320">
+<img src="captures/08-jetons.png" alt="Écran Coachs temporaires" width="320">
 
 | N° | Élément | Effet |
 | --- | --- | --- |
-| 1 | Générer le jeton | Crée le QR de la rencontre |
+| 1 | Générer le QR code | Crée le QR de la rencontre |
 | 2 | Régénérer | Remplace le QR : l'ancien ne fonctionne plus |
 | 3 | Révoquer | Désactive le QR définitivement |
 

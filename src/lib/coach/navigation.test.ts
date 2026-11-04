@@ -12,11 +12,11 @@ import {
  * Fonction pure : testable sans Supabase.
  */
 describe('liensCoach', () => {
-  it('coach permanent : Mes rencontres, Jetons — sans « Accueil » (R10, R7)', () => {
+  it('coach permanent : Mes rencontres, Coachs temporaires — sans « Accueil » (R10, R7)', () => {
     const liens = liensCoach({ type: 'permanent', clubId: 'club-1' })
     expect(liens).toEqual([
       { href: '/coach', label: 'Mes rencontres' },
-      { href: '/coach/jetons', label: 'Jetons' },
+      { href: '/coach/jetons', label: 'Coachs temporaires' },
     ])
   })
 
@@ -27,7 +27,7 @@ describe('liensCoach', () => {
     expect(temp.some((l) => l.href === '/')).toBe(false)
   })
 
-  it('coach permanent : expose « Jetons » (seul accès depuis que l\'accueil n\'y mène plus, C1)', () => {
+  it('coach permanent : expose « Coachs temporaires » (seul accès depuis que l\'accueil n\'y mène plus, C1)', () => {
     const liens = liensCoach({ type: 'permanent', clubId: 'club-1' })
     expect(liens.some((l) => l.href === '/coach/jetons')).toBe(true)
   })

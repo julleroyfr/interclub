@@ -190,7 +190,7 @@ test.describe('Édition de la structure d’une rencontre (spec #3 R51–R55)', 
     await page.goto(URL_ADMIN)
     await ouvrirOnglet(page, /^Vitesse/)
     await page.getByRole('button', { name: 'Supprimer la voie de vitesse E2E' }).click()
-    await expect(page.getByText('Ses jetons juges seront aussi supprimés.')).toBeVisible()
+    await expect(page.getByText('Ses QR codes juges seront aussi supprimés.')).toBeVisible()
     await page.getByRole('button', { name: 'Oui, supprimer' }).click()
     await expect(page.getByRole('button', { name: 'Supprimer la voie de vitesse E2E' })).toHaveCount(0)
     expect(execSql(`select count(*) from interclub.voie_vitesse where id = '${VITESSE}';`)).toBe('0')

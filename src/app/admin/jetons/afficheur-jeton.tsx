@@ -27,7 +27,8 @@ type Props = {
 /**
  * Affiche le jeton actif d'un périmètre (QR + actions révoquer/régénérer) ou,
  * s'il n'existe pas, un bouton de génération. Server Component : les actions
- * sont des Server Actions (formulaires), aucune JS client nécessaire.
+ * sont des Server Actions (formulaires), aucune JS client nécessaire. Les
+ * libellés parlent de « QR code », jamais de « jeton » (spec #2 R47).
  */
 export function AfficheurJeton({ titre, chemin, perimetre, jeton }: Props) {
   return (
@@ -39,7 +40,7 @@ export function AfficheurJeton({ titre, chemin, perimetre, jeton }: Props) {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={jeton.qrDataUrl}
-            alt={`QR du jeton ${titre}`}
+            alt={`QR code ${titre}`}
             width={180}
             height={180}
             className="mx-auto rounded-xl bg-white p-2"
@@ -83,7 +84,7 @@ export function AfficheurJeton({ titre, chemin, perimetre, jeton }: Props) {
             <input type="hidden" name="equipeId" value={perimetre.equipeId} />
           )}
           <Bouton type="submit" pleineLargeur>
-            Générer le jeton
+            Générer le QR code
           </Bouton>
         </form>
       )}
