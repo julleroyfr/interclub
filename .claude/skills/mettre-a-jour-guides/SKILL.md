@@ -70,7 +70,10 @@ Le seed est lourd : si aucune capture n'est à refaire, ne pas lancer
 
 1. `npm run doc:pdf` (ou `node scripts/guides/generer-pdf.mjs <guide.md>` pour
    un seul guide). Les PDF sont **ignorés par git** et diffusés à part : le
-   signaler dans le compte rendu.
+   signaler dans le compte rendu. Le PDF affiche la version de `package.json`
+   (sous le titre et en pied de page, cf. `docs/conventions/10-versionnement.md`
+   §5) : après une mise en production, les régénérer pour que la version
+   diffusée corresponde.
 2. `npm run lint:md` doit passer.
 
 ## Compte rendu

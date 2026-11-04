@@ -68,7 +68,9 @@ flowchart LR
   dans `main` **et** `develop`.
 - Une feature ne fusionne dans `develop` que quand la Definition of Done est
   remplie (cf. [01-workflow-spec-first-tdd.md](./01-workflow-spec-first-tdd.md) §6).
-- La promotion `develop → main` se fait après validation en recette.
+- La promotion `develop → main` se fait après validation en recette et
+  s'accompagne d'une **version** (tag `vX.Y.Z` + CHANGELOG), cf.
+  [10-versionnement.md](./10-versionnement.md).
 
 ## 3. Commits
 

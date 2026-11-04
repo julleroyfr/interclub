@@ -18,6 +18,8 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Interclub",
   description: "Application interclub",
+  // Version déployée, visible seulement dans le code source (convention 10 §5).
+  other: { version: process.env.VERSION_APPLICATION ?? "" },
 };
 
 export const viewport: Viewport = {

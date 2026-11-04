@@ -28,4 +28,5 @@ Points non négociables :
 - **Push = déploiement Netlify** (pas de GitHub Actions).
 
 Skills workflow disponibles : `nouvelle-fonctionnalite`, `rediger-spec`,
-`cycle-tdd`, `rediger-cahier-de-test`, `mettre-a-jour-guides`.
+`cycle-tdd`, `rediger-cahier-de-test`, `mettre-a-jour-guides`,
+`publier-version`.

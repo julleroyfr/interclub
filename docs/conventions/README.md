@@ -41,6 +41,7 @@ Détail et types de diagrammes : [01-workflow-spec-first-tdd.md](./01-workflow-s
 | [07-standards-nextjs-16.md](./07-standards-nextjs-16.md) | Standards Next.js 16 : Server/Client, request APIs async, Server Actions, proxy, structure |
 | [08-ihm-responsive.md](./08-ihm-responsive.md) | IHM responsive mobile-first, Tailwind v4, cibles tactiles, accessibilité |
 | [09-environnements-et-donnees.md](./09-environnements-et-donnees.md) | Environnements prod/recette, gitflow, jeux de données de test (seed/purge) |
+| [10-versionnement.md](./10-versionnement.md) | Versions SemVer, tags `vX.Y.Z`, CHANGELOG, procédure de mise en prod, version exposée (meta, guides) |
 
 ### Skills associés (`.claude/skills/`)
 
@@ -53,6 +54,7 @@ Détail et types de diagrammes : [01-workflow-spec-first-tdd.md](./01-workflow-s
 | `expertise-nextjs` | Travailler avec CE Next 16 (breaking changes) — renvoie aux docs locales |
 | `expertise-supabase` | Auth, RLS, realtime, accès données, migrations manuelles avec @supabase/ssr |
 | `expertise-ihm-responsive` | Écrans responsive mobile-first (Tailwind v4), tactile, a11y, vérif manuelle |
+| `publier-version` | Mise en production versionnée : incrément SemVer, CHANGELOG, tag `vX.Y.Z`, push sur accord |
 
 ## Statut
 
