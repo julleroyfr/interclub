@@ -90,10 +90,10 @@ test.describe('Cahier 23 — Navigation & routing (spec #12)', () => {
   })
 
   // ---- CT-07 : jetons joignables via la nav coach (R10, C1) ----
-  test('CT-07 · /coach/jetons via le lien « Jetons »', async ({ page }) => {
+  test('CT-07 · /coach/jetons via le lien « Coachs temporaires »', async ({ page }) => {
     await commeCoach(page)
     await page.goto('/coach')
-    await nav(page).getByRole('link', { name: 'Jetons' }).click()
+    await nav(page).getByRole('link', { name: 'Coachs temporaires' }).click()
     await expect(page).toHaveURL(/\/coach\/jetons/)
   })
 
@@ -141,7 +141,7 @@ test.describe('Cahier 23 — Navigation & routing (spec #12)', () => {
     // Ouvrir : mêmes liens qu'en desktop (R23), cibles ≥ 44 px, actif surligné.
     await menu.click()
     await expect(menu).toHaveAttribute('aria-expanded', 'true')
-    for (const label of ['Tableau de bord', 'Rencontres', 'Clubs', 'Grimpeurs', 'Gabarit', 'Jetons', 'Rôles']) {
+    for (const label of ['Tableau de bord', 'Rencontres', 'Clubs', 'Grimpeurs', 'Gabarit', 'QR codes', 'Rôles']) {
       const lien = nav(page).getByRole('link', { name: label })
       await expect(lien).toBeVisible()
       expect((await lien.boundingBox())!.height).toBeGreaterThanOrEqual(44)

@@ -224,15 +224,15 @@ test.describe('Catégorie adulte — lot 1 (spec #20)', () => {
     }
   })
 
-  test('l’admin génère le jeton capitaine d’une équipe adulte (R16, R20)', async ({ page }) => {
+  test('l’admin génère le QR code capitaine d’une équipe adulte (R16, R20)', async ({ page }) => {
     await commeAdmin(page)
     await page.goto(`/admin/jetons?rencontre=${idRencontre()}`)
     await expect(page.getByRole('heading', { name: 'Capitaines d’équipe' })).toBeVisible()
     // Pas de coach temporaire en adulte (R20).
     await expect(page.getByRole('heading', { name: /Coach temporaire/ })).toHaveCount(0)
     const carte = page.locator('div', { has: page.getByRole('heading', { name: 'Équipe 1', exact: true }) }).last()
-    await carte.getByRole('button', { name: 'Générer le jeton' }).click()
-    await expect(page.getByAltText('QR du jeton Équipe 1')).toBeVisible()
+    await carte.getByRole('button', { name: 'Générer le QR code' }).click()
+    await expect(page.getByAltText('QR code Équipe 1')).toBeVisible()
   })
 
   test('le capitaine saisit pour son équipe seulement, en ③ (R17–R20bis)', async ({ page }) => {
@@ -353,7 +353,7 @@ test.describe('Catégorie adulte — lot 1 (spec #20)', () => {
         ),
       ).toBe('bloc:false,vitesse:false,voie:true')
       await page.goto(`/admin/jetons?rencontre=${id}`)
-      await expect(page.getByText('Épreuve de vitesse désactivée : aucun jeton juge.')).toBeVisible()
+      await expect(page.getByText('Épreuve de vitesse désactivée : aucun QR code juge.')).toBeVisible()
 
       // ③ : état figé, plus de section Bloc à la saisie.
       execSql(`update interclub.rencontre set phase = 'competition' where id = '${id}';`)

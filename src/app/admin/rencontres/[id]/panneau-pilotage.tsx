@@ -141,7 +141,7 @@ export function PanneauPilotage({
             ▦
           </span>
           <span>
-            <span className="block text-sm font-semibold text-texte-fort">Jetons QR</span>
+            <span className="block text-sm font-semibold text-texte-fort">QR codes</span>
             <span className="block text-xs text-texte-doux">
               {`${categorie === 'adulte' ? 'Capitaines' : 'Coach temporaire'} & juges`}
             </span>

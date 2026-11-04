@@ -66,7 +66,7 @@ export default async function PageTableauDeBord() {
               <nav className="flex flex-col gap-1" aria-label="Accès rapides">
                 <LienAccesRapide href="/admin/rencontres">Rencontres</LienAccesRapide>
                 <LienAccesRapide href="/admin/gabarit">Gabarit</LienAccesRapide>
-                <LienAccesRapide href="/admin/jetons">Jetons QR</LienAccesRapide>
+                <LienAccesRapide href="/admin/jetons">QR codes</LienAccesRapide>
                 <LienAccesRapide href="/admin/mapping">Rôles</LienAccesRapide>
               </nav>
             </Carte>

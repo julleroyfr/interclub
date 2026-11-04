@@ -19,6 +19,12 @@
 - **Révision du 2026-10-09 — indicateur de chargement** (demande utilisateur du
   2026-10-09 : un clic sur un lien lent ne donnait aucun retour) : ajout de
   **R26** (indicateur de navigation en cours). Aucune autre règle modifiée.
+- **Révision du 2026-11-04 — vocabulaire coach** (demande utilisateur du
+  2026-11-04 : la notion de « jeton » est trop technique) : dans **R10**, le
+  lien « Mes jetons QR » devient **« Coachs temporaires »** ; l'espace coach ne
+  parle plus de « jeton » mais de **QR code** (spec #2 R47). Côté admin, le lien
+  « Jetons » du bandeau devient **« QR codes »**. Routes `/coach/jetons` et
+  `/admin/jetons` inchangées. Aucune autre règle modifiée.
 - **Sources** :
   - **Décision produit du 2026-09-25** (arbitrages navigation) : entrée coach
     unique, vue classement admin dédiée, sortie de session juge, classement en
@@ -102,8 +108,8 @@ menant à une impasse (404 non intentionnel).
 ### Espace coach
 
 - **R10.** `/coach` (« Mes rencontres ») est l'**entrée unique** du coach
-  permanent ; « Mes jetons QR » (`/coach/jetons`) y est un lien interne, pas une
-  destination d'entrée.
+  permanent ; « Coachs temporaires » (`/coach/jetons`, gestion des QR codes
+  coach temporaire) y est un lien interne, pas une destination d'entrée.
 - **R11.** Le coach **temporaire** a une navigation **bornée à sa rencontre** :
   `Accueil`, `Ma rencontre`, et **le classement de sa rencontre en lecture**.
   *(C6.)*

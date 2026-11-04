@@ -21,7 +21,7 @@ import {
 
 import { AfficheurJeton } from './afficheur-jeton'
 
-export const metadata: Metadata = { title: 'Jetons QR — Interclub' }
+export const metadata: Metadata = { title: 'QR codes — Interclub' }
 
 export default async function PageJetonsAdmin({
   searchParams,
@@ -38,14 +38,14 @@ export default async function PageJetonsAdmin({
     <Coquille liens={liensAdmin()} largeur="large" deconnexion>
       <div className="flex flex-col gap-6">
         <EnTetePage
-          titre="Jetons QR"
-          sousTitre="Générez, affichez, révoquez ou régénérez les jetons d’une rencontre. Générer un jeton juge affecte le juge à sa voie."
+          titre="QR codes"
+          sousTitre="Générez, affichez, révoquez ou régénérez les QR codes d’une rencontre. Générer le QR code d’une voie de vitesse y affecte le juge qui le scanne."
         />
 
         {erreur && (
           <p role="alert" className="text-sm text-danger">
-            L’opération a échoué ({erreur}). Un jeton est peut-être déjà actif sur
-            ce périmètre.
+            L’opération a échoué ({erreur}). Un QR code est peut-être déjà actif
+            pour ce club, cette voie ou cette équipe.
           </p>
         )}
 
@@ -118,7 +118,7 @@ async function SectionsRencontre({
         <section className="flex flex-col gap-3">
           <TitreSection>Capitaines d’équipe</TitreSection>
           <p className="text-xs text-texte-attenue">
-            Un jeton par équipe adulte. Il n’ouvre de session qu’en compétition (③) et
+            Un QR code par équipe adulte. Il ne fonctionne qu’en compétition (③) et
             ne permet de saisir que les voies et blocs des membres de l’équipe.
           </p>
           {equipes.length === 0 ? (
@@ -165,7 +165,7 @@ async function SectionsRencontre({
         {vitesseDesactivee ? (
           // Épreuve de vitesse désactivée (adulte) : aucun jeton juge (spec #20 R39).
           <p className="text-sm text-texte-attenue">
-            Épreuve de vitesse désactivée : aucun jeton juge.
+            Épreuve de vitesse désactivée : aucun QR code juge.
           </p>
         ) : voies.length === 0 ? (
           <p className="text-sm text-texte-attenue">

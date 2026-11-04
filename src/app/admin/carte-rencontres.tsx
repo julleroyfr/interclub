@@ -129,8 +129,8 @@ function LigneRencontreTdb({ rencontre }: { rencontre: RencontreTdb }) {
         )}
         <Link
           href={`/admin/jetons?rencontre=${rencontre.id}`}
-          aria-label="Jetons QR de cette rencontre"
-          title="Jetons QR"
+          aria-label="QR codes de cette rencontre"
+          title="QR codes"
           className="ml-auto inline-flex h-8 w-8 items-center justify-center rounded-lg border border-bordure text-texte-attenue transition hover:border-accent/40 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
         >
           <IconeQR />

@@ -263,7 +263,7 @@ function EtatEpreuve({
       )}
       {modifiable && epreuve.active && epreuve.type === 'vitesse' && (
         <p className="text-xs text-texte-doux">
-          Désactiver la vitesse révoque ses jetons juges ; après réactivation, générez-en de nouveaux.
+          Désactiver la vitesse révoque ses QR codes juges ; après réactivation, générez-en de nouveaux.
         </p>
       )}
       {etat?.erreur && (
@@ -1088,7 +1088,7 @@ function OngletVitesse({
                 <BoutonSupprimer
                   action={supprimerVoieVitesseRencontre}
                   champs={{ id: vv.id, rencontreId: structure.id }}
-                  question={`Supprimer la voie de vitesse « ${vv.libelle ?? vv.numero} » ? Ses jetons juges seront aussi supprimés.`}
+                  question={`Supprimer la voie de vitesse « ${vv.libelle ?? vv.numero} » ? Ses QR codes juges seront aussi supprimés.`}
                   libelle={`la voie de vitesse ${vv.libelle ?? vv.numero}`}
                 />
               )}
