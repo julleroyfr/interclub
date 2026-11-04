@@ -41,7 +41,9 @@
     "db:verifier": "bash scripts/verifier-schema.sh",
     "db:verifier-retours": "bash scripts/verifier-retours-arriere.sh",
     "doc:captures": "playwright test --config scripts/captures/playwright.config.ts",
-    "doc:pdf": "node scripts/guides/generer-pdf.mjs"
+    "doc:pdf": "node scripts/guides/generer-pdf.mjs",
+    "version:preparer": "node scripts/version/version.mjs preparer",
+    "version:taguer": "node scripts/version/version.mjs taguer"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",

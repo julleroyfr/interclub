@@ -6,7 +6,8 @@
 // Markdown → HTML (marked) → PDF A4 (Chromium de Playwright). Le PDF est écrit à
 // côté du Markdown (même nom, extension .pdf). Les parties réservées à l'équipe
 // (bloc « Captures » de l'en-tête, section « Mettre à jour les captures ») sont
-// retirées : le PDF s'adresse aux utilisateurs.
+// retirées : le PDF s'adresse aux utilisateurs. La version de package.json figure
+// sous le titre et en pied de page (docs/conventions/10-versionnement.md §5).
 
 import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -83,6 +84,7 @@ async function genererPdf(cheminMd) {
 
   const titre = corps.match(/<h1[^>]*>(.*?)<\/h1>/)?.[1].replace(/<[^>]+>/g, '') ?? 'Guide'
   const date = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+  const { version } = JSON.parse(readFileSync('package.json', 'utf8'))
 
   const html = `<!doctype html>
   <html lang="fr">
@@ -132,7 +134,7 @@ async function genererPdf(cheminMd) {
   </style>
   </head>
   <body>
-  ${corps.replace(/(<\/h1>)/, `$1\n<p class="edition">Édition du ${date}</p>`)}
+  ${corps.replace(/(<\/h1>)/, `$1\n<p class="edition">Édition du ${date} — version ${version}</p>`)}
   </body>
   </html>`
 
@@ -151,7 +153,7 @@ async function genererPdf(cheminMd) {
       displayHeaderFooter: true,
       headerTemplate: '<span></span>',
       footerTemplate: `<div style="width:100%;font-size:8pt;color:#5b6878;padding:0 16mm;display:flex;justify-content:space-between;font-family:Segoe UI,sans-serif">
-        <span>${titre}</span><span><span class="pageNumber"></span> / <span class="totalPages"></span></span></div>`,
+        <span>${titre} — v${version}</span><span><span class="pageNumber"></span> / <span class="totalPages"></span></span></div>`,
       margin: { top: '18mm', bottom: '20mm', left: '16mm', right: '16mm' },
     })
   } finally {
