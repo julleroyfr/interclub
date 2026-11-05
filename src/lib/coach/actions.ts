@@ -15,6 +15,7 @@ import {
   verifierAjoutComposition,
 } from '@/domaine/engagement'
 import { type ContexteCoach, getContexteCoach } from '@/lib/auth/session'
+import { bornesAgeOuErreur } from '@/lib/rencontres/bornes-age'
 import { verifierLecture } from '@/lib/supabase/lecture'
 import { createClient } from '@/lib/supabase/server'
 
@@ -334,12 +335,16 @@ export async function ajouterGrimpeurEquipe(
     return { erreur: "Ce grimpeur n'appartient ni à votre club ni à vos prêts." }
   }
 
-  // Éligibilité à la catégorie de la rencontre (tranche d'âge, spec #1 R34).
+  // Éligibilité à la catégorie de la rencontre (tranche d'âge, spec #1 R34 ;
+  // âges configurés, R34bis).
+  const bornesAge = bornesAgeOuErreur()
+  if ('erreur' in bornesAge) return bornesAge
   if (
     !estEligibleCategorie(
       grimpeur.annee_naissance as number,
       rencontre.categorie,
       anneeSaison(rencontre.dateRencontre),
+      bornesAge.bornes,
     )
   ) {
     return {

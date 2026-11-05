@@ -5,6 +5,10 @@
   — engagement éditable par coach permanent en ① pré-compétition et par permanent
   **et** temporaire en ② préparation, gelé dès ③ compétition, R16 — validé le
   2026-09-01)
+- **Révision** : 2026-11-05 — âge de bascule paramétrable (spec #1 R34bis) :
+  R12 ne cite plus « 13 ans » ni « 19 ans » mais l'**âge de bascule**
+  (`AGE_BASCULE`, ex. 12) et l'**âge maximum ado** (`AGE_ADO_MAX`, ex. 18) pour la
+  saison 2026-2027.
 - **Révision** : 2026-09-25 — navigation (règle de changement, spec #12) : entrée
   unique **`/coach`** (l'accueil n'ouvre plus directement les jetons, C1) ;
   « Jetons » devient un **lien interne** de l'espace coach (R10) ; le coach
@@ -187,8 +191,10 @@ cette spec. (Spec #1 R6/R27, rév. 2026-09-01.)
   rencontre (spec #1 R35). Dans tous les cas, seuls les grimpeurs **éligibles à la
   catégorie** de la rencontre (tranche d'âge, spec #1 R34) sont proposés ; l'ajout
   d'un grimpeur **hors tranche d'âge** est **refusé**. La catégorie **enfant**
-  admet « moins de 13 ans » **et** l'année-pivot (13 ans) ; **ado**, « 13 à 19 ans »
-  (le pivot est éligible aux deux, R34).
+  admet les plus jeunes **et** l'année-pivot (âge de bascule) ; **ado**, de l'âge
+  de bascule à l'âge maximum ado (le pivot est éligible aux deux, spec #1 R34).
+  Ces âges sont paramétrés par `AGE_BASCULE` et `AGE_ADO_MAX` (spec #1 R34bis,
+  rév. 2026-11-05).
 - **R12bis.** Le formulaire d'ajout propose, au-dessus de la liste des grimpeurs
   (R12), un **champ de recherche** qui **filtre** les grimpeurs proposés sur leur
   **nom et prénom** : insensible à la **casse** et aux **accents**, **multi-termes**

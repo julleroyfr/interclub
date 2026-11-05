@@ -249,7 +249,8 @@ La saison est calculée à partir de la date ; la saison en cours est affichée 
 défaut.
 
 **Catégorie Adulte** : ouverte aux grimpeurs de **16 ans et plus** en saison
-(un grimpeur de 16 à 19 ans peut donc aussi faire l'Ado). La rencontre est créée
+(un grimpeur de 16 à 18 ans peut donc aussi faire l'Ado ; à 19 ans, il ne
+fait plus que l'Adulte). La rencontre est créée
 à partir du gabarit Adulte. Ses équipes se gèrent dans le panneau **Équipes
 adultes** du tableau de bord : équipes **sans club**, nommées « Équipe 1 »,
 « Équipe 2 »… par défaut, de **4 grimpeurs au plus**, choisis parmi les 16 ans

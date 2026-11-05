@@ -13,6 +13,7 @@ import {
 } from '@/domaine/engagement'
 import { anneeSaison, estEligibleCategorie, type Phase } from '@/domaine/rencontre'
 import { getUtilisateurCourant } from '@/lib/auth/session'
+import { bornesAgeOuErreur } from '@/lib/rencontres/bornes-age'
 import { verifierLecture } from '@/lib/supabase/lecture'
 import { createClient } from '@/lib/supabase/server'
 
@@ -107,11 +108,14 @@ export async function ajouterGrimpeurEquipeAdulte(
   if (gel) return gel
   if (!grimpeur) return { erreur: 'Grimpeur introuvable.' }
 
+  const bornesAge = bornesAgeOuErreur()
+  if ('erreur' in bornesAge) return bornesAge
   if (
     !estEligibleCategorie(
       grimpeur.annee_naissance as number,
       'adulte',
       anneeSaison(rencontre.date_rencontre as string),
+      bornesAge.bornes,
     )
   ) {
     return { erreur: 'Ce grimpeur a moins de 16 ans : il ne peut pas concourir en adulte.' }

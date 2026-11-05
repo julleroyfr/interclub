@@ -38,8 +38,8 @@ Seed `01` : rencontre pilote `3333…` (Club A, enfant) ; **Devi Bravo** (Club B
   2. **Coach** (Club A) : ouvrir la rencontre en phase `pre_competition`.
 - **Résultat attendu** :
   - Étape 1 : le sélecteur de grimpeur ne propose que les grimpeurs du **Club B**
-    **éligibles à la catégorie de la rencontre** (enfant → moins de 13 ans + pivot,
-    R34 ; filtre par club + recherche) ; message « Prêt créé. » ; une ligne apparaît
+    **éligibles à la catégorie de la rencontre** (enfant → jusqu'à l'âge de bascule
+    `AGE_BASCULE`, pivot inclus ; ado → jusqu'à `AGE_ADO_MAX` ; R34/R34bis ; filtre par club + recherche) ; message « Prêt créé. » ; une ligne apparaît
     dans le tableau des prêts (Devi Bravo · origine Club B · accueil Club A).
   - Étape 2 : Devi Bravo apparaît dans le **roster** du coach, libellé
     **« Devi Bravo (prêté · Club B) »** (R12/R13).

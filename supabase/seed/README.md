@@ -39,6 +39,13 @@ Règles : [docs/conventions/09-environnements-et-donnees.md](../../docs/conventi
   captures des guides (admin, coach, capitaine) et aux essais (spec #20).
   Rejouable : supprime d'abord les rencontres adultes portées par le Club B. À
   appliquer après `01` et les migrations adultes.
+- `06-ages-limites.sql` — **opt-in**. Six grimpeurs Club A « Limite » aux
+  **âges limites** de la saison 2026-2027 (nés en 2015, 2014, 2013, 2010, 2008,
+  2007 : 11, 12, 13, 16, 18 et 19 ans), et deux rencontres Club A **enfant** et
+  **ado** du 2027-01-16 en ① pré-compétition avec une équipe vide « Limites ».
+  Sert à vérifier l'éligibilité par âge avec `AGE_BASCULE=12` et
+  `AGE_ADO_MAX=18` (spec #1 R34bis, cahier 13 CT-18). Rejouable ; UUID
+  `a6a6a6a6-…`. À appliquer après `01`.
 - `99-purge-jeu-de-test.sql` — DELETE borné aux seules données de test
   (rejouable). **Jamais chargé automatiquement** (exclu de `config.toml`) pour
   ne pas effacer le seed au reset.

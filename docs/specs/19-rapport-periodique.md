@@ -20,11 +20,16 @@
       tâche pg_cron interne ne compte pas comme une activité. Cela justifie
       l'écart au principe « pas d'API custom » (conventions).
   - **Spec #1 — Rôles** (`01-roles-et-autorisations.md`) : **R34** (âge rapporté
-    à la saison, pivot 13 ans, ado jusqu'à 19 ans) et **R37** (saison calculée à
+    à la saison, pivot à l'âge de bascule, ado jusqu'à l'âge maximum ado) et **R37** (saison calculée à
     partir de la date).
   - **ADR 0005** (`docs/decisions/0005-lecture-transverse-service-role.md`) :
     usage de `service_role` gardé ; cette spec y ajoute une **exception**
     (cf. R19).
+- **Révision** : 2026-11-05 — âge de bascule paramétrable (spec #1 R34bis) :
+  la tranche **pivot** n'est plus figée à 13 ans mais vaut l'**âge de bascule**
+  `AGE_BASCULE` ; la tranche **ado** s'arrête à l'**âge maximum ado**
+  `AGE_ADO_MAX` (18 en 2026-2027), la tranche **adulte** commence juste après
+  (R7 réécrite, R7bis ajoutée).
 - **Note de rédaction** : spec purement données/traitement, **sans écran** (pas
   de maquette). Elle ne modifie aucune règle existante.
 
@@ -74,14 +79,20 @@ sollicite la base au moins une fois par semaine.
   (libellé « AAAA–AAAA+1 »).
 - **R7.** La tranche d'âge d'un grimpeur se calcule à partir de son **âge en
   saison** (année de la saison courante moins année de naissance, spec #1 R34) :
-  - **enfant** : âge ≤ 12 ;
-  - **pivot** : âge = 13 ;
-  - **ado** : 14 ≤ âge ≤ 19 ;
-  - **hors tranche** : âge ≥ 20.
+  avec **B** l'âge de bascule et **M** l'âge maximum ado (spec #1 R34bis,
+  rév. 2026-11-05) :
+  - **enfant** : âge < B ;
+  - **pivot** : âge = B ;
+  - **ado** : B < âge ≤ M ;
+  - **hors tranche** (« adulte », spec #20 R33) : âge > M.
 
   Chaque grimpeur appartient à **exactement une** tranche.
   *(Catégorie adulte, rév. 2026-10-23 : la tranche « hors tranche » est renommée
   **« adulte »** — spec #20 R33.)*
+- **R7bis.** Si les âges ne sont pas configurés (`AGE_BASCULE` ou
+  `AGE_ADO_MAX` absente ou invalide, spec #1 R34bis), le rapport est en
+  **échec** (R17) ; les lectures
+  ont tout de même lieu, ce qui maintient le projet actif (R2).
 - **R8.** Le rapport donne le **nombre total de clubs**.
 - **R9.** Pour **chaque club**, le rapport donne son **nom** et le nombre de
   grimpeurs **par tranche** (enfant, pivot, ado, hors tranche) ainsi que leur
@@ -165,10 +176,10 @@ sequenceDiagram
   **alors** la route répond 200, les logs contiennent une ligne
   `[rapport-periodique]` avec 3 clubs triés par nom (le club vide à 0), et une
   ligne est ajoutée à l'historique avec la saison 2026.
-- **Étant donné** un grimpeur né en 2013 et la saison 2026,
-  **alors** il est compté en **pivot** (âge 13). Né en 2014, il est
-  **enfant** (12). Né en 2012, il est **ado** (14). Né en 2006, il est
-  **hors tranche** (20).
+- **Étant donné** la saison 2026, `AGE_BASCULE` = 12 et `AGE_ADO_MAX` = 18, un
+  grimpeur né en 2014 **alors** est compté en **pivot** (âge 12). Né en 2015, il
+  est **enfant** (11). Né en 2013 ou en 2008, il est **ado** (13, 18). Né en
+  2007, il est **hors tranche** (19).
 - **Étant donné** des rencontres le 2026-08-31, le 2026-09-01 et le 2027-08-31,
   **quand** le rapport est produit le 2026-10-16,
   **alors** seules les deux dernières figurent dans le rapport (saison 2026).
@@ -204,6 +215,8 @@ sequenceDiagram
 - Variable `CRON_SECRET` à définir dans l'environnement **Production** de
   l'hébergeur (16 caractères aléatoires au moins).
 - `SUPABASE_SERVICE_ROLE_KEY` est déjà présente.
+- `AGE_BASCULE` et `AGE_ADO_MAX` (spec #1 R34bis) doivent être définies :
+  elles fixent les tranches pivot, ado et adulte (R7).
 
 ## Hors périmètre
 
