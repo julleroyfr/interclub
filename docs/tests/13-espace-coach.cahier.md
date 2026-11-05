@@ -394,3 +394,4 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
 | 2026-09-18 | agent/playwright | develop | CT-15 | auto | ✅ | nav coach temp → « Ma rencontre » (R8bis) |
 | 2026-10-02 | agent/playwright | develop | CT-01 | auto | ✅ | négatif réaligné : anonyme → `/connexion` (spec #12 R2), sans rôle → 404 |
 | 2026-10-02 | agent/playwright | develop | CT-01→CT-15 | auto | ✅ | suite complète verte après correctifs E1 (insert grimpeur `sexe`/`licence`) |
+| 2026-11-05 | utilisateur | d87593d | CT-18 | manuel | ✅ | âges limites (seed 06) avec `AGE_BASCULE=12`, `AGE_ADO_MAX=18` ; cahier 32 optionnel, non déroulé |
