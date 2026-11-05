@@ -1,6 +1,8 @@
 # Spec : Catégorie adulte
 
 - **Statut** : validée (2026-10-23) ; révisée le 2026-10-25 (R19bis, R19ter, R36–R41, à la demande du produit)
+- **Révision** : 2026-11-05 — âge maximum ado paramétrable (spec #1 R34bis,
+  `AGE_ADO_MAX`, 18 en 2026-2027) : R3 et R33 ne citent plus « 19 ans ».
 - **Sources** :
   - **Règlement** : *Règlement des interclubs d'escalade — Addendum règlement
     Adultes*, CT 33 FFME 2025-2026 (`docs/reglement/2025 Interclubs - Reglement
@@ -57,8 +59,10 @@ catégories **enfant** et **ado** reste **inchangé**.
 - **R2.** Un grimpeur est **éligible** à une rencontre adulte si et seulement si
   son **âge en saison** est **≥ 16**. Il n'y a pas d'âge maximal.
   *(Source : décision 2026-10-23.)*
-- **R3.** Un grimpeur de 16 à 19 ans en saison est éligible à la fois à l'ado et à
-  l'adulte : il peut être engagé dans une rencontre de chaque catégorie.
+- **R3.** Un grimpeur de 16 ans à l'**âge maximum ado** (spec #1 R34bis ; 18 en
+  2026-2027) en saison est éligible à la fois à l'ado et à l'adulte : il peut
+  être engagé dans une rencontre de chaque catégorie. *(Rév. 2026-11-05 :
+  remplace « 16 à 19 ans ».)*
 - **R4.** Les rencontres adultes suivent le même **cycle de phases** (① à ⑤) et
   les mêmes garde-fous de date que les autres catégories (spec #1 R5).
 
@@ -235,8 +239,9 @@ catégories **enfant** et **ado** reste **inchangé**.
   une équipe de la rencontre. *(Remplace, en adulte, « au moins une équipe du
   club », spec #15 R4.)*
 - **R33.** Dans le rapport périodique (spec #19) :
-  - la tranche « hors tranche » (âge en saison ≥ 20) est renommée
-    **« adulte »** ; les bornes des tranches ne changent pas (R7/R9) ;
+  - la tranche « hors tranche » (âge en saison au-delà de l'âge maximum ado,
+    spec #19 R7) est renommée **« adulte »** ; les bornes des tranches ne
+    changent pas (R7/R9) ;
   - les rencontres sont triées par date puis par catégorie **enfant, ado,
     adulte** (R12) ;
   - le nombre de rencontres de la saison est donné pour **enfant, ado,

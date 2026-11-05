@@ -4,6 +4,7 @@ import { cache } from 'react'
 
 import { bornesAnneeNaissance, type Categorie } from '@/domaine/rencontre'
 import { exigerLectureAdmin } from '@/lib/auth/garde-lecture'
+import { lireBornesAge } from '@/lib/rencontres/bornes-age'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { lireToutesLesPages } from '@/lib/supabase/pagination'
 
@@ -26,7 +27,7 @@ export const lireGrimpeursEligibles = cache(
   async (categorie: Categorie, saison: number): Promise<GrimpeurEligible[]> => {
     await exigerLectureAdmin('grimpeurs éligibles')
     const admin = createAdminClient()
-    const { min, max } = bornesAnneeNaissance(categorie, saison)
+    const { min, max } = bornesAnneeNaissance(categorie, saison, lireBornesAge())
     const lignes = await lireToutesLesPages((debut, fin) => {
       let q = admin.from('grimpeur').select('id, nom, prenom, club_id, annee_naissance')
       // Bornes `null` = sans borne (adulte : pas de borne basse, spec #20 R2).

@@ -7,6 +7,9 @@
     `purge-rapport-periodique`.
   - Variable **`CRON_SECRET`** définie sur Vercel : environnement **Production**
     (obligatoire), **Preview** (pour dérouler CT-01 à CT-04 en recette).
+  - Variables **`AGE_BASCULE=12`** et **`AGE_ADO_MAX=18`** définies (saison
+    2026-2027, spec #1 R34bis) ; l'une absente, le rapport répond 500 après ses
+    lectures (R7bis).
   - Accès au Dashboard Vercel (Settings → Cron Jobs, Logs) et au SQL Editor /
     Table Editor Supabase.
 - **Environnement** : recette (preview) puis prod — version/commit : `______`
@@ -75,8 +78,9 @@
     `nombreRencontres` = décompte SQL par catégorie — R8, R10, R13.
   - Chaque club figure, trié par nom, avec ses effectifs (un club sans grimpeur
     à 0) ; la somme des `total` des clubs = `totaux.total` — R9, R10.
-  - Un grimpeur né en 2013 est en `pivot`, né en 2014 en `enfant`, né en 2012 en
-    `ado`, né en 2006 ou avant en `horsTranche` — R7.
+  - Avec `AGE_BASCULE=12` et `AGE_ADO_MAX=18` (saison 2026) : un grimpeur né
+    en 2014 est en `pivot`, né en 2015 en `enfant`, né de 2013 à 2008 en `ado`,
+    né en 2007 ou avant en `adulte` — R7 (rév. 2026-11-05).
   - Rencontres de la saison seulement, triées par date puis enfant avant ado,
     avec porteur, phase et nombre d'équipes — R11, R12.
   - Rejouer l'appel : une **deuxième** ligne est ajoutée — R16.

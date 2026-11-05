@@ -175,8 +175,11 @@ close.
 | 8 | Supprimer l'équipe | Supprime l'équipe et sa composition |
 
 **Ajouter un grimpeur** : la liste ne propose que les grimpeurs du club
-**éligibles à la catégorie** de la rencontre (Enfant : moins de 13 ans ; Ado :
-13 à 19 ans ; les grimpeurs de 13 ans sont éligibles aux deux). Le champ de
+**éligibles à la catégorie** de la rencontre, selon leur âge dans la saison
+(année de début de saison moins année de naissance). Pour la saison 2026-2027,
+les grimpeurs nés en **2014** (12 ans) sont éligibles **aux deux** catégories ;
+les plus jeunes vont en Enfant, les plus âgés en Ado, jusqu'à **18 ans** en
+début de saison (nés en **2008** au plus tôt). Le champ de
 recherche accepte plusieurs mots dans n'importe quel ordre, sans tenir compte
 des majuscules ni des accents (« ana alp » trouve « Ana Alpha ») ; si un seul
 grimpeur correspond, il est présélectionné.

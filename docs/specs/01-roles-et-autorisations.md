@@ -90,6 +90,18 @@
   identifiés** (nouveau terme, Vocabulaire). Impact : **R8 réécrite**, « RLS
   attendue » alignée ; les specs qui renvoient à R8 (#6 R6, #7 R11, #10 R15)
   héritent de la définition sans modification.
+- **Révision** : 2026-11-05 (**validée le 2026-11-05**) — **âge de bascule
+  paramétrable** (règle de changement). Pour la saison 2026-2027, l'année de
+  bascule est **2014** (12 ans en saison) et non plus 2013 (13 ans). Pour ne pas
+  relivrer l'application à chaque changement de règlement, l'âge de bascule
+  n'est plus figé à 13 ans : il est lu dans la variable d'environnement serveur
+  **`AGE_BASCULE`** (R34bis). **R34 réécrite** (enfant = âge ≤ bascule ; ado =
+  bascule à l'âge maximum ado), vocabulaire « Catégorie » aligné. Les libellés de
+  catégorie ne citent plus d'âge. **Âge maximum ado** : la règle est d'avoir
+  **18 ans au plus** en début de saison (saison 2026-2027 : nés en **2008** au
+  plus tôt), et non plus 19 ; il est lui aussi lu dans une variable
+  d'environnement serveur, **`AGE_ADO_MAX`** (R34bis). Specs qui en héritent :
+  #5 R12, #19 R7, #20 R3.
 
 ## Objectif
 
@@ -125,11 +137,18 @@ conditionne les accès temporels.
 - **Grimpeur** (compétiteur) : membre d'une équipe.
 - **Rencontre** : confrontation programmée entre équipes, déroulée en trois
   phases (voir R5). Porte exactement une **catégorie** (voir R34).
-- **Catégorie** : tranche d'âge d'une rencontre — **matin** (moins de 13 ans) ou
-  **après-midi** (13/19 ans) — déterminée par l'année de naissance rapportée à
-  l'**année de la saison** au sens de R37 (borne dynamique, pas une année
-  figée). L'année-pivot (les « 13 ans ») peut concourir dans les deux
-  catégories.
+- **Catégorie** : tranche d'âge d'une rencontre — **matin** (enfants, jusqu'à
+  l'âge de bascule) ou **après-midi** (ados, de l'âge de bascule à l'âge
+  maximum ado) —
+  déterminée par l'année de naissance rapportée à l'**année de la saison** au
+  sens de R37 (borne dynamique, pas une année figée). L'année-pivot (les
+  grimpeurs ayant l'âge de bascule) peut concourir dans les deux catégories.
+- **Âge de bascule** : âge en saison des grimpeurs de l'année-pivot, éligibles
+  aux deux catégories enfant et ado. Paramétré par la variable d'environnement
+  `AGE_BASCULE` (R34bis) — ex. **12** pour la saison 2026-2027 (nés en 2014).
+- **Âge maximum ado** : âge en saison le plus élevé admis en catégorie ado.
+  Paramétré par la variable d'environnement `AGE_ADO_MAX` (R34bis) — ex. **18**
+  pour la saison 2026-2027 (nés en 2008 au plus tôt).
 - **Épreuve** : discipline évaluée lors d'une rencontre — **voie**, **bloc** ou
   **vitesse**.
 - **Vitesse** : épreuve chronométrée ; sa saisie porte, par grimpeur, sur un
@@ -227,18 +246,35 @@ conditionne les accès temporels.
   et **③ compétition** ; pour le **juge**, phase **③ compétition**. Hors de cette
   fenêtre (avant la préparation, ou dès la ④ clôture), la session est invalide
   (révocation recalculée à chaque requête).
-- **R34.** Une rencontre porte exactement une **catégorie** (matin < 13 ans, ou
-  après-midi 13/19 ans). Une journée d'interclub à deux demi-journées se
+- **R34.** Une rencontre porte exactement une **catégorie** (matin : enfants, ou
+  après-midi : ados). Une journée d'interclub à deux demi-journées se
   modélise en **deux rencontres distinctes**, chacune avec ses propres phases,
   jetons QR et affectations. Un grimpeur de l'année-pivot peut être engagé dans
   les deux rencontres. L'**âge** est rapporté à la **saison** (année de la saison
   moins l'année de naissance). L'**engagement** d'un grimpeur dans une rencontre
   (composition d'équipe, y compris un prêté) est **limité aux grimpeurs éligibles à
-  sa catégorie** : **enfant** = âge ≤ 13 (moins de 13 ans **et** pivot) ; **ado** =
-  13 à 19 ans. Un grimpeur hors tranche d'âge ne peut y être engagé (cf. spec #5 R12).
+  sa catégorie** : **enfant** = âge ≤ **B** (plus jeunes **et** pivot) ; **ado** =
+  **B** ≤ âge ≤ **M**, où **B** est l'**âge de bascule** et **M** l'**âge maximum
+  ado** (R34bis). Un grimpeur hors tranche d'âge ne peut y être engagé (cf. spec
+  #5 R12). *(Rév. 2026-11-05 : B remplace la valeur figée 13, M la valeur figée
+  19.)* Exemple, saison 2026-2027 avec B = 12 et M = 18 : un grimpeur né en 2014
+  (12 ans) est éligible enfant **et** ado ; né en 2013 (13 ans), ado seulement ;
+  né en 2015 (11 ans), enfant seulement ; né en 2008 (18 ans), ado ; né en 2007
+  (19 ans), **pas** ado.
   *(Catégorie adulte, rév. 2026-10-23 : troisième catégorie **adulte**, éligible
   dès 16 ans en saison, sans âge maximal ; prêts sans objet en adulte — spec #20
   R1–R3, R11.)*
+- **R34bis.** L'**âge de bascule** B et l'**âge maximum ado** M sont lus dans
+  les variables d'environnement serveur **`AGE_BASCULE`** et **`AGE_ADO_MAX`** :
+  chacune est un **entier** compris entre **1 et 99**, espaces de bord tolérés,
+  avec **B ≤ M**. Si une variable est **absente ou invalide**, ou si B > M, tout
+  calcul d'éligibilité est **bloqué** : l'engagement est refusé avec un message
+  qui nomme la variable à configurer, et aucune valeur par défaut n'est
+  appliquée. Changer une valeur ne demande **aucune relivraison du code**,
+  seulement un **redéploiement** depuis la console de l'hébergeur. Les
+  engagements déjà posés ne sont **pas** réexaminés. Les **libellés** de
+  catégorie ne citent **aucun âge** (« Enfant — matin », « Ado — après-midi »),
+  pour rester justes quelle que soit la valeur.
 
 ### Admin
 
@@ -520,6 +556,9 @@ le prêt** lui-même (R35).
   rencontre (R15, R29).
 - Une **rencontre** porte exactement une **catégorie** (matin / après-midi) ;
   les deux demi-journées d'une journée sont **deux rencontres** distinctes (R34).
+- L'**âge de bascule** et l'**âge maximum ado** ne sont **pas** stockés en
+  base : ils viennent des variables d'environnement `AGE_BASCULE` et
+  `AGE_ADO_MAX` (R34bis).
 - Un grimpeur a **au plus un résultat de vitesse** pour l'épreuve de vitesse
   d'une rencontre (unicité), ce résultat étant un temps, une chute ou une
   non-présentation (R31).

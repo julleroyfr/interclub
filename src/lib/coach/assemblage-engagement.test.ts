@@ -2,12 +2,14 @@ import { describe, it, expect } from 'vitest'
 
 import { assemblerEngagementClub, type DonneesEngagementClub } from './assemblage-engagement'
 
-// Rencontre ado, saison 2026 (date 2026-10-12) : éligibles nés 2007–2013 (R12/R34).
+// Rencontre ado, saison 2026 (date 2026-10-12), âge de bascule 12 et maximum
+// ado 18 : éligibles nés 2008–2014 (R12/R34, R34bis).
 const CLUB_A = 'club-a'
 const CLUB_B = 'club-b'
 
 function donnees(partiel: Partial<DonneesEngagementClub> = {}): DonneesEngagementClub {
   return {
+    bornesAge: { ageBascule: 12, ageAdoMax: 18 },
     rencontre: {
       id: 'r1',
       dateRencontre: '2026-10-12',
@@ -81,7 +83,7 @@ describe('spec #5 — Roster disponible (R12/R13/R14)', () => {
         rosterClub: [
           { id: 'g1', nom: 'Ado', prenom: 'A', clubId: CLUB_A, anneeNaissance: 2010 },
           { id: 'g2', nom: 'Enfant', prenom: 'E', clubId: CLUB_A, anneeNaissance: 2016 },
-          { id: 'g3', nom: 'Pivot', prenom: 'P', clubId: CLUB_A, anneeNaissance: 2013 },
+          { id: 'g3', nom: 'Pivot', prenom: 'P', clubId: CLUB_A, anneeNaissance: 2014 },
         ],
       }),
       CLUB_A,

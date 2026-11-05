@@ -9,6 +9,7 @@ import {
 } from '@/lib/coach/assemblage-engagement'
 import { versGrimpeurLu } from '@/lib/coach/engagement'
 import { lireGrimpeursEligibles } from '@/lib/grimpeurs/eligibles'
+import { lireBornesAge } from '@/lib/rencontres/bornes-age'
 import { lireClubsAdmin, lirePretsAdmin, lireRencontreAdmin } from '@/lib/rencontres/lectures-admin'
 import { verifierLecture } from '@/lib/supabase/lecture'
 import { createClient } from '@/lib/supabase/server'
@@ -94,6 +95,7 @@ export async function chargerEngagementTousClubs(
     if (g) ajouter(pretesParClub, p.club_accueil_id as string, versGrimpeurLu(g))
   }
 
+  const bornesAge = lireBornesAge()
   const rosterParClub = new Map<string, GrimpeurLu[]>()
   for (const g of roster) ajouter(rosterParClub, g.clubId, g)
 
@@ -112,6 +114,7 @@ export async function chargerEngagementTousClubs(
       clubNom: c.nom as string,
       engagement: assemblerEngagementClub(
         {
+          bornesAge,
           rencontre: donneesRencontre,
           nomClub,
           equipes: equipesParClub.get(clubId) ?? [],

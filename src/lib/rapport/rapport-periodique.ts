@@ -9,6 +9,7 @@ import {
 } from '@/domaine/rapport'
 import { anneeSaison, bornesSaison } from '@/domaine/rencontre'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { lireBornesAge } from '@/lib/rencontres/bornes-age'
 import { verifierLecture } from '@/lib/supabase/lecture'
 import { lireToutesLesPages } from '@/lib/supabase/pagination'
 
@@ -67,7 +68,10 @@ export async function reponseRapportPeriodique(requete: Request): Promise<Respon
 
   try {
     const date = dateExecution(new Date())
-    const rapport = construireRapport(await lireDonnees(anneeSaison(date)), date)
+    const donnees = await lireDonnees(anneeSaison(date))
+    // Lus après les lectures : elles maintiennent le projet actif même si
+    // AGE_BASCULE ou AGE_ADO_MAX manque (spec #19 R7bis).
+    const rapport = construireRapport(donnees, date, lireBornesAge())
     console.log(ligneLog(rapport))
 
     const insertion = await createAdminClient()

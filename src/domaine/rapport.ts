@@ -3,7 +3,7 @@
 // d'âge, rencontres. Aucun accès Supabase ici : la lecture, les logs et
 // l'enregistrement relèvent de `src/lib/rapport/`.
 
-import { ageEnSaison, anneeSaison, bornesSaison, labelSaison, type Categorie } from './rencontre'
+import { ageEnSaison, anneeSaison, bornesSaison, labelSaison, type BornesAge, type Categorie } from './rencontre'
 
 /** Tranche d'âge d'un grimpeur dans la saison (R7). */
 export type TrancheAge = 'enfant' | 'pivot' | 'ado' | 'adulte'
@@ -56,12 +56,15 @@ export function verifierSecret(enTete: string | null, secret: string | undefined
   return ecart === 0 ? 'ok' : 'refuse'
 }
 
-/** Tranche d'âge (R7) : enfant ≤ 12, pivot = 13, ado 14–19, adulte ≥ 20. */
-export function trancheAge(anneeNaissance: number, saison: number): TrancheAge {
+/**
+ * Tranche d'âge (R7), B = âge de bascule, M = âge maximum ado (spec #1 R34bis) :
+ * enfant < B, pivot = B, ado B+1–M, adulte > M.
+ */
+export function trancheAge(anneeNaissance: number, saison: number, bornes: BornesAge): TrancheAge {
   const age = ageEnSaison(anneeNaissance, saison)
-  if (age <= 12) return 'enfant'
-  if (age === 13) return 'pivot'
-  if (age <= 19) return 'ado'
+  if (age < bornes.ageBascule) return 'enfant'
+  if (age === bornes.ageBascule) return 'pivot'
+  if (age <= bornes.ageAdoMax) return 'ado'
   return 'adulte'
 }
 
@@ -85,7 +88,11 @@ function effectifsVides(): Effectifs {
 const ORDRE_CATEGORIE: Record<Categorie, number> = { enfant: 0, ado: 1, adulte: 2 }
 
 /** Construit le rapport de la saison contenant `dateExecutionISO` (R6–R13). */
-export function construireRapport(donnees: DonneesRapport, dateExecutionISO: string): RapportPeriodique {
+export function construireRapport(
+  donnees: DonneesRapport,
+  dateExecutionISO: string,
+  bornes: BornesAge,
+): RapportPeriodique {
   const saison = anneeSaison(dateExecutionISO)
 
   // R9, R10 — effectifs par club et totaux.
@@ -95,7 +102,7 @@ export function construireRapport(donnees: DonneesRapport, dateExecutionISO: str
     const club = parClub.get(g.club_id)
     // Garantie par la clé étrangère ; ignorée sinon pour que total = Σ clubs (R10).
     if (!club) continue
-    const cle = CLE_TRANCHE[trancheAge(g.annee_naissance, saison)]
+    const cle = CLE_TRANCHE[trancheAge(g.annee_naissance, saison, bornes)]
     for (const e of [club, totaux]) {
       e[cle] += 1
       e.total += 1
