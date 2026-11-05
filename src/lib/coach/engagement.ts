@@ -8,6 +8,7 @@ import {
   type GrimpeurLu,
 } from '@/lib/coach/assemblage-engagement'
 import { exigerLectureCoachDuClub } from '@/lib/auth/garde-lecture'
+import { lireBornesAge } from '@/lib/rencontres/bornes-age'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { verifierLecture } from '@/lib/supabase/lecture'
 import { createClient } from '@/lib/supabase/server'
@@ -241,6 +242,7 @@ export async function getEngagementRencontre(
 
   return assemblerEngagementClub(
     {
+      bornesAge: lireBornesAge(),
       rencontre: {
         id: rencontre.id as string,
         dateRencontre: rencontre.date_rencontre as string,

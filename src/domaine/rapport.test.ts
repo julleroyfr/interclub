@@ -36,15 +36,25 @@ describe('verifierSecret — garde du déclencheur', () => {
   })
 })
 
+// Saison 2026-2027 : âge de bascule 12, âge maximum ado 18 (spec #1 R34bis).
+const BORNES = { ageBascule: 12, ageAdoMax: 18 }
+
 describe('trancheAge — âge en saison (R7)', () => {
-  it('classe enfant jusqu’à 12 ans, pivot à 13, ado de 14 à 19, adulte dès 20 (R7, spec #20 R33)', () => {
-    expect(trancheAge(2020, 2026)).toBe('enfant')
-    expect(trancheAge(2014, 2026)).toBe('enfant')
-    expect(trancheAge(2013, 2026)).toBe('pivot')
-    expect(trancheAge(2012, 2026)).toBe('ado')
-    expect(trancheAge(2007, 2026)).toBe('ado')
-    expect(trancheAge(2006, 2026)).toBe('adulte')
-    expect(trancheAge(1980, 2026)).toBe('adulte')
+  it('enfant jusqu’à 11 ans, pivot à 12, ado de 13 à 18, adulte dès 19 (R7, spec #20 R33)', () => {
+    expect(trancheAge(2020, 2026, BORNES)).toBe('enfant')
+    expect(trancheAge(2015, 2026, BORNES)).toBe('enfant')
+    expect(trancheAge(2014, 2026, BORNES)).toBe('pivot')
+    expect(trancheAge(2013, 2026, BORNES)).toBe('ado')
+    expect(trancheAge(2008, 2026, BORNES)).toBe('ado')
+    expect(trancheAge(2007, 2026, BORNES)).toBe('adulte')
+    expect(trancheAge(1980, 2026, BORNES)).toBe('adulte')
+  })
+
+  it('les tranches suivent les âges configurés (R7, spec #1 R34bis)', () => {
+    const anciens = { ageBascule: 13, ageAdoMax: 19 }
+    expect(trancheAge(2013, 2026, anciens)).toBe('pivot')
+    expect(trancheAge(2014, 2026, anciens)).toBe('enfant')
+    expect(trancheAge(2007, 2026, anciens)).toBe('ado')
   })
 })
 
@@ -64,9 +74,9 @@ describe('construireRapport', () => {
     ],
     grimpeurs: [
       { club_id: 'c-a', annee_naissance: 2015 }, // enfant (11)
-      { club_id: 'c-a', annee_naissance: 2013 }, // pivot
+      { club_id: 'c-a', annee_naissance: 2014 }, // pivot (12, bascule 12)
       { club_id: 'c-a', annee_naissance: 2010 }, // ado (16)
-      { club_id: 'c-z', annee_naissance: 2012 }, // ado (14)
+      { club_id: 'c-z', annee_naissance: 2013 }, // ado (13)
       { club_id: 'c-z', annee_naissance: 2000 }, // adulte (spec #20 R33)
     ],
     rencontres: [
@@ -79,7 +89,7 @@ describe('construireRapport', () => {
     ],
     equipes: [{ rencontre_id: 'r-enf' }, { rencontre_id: 'r-enf' }, { rencontre_id: 'r-ado' }, { rencontre_id: 'r-avant' }],
   }
-  const rapport = construireRapport(donnees, '2026-10-16')
+  const rapport = construireRapport(donnees, '2026-10-16', BORNES)
 
   it('porte la date d’exécution et la saison courante (R6)', () => {
     expect(rapport.dateExecution).toBe('2026-10-16')
@@ -141,13 +151,14 @@ describe('construireRapport', () => {
         ],
       },
       '2027-03-10',
+      BORNES,
     )
     expect(avecAdulte.rencontres.map((r) => r.categorie)).toEqual(['enfant', 'ado', 'adulte'])
     expect(avecAdulte.nombreRencontres).toEqual({ enfant: 1, ado: 1, adulte: 1, total: 3 })
   })
 
   it('produit un rapport à zéro sur une base vide (cas limite)', () => {
-    const vide = construireRapport(VIDE, '2027-03-10')
+    const vide = construireRapport(VIDE, '2027-03-10', BORNES)
     expect(vide.saison).toBe(2026)
     expect(vide.nombreClubs).toBe(0)
     expect(vide.totaux).toEqual({ enfant: 0, pivot: 0, ado: 0, adulte: 0, total: 0 })
@@ -157,7 +168,7 @@ describe('construireRapport', () => {
 
 describe('ligneLog (R14)', () => {
   it('préfixe la ligne par [rapport-periodique] suivi du contenu complet', () => {
-    const rapport = construireRapport(VIDE, '2026-10-16')
+    const rapport = construireRapport(VIDE, '2026-10-16', BORNES)
     const ligne = ligneLog(rapport)
     expect(ligne.startsWith('[rapport-periodique] ')).toBe(true)
     expect(JSON.parse(ligne.slice('[rapport-periodique] '.length))).toEqual(rapport)

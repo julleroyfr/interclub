@@ -11,8 +11,9 @@ import type { TypeEpreuve } from './gabarit'
  * Valeurs = contrainte SQL.
  */
 export const CATEGORIES = [
-  { value: 'enfant', label: 'Enfant — matin (moins de 13 ans)', labelCourt: 'Enfant' },
-  { value: 'ado', label: 'Ado — après-midi (13 à 19 ans)', labelCourt: 'Ado' },
+  // Libellés enfant/ado sans âge : l'âge de bascule est paramétrable (R34bis).
+  { value: 'enfant', label: 'Enfant — matin', labelCourt: 'Enfant' },
+  { value: 'ado', label: 'Ado — après-midi', labelCourt: 'Ado' },
   { value: 'adulte', label: 'Adulte (16 ans et plus)', labelCourt: 'Adulte' },
 ] as const
 
@@ -154,12 +155,66 @@ export function labelSaison(annee: number): string {
   return `${annee}–${annee + 1}`
 }
 
-// Bornes d'âge des catégories (R34) : enfant « moins de 13 ans » + pivot ; ado
-// « 13 à 19 ans ». Le pivot (13 ans) est éligible aux DEUX catégories.
-export const AGE_PIVOT = 13
-export const AGE_ADO_MAX = 19
+// Bornes d'âge des catégories (R34) : enfant = jusqu'à l'âge de bascule (pivot
+// inclus) ; ado = de l'âge de bascule à l'âge maximum ado. Le pivot est éligible
+// aux DEUX catégories. Ces deux âges ne sont pas figés : ils viennent de
+// `AGE_BASCULE` et `AGE_ADO_MAX` (R34bis), passés en paramètre.
+
 /** Âge minimal en saison de la catégorie adulte, sans âge maximal (spec #20 R2). */
 export const AGE_ADULTE_MIN = 16
+
+/** Âges configurés des catégories enfant/ado (R34bis). */
+export type BornesAge = {
+  /** Âge de bascule : le pivot, éligible enfant ET ado. */
+  ageBascule: number
+  /** Âge maximum ado (inclus). */
+  ageAdoMax: number
+}
+
+/** Bornes admises d'un âge configuré (R34bis). */
+export const AGE_CONFIGURE_MIN = 1
+export const AGE_CONFIGURE_MAX = 99
+
+/** Âges absents ou invalides : l'éligibilité est bloquée (R34bis). */
+export class BornesAgeNonConfigureesError extends Error {
+  constructor(detail: string) {
+    super(`${detail} : contactez l’administrateur.`)
+    this.name = 'BornesAgeNonConfigureesError'
+  }
+}
+
+// Lit un âge configuré (entier de 1 à 99, espaces de bord tolérés).
+function analyserAge(valeur: string | undefined, variable: string, libelle: string): number {
+  const brut = (valeur ?? '').trim()
+  const age = /^\d{1,2}$/.test(brut) ? Number(brut) : NaN
+  if (!(age >= AGE_CONFIGURE_MIN && age <= AGE_CONFIGURE_MAX)) {
+    throw new BornesAgeNonConfigureesError(
+      `${libelle} n’est pas configuré (variable ${variable}, entier de ${AGE_CONFIGURE_MIN} à ${AGE_CONFIGURE_MAX})`,
+    )
+  }
+  return age
+}
+
+/**
+ * Lit les âges des catégories depuis les valeurs brutes de `AGE_BASCULE` et
+ * `AGE_ADO_MAX` (R34bis) : entiers de 1 à 99, âge de bascule ≤ âge maximum ado.
+ * Absent ou invalide → erreur, sans valeur par défaut.
+ */
+export function analyserBornesAge(
+  ageBascule: string | undefined,
+  ageAdoMax: string | undefined,
+): BornesAge {
+  const bornes = {
+    ageBascule: analyserAge(ageBascule, 'AGE_BASCULE', 'L’âge de bascule enfant/ado'),
+    ageAdoMax: analyserAge(ageAdoMax, 'AGE_ADO_MAX', 'L’âge maximum ado'),
+  }
+  if (bornes.ageBascule > bornes.ageAdoMax) {
+    throw new BornesAgeNonConfigureesError(
+      'L’âge de bascule (AGE_BASCULE) dépasse l’âge maximum ado (AGE_ADO_MAX)',
+    )
+  }
+  return bornes
+}
 
 /**
  * Âge « de compétition » d'un grimpeur pour une saison : année de la saison moins
@@ -171,22 +226,24 @@ export function ageEnSaison(anneeNaissance: number, anneeSaison: number): number
 
 /**
  * Vrai si un grimpeur né en `anneeNaissance` est éligible à la `categorie` d'une
- * rencontre de la saison `anneeSaison` (R34) : **enfant** = âge ≤ 13 (moins de 13
- * ans + pivot), **ado** = 13 ≤ âge ≤ 19. Le pivot (13 ans) est dans les deux.
- * **Adulte** = âge ≥ 16, sans maximum (spec #20 R2) : les 16–19 ans sont donc
- * éligibles à l'ado et à l'adulte (R3).
+ * rencontre de la saison `anneeSaison` (R34) : **enfant** = âge ≤ âge de bascule,
+ * **ado** = âge de bascule ≤ âge ≤ âge maximum ado. Le pivot (âge de bascule) est
+ * dans les deux. **Adulte** = âge ≥ 16, sans maximum (spec #20 R2) : de 16 ans à
+ * l'âge maximum ado, un grimpeur est donc éligible à l'ado et à l'adulte (R3) ;
+ * `bornes` y est sans effet.
  */
 export function estEligibleCategorie(
   anneeNaissance: number,
   categorie: Categorie,
   anneeSaison: number,
+  bornes: BornesAge,
 ): boolean {
   const age = ageEnSaison(anneeNaissance, anneeSaison)
   switch (categorie) {
     case 'enfant':
-      return age <= AGE_PIVOT
+      return age <= bornes.ageBascule
     case 'ado':
-      return age >= AGE_PIVOT && age <= AGE_ADO_MAX
+      return age >= bornes.ageBascule && age <= bornes.ageAdoMax
     case 'adulte':
       return age >= AGE_ADULTE_MIN
   }
@@ -194,20 +251,21 @@ export function estEligibleCategorie(
 
 /**
  * Bornes d'année de naissance équivalentes à `estEligibleCategorie` (R34), pour
- * filtrer une lecture en base : **enfant** = né en `saison − 13` ou après (pas de
- * borne haute) ; **ado** = né de `saison − 19` à `saison − 13` ; **adulte** = né
- * en `saison − 16` ou avant (pas de borne basse, spec #20 R2). `null` = pas de
- * borne.
+ * filtrer une lecture en base (B = âge de bascule, M = âge maximum ado) :
+ * **enfant** = né en `saison − B` ou après (pas de borne haute) ; **ado** = né de
+ * `saison − M` à `saison − B` ; **adulte** = né en `saison − 16` ou avant (pas de
+ * borne basse, spec #20 R2). `null` = pas de borne.
  */
 export function bornesAnneeNaissance(
   categorie: Categorie,
   anneeSaison: number,
+  bornes: BornesAge,
 ): { min: number | null; max: number | null } {
   switch (categorie) {
     case 'enfant':
-      return { min: anneeSaison - AGE_PIVOT, max: null }
+      return { min: anneeSaison - bornes.ageBascule, max: null }
     case 'ado':
-      return { min: anneeSaison - AGE_ADO_MAX, max: anneeSaison - AGE_PIVOT }
+      return { min: anneeSaison - bornes.ageAdoMax, max: anneeSaison - bornes.ageBascule }
     case 'adulte':
       return { min: null, max: anneeSaison - AGE_ADULTE_MIN }
   }

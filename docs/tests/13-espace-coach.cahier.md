@@ -10,7 +10,8 @@
 
 - **Spec de référence** :
   `docs/specs/05-espace-coach.md` (R1–R21, dont R10bis, R12bis) ;
-  `docs/specs/01-roles-et-autorisations.md` (R6, R16, R17, R27, R35, R36) ;
+  `docs/specs/01-roles-et-autorisations.md` (R6, R16, R17, R27, R34, R34bis,
+  R35, R36) ; `docs/specs/20-categorie-adulte.md` (R3) ;
   `docs/specs/02-authentification-et-sessions-qr.md` (R12, validité QR
   nature-dépendante) ;
   [ADR 0001](../decisions/0001-authentification-sessions-ephemeres-qr.md).
@@ -20,6 +21,8 @@
     — lancer `supabase db reset` en local (migrations + seed 01/02/03).
   - `supabase/config.toml` → `enable_anonymous_sign_ins = true`.
   - App lancée : `npm run dev` → l'app écoute sur le **port 3011**.
+  - Variables **`AGE_BASCULE=12`** et **`AGE_ADO_MAX=18`** dans `.env.local`
+    (spec #1 R34bis) ; à définir aussi en recette et en prod (puis redéployer).
 - **Environnement** : local (stack Docker) — version/commit : `______`
 
 ## Jeu de données initial
@@ -333,6 +336,39 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
   4. Félix Alpha est ajouté à A2 ; le champ de recherche est **vidé**.
 - **Nettoyage** : retirer Félix Alpha de A2.
 
+### CT-18 `[manuel]` — Âges des catégories paramétrables   (couvre : spec #1 R34, R34bis ; spec #20 R3 ; nominal + cas limite)
+
+- **Rôle / compte** : `coach@test.local` (permanent Club A).
+- **Pré-condition** : `AGE_BASCULE=12`, `AGE_ADO_MAX=18` ; seed opt-in
+  **`06-ages-limites.sql`** appliqué (après `01`) : rencontres Club A **enfant**
+  et **ado** du **2027-01-16** (saison 2026-2027) en ① pré-compétition, chacune
+  avec une équipe vide « Limites », et six grimpeurs Club A libres :
+  **Limite Onze** (2015, 11 ans), **Limite Douze** (2014, 12 ans, pivot),
+  **Limite Treize** (2013, 13 ans), **Limite Seize** (2010, 16 ans),
+  **Limite Dixhuit** (2008, 18 ans), **Limite Dixneuf** (2007, 19 ans).
+- **Étapes** :
+  1. Rencontre **enfant** du 2027-01-16, équipe « Limites » : saisir « limite »
+     dans la recherche et lire la liste.
+  2. Rencontre **ado** du 2027-01-16, équipe « Limites » : saisir « limite » et
+     lire la liste ; ajouter **Limite Douze**.
+  3. Rencontre **enfant** : ajouter **Limite Douze** (engagé aux deux rencontres).
+  4. Admin : créer ou modifier une rencontre, lire la liste « Catégorie ».
+  5. Retirer `AGE_BASCULE` (ou la mettre à `douze`), redémarrer l'app, puis
+     ouvrir la rencontre ado. Recommencer avec `AGE_BASCULE=12` et
+     `AGE_ADO_MAX` absente, puis avec `AGE_BASCULE=19` et `AGE_ADO_MAX=18`.
+- **Résultat attendu** :
+  1. Enfant : **Limite Onze** et **Limite Douze** seulement.
+  2. Ado : **Limite Douze**, **Treize**, **Seize** et **Dixhuit** ; **Onze** et
+     **Dixneuf absents** ; ajout de Limite Douze accepté.
+  3. Ajout **accepté** : le pivot concourt dans les deux catégories.
+  4. Libellés « **Enfant — matin** » et « **Ado — après-midi** », sans âge.
+  5. L'écran d'engagement est en **erreur** ; les journaux serveur contiennent
+     un message qui nomme la variable en cause (`AGE_BASCULE`, `AGE_ADO_MAX`,
+     ou les deux si la bascule dépasse le maximum). Aucune valeur par défaut
+     n'est appliquée.
+- **Nettoyage** : remettre `AGE_BASCULE=12` et `AGE_ADO_MAX=18`, redémarrer ;
+  rejouer `06-ages-limites.sql` (remet les deux rencontres à vide).
+
 ## Registre d'exécution
 
 > **Testeur** : `agent/playwright` pour un passage machine, un nom pour un passage
@@ -358,3 +394,4 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
 | 2026-09-18 | agent/playwright | develop | CT-15 | auto | ✅ | nav coach temp → « Ma rencontre » (R8bis) |
 | 2026-10-02 | agent/playwright | develop | CT-01 | auto | ✅ | négatif réaligné : anonyme → `/connexion` (spec #12 R2), sans rôle → 404 |
 | 2026-10-02 | agent/playwright | develop | CT-01→CT-15 | auto | ✅ | suite complète verte après correctifs E1 (insert grimpeur `sexe`/`licence`) |
+| 2026-11-05 | utilisateur | d87593d | CT-18 | manuel | ✅ | âges limites (seed 06) avec `AGE_BASCULE=12`, `AGE_ADO_MAX=18` ; cahier 32 optionnel, non déroulé |

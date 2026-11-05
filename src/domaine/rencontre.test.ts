@@ -3,8 +3,10 @@ import { describe, it, expect } from 'vitest'
 import {
   CATEGORIES,
   PHASES,
+  BornesAgeNonConfigureesError,
   SaisieRencontreInvalideError,
   aClassementClub,
+  analyserBornesAge,
   epreuveDesactivable,
   etatEpreuveModifiable,
   anneeSaison,
@@ -193,50 +195,118 @@ describe('spec #1 — Garde-fou « jour J » — préparation ET compétition (R
   })
 })
 
+// Saison 2026-2027 : âge de bascule 12 (nés en 2014), âge maximum ado 18 (nés
+// en 2008 au plus tôt), spec #1 R34bis.
+const BORNES = { ageBascule: 12, ageAdoMax: 18 }
+
 describe('spec #1 — Éligibilité d’un grimpeur à la catégorie d’une rencontre (R34)', () => {
   // Saison 2026 (rencontre entre sept. 2026 et août 2027). Âge = 2026 − année.
   const SAISON = 2026
 
-  it('enfant : accepte « moins de 13 ans » et le pivot (13 ans)', () => {
-    expect(estEligibleCategorie(2015, 'enfant', SAISON)).toBe(true) // 11 ans
-    expect(estEligibleCategorie(2013, 'enfant', SAISON)).toBe(true) // 13 ans (pivot)
+  it('enfant : accepte les plus jeunes et le pivot (âge de bascule)', () => {
+    expect(estEligibleCategorie(2015, 'enfant', SAISON, BORNES)).toBe(true) // 11 ans
+    expect(estEligibleCategorie(2014, 'enfant', SAISON, BORNES)).toBe(true) // 12 ans (pivot)
   })
 
-  it('enfant : refuse 14 ans et plus', () => {
-    expect(estEligibleCategorie(2012, 'enfant', SAISON)).toBe(false) // 14 ans
+  it('enfant : refuse au-delà de l’âge de bascule', () => {
+    expect(estEligibleCategorie(2013, 'enfant', SAISON, BORNES)).toBe(false) // 13 ans
   })
 
-  it('ado : accepte le pivot (13 ans) jusqu’à 19 ans', () => {
-    expect(estEligibleCategorie(2013, 'ado', SAISON)).toBe(true) // 13 ans (pivot)
-    expect(estEligibleCategorie(2007, 'ado', SAISON)).toBe(true) // 19 ans
+  it('ado : accepte le pivot (âge de bascule) jusqu’à l’âge maximum ado', () => {
+    expect(estEligibleCategorie(2014, 'ado', SAISON, BORNES)).toBe(true) // 12 ans (pivot)
+    expect(estEligibleCategorie(2008, 'ado', SAISON, BORNES)).toBe(true) // 18 ans
   })
 
-  it('ado : refuse « moins de 13 ans » et « plus de 19 ans »', () => {
-    expect(estEligibleCategorie(2015, 'ado', SAISON)).toBe(false) // 11 ans
-    expect(estEligibleCategorie(2006, 'ado', SAISON)).toBe(false) // 20 ans
+  it('ado : refuse sous l’âge de bascule et au-delà de l’âge maximum ado', () => {
+    expect(estEligibleCategorie(2015, 'ado', SAISON, BORNES)).toBe(false) // 11 ans
+    expect(estEligibleCategorie(2007, 'ado', SAISON, BORNES)).toBe(false) // 19 ans
   })
 
-  it('le pivot (13 ans) est éligible aux deux catégories (R34)', () => {
-    expect(estEligibleCategorie(2013, 'enfant', SAISON)).toBe(true)
-    expect(estEligibleCategorie(2013, 'ado', SAISON)).toBe(true)
+  it('saison 2026-2027 : né en 2014 éligible aux deux, 2013 ado seul, 2015 enfant seul (R34)', () => {
+    expect(estEligibleCategorie(2014, 'enfant', SAISON, BORNES)).toBe(true)
+    expect(estEligibleCategorie(2014, 'ado', SAISON, BORNES)).toBe(true)
+    expect(estEligibleCategorie(2013, 'enfant', SAISON, BORNES)).toBe(false)
+    expect(estEligibleCategorie(2013, 'ado', SAISON, BORNES)).toBe(true)
+    expect(estEligibleCategorie(2015, 'enfant', SAISON, BORNES)).toBe(true)
+    expect(estEligibleCategorie(2015, 'ado', SAISON, BORNES)).toBe(false)
   })
 
-  it('bornes d’année de naissance : enfant = né en 2013 ou après, sans borne haute', () => {
-    expect(bornesAnneeNaissance('enfant', SAISON)).toEqual({ min: 2013, max: null })
+  it('les âges sont des paramètres : bascule 13 et maximum 19 (R34bis)', () => {
+    const anciens = { ageBascule: 13, ageAdoMax: 19 }
+    expect(estEligibleCategorie(2013, 'enfant', SAISON, anciens)).toBe(true)
+    expect(estEligibleCategorie(2013, 'ado', SAISON, anciens)).toBe(true)
+    expect(estEligibleCategorie(2014, 'ado', SAISON, anciens)).toBe(false)
+    expect(estEligibleCategorie(2007, 'ado', SAISON, anciens)).toBe(true)
   })
 
-  it('bornes d’année de naissance : ado = né de 2007 à 2013', () => {
-    expect(bornesAnneeNaissance('ado', SAISON)).toEqual({ min: 2007, max: 2013 })
+  it('bornes d’année de naissance : enfant = né en 2014 ou après, sans borne haute', () => {
+    expect(bornesAnneeNaissance('enfant', SAISON, BORNES)).toEqual({ min: 2014, max: null })
+  })
+
+  it('bornes d’année de naissance : ado = né de 2008 à 2014', () => {
+    expect(bornesAnneeNaissance('ado', SAISON, BORNES)).toEqual({ min: 2008, max: 2014 })
   })
 
   it('les bornes reproduisent exactement estEligibleCategorie', () => {
-    for (const categorie of ['enfant', 'ado', 'adulte'] as const) {
-      const { min, max } = bornesAnneeNaissance(categorie, SAISON)
-      for (let annee = 1930; annee <= 2035; annee++) {
-        const dansBornes = (min === null || annee >= min) && (max === null || annee <= max)
-        expect(dansBornes).toBe(estEligibleCategorie(annee, categorie, SAISON))
+    const jeux = [
+      { ageBascule: 10, ageAdoMax: 17 },
+      BORNES,
+      { ageBascule: 13, ageAdoMax: 19 },
+    ]
+    for (const bornes of jeux) {
+      for (const categorie of ['enfant', 'ado', 'adulte'] as const) {
+        const { min, max } = bornesAnneeNaissance(categorie, SAISON, bornes)
+        for (let annee = 1930; annee <= 2035; annee++) {
+          const dansBornes = (min === null || annee >= min) && (max === null || annee <= max)
+          expect(dansBornes).toBe(estEligibleCategorie(annee, categorie, SAISON, bornes))
+        }
       }
     }
+  })
+
+  it('les libellés enfant/ado ne citent aucun âge (R34bis)', () => {
+    expect(CATEGORIES.find((c) => c.value === 'enfant')?.label).toBe('Enfant — matin')
+    expect(CATEGORIES.find((c) => c.value === 'ado')?.label).toBe('Ado — après-midi')
+  })
+})
+
+describe('spec #1 — Âges lus dans AGE_BASCULE et AGE_ADO_MAX (R34bis)', () => {
+  it('accepte des entiers de 1 à 99, espaces de bord tolérés', () => {
+    expect(analyserBornesAge('12', '18')).toEqual({ ageBascule: 12, ageAdoMax: 18 })
+    expect(analyserBornesAge(' 13 ', ' 19 ')).toEqual({ ageBascule: 13, ageAdoMax: 19 })
+    expect(analyserBornesAge('1', '99')).toEqual({ ageBascule: 1, ageAdoMax: 99 })
+  })
+
+  it('accepte un âge de bascule égal à l’âge maximum ado', () => {
+    expect(analyserBornesAge('15', '15')).toEqual({ ageBascule: 15, ageAdoMax: 15 })
+  })
+
+  it('bloque si une variable est absente ou vide (pas de valeur par défaut)', () => {
+    for (const [bascule, max] of [
+      [undefined, '18'],
+      ['12', undefined],
+      ['', '18'],
+      ['12', '   '],
+    ]) {
+      expect(() => analyserBornesAge(bascule, max)).toThrow(BornesAgeNonConfigureesError)
+    }
+  })
+
+  it('bloque si une valeur n’est pas un entier de 1 à 99', () => {
+    for (const valeur of ['0', '100', '-12', '12.5', '12 ans', 'douze', '2014']) {
+      expect(() => analyserBornesAge(valeur, '18')).toThrow(BornesAgeNonConfigureesError)
+      expect(() => analyserBornesAge('1', valeur)).toThrow(BornesAgeNonConfigureesError)
+    }
+  })
+
+  it('bloque si l’âge de bascule dépasse l’âge maximum ado', () => {
+    expect(() => analyserBornesAge('19', '18')).toThrow(BornesAgeNonConfigureesError)
+  })
+
+  it('le message d’erreur nomme la variable à configurer', () => {
+    expect(() => analyserBornesAge(undefined, '18')).toThrow(/AGE_BASCULE/)
+    expect(() => analyserBornesAge('12', 'x')).toThrow(/AGE_ADO_MAX/)
+    expect(() => analyserBornesAge('19', '18')).toThrow(/AGE_BASCULE.*AGE_ADO_MAX/)
   })
 })
 
@@ -260,23 +330,28 @@ describe('spec #20 — Catégorie adulte (R1–R3)', () => {
   })
 
   it('adulte : éligible dès 16 ans en saison (R2)', () => {
-    expect(estEligibleCategorie(2010, 'adulte', SAISON)).toBe(true) // 16 ans
-    expect(estEligibleCategorie(2011, 'adulte', SAISON)).toBe(false) // 15 ans
+    expect(estEligibleCategorie(2010, 'adulte', SAISON, BORNES)).toBe(true) // 16 ans
+    expect(estEligibleCategorie(2011, 'adulte', SAISON, BORNES)).toBe(false) // 15 ans
   })
 
   it('adulte : pas d’âge maximal (R2)', () => {
-    expect(estEligibleCategorie(1950, 'adulte', SAISON)).toBe(true) // 76 ans
+    expect(estEligibleCategorie(1950, 'adulte', SAISON, BORNES)).toBe(true) // 76 ans
   })
 
-  it('un grimpeur de 16 à 19 ans est éligible à l’ado et à l’adulte (R3)', () => {
-    for (const annee of [2007, 2008, 2009, 2010]) {
-      expect(estEligibleCategorie(annee, 'ado', SAISON)).toBe(true)
-      expect(estEligibleCategorie(annee, 'adulte', SAISON)).toBe(true)
+  it('un grimpeur de 16 ans à l’âge maximum ado est éligible à l’ado et à l’adulte (R3)', () => {
+    for (const annee of [2008, 2009, 2010]) {
+      expect(estEligibleCategorie(annee, 'ado', SAISON, BORNES)).toBe(true)
+      expect(estEligibleCategorie(annee, 'adulte', SAISON, BORNES)).toBe(true)
     }
   })
 
+  it('au-delà de l’âge maximum ado, adulte seulement (R3, rév. 2026-11-05)', () => {
+    expect(estEligibleCategorie(2007, 'ado', SAISON, BORNES)).toBe(false) // 19 ans
+    expect(estEligibleCategorie(2007, 'adulte', SAISON, BORNES)).toBe(true)
+  })
+
   it('bornes d’année de naissance : adulte = né en 2010 ou avant, sans borne basse (R2)', () => {
-    expect(bornesAnneeNaissance('adulte', SAISON)).toEqual({ min: null, max: 2010 })
+    expect(bornesAnneeNaissance('adulte', SAISON, BORNES)).toEqual({ min: null, max: 2010 })
   })
 })
 

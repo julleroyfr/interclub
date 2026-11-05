@@ -1,4 +1,10 @@
-import { anneeSaison, estEligibleCategorie, type Categorie, type Phase } from '@/domaine/rencontre'
+import {
+  anneeSaison,
+  estEligibleCategorie,
+  type BornesAge,
+  type Categorie,
+  type Phase,
+} from '@/domaine/rencontre'
 
 // Assemblage PUR de l'engagement d'un club en rencontre (spec #5 R9–R14, R34) à
 // partir de lectures déjà faites. Partagé par le loader coach (un club) et le
@@ -62,6 +68,8 @@ export type GrimpeurLu = {
 
 /** Lectures nécessaires à l'assemblage de l'engagement d'UN club. */
 export type DonneesEngagementClub = {
+  /** Âges configurés des catégories enfant/ado (spec #1 R34bis). */
+  bornesAge: BornesAge
   rencontre: {
     id: string
     dateRencontre: string
@@ -98,7 +106,7 @@ export function assemblerEngagementClub(
   const { rencontre } = d
   const saison = anneeSaison(rencontre.dateRencontre)
   const estEligible = (anneeNaissance: number) =>
-    estEligibleCategorie(anneeNaissance, rencontre.categorie, saison)
+    estEligibleCategorie(anneeNaissance, rencontre.categorie, saison, d.bornesAge)
   const nomClub = (id: string, defaut: string) => d.nomClub.get(id) ?? defaut
 
   const dejaEngages = new Set<string>()

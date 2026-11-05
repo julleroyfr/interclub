@@ -60,6 +60,10 @@ delete from interclub.equipe       where rencontre_id in ('33333333-3333-3333-33
 delete from interclub.epreuve      where rencontre_id in ('33333333-3333-3333-3333-333333333333', 'adadadad-adad-adad-adad-adadadadadad');
 delete from interclub.voie_vitesse where rencontre_id in ('33333333-3333-3333-3333-333333333333', 'adadadad-adad-adad-adad-adadadadadad');
 delete from interclub.rencontre    where id in ('33333333-3333-3333-3333-333333333333', 'adadadad-adad-adad-adad-adadadadadad');
+-- Rencontres du seed opt-in 06 (âges limites), Club A le 2027-01-16 (cascade).
+delete from interclub.rencontre
+ where club_porteur_id = '11111111-1111-1111-1111-111111111111'
+   and date_rencontre = '2027-01-16' and categorie in ('enfant', 'ado');
 
 -- 6. Grimpeurs des clubs de test.
 delete from interclub.grimpeur
