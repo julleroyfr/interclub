@@ -49,7 +49,7 @@
     et **paliers de blocs** (R39), stockés et éditables par voie/bloc de la
     rencontre. La saisie ne stocke pas de points : elle stocke l'**issue** (le
     niveau atteint), les points en découlant par lecture de la config.
-  - **Règlement** « 2025 Interclubs — Reglement v3 » (CT33 FFME) :
+  - **Règlement** « 2027 Interclubs — Reglement v3 » (CT33 FFME) :
     - **Matin (enfants < 13 ans)**, p. 3–4 : « chaque compétiteur s'engage selon
       son niveau pour **3 voies de niveau croissant** » (Groupe de départ) ; « les
       voies en tête proposent une **prise valorisée** qui donne la **moitié** des

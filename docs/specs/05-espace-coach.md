@@ -35,7 +35,7 @@
     pré-compétition** (permanent) et **② préparation** (permanent + temporaire,
     R6/R25/R27), coach temporaire actif **le jour J** (préparation + compétition,
     R9/R28), rattachement des **prêtés** réservé à l'admin (R35/R36).
-  - **Règlement** « 2025 Interclubs — Reglement v3 » §6 (Clubs et équipes) :
+  - **Règlement** « 2027 Interclubs — Reglement v3 » §6 (Clubs et équipes) :
     « constitution d'**équipes de 8 participants** pour chaque club ; les
     participants en surnombre constituent une **équipe incomplète (CT33)** OU
     s'inscrivent dans une équipe incomplète d'un autre club (**prêt ponctuel**) ».

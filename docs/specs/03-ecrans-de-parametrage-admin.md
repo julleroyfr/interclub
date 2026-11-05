@@ -258,7 +258,7 @@ saisie, les flux CRUD, et les règles de suppression (dépendances / cascade).
   existante, dans le gabarit comme dans une rencontre, toutes catégories — spec
   #20 R9bis.)*
 - **R33.** Le gabarit **enfant** est pré-initialisé avec le format du règlement
-  CT33 FFME 2025-2026 (§ Matin) lors du déploiement (via seed) :
+  CT33 FFME 2026-2027 (§ Matin) lors du déploiement (via seed) :
 
   | Épreuve | Contenu | Détail |
   |---------|---------|--------|
@@ -267,7 +267,7 @@ saisie, les flux CRUD, et les règles de suppression (dépendances / cascade).
   | Vitesse | 2 voies | Libellées « Filles » et « Garçons » ; **barème par rang** seedé (§ Matin : 1er = 15… au-delà 45e = 2, chute = 1, NP = 0 — R46) |
 
 - **R34.** Le gabarit **ado** est pré-initialisé avec le format du règlement CT33
-  FFME 2025-2026 (§ Après-midi) :
+  FFME 2026-2027 (§ Après-midi) :
 
   | Épreuve | Contenu | Détail |
   |---------|---------|--------|

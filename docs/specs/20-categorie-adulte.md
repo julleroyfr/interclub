@@ -3,15 +3,20 @@
 - **Statut** : validée (2026-10-23) ; révisée le 2026-10-25 (R19bis, R19ter, R36–R41, à la demande du produit)
 - **Révision** : 2026-11-05 — âge maximum ado paramétrable (spec #1 R34bis,
   `AGE_ADO_MAX`, 18 en 2026-2027) : R3 et R33 ne citent plus « 19 ans ».
+- **Révision** : 2026-11-05 — sources alignées sur le règlement 2026-2027
+  (aucun barème modifié) ; seuil adulte de 16 ans confirmé comme décision
+  produit, sans changement de règle.
 - **Sources** :
   - **Règlement** : *Règlement des interclubs d'escalade — Addendum règlement
-    Adultes*, CT 33 FFME 2025-2026 (`docs/reglement/2025 Interclubs - Reglement
-    v3_1 - Adultes (2).pdf`). L'addendum **complète** le règlement jeunes
-    (`docs/reglement/2025 Interclubs - Reglement v3 (2).pdf`) : ce qui n'y est pas
+    Adultes*, CT 33 FFME 2026-2027 (`docs/reglement/2027 Interclubs - Reglement
+    Adultes.pdf`). L'addendum **complète** le règlement jeunes
+    (`docs/reglement/2027 Interclubs - Reglement v3.pdf`) : ce qui n'y est pas
     redéfini reste celui de la catégorie 13/19 ans (ado).
   - **Décisions produit du 2026-10-23** :
-    - catégorie **adulte** ouverte dès **16 ans** en saison (la catégorie U18 de
-      l'addendum désigne les plus de 16 ans), sans borne haute ;
+    - catégorie **adulte** ouverte dès **16 ans** en saison, sans borne haute
+      (choix produit : l'addendum ne fixe pas d'âge minimum ; confirmé le
+      2026-11-05 malgré le passage de « U18 » à « U19 » dans l'addendum
+      2026-2027) ;
     - **import** des licenciés **sans limite d'âge** ;
     - **pas de classement club** en adulte ;
     - l'**admin** crée et compose les équipes (clubs mélangés, 4 au plus) et

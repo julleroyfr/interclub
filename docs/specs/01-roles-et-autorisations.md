@@ -2,7 +2,7 @@
 
 - **Statut** : validée (le 2026-07-12)
 - **Sources** : décision produit du 2026-07-12 (rôles, droits, cycle de vie
-  d'une rencontre) ; règlement CT33 FFME 2025-2026 **enfant/ado** et v3.1 Adultes
+  d'une rencontre) ; règlement CT33 FFME 2026-2027 **enfant/ado** et Addendum Adultes
   (épreuves voie / bloc / vitesse, résultat de vitesse, catégories matin /
   après-midi, prêts de grimpeurs). ⚠️ La dernière version du règlement prime
   toujours (cf. `docs/conventions/01-workflow-spec-first-tdd.md` §4).
