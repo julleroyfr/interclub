@@ -96,6 +96,12 @@ export async function chargerEngagementTousClubs(
   }
 
   const bornesAge = lireBornesAge()
+  // Les éligibles ado comprennent déjà les surclassés de la saison, tous clubs
+  // (prêtés compris) : ils suffisent à l'assemblage (spec #21 R7, R20).
+  const saison = anneeSaison(rencontre.date_rencontre as string)
+  const surclassements = roster
+    .filter((g) => g.surclasse)
+    .map((g) => ({ grimpeurId: g.id, saison }))
   const rosterParClub = new Map<string, GrimpeurLu[]>()
   for (const g of roster) ajouter(rosterParClub, g.clubId, g)
 
@@ -121,6 +127,7 @@ export async function chargerEngagementTousClubs(
           grimpeursCompo,
           rosterClub: rosterParClub.get(clubId) ?? [],
           pretes: pretesParClub.get(clubId) ?? [],
+          surclassements,
         },
         clubId,
       ),

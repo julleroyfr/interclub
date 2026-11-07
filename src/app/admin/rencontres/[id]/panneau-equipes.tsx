@@ -206,6 +206,12 @@ function LigneMembre({
           Prêté{membre.clubOrigineNom ? ` · ${membre.clubOrigineNom}` : ''}
         </span>
       )}
+      {/* Surclassé pour la saison, en rencontre ado (spec #21 R20). */}
+      {membre.surclasse && (
+        <span className="inline-flex items-center rounded-full border border-surclasse/35 bg-surclasse/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-surclasse">
+          Surclassé
+        </span>
+      )}
 
       {estEnfant && (
         <form action={actionGroupe} className="ml-auto flex items-center gap-1">
@@ -380,9 +386,11 @@ function FormAjout({
         defaultValue={filtres.length === 1 ? filtres[0].id : undefined}
         options={filtres.map((g) => ({
           value: g.id,
-          label: g.prete
-            ? `${g.prenom} ${g.nom} (prêté · ${g.clubOrigineNom})`
-            : `${g.prenom} ${g.nom}`,
+          label:
+            `${g.prenom} ${g.nom}` +
+            (g.prete ? ` (prêté · ${g.clubOrigineNom})` : '') +
+            // Badge « Surclassé » dans la liste d'ajout ado (spec #21 R20).
+            (g.surclasse ? ' · surclassé' : ''),
         }))}
         placeholder={filtres.length ? '— Choisir —' : 'Aucun grimpeur pour cette recherche'}
         required

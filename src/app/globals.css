@@ -23,6 +23,7 @@
   --color-secondaire: #bef264; /* lime — succès, mise en avant */
   --color-danger: #fb7185; /* rose — chute, erreur, destructif */
   --color-prete: #c084fc; /* violet — grimpeur prêté (spec #5 R13) */
+  --color-surclasse: #818cf8; /* indigo — grimpeur surclassé (spec #21 R18/R20) */
   --color-prepa: #fb923c; /* orange — préparation « jour J » (phase ②) */
   --color-attention: #fbbf24; /* ambre — clôture / vérification en cours */
   --color-admin: #f472b6; /* rose — actions administrateur (spec #9) */

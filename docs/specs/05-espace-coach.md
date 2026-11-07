@@ -9,6 +9,9 @@
   R12 ne cite plus « 13 ans » ni « 19 ans » mais l'**âge de bascule**
   (`AGE_BASCULE`, ex. 12) et l'**âge maximum ado** (`AGE_ADO_MAX`, ex. 18) pour la
   saison 2026-2027.
+- **Révision** : 2026-11-07 (**validée le 2026-11-07**) — **surclassement**
+  (spec #21) : en rencontre ado, R12 propose aussi les grimpeurs **surclassés**
+  pour la saison, avec un badge « Surclassé ».
 - **Révision** : 2026-09-25 — navigation (règle de changement, spec #12) : entrée
   unique **`/coach`** (l'accueil n'ouvre plus directement les jetons, C1) ;
   « Jetons » devient un **lien interne** de l'espace coach (R10) ; le coach
@@ -194,7 +197,8 @@ cette spec. (Spec #1 R6/R27, rév. 2026-09-01.)
   admet les plus jeunes **et** l'année-pivot (âge de bascule) ; **ado**, de l'âge
   de bascule à l'âge maximum ado (le pivot est éligible aux deux, spec #1 R34).
   Ces âges sont paramétrés par `AGE_BASCULE` et `AGE_ADO_MAX` (spec #1 R34bis,
-  rév. 2026-11-05).
+  rév. 2026-11-05). En rencontre **ado**, un grimpeur **surclassé** pour la saison
+  (spec #21 R7) est proposé, avec le badge **« Surclassé »** (spec #21 R20–R21).
 - **R12bis.** Le formulaire d'ajout propose, au-dessus de la liste des grimpeurs
   (R12), un **champ de recherche** qui **filtre** les grimpeurs proposés sur leur
   **nom et prénom** : insensible à la **casse** et aux **accents**, **multi-termes**

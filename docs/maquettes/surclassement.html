@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Maquette — Surclassement enfant → ado</title>
+<style>
+  :root {
+    --fond: #020617;
+    --surface: rgba(255, 255, 255, 0.04);
+    --surface-forte: rgba(255, 255, 255, 0.08);
+    --bordure: rgba(255, 255, 255, 0.12);
+    --accent: #22d3ee;
+    --accent-doux: #67e8f9;
+    --secondaire: #bef264;
+    --danger: #fb7185;
+    --attention: #fbbf24;
+    --admin: #f472b6;
+    --surclasse: #818cf8;
+    --texte-fort: #ffffff;
+    --texte: #e2e8f0;
+    --texte-attenue: #94a3b8;
+    --texte-doux: #64748b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--fond); color: var(--texte);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.4; padding: 20px clamp(12px, 3vw, 40px) 80px;
+  }
+  h1 { color: var(--texte-fort); font-size: clamp(18px, 2.4vw, 24px); margin: 0 0 6px; }
+  .intro { color: var(--texte-attenue); max-width: 880px; font-size: 14px; margin: 0 0 20px; }
+  .repli { display: inline-block; margin-top: 4px; color: var(--texte-doux); font-size: 12px; }
+  .etape { color: var(--accent); font-size: 12px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .06em; margin: 34px 0 10px; }
+
+  .app {
+    width: min(880px, 100%);
+    border: 1px solid var(--bordure); border-radius: 18px; overflow: hidden;
+    background: linear-gradient(180deg, rgba(244,114,182,0.05), rgba(2,6,23,0) 160px), var(--fond);
+    box-shadow: 0 16px 50px rgba(0,0,0,.5);
+  }
+  .app.coach { background: linear-gradient(180deg, rgba(34,211,238,0.05), rgba(2,6,23,0) 160px), var(--fond); }
+  .barre-haut {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px;
+    padding: 14px clamp(14px, 2vw, 22px); border-bottom: 1px solid var(--bordure);
+  }
+  .barre-haut .titres { margin-right: auto; }
+  .lien-retour { color: var(--texte-attenue); font-size: 12.5px; }
+  .titre-ecran { color: var(--texte-fort); font-weight: 700; font-size: clamp(15px, 1.6vw, 18px); margin-top: 2px; }
+  .badge-role { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px;
+    padding: 4px 11px; font-size: 12px; font-weight: 700; }
+  .badge-role.admin { background: rgba(244,114,182,.12); color: var(--admin); border: 1px solid rgba(244,114,182,.35); }
+  .badge-role.coach { background: rgba(34,211,238,.12); color: var(--accent); border: 1px solid rgba(34,211,238,.35); }
+
+  .contenu { padding: 18px clamp(14px, 2.2vw, 26px); }
+  .recherche {
+    width: 100%; background: rgba(0,0,0,.3); color: var(--texte-fort); color-scheme: dark;
+    border: 1px solid var(--bordure); border-radius: 10px; padding: 10px 12px; font-size: 16px; margin-bottom: 14px;
+  }
+
+  ul.liste { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+  .ligne { border: 1px solid var(--bordure); border-radius: 16px; background: rgba(0,0,0,.2); padding: 14px 16px; }
+  .ligne.focus { border-color: rgba(129,140,248,.5); box-shadow: 0 0 0 1px rgba(129,140,248,.25) inset; }
+  .tete { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+  .identite { min-width: 0; }
+  .nom { color: var(--texte-fort); font-weight: 600; font-size: 15.5px; }
+  .nom .famille { text-transform: uppercase; }
+  .meta { color: var(--texte-doux); font-size: 12px; margin-top: 4px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  .pastille { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; vertical-align: 1px;
+    border-radius: 999px; padding: 1px 8px; font-size: 10.5px; font-weight: 700; }
+  .pastille.surclasse { color: var(--surclasse); background: rgba(129,140,248,.12); border: 1px solid rgba(129,140,248,.38); }
+  .pastille.generee { color: var(--attention); background: rgba(251,191,36,.10); border: 1px solid rgba(251,191,36,.3); }
+
+  .btn { border-radius: 10px; padding: 10px 14px; font-size: 13px; font-weight: 600; cursor: pointer; min-height: 44px;
+    border: 1px solid var(--bordure); background: transparent; color: var(--texte-attenue); }
+  .btn.violet { border-color: rgba(129,140,248,.45); background: rgba(129,140,248,.14); color: var(--surclasse); }
+  .btn.danger { border-color: rgba(251,113,133,.4); background: rgba(251,113,133,.10); color: var(--danger); }
+  .btn.plein { border-color: rgba(244,114,182,.45); background: rgba(244,114,182,.15); color: var(--admin); font-weight: 700; }
+
+  .panneau { margin-top: 14px; border-top: 1px solid var(--bordure); padding-top: 14px; }
+  .panneau-titre { color: var(--texte-fort); font-size: 13.5px; font-weight: 700; margin: 0 0 8px; }
+  .champ label { display: block; color: var(--texte-attenue); font-size: 12.5px; font-weight: 600; margin-bottom: 6px; }
+  .champ select {
+    width: 100%; max-width: 320px; background: rgba(0,0,0,.3); color: var(--texte-fort); color-scheme: dark;
+    border: 1px solid var(--bordure); border-radius: 10px; padding: 10px 12px; font-size: 16px;
+  }
+  .champ select option { background: var(--fond); color: var(--texte); }
+  .aide { color: var(--texte-doux); font-size: 12px; margin: 8px 0 0; }
+  .boutons { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+
+  .alerte { border-radius: 12px; padding: 11px 14px; font-size: 13px; margin-top: 10px; }
+  .alerte.err { color: var(--danger); background: rgba(251,113,133,.08); border: 1px solid rgba(251,113,133,.3); }
+  .alerte.ok { color: var(--secondaire); background: rgba(190,242,100,.06); border: 1px solid rgba(190,242,100,.22); }
+  .alerte.att { color: var(--attention); background: rgba(251,191,36,.07); border: 1px solid rgba(251,191,36,.28); }
+
+  ul.retraits { margin: 8px 0 0; padding-left: 18px; font-size: 13px; color: var(--texte); }
+  ul.retraits li { margin-bottom: 4px; }
+  ul.retraits .phase { color: var(--texte-doux); font-size: 11.5px; }
+  .conserves { color: var(--texte-attenue); font-size: 12.5px; margin-top: 8px; }
+
+  details.histo { margin-top: 10px; }
+  details.histo summary { cursor: pointer; color: var(--texte-attenue); font-size: 12.5px; min-height: 32px;
+    display: flex; align-items: center; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th { text-align: left; color: var(--texte-doux); font-weight: 600; font-size: 11px; text-transform: uppercase;
+    letter-spacing: .04em; padding: 6px 8px; border-bottom: 1px solid var(--bordure); }
+  td { padding: 8px; border-bottom: 1px solid rgba(255,255,255,.05); }
+  td.actif { color: var(--secondaire); font-weight: 600; }
+  .table-scroll { overflow-x: auto; }
+
+  /* coach */
+  .entete-rencontre { display: flex; flex-wrap: wrap; gap: 6px 14px; color: var(--texte-attenue); font-size: 12.5px; margin-bottom: 14px; }
+  .entete-rencontre b { color: var(--texte-fort); }
+  .grille { display: grid; grid-template-columns: 1fr; gap: 16px; }
+  @media (min-width: 720px) { .grille { grid-template-columns: 1fr 1fr; } }
+  .carte { border: 1px solid var(--bordure); border-radius: 14px; background: var(--surface); padding: 12px 14px; }
+  .carte h3 { margin: 0 0 10px; color: var(--texte-fort); font-size: 14px; }
+  .item { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.05); min-height: 44px; }
+  .item:last-child { border-bottom: 0; }
+  .item .qui { font-size: 13.5px; color: var(--texte); }
+  .item .qui small { color: var(--texte-doux); }
+  .ajout { border-radius: 8px; padding: 6px 12px; font-size: 12.5px; font-weight: 600; min-height: 36px;
+    border: 1px solid rgba(34,211,238,.35); background: rgba(34,211,238,.10); color: var(--accent); cursor: pointer; }
+
+  /* classement */
+  .rang { color: var(--texte-doux); width: 34px; }
+  .pts { text-align: right; color: var(--texte-fort); font-weight: 700; }
+  tr.vise td { background: rgba(129,140,248,.07); }
+
+  .legende { max-width: 880px; margin: 40px 0 0; color: var(--texte-attenue); font-size: 13px; }
+  .legende h2 { color: var(--texte-fort); font-size: 15px; margin-bottom: 6px; }
+  .legende h3 { color: var(--admin); font-size: 13px; margin: 16px 0 4px; }
+  .legende li { margin-bottom: 6px; }
+  .legende code { background: var(--surface-forte); padding: 1px 5px; border-radius: 5px; color: var(--texte-fort); font-size: 12px; }
+</style>
+</head>
+<body>
+  <h1>Surclassement enfant → ado — maquette (spec #21)</h1>
+  <p class="intro">L'<strong>admin</strong> surclasse un enfant pour une saison : il reste éligible <strong>enfant</strong> et
+  devient éligible <strong>ado</strong>. La révocation le retire des rencontres ado à venir (① / ②) mais
+  <strong>conserve</strong> tout ce qu'il a disputé (③ et après). Saison 2026–2027, âge de bascule B = 12.
+  Design « Nuit », mobile-first.
+  <span class="repli">↔ Redimensionnez la fenêtre pour voir le repli responsive.</span></p>
+
+  <!-- ===================================================================== -->
+  <div class="etape">① Admin — écran Grimpeurs (R18–R19)</div>
+  <div class="app">
+    <div class="barre-haut">
+      <div class="titres">
+        <div class="lien-retour">← Tableau de bord</div>
+        <div class="titre-ecran">Grimpeurs</div>
+      </div>
+      <span class="badge-role admin">Admin</span>
+    </div>
+    <div class="contenu">
+      <input class="recherche" type="search" placeholder="Rechercher un grimpeur (nom, prénom)" aria-label="Rechercher un grimpeur" />
+      <ul class="liste">
+        <!-- Surclassable, avec panneau ouvert -->
+        <li class="ligne focus">
+          <div class="tete">
+            <div class="identite">
+              <div class="nom"><span class="famille">Martin</span> Léa</div>
+              <div class="meta">Club Alpin Bordeaux · née en 2015 · Femme · licence 412358 · 1 engagement</div>
+            </div>
+            <div class="actions">
+              <button class="btn">Modifier</button>
+              <button class="btn violet" aria-expanded="true">Surclasser</button>
+              <button class="btn danger">Supprimer</button>
+            </div>
+          </div>
+          <div class="panneau">
+            <p class="panneau-titre">Surclasser en ado</p>
+            <div class="champ">
+              <label for="saison-lea">Saison</label>
+              <select id="saison-lea">
+                <option selected>2026–2027 (saison courante)</option>
+                <option>2027–2028 (saison suivante)</option>
+              </select>
+            </div>
+            <p class="aide">Léa restera éligible enfant et pourra aussi être engagée dans les rencontres ado de cette
+              saison. Le surclassement ne se reporte pas sur la saison suivante.</p>
+            <div class="boutons">
+              <button class="btn plein">Confirmer le surclassement</button>
+              <button class="btn">Annuler</button>
+            </div>
+          </div>
+        </li>
+
+        <!-- Surclassé actif -->
+        <li class="ligne">
+          <div class="tete">
+            <div class="identite">
+              <div class="nom"><span class="famille">Durand</span> Tom
+                <span class="pastille surclasse">Surclassé ado 2026–2027</span></div>
+              <div class="meta">Grimp'Océan · né en 2015 · Homme · licence 398120 · 3 engagements</div>
+            </div>
+            <div class="actions">
+              <button class="btn">Modifier</button>
+              <button class="btn violet">Révoquer le surclassement</button>
+              <button class="btn danger">Supprimer</button>
+            </div>
+          </div>
+          <details class="histo" open>
+            <summary>Historique des surclassements (2)</summary>
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th>Saison</th><th>Accordé le</th><th>Révoqué le</th></tr></thead>
+                <tbody>
+                  <tr><td>2026–2027</td><td>12/11/2026</td><td class="actif">Actif</td></tr>
+                  <tr><td>2026–2027</td><td>02/10/2026</td><td>20/10/2026</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </details>
+        </li>
+
+        <!-- Pivot : pas d'action -->
+        <li class="ligne">
+          <div class="tete">
+            <div class="identite">
+              <div class="nom"><span class="famille">Petit</span> Inès</div>
+              <div class="meta">Club Alpin Bordeaux · née en 2014 · Femme · licence 2000000004
+                <span class="pastille generee">générée</span> · 2 engagements</div>
+            </div>
+            <div class="actions">
+              <button class="btn">Modifier</button>
+              <button class="btn danger">Supprimer</button>
+            </div>
+          </div>
+        </li>
+
+        <!-- Ado : pas d'action -->
+        <li class="ligne">
+          <div class="tete">
+            <div class="identite">
+              <div class="nom"><span class="famille">Roux</span> Hugo</div>
+              <div class="meta">Grimp'Océan · né en 2011 · Homme · licence 401777 · 1 engagement</div>
+            </div>
+            <div class="actions">
+              <button class="btn">Modifier</button>
+              <button class="btn danger">Supprimer</button>
+            </div>
+          </div>
+        </li>
+      </ul>
+      <div class="alerte ok" role="status">Tom DURAND est surclassé en ado pour la saison 2026–2027.</div>
+      <div class="alerte err" role="alert">Ce grimpeur est déjà surclassé pour cette saison.</div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <div class="etape">② Admin — confirmation de révocation (R12–R15)</div>
+  <div class="app">
+    <div class="barre-haut">
+      <div class="titres">
+        <div class="lien-retour">← Tableau de bord</div>
+        <div class="titre-ecran">Grimpeurs</div>
+      </div>
+      <span class="badge-role admin">Admin</span>
+    </div>
+    <div class="contenu">
+      <ul class="liste">
+        <li class="ligne focus">
+          <div class="tete">
+            <div class="identite">
+              <div class="nom"><span class="famille">Durand</span> Tom
+                <span class="pastille surclasse">Surclassé ado 2026–2027</span></div>
+              <div class="meta">Grimp'Océan · né en 2015 · Homme · licence 398120 · 3 engagements</div>
+            </div>
+          </div>
+          <div class="panneau">
+            <p class="panneau-titre">Révoquer le surclassement 2026–2027 ?</p>
+            <div class="alerte att">
+              Tom sera <strong>retiré</strong> de ces rencontres ado à venir :
+              <ul class="retraits">
+                <li>Sam. 05/12/2026 — Grimp'Océan, équipe « Océan 1 » <span class="phase">· ① pré-compétition</span></li>
+                <li>Sam. 16/01/2027 — Club Alpin Bordeaux, prêt à l'équipe CT33 <span class="phase">· ① pré-compétition, prêt supprimé</span></li>
+              </ul>
+            </div>
+            <p class="conserves">Conservé : rencontre ado du 21/11/2026 (⑤ résultats publics). Ses résultats et ses
+              points restent dans les classements.</p>
+            <div class="boutons">
+              <button class="btn danger">Oui, révoquer</button>
+              <button class="btn">Non</button>
+            </div>
+          </div>
+        </li>
+      </ul>
+      <div class="alerte ok" role="status">Surclassement révoqué. Tom DURAND a été retiré de 2 rencontres ado à venir.</div>
+      <p class="aide">Sans engagement ado à venir, la confirmation affiche « Aucun engagement ado à venir ».</p>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <div class="etape">③ Coach — engagement d'une rencontre ado (R7, R20–R21)</div>
+  <div class="app coach">
+    <div class="barre-haut">
+      <div class="titres">
+        <div class="lien-retour">← Mes rencontres</div>
+        <div class="titre-ecran">Engagement — rencontre ado</div>
+      </div>
+      <span class="badge-role coach">Coach</span>
+    </div>
+    <div class="contenu">
+      <div class="entete-rencontre">
+        <span><b>Sam. 05/12/2026</b></span><span>Ado — après-midi</span><span>Grimp'Océan</span><span>① Pré-compétition</span>
+      </div>
+      <div class="grille">
+        <div class="carte">
+          <h3>Équipe « Océan 1 »</h3>
+          <div class="item"><span class="qui"><b>ROUX</b> Hugo <small>· 2011</small></span><button class="btn">Retirer</button></div>
+          <div class="item"><span class="qui"><b>DURAND</b> Tom <small>· 2015</small>
+            <span class="pastille surclasse">Surclassé</span></span><button class="btn">Retirer</button></div>
+        </div>
+        <div class="carte">
+          <h3>Ajouter un grimpeur</h3>
+          <div class="item"><span class="qui"><b>BLANC</b> Zoé <small>· 2013</small></span><button class="ajout">Ajouter</button></div>
+          <div class="item"><span class="qui"><b>MARTIN</b> Léa <small>· 2015</small>
+            <span class="pastille surclasse">Surclassé</span></span><button class="ajout">Ajouter</button></div>
+          <div class="item"><span class="qui"><b>PETIT</b> Inès <small>· 2014</small></span><button class="ajout">Ajouter</button></div>
+          <p class="aide">Les enfants non surclassés (ex. nés en 2015 sans surclassement) ne sont pas proposés.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <div class="etape">④ Classement d'une rencontre déjà disputée, après révocation (R13, R16)</div>
+  <div class="app">
+    <div class="barre-haut">
+      <div class="titres">
+        <div class="lien-retour">← Rencontre du 21/11/2026</div>
+        <div class="titre-ecran">Classement individuel — Ado, garçons</div>
+      </div>
+      <span class="badge-role admin">Admin</span>
+    </div>
+    <div class="contenu">
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Rang</th><th>Grimpeur</th><th>Club</th><th style="text-align:right">Points</th></tr></thead>
+          <tbody>
+            <tr><td class="rang">1</td><td>ROUX Hugo</td><td>Grimp'Océan</td><td class="pts">412</td></tr>
+            <tr class="vise"><td class="rang">2</td><td>DURAND Tom</td><td>Grimp'Océan</td><td class="pts">388</td></tr>
+            <tr><td class="rang">3</td><td>LEROY Noé</td><td>Club Alpin Bordeaux</td><td class="pts">351</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="aide">Tom (surclassement révoqué le 28/11/2026) reste classé avec ses points, ceux de son équipe et de
+        son club. Pas de badge : le classement ne réexamine pas l'éligibilité.</p>
+    </div>
+  </div>
+
+  <div class="legende">
+    <h2>Règles illustrées</h2>
+    <h3>Admin — écran Grimpeurs</h3>
+    <ul>
+      <li>« Surclasser » proposé seulement si l'âge en saison est &lt; B (R3, R18) : pas pour le pivot né en 2014 ni
+        pour un ado.</li>
+      <li>Saison au choix : courante (par défaut) ou suivante (R2) ; au plus un surclassement actif par saison (R4).</li>
+      <li>Badge « Surclassé ado <code>saison</code> » et historique accord / révocation (R18, R19, R11).</li>
+    </ul>
+    <h3>Révocation</h3>
+    <ul>
+      <li>Retrait des équipes ado en ① / ② et suppression du prêt (R12), liste dans la confirmation (R15).</li>
+      <li>Rencontres en ③ et après : rien n'est touché (R13) ; opération tout ou rien (R14).</li>
+    </ul>
+    <h3>Coach</h3>
+    <ul>
+      <li>Surclassés proposés à l'ajout en ado, badge « Surclassé » (R7, R20) ; aucune action de surclassement (R1).</li>
+    </ul>
+    <h3>Classements</h3>
+    <ul>
+      <li>Un révoqué reste dans les résultats, classements, PDF et contrôle des rencontres disputées (R16).</li>
+    </ul>
+  </div>
+</body>
+</html>

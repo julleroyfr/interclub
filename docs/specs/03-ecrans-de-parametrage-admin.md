@@ -1,5 +1,8 @@
 # Spec : Écrans de paramétrage (admin)
 
+- **Révision** : 2026-11-07 (**validée le 2026-11-07**) — **surclassement**
+  (spec #21) : R26 complétée, l'écran Grimpeurs porte le badge « Surclassé
+  ado », les actions Surclasser / Révoquer et l'historique (spec #21 R18–R19).
 - **Statut** : validée (section « Configuration d'une rencontre » R40–R45 validée
   le 2026-08-28). **Barème de vitesse (R46 « barème par rang », modèle de données
   associé) ajouté et validé le 2026-09-22** — comble le report de R39 ; le
@@ -216,6 +219,8 @@ saisie, les flux CRUD, et les règles de suppression (dépendances / cascade).
   (**50 grimpeurs par page**) ; la **recherche s'applique à l'ensemble du roster**
   (tous les grimpeurs correspondants, pas seulement la page affichée), puis le
   résultat est paginé. L'affichage montre « **NOM Prénom** » (nom en premier).
+  *(Rév. 2026-11-07 : badge « Surclassé ado », actions Surclasser / Révoquer le
+  surclassement et historique des surclassements — spec #21 R18–R19.)*
 
 ### Saison des rencontres
 
