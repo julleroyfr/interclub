@@ -134,6 +134,19 @@ npm run test:e2e              # tous les cahiers E2E
   ex æquo + saut de rang, chute/NP/à saisir, recalcul du sexe, propagation
   équipe/club, barème ado, `points_vitesse` réservée au trigger.
 
+## Cartographie (cahier 34 — surclassement)
+
+- `surclassement.spec.ts` + `surclassement-complements.spec.ts`
+  (`npm run test:cahier:surclassement`) : **CT-01 → CT-10** (8 tests) — accord,
+  engagement coach et badge, confirmation et retraits, nouvel accord ; révoqué
+  toujours classé (admin, coach, PDF via `helpers/pdf.ts`, contrôle) ; révocation
+  en ③ et saisie acceptée ; prêt et équipe admin d'un surclassé du Club B ; pas
+  de surclassement pour le pivot, un ado ou en adulte ; accès réservé à l'admin.
+- CT-10 → CT-16 (RLS, RPC, migration et retour arrière) :
+  `npm run test:surclassement`.
+- Mute la phase de la rencontre ado du seed (remise en ③) ; données `21e2e…`
+  créées puis supprimées.
+
 > **Suite complète** : les fichiers mutent les mêmes rencontres seed → lancer en
 > série, `npx playwright test --project=chromium --workers=1`, sur une base au
 > seed (`npm run db:reset`).

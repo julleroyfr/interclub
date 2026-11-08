@@ -18,6 +18,11 @@
   `npm run test:surclassement` 30/30 ; E2E `surclassement.spec.ts` 1/1 ;
   non-régression E2E engagement coach, équipes et prêts admin, intégrité,
   temps réel, sécurité 42/42 ; Vitest 698/698.
+- **Entièrement automatisé en local le 2026-11-08** : `npm run
+  test:surclassement` 36/36 (CT-10 → CT-16) ; `npm run
+  test:cahier:surclassement` 8/8 (CT-01 → CT-10) ; non-régression E2E
+  saisie, classement, PDF, vitesse, contrôle, prêts, équipes, adulte et
+  engagement coach 98/98. En recette, les cas restent à dérouler à la main.
 
 Légende : `[auto]` rejoué par un test automatisé, `[manuel]` à dérouler à la
 main, `[mixte]` partie automatisée + vérification à l'œil.
@@ -63,7 +68,8 @@ Les tests automatisés créent puis suppriment leurs propres données (grimpeurs
   le bouton **Surclasser** disparaît : en 2027–2028, un grimpeur né en 2015
   aura 12 ans (pivot, déjà éligible ado). Pour un grimpeur né en 2016, il
   reste proposé pour 2027–2028 seulement.
-- **Automatisé** : E2E `surclassement.spec.ts`.
+- **Automatisé** : E2E `surclassement.spec.ts` ; né en 2016, deux saisons
+  proposées : `surclassement-complements.spec.ts`.
 
 ### CT-02 — Le coach voit et engage le surclassé en ado (couvre : R7, R20) `[auto]`
 
@@ -78,7 +84,8 @@ Les tests automatisés créent puis suppriment leurs propres données (grimpeurs
 - **RLS / sécurité** : le coach n'a ni bouton ni écran pour surclasser (R1,
   cf. CT-10).
 - **Automatisé** : E2E `surclassement.spec.ts` (ado) ; badge absent en enfant :
-  Vitest `assemblage-engagement.test.ts`.
+  E2E `surclassement-complements.spec.ts` et Vitest
+  `assemblage-engagement.test.ts`.
 
 ### CT-03 — Confirmation de révocation (couvre : R15) `[auto]`
 
@@ -88,7 +95,8 @@ Les tests automatisés créent puis suppriment leurs propres données (grimpeurs
 - **Résultat attendu** : la confirmation annonce « Tom sera retiré(e) de ces
   rencontres ado à venir : 05/12/2026 — Club A, équipe « … » ». Sans
   engagement ado à venir, elle affiche « Aucun engagement ado à venir. ».
-- **Automatisé** : E2E `surclassement.spec.ts` (avec engagement).
+- **Automatisé** : E2E `surclassement.spec.ts` (avec engagement) ; sans
+  engagement : `surclassement-complements.spec.ts` (CT-07).
 
 ### CT-04 — Révocation : retrait des rencontres ado ①/② et historique (couvre : R11, R12, R19) `[auto]`
 
@@ -112,7 +120,7 @@ Les tests automatisés créent puis suppriment leurs propres données (grimpeurs
   (cf. CT-14).
 - **Automatisé** : E2E `surclassement.spec.ts`.
 
-### CT-06 — Un révoqué reste dans les résultats et classements de la rencontre disputée (couvre : R13, R16) `[manuel]`
+### CT-06 — Un révoqué reste dans les résultats et classements de la rencontre disputée (couvre : R13, R16) `[auto]`
 
 - **Rôle / compte** : admin, puis coach Club A.
 - **Pré-condition** : grimpeur surclassé, ayant concouru dans une rencontre ado
@@ -127,8 +135,11 @@ Les tests automatisés créent puis suppriment leurs propres données (grimpeurs
 - **Résultat attendu** : le grimpeur apparaît toujours, au même rang, avec les
   mêmes points ; les scores équipe et club sont inchangés ; il apparaît sans
   badge ; seule la rencontre ① a perdu ce grimpeur.
+- **Automatisé** : E2E `surclassement-complements.spec.ts` (classements
+  individuel, équipe et club admin et coach, texte du PDF, contrôle T6 ; la
+  rencontre ado du seed sert de rencontre ⑤).
 
-### CT-07 — Révocation pendant une rencontre en cours (couvre : R13, R17) `[manuel]`
+### CT-07 — Révocation pendant une rencontre en cours (couvre : R13, R17) `[auto]`
 
 - **Pré-condition** : grimpeur surclassé engagé dans une rencontre ado en **③
   compétition**.
@@ -138,10 +149,11 @@ Les tests automatisés créent puis suppriment leurs propres données (grimpeurs
      rencontre.
 - **Résultat attendu** : la confirmation n'annonce pas cette rencontre ; le
   grimpeur reste engagé ; la saisie est acceptée.
-- **Couverture automatique partielle** : conservation en ③ vérifiée par
-  `npm run test:surclassement` (CT-13).
+- **Automatisé** : E2E `surclassement-complements.spec.ts` (saisie puis
+  correction coach) ; conservation en ③ en base : `npm run test:surclassement`
+  (CT-13).
 
-### CT-08 — Surclassé côté admin : équipes et prêts (couvre : R9) `[manuel]`
+### CT-08 — Surclassé côté admin : équipes et prêts (couvre : R9) `[auto]`
 
 - **Rôle / compte** : admin.
 - **Pré-condition** : grimpeur du Club B surclassé pour la saison.
@@ -155,10 +167,10 @@ Les tests automatisés créent puis suppriment leurs propres données (grimpeurs
 - **Résultat attendu** : (1) il est proposé au prêt ; (2) il est proposé avec
   les deux mentions ; (3) la confirmation annonce le prêt (« prêt supprimé »)
   et l'équipe ; après révocation, prêt et composition ont disparu.
-- **Couverture automatique partielle** : suppression du prêt par la RPC
-  vérifiée par `npm run test:surclassement` (CT-13).
+- **Automatisé** : E2E `surclassement-complements.spec.ts` ; suppression du
+  prêt par la RPC : `npm run test:surclassement` (CT-13).
 
-### CT-09 — Pas de surclassement pour le pivot ni pour un ado (couvre : R3, R8) `[manuel]`
+### CT-09 — Pas de surclassement pour le pivot ni pour un ado (couvre : R3, R8) `[auto]`
 
 - **Rôle / compte** : admin.
 - **Étapes** :
@@ -166,7 +178,9 @@ Les tests automatisés créent puis suppriment leurs propres données (grimpeurs
   2. Ouvrir une rencontre **adulte** en ① avec un grimpeur surclassé.
 - **Résultat attendu** : (1) aucun bouton **Surclasser** sur ces deux lignes.
   (2) le surclassé n'est pas proposé dans les équipes adultes.
-- **Domaine** : Vitest `surclassement.test.ts` (R3, R8 ; messages de refus).
+- **Automatisé** : E2E `surclassement-complements.spec.ts` (adulte : panneau
+  Équipes adultes de l'admin) ; domaine : Vitest `surclassement.test.ts` (R3,
+  R8 ; messages de refus).
 
 ### CT-10 — Écriture réservée à l'admin (couvre : R1) `[auto]`
 
@@ -174,7 +188,8 @@ Les tests automatisés créent puis suppriment leurs propres données (grimpeurs
   ligne `surclassement` ; un coach appelle `revoquer_surclassement`.
 - **Résultat attendu** : refus (HTTP 403 / 401, `acces_refuse`) ; aucune ligne
   écrite ; l'admin, lui, crée la ligne (201).
-- **Automatisé** : `npm run test:surclassement`.
+- **Automatisé** : `npm run test:surclassement` ; écran Grimpeurs en 404 pour
+  le coach : E2E `surclassement-complements.spec.ts`.
 
 ### CT-11 — Un seul surclassement actif par saison (couvre : R4, R5) `[auto]`
 
@@ -211,7 +226,7 @@ Les tests automatisés créent puis suppriment leurs propres données (grimpeurs
   l'accord), aucune composition n'est retirée et la RPC renvoie 0.
 - **Automatisé** : `npm run test:surclassement`.
 
-### CT-16 — Migration et retour arrière en recette `[manuel]`
+### CT-16 — Migration et retour arrière `[auto]` en local, `[manuel]` en recette
 
 - **Rôle / compte** : `postgres` (SQL Editor recette).
 - **Étapes** :
@@ -230,6 +245,9 @@ Les tests automatisés créent puis suppriment leurs propres données (grimpeurs
 - **Résultat attendu** : (1) aucune erreur au rejeu. (2) une ligne de version ;
   index `uq_surclassement_actif` et `idx_surclassement_grimpeur_id` ; `false`
   pour anon. (3) table et fonction supprimées, ligne de version retirée.
+- **Automatisé (local)** : `npm run test:surclassement` (rejeu, contrôles,
+  retour arrière puis réapplication) et `npm run db:verifier-retours --
+  202611071100_surclassement`.
 
 ## Couverture hors cahier
 
@@ -247,4 +265,6 @@ Les tests automatisés créent puis suppriment leurs propres données (grimpeurs
 | 2026-11-07 | agent (local) | feature/surclassement | CT-10 → CT-15 | ✅ | `npm run test:surclassement` 30/30 |
 | 2026-11-07 | agent (local) | feature/surclassement | CT-01 → CT-05 | ✅ | E2E `surclassement.spec.ts` 1/1 |
 | 2026-11-07 | agent (local) | feature/surclassement | CT-16 (base locale) | ✅ | `db:verifier-retours` ✅, `db:verifier` ✅ |
+| 2026-11-08 | agent (local) | feature/surclassement | CT-10 → CT-16 | ✅ | `npm run test:surclassement` 36/36 |
+| 2026-11-08 | agent (local) | feature/surclassement | CT-01 → CT-10 | ✅ | `npm run test:cahier:surclassement` 8/8 ; non-régression E2E 98/98 |
 | | | | CT-01 → CT-16 (recette) | | |

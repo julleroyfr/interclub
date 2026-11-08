@@ -11,6 +11,8 @@
 #             une autre saison (R13) ; nombre de rencontres renvoyé (R15).
 #   - CT-14 : historique et nouvel accord après révocation (R11).
 #   - CT-15 : grimpeur éligible ado par l'âge (p_retirer = faux) : aucun retrait.
+#   - CT-16 : rejeu de la migration, contrôles du cahier (version, index, droit
+#             anon), retour arrière puis réapplication.
 #
 # Rejouable : club, grimpeurs et rencontres dédiés supprimés (cascade) puis
 # recréés à chaque exécution.
@@ -176,6 +178,28 @@ verifie "composition ① conservée" "$(compo "$R_PRE")" "1"
 sql "delete from interclub.rencontre where id in ($RENCONTRES);" >/dev/null
 sql "delete from interclub.grimpeur where id in ('$G1','$G2','$G3');" >/dev/null
 sql "delete from interclub.club where id = '$CLUB_T';" >/dev/null
+
+echo "== CT-16 Migration rejouée, contrôles et retour arrière =="
+MIGRATION="supabase/migrations/202611071100_surclassement.sql"
+RETOUR="supabase/retours-arriere/202611071100_surclassement_retour_arriere.sql"
+appliquer() { docker exec -i "$CONTENEUR" psql -U postgres -q -v ON_ERROR_STOP=1 < "$1" >/dev/null 2>&1; }
+controles() {
+  sql "select count(*) from interclub.version where version = '202611071100_surclassement';"
+  sql "select string_agg(indexname, ',' order by indexname) from pg_indexes
+       where schemaname = 'interclub' and tablename = 'surclassement' and indexname <> 'surclassement_pkey';"
+  sql "select has_function_privilege('anon', 'interclub.revoquer_surclassement(uuid, int, boolean)', 'execute');"
+}
+ATTENDU=$'1\nidx_surclassement_grimpeur_id,uq_surclassement_actif\nf'
+if appliquer "$MIGRATION"; then ok "rejeu de la migration sans erreur"; else ko "rejeu de la migration en erreur"; fi
+verifie "version, index et droit anon après rejeu" "$(controles)" "$ATTENDU"
+if appliquer "$RETOUR"; then ok "retour arrière sans erreur"; else ko "retour arrière en erreur"; fi
+verifie "retour arrière : table, fonction et version retirées" \
+  "$(sql "select (to_regclass('interclub.surclassement') is null)::text || '/' ||
+                 (to_regprocedure('interclub.revoquer_surclassement(uuid, int, boolean)') is null)::text || '/' ||
+                 (select count(*) from interclub.version where version = '202611071100_surclassement');")" \
+  "true/true/0"
+if appliquer "$MIGRATION"; then ok "réapplication après retour arrière"; else ko "réapplication en erreur"; fi
+verifie "version, index et droit anon après réapplication" "$(controles)" "$ATTENDU"
 
 echo
 echo "Résultat : $PASS OK, $FAIL KO"
