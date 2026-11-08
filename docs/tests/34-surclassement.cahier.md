@@ -11,7 +11,7 @@
   - Variables `AGE_BASCULE` (12) et `AGE_ADO_MAX` (18) configurées (spec #1
     R34bis).
 - **Environnement** : local, puis recette (preview `feature/surclassement`) —
-  version/commit : `______`
+  version/commit : `______` — migration appliquée en recette le 2026-11-08
 - **Validé en local le 2026-11-07** : `npm run db:verifier-retours --
   202611071100_surclassement` (retour arrière = état antérieur, rejeu
   idempotent, `db reset` final identique) ; `npm run db:verifier` ;
@@ -267,4 +267,4 @@ Les tests automatisés créent puis suppriment leurs propres données (grimpeurs
 | 2026-11-07 | agent (local) | feature/surclassement | CT-16 (base locale) | ✅ | `db:verifier-retours` ✅, `db:verifier` ✅ |
 | 2026-11-08 | agent (local) | feature/surclassement | CT-10 → CT-16 | ✅ | `npm run test:surclassement` 36/36 |
 | 2026-11-08 | agent (local) | feature/surclassement | CT-01 → CT-10 | ✅ | `npm run test:cahier:surclassement` 8/8 ; non-régression E2E 98/98 |
-| | | | CT-01 → CT-16 (recette) | | |
+| 2026-11-08 | julleroyfr | feature/surclassement (68a962c) | CT-01 → CT-16 (recette) | ✅ | migration appliquée en recette, testé sur la preview de la branche |
