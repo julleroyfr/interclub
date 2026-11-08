@@ -1,5 +1,6 @@
 import 'server-only'
 
+import type { FiltreCategorie } from '@/domaine/filtre-grimpeurs'
 import type { Sexe } from '@/domaine/grimpeur'
 import { createClient } from '@/lib/supabase/server'
 
@@ -42,13 +43,15 @@ export type PageGrimpeurs = {
  * **tout** le roster côté base, PUIS la page est découpée — la recherche porte
  * donc sur l'ensemble des grimpeurs, pas seulement la page courante. Tri par nom
  * puis prénom. `total` = nombre total de grimpeurs correspondant à la recherche
- * (pour la pagination). L'admin voit tout le roster (RLS). À appeler derrière la
- * garde admin de l'écran.
+ * (pour la pagination). Filtres club et catégorie optionnels, cumulés (R26b).
+ * L'admin voit tout le roster (RLS). À appeler derrière la garde admin de
+ * l'écran.
  */
 export async function rechercherGrimpeurs(
   recherche: string,
   page: number,
   clubId?: string,
+  categorie?: FiltreCategorie | null,
 ): Promise<PageGrimpeurs> {
   const supabase = await createClient()
   const pageSure = Math.max(1, Math.floor(page) || 1)
@@ -58,6 +61,13 @@ export async function rechercherGrimpeurs(
     p_limit: GRIMPEURS_PAR_PAGE,
     p_offset: (pageSure - 1) * GRIMPEURS_PAR_PAGE,
     ...(clubId ? { p_club_id: clubId } : {}),
+    ...(categorie
+      ? {
+          p_annee_min: categorie.anneeMin,
+          p_annee_max: categorie.anneeMax,
+          p_saison_surclasses: categorie.saisonSurclasses,
+        }
+      : {}),
   })
   if (error) throw error
 

@@ -127,9 +127,21 @@ correspondant. En l'ouvrant, un coach crée son compte, qui est
 | 2 | Nouveau grimpeur | Ouvre le formulaire de création |
 | 3 | Rechercher un nom ou prénom | Filtre la liste |
 | 4 | Tous les clubs | Restreint la liste à un club |
-| 5 | Modifier | Modifie le grimpeur, y compris son club |
-| 6 | Surclasser | Autorise un enfant à concourir aussi en Ado pour une saison |
-| 7 | Supprimer | Supprime le grimpeur |
+| 5 | Toutes les catégories | Restreint la liste aux grimpeurs d'une catégorie (Enfant, Ado, Adulte) |
+| 6 | Modifier | Modifie le grimpeur, y compris son club |
+| 7 | Surclasser | Autorise un enfant à concourir aussi en Ado pour une saison |
+| 8 | Supprimer | Supprime le grimpeur |
+
+La recherche, le club et la catégorie se **combinent** et portent sur
+**tous** les grimpeurs, pas seulement la page affichée. **Effacer** les remet à
+zéro.
+
+Le filtre **catégorie** montre les grimpeurs qui **peuvent concourir** dans la
+catégorie, avec leur âge de la **saison en cours** (indiquée sous les filtres).
+Un même grimpeur peut donc apparaître dans deux catégories : les grimpeurs nés
+l'année de l'âge de bascule figurent en Enfant **et** en Ado, ceux de 16 ans à
+l'âge maximum ado en Ado **et** en Adulte. En **Ado**, les enfants **surclassés**
+pour la saison sont aussi listés.
 
 Un grimpeur porte un **club**, un **nom**, un **prénom**, une **année de
 naissance**, un **sexe** et un **numéro de licence** unique. À la création,

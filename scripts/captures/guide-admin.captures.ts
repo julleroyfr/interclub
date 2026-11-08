@@ -211,6 +211,7 @@ test('06 — grimpeurs et imports', async ({ page }) => {
     page.locator('summary').filter({ hasText: 'Nouveau grimpeur' }),
     page.getByPlaceholder(/Rechercher un nom ou prénom/),
     page.getByRole('combobox').filter({ hasText: 'Tous les clubs' }),
+    page.getByLabel('Catégorie'),
     bouton(page, 'Modifier'),
     bouton(page, 'Surclasser'),
     bouton(page, 'Supprimer'),
