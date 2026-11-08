@@ -12,7 +12,14 @@ import { verifierLecture } from '@/lib/supabase/lecture'
 // ouverts en RLS `authenticated` (cf. ADR 0002/0003). À n'appeler que derrière
 // une garde admin ; l'écriture, elle, passe par la RLS (client authenticated).
 
-export type GrimpeurOption = { id: string; prenom: string; nom: string; clubId: string }
+export type GrimpeurOption = {
+  id: string
+  prenom: string
+  nom: string
+  clubId: string
+  /** Éligible au titre d'un surclassement (mention « surclassé », spec #21 R9). */
+  surclasse: boolean
+}
 export type ClubOption = { id: string; nom: string }
 
 export type PretExistant = {
@@ -82,7 +89,7 @@ export async function chargerPretsRencontre(
 
   const grimpeurs: GrimpeurOption[] = grimpeursLus
     .filter((g) => !indisponibles.has(g.id))
-    .map((g) => ({ id: g.id, prenom: g.prenom, nom: g.nom, clubId: g.clubId }))
+    .map((g) => ({ id: g.id, prenom: g.prenom, nom: g.nom, clubId: g.clubId, surclasse: g.surclasse }))
 
   const prets: PretExistant[] = pretsLus.map((p) => {
     const brut = p.grimpeur as unknown

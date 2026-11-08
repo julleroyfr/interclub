@@ -7,6 +7,7 @@ import {
   EnTetePage,
   TitreSection,
 } from '@/composants'
+import { BornesAgeNonConfigureesError } from '@/domaine/rencontre'
 import { liensAdmin } from '@/lib/admin/navigation'
 import { exigerAdmin } from '@/lib/auth/session'
 import {
@@ -14,6 +15,8 @@ import {
   listerClubsOptions,
   rechercherGrimpeurs,
 } from '@/lib/grimpeurs/grimpeurs'
+import { chargerSurclassementsPage } from '@/lib/grimpeurs/surclassement'
+import { lireBornesAge } from '@/lib/rencontres/bornes-age'
 
 import { FormulaireGrimpeur } from './formulaire-grimpeur'
 import { ListeGrimpeurs } from './liste-grimpeurs'
@@ -43,6 +46,14 @@ export default async function PageGrimpeurs({
     rechercherGrimpeurs(recherche, page, clubFiltre || undefined),
     listerClubsOptions(),
   ])
+
+  // Surclassements des grimpeurs de la page (spec #21 R18–R19). Âges non
+  // configurés (spec #1 R34bis) : aucun accord proposé, historique visible.
+  const etatsSurclassement = await chargerSurclassementsPage(
+    grimpeurs,
+    aujourdhuiISO(),
+    bornesAgeOuNull(),
+  )
 
   const nbPages = Math.max(1, Math.ceil(total / GRIMPEURS_PAR_PAGE))
   const hrefPage = (p: number) => {
@@ -146,7 +157,11 @@ export default async function PageGrimpeurs({
             </p>
           )}
 
-          <ListeGrimpeurs grimpeurs={grimpeurs} clubs={clubs} />
+          <ListeGrimpeurs
+            grimpeurs={grimpeurs}
+            clubs={clubs}
+            surclassements={Object.fromEntries(etatsSurclassement)}
+          />
 
           {nbPages > 1 && (
             <nav className="mt-2 flex flex-wrap items-center justify-between gap-3">
@@ -169,6 +184,22 @@ export default async function PageGrimpeurs({
       </div>
     </Coquille>
   )
+}
+
+/** Date du jour (calendrier local) au format ISO `AAAA-MM-JJ`. */
+function aujourdhuiISO(): string {
+  const d = new Date()
+  const p = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
+}
+
+function bornesAgeOuNull() {
+  try {
+    return lireBornesAge()
+  } catch (e) {
+    if (e instanceof BornesAgeNonConfigureesError) return null
+    throw e
+  }
 }
 
 function LienPage({

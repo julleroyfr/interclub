@@ -4,7 +4,6 @@ import { revalidatePath } from 'next/cache'
 
 import {
   anneeSaison,
-  estEligibleCategorie,
   type Categorie,
   type Phase,
 } from '@/domaine/rencontre'
@@ -14,7 +13,9 @@ import {
   normaliserNomEquipe,
   verifierAjoutComposition,
 } from '@/domaine/engagement'
+import { estEligibleRencontre } from '@/domaine/surclassement'
 import { type ContexteCoach, getContexteCoach } from '@/lib/auth/session'
+import { SURCLASSEMENT_EMBARQUE, estSurclasseEmbarque } from '@/lib/grimpeurs/surclassement-embarque'
 import { bornesAgeOuErreur } from '@/lib/rencontres/bornes-age'
 import { verifierLecture } from '@/lib/supabase/lecture'
 import { createClient } from '@/lib/supabase/server'
@@ -293,7 +294,11 @@ export async function ajouterGrimpeurEquipe(
   // par le formulaire, qui doit être celle de l'équipe (vérifié ci-dessous).
   const [appartenance, grimpeurRes, membresRes, engagesRes, pretRes] = await Promise.all([
     equipeDuClub(supabase, equipeId, coach.clubId),
-    supabase.from('grimpeur').select('club_id, annee_naissance').eq('id', grimpeurId).maybeSingle(),
+    supabase
+      .from('grimpeur')
+      .select(`club_id, annee_naissance, ${SURCLASSEMENT_EMBARQUE}`)
+      .eq('id', grimpeurId)
+      .maybeSingle(),
     supabase.from('composition').select('grimpeur_id').eq('equipe_id', equipeId),
     supabase.from('composition').select('grimpeur_id').eq('rencontre_id', rencontreId),
     // Prêt actif de ce grimpeur au club du coach pour cette rencontre (R13/R36).
@@ -336,15 +341,17 @@ export async function ajouterGrimpeurEquipe(
   }
 
   // Éligibilité à la catégorie de la rencontre (tranche d'âge, spec #1 R34 ;
-  // âges configurés, R34bis).
+  // âges configurés, R34bis ; surclassement de la saison, spec #21 R7).
   const bornesAge = bornesAgeOuErreur()
   if ('erreur' in bornesAge) return bornesAge
+  const saison = anneeSaison(rencontre.dateRencontre)
   if (
-    !estEligibleCategorie(
+    !estEligibleRencontre(
       grimpeur.annee_naissance as number,
       rencontre.categorie,
-      anneeSaison(rencontre.dateRencontre),
+      saison,
       bornesAge.bornes,
+      estSurclasseEmbarque(grimpeur.surclassement, saison),
     )
   ) {
     return {

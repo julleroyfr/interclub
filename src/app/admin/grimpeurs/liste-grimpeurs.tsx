@@ -15,8 +15,21 @@ import type {
   GrimpeurAvecDependances,
   OptionClub,
 } from '@/lib/grimpeurs/grimpeurs'
+import type { EtatSurclassementGrimpeur } from '@/lib/grimpeurs/surclassement'
+
+import {
+  BadgesSurclassement,
+  BoutonsSurclassement,
+  type PanneauSurclassement,
+  PanneauxSurclassement,
+} from './surclassement-grimpeur'
 
 const etatInitial: EtatGrimpeur = undefined
+const SANS_SURCLASSEMENT: EtatSurclassementGrimpeur = {
+  historique: [],
+  actifs: [],
+  saisonsAccordables: [],
+}
 
 /**
  * Liste (page) des grimpeurs avec édition inline et suppression confirmée
@@ -26,9 +39,12 @@ const etatInitial: EtatGrimpeur = undefined
 export function ListeGrimpeurs({
   grimpeurs,
   clubs,
+  surclassements,
 }: {
   grimpeurs: GrimpeurAvecDependances[]
   clubs: OptionClub[]
+  /** État de surclassement par grimpeur (spec #21 R18–R19). */
+  surclassements: Record<string, EtatSurclassementGrimpeur>
 }) {
   if (grimpeurs.length === 0) {
     return (
@@ -41,7 +57,11 @@ export function ListeGrimpeurs({
         // La clé inclut les champs mutables : après une écriture (revalidation),
         // la ligne se remonte à neuf — l'éditeur inline se referme sans effet.
         <li key={`${g.id}:${g.nom}:${g.prenom}:${g.anneeNaissance}:${g.sexe}:${g.licence}:${g.clubId}`}>
-          <LigneGrimpeur grimpeur={g} clubs={clubs} />
+          <LigneGrimpeur
+            grimpeur={g}
+            clubs={clubs}
+            surclassement={surclassements[g.id] ?? SANS_SURCLASSEMENT}
+          />
         </li>
       ))}
     </ul>
@@ -51,12 +71,15 @@ export function ListeGrimpeurs({
 function LigneGrimpeur({
   grimpeur,
   clubs,
+  surclassement,
 }: {
   grimpeur: GrimpeurAvecDependances
   clubs: OptionClub[]
+  surclassement: EtatSurclassementGrimpeur
 }) {
   const [edition, setEdition] = useState(false)
   const [confirmSuppr, setConfirmSuppr] = useState(false)
+  const [panneauSurcl, setPanneauSurcl] = useState<PanneauSurclassement>(null)
   const [etatMod, actionMod, modEnCours] = useActionState(
     modifierGrimpeur,
     etatInitial,
@@ -157,6 +180,7 @@ function LigneGrimpeur({
           <div className="min-w-0">
             <p className="truncate text-base font-medium text-texte-fort">
               <span className="uppercase">{grimpeur.nom}</span> {grimpeur.prenom}
+              <BadgesSurclassement etat={surclassement} />
             </p>
             <p className="mt-1 text-xs text-texte-doux">
               {grimpeur.clubNom} · {grimpeur.sexe === 'F' ? 'née' : 'né'} en {grimpeur.anneeNaissance} ·{' '}
@@ -176,6 +200,11 @@ function LigneGrimpeur({
             <Bouton variante="fantome" onClick={() => setEdition(true)}>
               Modifier
             </Bouton>
+            <BoutonsSurclassement
+              etat={surclassement}
+              panneau={panneauSurcl}
+              setPanneau={setPanneauSurcl}
+            />
 
             {confirmSuppr ? (
               <form action={actionSuppr} className="flex items-center gap-2">
@@ -205,6 +234,16 @@ function LigneGrimpeur({
         <p role="alert" className="mt-2 text-sm text-danger">
           {etatSuppr.erreur}
         </p>
+      )}
+
+      {!edition && (
+        <PanneauxSurclassement
+          grimpeurId={grimpeur.id}
+          prenom={grimpeur.prenom}
+          etat={surclassement}
+          panneau={panneauSurcl}
+          setPanneau={setPanneauSurcl}
+        />
       )}
     </div>
   )

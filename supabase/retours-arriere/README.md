@@ -26,9 +26,12 @@ développée sur une branche dédiée et testée sur l'unique base de recette
 - Une fois la migration appliquée en prod, son retour arrière n'a plus lieu
   d'être : il est supprimé lors de l'archivage de la migration.
 
-Retour arrière en attente :
-`202611071000_suppression_table_coach_retour_arriere.sql` (recrée la table
-`coach`, vide).
+Retours arrière en attente :
+
+- `202611071000_suppression_table_coach_retour_arriere.sql` (recrée la table
+  `coach`, vide) ;
+- `202611071100_surclassement_retour_arriere.sql` (supprime la table
+  `surclassement` et la RPC `revoquer_surclassement`, spec #21).
 
 Les scripts de l'évolution adulte et de l'ajout de grimpeur sans licence
 (`202610231000` → `202610251200`) ont été supprimés à leur archivage, après

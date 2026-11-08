@@ -11,8 +11,10 @@ import {
   verifierAjoutComposition,
   verifierChangementEquipe,
 } from '@/domaine/engagement'
-import { anneeSaison, estEligibleCategorie, type Categorie } from '@/domaine/rencontre'
+import { anneeSaison, type Categorie } from '@/domaine/rencontre'
+import { estEligibleRencontre } from '@/domaine/surclassement'
 import { getUtilisateurCourant } from '@/lib/auth/session'
+import { SURCLASSEMENT_EMBARQUE, estSurclasseEmbarque } from '@/lib/grimpeurs/surclassement-embarque'
 import { bornesAgeOuErreur } from '@/lib/rencontres/bornes-age'
 import { verifierLecture } from '@/lib/supabase/lecture'
 import { createClient } from '@/lib/supabase/server'
@@ -107,7 +109,11 @@ export async function ajouterGrimpeurAdmin(
     await Promise.all([
       supabase.from('equipe').select('club_id, rencontre_id').eq('id', equipeId).maybeSingle(),
       supabase.from('rencontre').select('categorie, date_rencontre').eq('id', rencontreId).maybeSingle(),
-      supabase.from('grimpeur').select('club_id, annee_naissance').eq('id', grimpeurId).maybeSingle(),
+      supabase
+        .from('grimpeur')
+        .select(`club_id, annee_naissance, ${SURCLASSEMENT_EMBARQUE}`)
+        .eq('id', grimpeurId)
+        .maybeSingle(),
       supabase.from('composition').select('grimpeur_id').eq('equipe_id', equipeId),
       supabase.from('composition').select('grimpeur_id').eq('rencontre_id', rencontreId),
     ])
@@ -117,12 +123,15 @@ export async function ajouterGrimpeurAdmin(
 
   const bornesAge = bornesAgeOuErreur()
   if ('erreur' in bornesAge) return bornesAge
+  // Surclassement de la saison compris (spec #21 R7, R9).
+  const saison = anneeSaison(rencontre.date_rencontre as string)
   if (
-    !estEligibleCategorie(
+    !estEligibleRencontre(
       grimpeur.annee_naissance as number,
       rencontre.categorie as Categorie,
-      anneeSaison(rencontre.date_rencontre as string),
+      saison,
       bornesAge.bornes,
+      estSurclasseEmbarque(grimpeur.surclassement, saison),
     )
   ) {
     return { erreur: "Ce grimpeur n'est pas dans la tranche d'âge de la rencontre." }

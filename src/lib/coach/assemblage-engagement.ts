@@ -1,10 +1,10 @@
 import {
   anneeSaison,
-  estEligibleCategorie,
   type BornesAge,
   type Categorie,
   type Phase,
 } from '@/domaine/rencontre'
+import { estEligibleRencontre } from '@/domaine/surclassement'
 
 // Assemblage PUR de l'engagement d'un club en rencontre (spec #5 R9–R14, R34) à
 // partir de lectures déjà faites. Partagé par le loader coach (un club) et le
@@ -21,6 +21,8 @@ export type MembreEquipe = {
   /** Vrai si le grimpeur est prêté d'un autre club (R13/R36). */
   prete: boolean
   clubOrigineNom: string | null
+  /** Vrai si surclassé pour la saison, en rencontre ado (badge, spec #21 R20). */
+  surclasse: boolean
 }
 
 /** Équipe du club engagée dans une rencontre, avec sa composition (R9). */
@@ -40,6 +42,8 @@ export type OptionGrimpeur = {
   prete: boolean
   /** Club d'origine si prêté, pour le badge « prêté · club ». */
   clubOrigineNom: string | null
+  /** Vrai si proposé au titre d'un surclassement (badge, spec #21 R20). */
+  surclasse: boolean
 }
 
 /** Détail d'engagement d'une rencontre pour le club du coach (R9–R14). */
@@ -91,6 +95,8 @@ export type DonneesEngagementClub = {
   rosterClub: GrimpeurLu[]
   /** Grimpeurs prêtés à ce club pour la rencontre (non filtrés par catégorie). */
   pretes: GrimpeurLu[]
+  /** Surclassements ACTIFS des grimpeurs lus, toutes saisons (spec #21). */
+  surclassements: readonly { grimpeurId: string; saison: number }[]
 }
 
 /** Phases où le coach peut éditer l'engagement (R16) : pré-compétition + préparation. */
@@ -98,15 +104,30 @@ export function estEditable(phase: Phase): boolean {
   return phase === 'pre_competition' || phase === 'preparation'
 }
 
-/** Assemble l'engagement d'un club (R9–R14) ; roster filtré par catégorie (R34). */
+/**
+ * Assemble l'engagement d'un club (R9–R14) ; roster filtré par catégorie (R34),
+ * surclassés de la saison compris en ado (spec #21 R7).
+ */
 export function assemblerEngagementClub(
   d: DonneesEngagementClub,
   clubId: string,
 ): EngagementRencontre {
   const { rencontre } = d
   const saison = anneeSaison(rencontre.dateRencontre)
-  const estEligible = (anneeNaissance: number) =>
-    estEligibleCategorie(anneeNaissance, rencontre.categorie, saison, d.bornesAge)
+  // Surclassés de la saison : éligibles ado en plus de l'enfant (spec #21 R7) ;
+  // le badge n'a de sens qu'en rencontre ado (R20).
+  const surclassesSaison = new Set(
+    d.surclassements.filter((s) => s.saison === saison).map((s) => s.grimpeurId),
+  )
+  const badge = (id: string) => rencontre.categorie === 'ado' && surclassesSaison.has(id)
+  const estEligible = (g: GrimpeurLu) =>
+    estEligibleRencontre(
+      g.anneeNaissance,
+      rencontre.categorie,
+      saison,
+      d.bornesAge,
+      surclassesSaison.has(g.id),
+    )
   const nomClub = (id: string, defaut: string) => d.nomClub.get(id) ?? defaut
 
   const dejaEngages = new Set<string>()
@@ -126,6 +147,7 @@ export function assemblerEngagementClub(
           groupeDepart: c.groupeDepart,
           prete,
           clubOrigineNom: prete ? nomClub(info!.clubId, '(autre club)') : null,
+          surclasse: badge(c.grimpeurId),
         }
       })
       .sort((a, b) => a.nom.localeCompare(b.nom) || a.prenom.localeCompare(b.prenom)),
@@ -133,7 +155,7 @@ export function assemblerEngagementClub(
 
   const roster: OptionGrimpeur[] = [
     ...d.rosterClub
-      .filter((g) => estEligible(g.anneeNaissance))
+      .filter(estEligible)
       .map((g) => ({
         id: g.id,
         nom: g.nom,
@@ -141,9 +163,10 @@ export function assemblerEngagementClub(
         dejaEngage: dejaEngages.has(g.id),
         prete: false,
         clubOrigineNom: null,
+        surclasse: badge(g.id),
       })),
     ...d.pretes
-      .filter((g) => estEligible(g.anneeNaissance))
+      .filter(estEligible)
       .map((g) => ({
         id: g.id,
         nom: g.nom,
@@ -151,6 +174,7 @@ export function assemblerEngagementClub(
         dejaEngage: dejaEngages.has(g.id),
         prete: true,
         clubOrigineNom: nomClub(g.clubId, '(autre club)'),
+        surclasse: badge(g.id),
       })),
   ]
 
