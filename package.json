@@ -1,6 +1,6 @@
 {
   "name": "interclub",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "private": true,
   "scripts": {
     "prepare": "git config core.hooksPath .githooks || exit 0",

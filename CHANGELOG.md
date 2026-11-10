@@ -6,6 +6,59 @@ numérotation [SemVer](https://semver.org/lang/fr/) adaptée au projet.
 
 Règles et procédure : [docs/conventions/10-versionnement.md](docs/conventions/10-versionnement.md).
 
+## [2.1.0] — 2026-11-10
+
+Surclassement des enfants en ado, filtre par catégorie des grimpeurs, et une
+application plus rapide et plus fiable le jour J.
+
+### Ajouté
+
+- **Surclassement enfant → ado** : sur l’écran Grimpeurs, l’admin peut
+  surclasser un enfant pour la saison ; il peut alors être engagé **aussi** en
+  ado, sans perdre sa rencontre enfant. Le coach voit un badge « surclassé ».
+  À la révocation, le grimpeur est retiré des équipes ado des rencontres en
+  pré-compétition ou préparation ; ses résultats déjà obtenus sont conservés
+  (spec #21 ; spec #1 R34/R35, #3 R26, #5 R12).
+- **Filtre par catégorie** de la liste admin des grimpeurs (enfant, ado,
+  adulte), surclassés comptés en ado (spec #3 R26b).
+
+### Modifié
+
+- **Jour J plus fluide** : écrans de classement et de saisie plus rapides,
+  moins de rafraîchissements en temps réel à chaque temps de vitesse saisi.
+- **Passage de phase d’une rencontre** fait d’un seul bloc : les NP
+  automatiques de la clôture sont posés en même temps que le changement de
+  phase, ou pas du tout (spec #3 R17, spec #6 R18).
+- Les règles de saisie (phase de la rencontre, effectif d’une équipe, structure
+  modifiable, contrôle des résultats) sont aussi vérifiées par la base, en plus
+  de l’écran (spec #3 R51, #5 R15, #9 R5, #16 R13).
+
+### Corrigé
+
+- Compteurs (clubs, rencontres, tableau de bord, accueil coach) faux au-delà de
+  1000 éléments.
+- À la clôture, NP qui pouvaient être posés à tort sur les grosses rencontres.
+- Écran d’attribution des rôles : des comptes pouvaient ne pas apparaître
+  (spec #2 R46).
+- Régénération d’un QR code ou d’une invitation : un incident ne laisse plus le
+  périmètre sans jeton ni invitation valide.
+- Ajout du premier élément d’une épreuve ou d’un bloc vide.
+- Sécurité : les fonctions des sessions QR ne sont plus accessibles sans
+  session.
+
+### Migrations à appliquer
+
+- `202611071000_suppression_table_coach` (cf. supabase/migrations/JOURNAL.md)
+- `202611071100_surclassement` (cf. supabase/migrations/JOURNAL.md)
+- `202611081000_rpc_rechercher_grimpeurs_filtre_categorie` (cf. supabase/migrations/JOURNAL.md)
+- `202611101000_rpc_lister_comptes_permanents` (cf. supabase/migrations/JOURNAL.md)
+- `202611101100_rpc_effectifs_grimpeurs` (cf. supabase/migrations/JOURNAL.md)
+- `202611101200_points_vitesse_sans_reecriture` (cf. supabase/migrations/JOURNAL.md)
+- `202611101300_rpc_changer_phase_rencontre` (cf. supabase/migrations/JOURNAL.md)
+- `202611101400_durcissement_droits_anon` (cf. supabase/migrations/JOURNAL.md)
+- `202611101500_gardes_en_base` (cf. supabase/migrations/JOURNAL.md)
+- `202611101600_rpc_ecritures_atomiques` (cf. supabase/migrations/JOURNAL.md)
+
 ## [2.0.0] — 2026-11-05
 
 Version de la saison 2026-2027 : les tranches d’âge enfant et ado suivent le
