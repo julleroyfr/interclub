@@ -9,6 +9,7 @@ import {
   type GrimpeurCsv,
 } from '@/domaine/import-csv-sans-licence'
 import { getUtilisateurCourant } from '@/lib/auth/session'
+import { verifierLecture } from '@/lib/supabase/lecture'
 import { createClient } from '@/lib/supabase/server'
 
 import { type EtatImportCsv } from './import-csv'
@@ -55,7 +56,10 @@ export async function importerGrimpeursCsv(
   }
 
   const supabase = await createClient()
-  const { data: club } = await supabase.from('club').select('nom').eq('id', clubId).maybeSingle()
+  const club = verifierLecture(
+    await supabase.from('club').select('nom').eq('id', clubId).maybeSingle(),
+    'du club',
+  )
   if (!club) return { erreur: 'Le club choisi est introuvable.' }
 
   // 3. Lecture UTF-8 (un octet invalide devient U+FFFD, rejeté par R8b) — R5/R6.

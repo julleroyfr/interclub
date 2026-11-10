@@ -10,6 +10,7 @@ import {
 } from '@/domaine/surclassement'
 import { getUtilisateurCourant } from '@/lib/auth/session'
 import { bornesAgeOuErreur } from '@/lib/rencontres/bornes-age'
+import { verifierLecture } from '@/lib/supabase/lecture'
 import { createClient } from '@/lib/supabase/server'
 
 import { type EtatGrimpeur } from './grimpeurs'
@@ -56,7 +57,7 @@ export async function accorderSurclassement(
   if ('erreur' in bornes) return bornes
 
   const supabase = await createClient()
-  const [{ data: grimpeur }, { data: actif }] = await Promise.all([
+  const [grimpeurRes, actifRes] = await Promise.all([
     supabase.from('grimpeur').select('nom, prenom, annee_naissance').eq('id', grimpeurId).maybeSingle(),
     supabase
       .from('surclassement')
@@ -66,6 +67,9 @@ export async function accorderSurclassement(
       .is('revoque_le', null)
       .maybeSingle(),
   ])
+  // Une lecture en échec n'est pas « introuvable » ni « non surclassé » (B3).
+  const grimpeur = verifierLecture(grimpeurRes, 'du grimpeur')
+  const actif = verifierLecture(actifRes, 'du surclassement actif')
   if (!grimpeur) return { erreur: 'Grimpeur introuvable.' }
 
   const motif = refusAccordSurclassement({
@@ -102,11 +106,10 @@ export async function revoquerSurclassement(
   if (!Number.isInteger(saison)) return { erreur: 'Saison invalide.' }
 
   const supabase = await createClient()
-  const { data: grimpeur } = await supabase
-    .from('grimpeur')
-    .select('nom, prenom, annee_naissance')
-    .eq('id', grimpeurId)
-    .maybeSingle()
+  const grimpeur = verifierLecture(
+    await supabase.from('grimpeur').select('nom, prenom, annee_naissance').eq('id', grimpeurId).maybeSingle(),
+    'du grimpeur',
+  )
   if (!grimpeur) return { erreur: 'Grimpeur introuvable.' }
 
   // Éligible ado par son âge (âge de bascule abaissé depuis l'accord) : la
