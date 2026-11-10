@@ -105,7 +105,7 @@ export async function ajouterGrimpeurAdmin(
   }
 
   const supabase = await createClient()
-  const [{ data: equipe }, { data: rencontre }, { data: grimpeur }, { data: membres }, { data: engages }] =
+  const [equipeRes, rencontreRes, grimpeurRes, membresRes, engagesRes] =
     await Promise.all([
       supabase.from('equipe').select('club_id, rencontre_id').eq('id', equipeId).maybeSingle(),
       supabase.from('rencontre').select('categorie, date_rencontre').eq('id', rencontreId).maybeSingle(),
@@ -117,6 +117,12 @@ export async function ajouterGrimpeurAdmin(
       supabase.from('composition').select('grimpeur_id').eq('equipe_id', equipeId),
       supabase.from('composition').select('grimpeur_id').eq('rencontre_id', rencontreId),
     ])
+  // Une lecture en échec n'est pas « introuvable » ni « équipe vide » (B3).
+  const equipe = verifierLecture(equipeRes, "de l'équipe")
+  const rencontre = verifierLecture(rencontreRes, 'de la rencontre')
+  const grimpeur = verifierLecture(grimpeurRes, 'du grimpeur')
+  const membres = verifierLecture(membresRes, "des membres de l'équipe")
+  const engages = verifierLecture(engagesRes, 'des engagés de la rencontre')
   if (!equipe) return { erreur: 'Équipe introuvable.' }
   if (!rencontre) return { erreur: 'Rencontre introuvable.' }
   if (!grimpeur) return { erreur: 'Grimpeur introuvable.' }

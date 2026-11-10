@@ -92,7 +92,7 @@ export async function ajouterVoieDifficulteGabarit(
       .eq('gabarit_epreuve_id', gabaritEpreuveId)
       .order('ordre', { ascending: false })
       .limit(1)
-      .single(),
+      .maybeSingle(),
     'des voies du gabarit',
   )
 
@@ -199,7 +199,7 @@ export async function ajouterBlocGabarit(
       .eq('gabarit_epreuve_id', gabaritEpreuveId)
       .order('ordre', { ascending: false })
       .limit(1)
-      .single(),
+      .maybeSingle(),
     'des blocs du gabarit',
   )
 
@@ -269,7 +269,7 @@ export async function ajouterPalierBlocGabarit(
       .eq('gabarit_bloc_id', gabaritBlocId)
       .order('ordre', { ascending: false })
       .limit(1)
-      .single(),
+      .maybeSingle(),
     'des paliers du gabarit',
   )
 
@@ -329,7 +329,7 @@ export async function ajouterVoieVitesseGabarit(
       .eq('gabarit_epreuve_id', gabaritEpreuveId)
       .order('ordre', { ascending: false })
       .limit(1)
-      .single(),
+      .maybeSingle(),
     'des voies de vitesse du gabarit',
   )
 

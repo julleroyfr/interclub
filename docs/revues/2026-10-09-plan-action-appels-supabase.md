@@ -68,7 +68,7 @@ flowchart TD
 | 6 | P8–P11, P13–P15, J4, J5 (L4) | −1 vague par écran ou action | `feature/perf-petits-gains` | 🔄 (J4 fait) |
 | 7 | A1–A5, P15 (E6) | 3–5 → 2 | `feature/rpc-ecritures-atomiques` | ⏳ |
 | 8 | T1 | −1 sur **toutes** les requêtes | — | ⏸ reportée |
-| 9 | B1, B3, B4 (= J5) | correctifs | `feature/correctifs-lectures` | ⏳ |
+| 9 | B1, B3, B4 (= J5) | correctifs | `feature/correctifs-lectures` | ✅ |
 | 10 | R1, R3, R5 ; R2, R4 sur décision | relectures temps réel ÷ ~100 par temps de vitesse | `feature/perf-temps-reel` | ⏳ |
 | 11 | E1–E5 | gardes ajoutées en base ; ajouts de structure 3 → 2 | `feature/gardes-en-base` | ⏳ |
 | 12 | L1, L2 ; L3 après mesure | classement et saisie 11 → 6 requêtes | `feature/perf-lectures-imbriquees` | ⏳ |
@@ -272,8 +272,7 @@ D-P1 tranchée le 2026-10-09 : **fonction SQL**.
   `202611101100`) au lieu de lire tous les grimpeurs ; équipes par rencontre en
   comptage embarqué au lieu de lire toutes les équipes de la saison. Tests SQL :
   `npm run test:rpc-comptages`.
-- [ ] ⏳ J5 prêts : vérifier en E2E si l'écran se rafraîchit après la création
-  ou la révocation d'un prêt. Corriger le chemin (`/admin/rencontres/[id]`).
+- [x] ✅ J5 prêts : chemin corrigé au lot 9 (B4).
 - [ ] ⏳ Vert : E2E concernés (`admin-prets`, `navigation-routing`, jetons).
 
 ## Lot 7 — Écritures atomiques (A1–A5) — ⏳
@@ -292,15 +291,25 @@ D-P2 tranchée le 2026-10-09 : **une fonction SQL par opération**.
 - [ ] ⏳ E6 (2026-11-10) : `revoquerInvitation` fait une lecture inutile
   (`update … .select()` suffit) ; `regenererJeton` relit le jeton déjà lu (P15).
 
-## Lot 9 — Correctifs (B1, B3, B4) — ⏳
+## Lot 9 — Correctifs (B1, B3, B4) — ✅
 
-- [ ] ⏳ B1 : `.maybeSingle()` pour le dernier ordre du gabarit (voie, bloc,
-  palier, voie de vitesse). **Rouge** : E2E ajout du premier élément d'une
-  épreuve vide du gabarit.
-- [ ] ⏳ B3 : `verifierLecture` sur les lectures `{data}` des sept actions
-  listées dans l'analyse.
-- [ ] ⏳ B4 (= J5) : revalider le bon chemin après création ou révocation d'un
-  prêt ; E2E `admin-prets` (rafraîchissement).
+Branche `feature/correctifs-lectures` (2026-11-10). Aucune migration, aucune
+spec modifiée.
+
+- [x] ✅ B1 : `.maybeSingle()` pour le dernier ordre du gabarit (voie, bloc,
+  palier, voie de vitesse). **Rouge** : `e2e/gabarit-premier-element.spec.ts`
+  (gabarit adulte vidé puis restauré) ; sur l'ancien code, écran « Une erreur
+  est survenue » dès le premier ajout. Cahier 11 CT-16.
+- [x] ✅ B3 : `verifierLecture` sur les lectures des sept actions.
+  **Rouge** : `e2e/lectures-verifiees.spec.ts`, droit `select` retiré juste
+  avant l'action. Sur l'ancien code, l'échec de lecture passait pour une
+  absence : prêt créé, grimpeur ajouté à une équipe (enfant et adulte) sans
+  contrôle des membres, et « introuvable » affiché pour la modification, le
+  surclassement, la révocation et l'import CSV. Après correction : écran
+  d'erreur, rien n'est écrit. Non déroulable en recette (panne simulée).
+- [x] ✅ B4 (= J5) : prêts revalidés sur `/admin/rencontres/[id]`. Pas d'effet
+  visible avant correction (Next re-rend la page courante après toute
+  revalidation) ; non-régression `e2e/admin-prets.spec.ts`.
 
 ## Lot 10 — Temps réel (R1–R5) — ⏳
 
