@@ -133,7 +133,7 @@ export async function getSaisieRencontre(
   rencontreId: string,
   clubId: string,
 ): Promise<SaisieRencontre | null> {
-  const saisie = await chargerSaisie(rencontreId, clubId)
+  const saisie = await chargerSaisie(rencontreId, { club: clubId })
   if (!saisie) return null
   const { grimpeursParClub, ...rencontre } = saisie
   return { ...rencontre, grimpeurs: grimpeursParClub.get(clubId) ?? [] }
@@ -142,19 +142,19 @@ export async function getSaisieRencontre(
 /**
  * Charge la saisie des membres d'UNE équipe adulte, pour son capitaine (spec #20
  * R18/R19). Sous session capitaine, la RLS ne laisse lire que son équipe et ses
- * membres ; le filtre sur `equipeId` est une défense en profondeur. Renvoie
+ * membres ; le filtre sur `equipeId` borne en plus les lectures (lot 12, L2). Renvoie
  * `null` si la rencontre est introuvable. À appeler derrière la garde capitaine.
  */
 export async function getSaisieEquipe(
   rencontreId: string,
   equipeId: string,
 ): Promise<SaisieRencontre | null> {
-  const saisie = await chargerSaisie(rencontreId, null)
+  const saisie = await chargerSaisie(rencontreId, { equipe: equipeId })
   if (!saisie) return null
   const { grimpeursParClub, ...rencontre } = saisie
+  // Membres rangés par club d'origine (équipe adulte sans club) : un seul tri.
   const grimpeurs = [...grimpeursParClub.values()]
     .flat()
-    .filter((g) => g.equipeId === equipeId)
     .sort((a, b) => a.nom.localeCompare(b.nom, 'fr') || a.prenom.localeCompare(b.prenom, 'fr'))
   return { ...rencontre, grimpeurs }
 }
@@ -171,6 +171,17 @@ export async function getSaisieTousClubs(rencontreId: string): Promise<SaisieTou
 
 type Ligne = Record<string, unknown>
 
+/**
+ * Périmètre lu : les grimpeurs composés d'un club (coach), d'une équipe
+ * (capitaine) ou de toute la rencontre (`null`, admin).
+ */
+type Perimetre = { club: string } | { equipe: string } | null
+
+/** Relation embarquée de cardinalité multiple (tableau ; vide si absente). */
+function embarques(v: unknown): Ligne[] {
+  return Array.isArray(v) ? (v as Ligne[]) : []
+}
+
 /** Relation embarquée : objet ou tableau selon l'inférence du client. */
 function premier(v: unknown): Ligne | null {
   const x = Array.isArray(v) ? v[0] : v
@@ -178,16 +189,21 @@ function premier(v: unknown): Ligne | null {
 }
 
 /**
- * Lectures + assemblage de la saisie, pour UN club (`clubId`) ou pour tous les
- * clubs engagés (`null`). Toutes les lectures partent en UNE vague : chaque table
- * est filtrée sur la rencontre par jointure (épreuve, voie, bloc), sans attendre
+ * Lectures + assemblage de la saisie, pour UN club, UNE équipe ou tous les clubs
+ * engagés (`perimetre`). Toutes les lectures partent en UNE vague, sans attendre
  * d'identifiants — chaque aller-retour vers la base compte, l'écran étant relu
- * après chaque saisie. Les lectures pouvant dépasser le plafond de lignes de
- * l'API (compositions, résultats de toute une rencontre) sont paginées.
+ * après chaque saisie :
+ * - la structure (rencontre, épreuves, voies, blocs et paliers, équipes) en une
+ *   lecture imbriquée (lot 12, L1) ;
+ * - les compositions, résultats et vitesse, filtrés sur la rencontre par
+ *   jointure et, pour un club ou une équipe, sur les grimpeurs qui y sont
+ *   composés (`grimpeur!inner(composition!inner(…))`, lot 12, L2) : seules les
+ *   lignes affichées sont lues. Ces lectures peuvent dépasser le plafond de
+ *   lignes de l'API : elles sont paginées.
  */
 async function chargerSaisie(
   rencontreId: string,
-  clubId: string | null,
+  perimetre: Perimetre,
 ): Promise<SaisieTousClubs | null> {
   const supabase = await createClient()
 
@@ -196,49 +212,47 @@ async function chargerSaisie(
   const pagine = (requete: (debut: number, fin: number) => unknown, quoi: string) =>
     lireToutesLesPages((debut, fin) => requete(debut, fin) as PromiseLike<Reponse>, quoi)
 
-  const requeteEquipes = supabase
-    .from('equipe')
-    .select('id, nom, club_id')
-    .eq('rencontre_id', rencontreId)
+  const clubId = perimetre && 'club' in perimetre ? perimetre.club : null
+  const equipeId = perimetre && 'equipe' in perimetre ? perimetre.equipe : null
 
-  const [
-    rencRes,
-    equipesRes,
-    voiesRes,
-    blocsRes,
-    paliersRes,
-    compos,
-    rvLignes,
-    rbLignes,
-    tvLignes,
-    pvLignes,
-    epreuvesRes,
-  ] = await Promise.all([
-    supabase
-      .from('rencontre')
-      .select('id, date_rencontre, categorie, phase, club:club_porteur_id(nom)')
-      .eq('id', rencontreId)
-      .maybeSingle(),
-    clubId ? requeteEquipes.eq('club_id', clubId) : requeteEquipes,
-    supabase
-      .from('voie_difficulte')
-      .select(
-        'id, niveau, cotation, repere, type_voie, ordre, points, points_prise_valorisee, points_zone1, points_zone2, epreuve!inner(rencontre_id)',
-      )
-      .eq('epreuve.rencontre_id', rencontreId)
-      .order('ordre'),
-    supabase
-      .from('bloc')
-      .select('id, code, ordre, epreuve!inner(rencontre_id, active)')
-      .eq('epreuve.rencontre_id', rencontreId)
-      .eq('epreuve.active', true)
-      .order('ordre'),
-    supabase
-      .from('bloc_palier')
-      .select('id, bloc_id, libelle, ordre, points, bloc!inner(epreuve!inner(rencontre_id, active))')
-      .eq('bloc.epreuve.rencontre_id', rencontreId)
-      .eq('bloc.epreuve.active', true)
-      .order('ordre'),
+  // Structure, équipes du périmètre seulement (le filtre ne porte que sur la
+  // relation embarquée). Le plafond de 1000 lignes de l'API vaut aussi pour
+  // chaque relation embarquée : ces tables restent petites (quelques dizaines
+  // de lignes par rencontre).
+  const requeteStructure = supabase
+    .from('rencontre')
+    .select(
+      `id, date_rencontre, categorie, phase, club:club_porteur_id(nom),
+      epreuve(type, active,
+        voie_difficulte(id, niveau, cotation, repere, type_voie, ordre, points, points_prise_valorisee, points_zone1, points_zone2),
+        bloc(id, code, ordre, bloc_palier(id, bloc_id, libelle, ordre, points))),
+      equipe(id, nom, club_id)`,
+    )
+    .eq('id', rencontreId)
+  const structure = clubId
+    ? requeteStructure.eq('equipe.club_id', clubId)
+    : equipeId
+      ? requeteStructure.eq('equipe.id', equipeId)
+      : requeteStructure
+
+  // Résultats et vitesse des grimpeurs composés du périmètre (L2). Sans
+  // périmètre (admin) : toute la rencontre, rattachée ensuite aux composés.
+  const jointureComposes = clubId
+    ? ', grimpeur!inner(composition!inner(rencontre_id, equipe!inner(club_id)))'
+    : equipeId
+      ? ', grimpeur!inner(composition!inner(equipe_id))'
+      : ''
+  const filtresComposes: [string, string][] = clubId
+    ? [
+        ['grimpeur.composition.rencontre_id', rencontreId],
+        ['grimpeur.composition.equipe.club_id', clubId],
+      ]
+    : equipeId
+      ? [['grimpeur.composition.equipe_id', equipeId]]
+      : []
+
+  const [rencRes, compos, rvLignes, rbLignes, tvLignes, pvLignes] = await Promise.all([
+    structure.maybeSingle(),
     // Compositions, grimpeur embarqué (nom, prénom, club d'origine et son nom).
     pagine((debut, fin) => {
       const q = supabase
@@ -247,58 +261,52 @@ async function chargerSaisie(
           'equipe_id, grimpeur_id, groupe_depart, equipe!inner(club_id), grimpeur:grimpeur_id(nom, prenom, club_id, club:club_id(nom))',
         )
         .eq('rencontre_id', rencontreId)
-      return (clubId ? q.eq('equipe.club_id', clubId) : q).order('grimpeur_id').range(debut, fin)
+      const borne = clubId ? q.eq('equipe.club_id', clubId) : equipeId ? q.eq('equipe_id', equipeId) : q
+      return borne.order('grimpeur_id').range(debut, fin)
     }, 'des compositions'),
-    // Résultats et vitesse de TOUTE la rencontre (lisibles au fil de l'eau, spec
-    // #1 R8), rattachés ensuite aux seuls grimpeurs composés.
-    pagine(
-      (debut, fin) =>
-        supabase
-          .from('resultat_voie')
-          .select('id, voie_difficulte_id, grimpeur_id, issue, voie_difficulte!inner(epreuve!inner(rencontre_id))')
-          .eq('voie_difficulte.epreuve.rencontre_id', rencontreId)
-          .order('id')
-          .range(debut, fin),
-      'des résultats de voie',
-    ),
-    pagine(
-      (debut, fin) =>
-        supabase
-          .from('resultat_bloc')
-          .select('id, bloc_id, grimpeur_id, issue, palier_id, bloc!inner(epreuve!inner(rencontre_id))')
-          .eq('bloc.epreuve.rencontre_id', rencontreId)
-          .order('id')
-          .range(debut, fin),
-      'des résultats de bloc',
-    ),
-    pagine(
-      (debut, fin) =>
-        supabase
-          .from('temps_vitesse')
-          .select('grimpeur_id, issue, temps, epreuve!inner(rencontre_id)')
-          .eq('epreuve.rencontre_id', rencontreId)
-          .order('grimpeur_id')
-          .range(debut, fin),
-      'des temps de vitesse',
-    ),
+    pagine((debut, fin) => {
+      let q = supabase
+        .from('resultat_voie')
+        .select(
+          `id, voie_difficulte_id, grimpeur_id, issue, voie_difficulte!inner(epreuve!inner(rencontre_id))${jointureComposes}`,
+        )
+        .eq('voie_difficulte.epreuve.rencontre_id', rencontreId)
+      for (const [colonne, valeur] of filtresComposes) q = q.eq(colonne, valeur)
+      return q.order('id').range(debut, fin)
+    }, 'des résultats de voie'),
+    pagine((debut, fin) => {
+      let q = supabase
+        .from('resultat_bloc')
+        .select(
+          `id, bloc_id, grimpeur_id, issue, palier_id, bloc!inner(epreuve!inner(rencontre_id))${jointureComposes}`,
+        )
+        .eq('bloc.epreuve.rencontre_id', rencontreId)
+      for (const [colonne, valeur] of filtresComposes) q = q.eq(colonne, valeur)
+      return q.order('id').range(debut, fin)
+    }, 'des résultats de bloc'),
+    pagine((debut, fin) => {
+      let q = supabase
+        .from('temps_vitesse')
+        .select(`grimpeur_id, issue, temps, epreuve!inner(rencontre_id)${jointureComposes}`)
+        .eq('epreuve.rencontre_id', rencontreId)
+      for (const [colonne, valeur] of filtresComposes) q = q.eq(colonne, valeur)
+      return q.order('grimpeur_id').range(debut, fin)
+    }, 'des temps de vitesse'),
     // Points de vitesse matérialisés par le trigger (R20), lus pour le score (R23).
-    pagine(
-      (debut, fin) =>
-        supabase
-          .from('points_vitesse')
-          .select('grimpeur_id, points, epreuve!inner(rencontre_id)')
-          .eq('epreuve.rencontre_id', rencontreId)
-          .order('grimpeur_id')
-          .range(debut, fin),
-      'des points de vitesse',
-    ),
-    // État des épreuves (spec #20 R38) : la vitesse désactivée n'est pas affichée.
-    supabase.from('epreuve').select('type, active').eq('rencontre_id', rencontreId),
+    pagine((debut, fin) => {
+      let q = supabase
+        .from('points_vitesse')
+        .select(`grimpeur_id, points, epreuve!inner(rencontre_id)${jointureComposes}`)
+        .eq('epreuve.rencontre_id', rencontreId)
+      for (const [colonne, valeur] of filtresComposes) q = q.eq(colonne, valeur)
+      return q.order('grimpeur_id').range(debut, fin)
+    }, 'des points de vitesse'),
   ])
 
   const rencontre = verifierLecture(rencRes, 'de la rencontre')
   if (!rencontre) return null
-  const etatsEpreuves = verifierLecture(epreuvesRes, 'des épreuves') ?? []
+  // État des épreuves (spec #20 R38) : bloc ou vitesse désactivés ne sont pas affichés.
+  const etatsEpreuves = embarques(rencontre.epreuve)
   const desactivee = (type: string) => etatsEpreuves.some((e) => e.type === type && e.active === false)
   const blocActif = !desactivee('bloc')
   const vitesseActive = !desactivee('vitesse')
@@ -306,7 +314,7 @@ async function chargerSaisie(
   const categorie = rencontre.categorie as Categorie
   const phase = rencontre.phase as Phase
 
-  const equipes = (verifierLecture(equipesRes, 'des équipes') ?? []) as {
+  const equipes = embarques(rencontre.equipe) as {
     id: string
     nom: string
     /** `null` pour une équipe adulte, sans club (spec #20 R11). */
@@ -315,8 +323,14 @@ async function chargerSaisie(
   const nomEquipe = new Map(equipes.map((e) => [e.id, e.nom]))
   const clubEquipe = new Map(equipes.map((e) => [e.id, e.club_id]))
 
-  const paliers = verifierLecture(paliersRes, 'des paliers') ?? []
-  const lignesVoies = verifierLecture(voiesRes, 'des voies') ?? []
+  // Voies de toutes les épreuves ; blocs et paliers des épreuves actives seulement.
+  const parOrdre = (a: Ligne, b: Ligne) => (a.ordre as number) - (b.ordre as number)
+  const lignesVoies = etatsEpreuves.flatMap((e) => embarques(e.voie_difficulte)).sort(parOrdre)
+  const lignesBlocs = etatsEpreuves
+    .filter((e) => e.active === true)
+    .flatMap((e) => embarques(e.bloc))
+    .sort(parOrdre)
+  const paliers = lignesBlocs.flatMap((b) => embarques(b.bloc_palier)).sort(parOrdre)
 
   // Libellés calculés sur toutes les voies de l'épreuve (spec #3 R50).
   const libelles = libellesVoies(
@@ -365,7 +379,7 @@ async function chargerSaisie(
   const pointsPalier = new Map<string, number>()
   for (const p of paliers) pointsPalier.set(p.id as string, (p.points as number) ?? 0)
 
-  const blocsConfig: BlocConfig[] = (verifierLecture(blocsRes, 'des blocs') ?? []).map((b) => ({
+  const blocsConfig: BlocConfig[] = lignesBlocs.map((b) => ({
     blocId: b.id as string,
     code: b.code as string,
     ordre: b.ordre as number,

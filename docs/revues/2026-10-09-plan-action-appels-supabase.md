@@ -71,7 +71,7 @@ flowchart TD
 | 9 | B1, B3, B4 (= J5) | correctifs | `feature/correctifs-lectures` | ✅ |
 | 10 | R1, R3, R4, R5 (R2 reporté) | relectures temps réel ÷ ~100 par temps de vitesse | `feature/perf-temps-reel` | ✅ |
 | 11 | E1–E5 | gardes ajoutées en base ; ajouts de structure 3 → 2 | `feature/gardes-en-base` | ⏳ |
-| 12 | L1, L2 ; L3 après mesure | classement et saisie 11 → 6 requêtes | `feature/perf-lectures-imbriquees` | ⏳ |
+| 12 | L1, L2 ; L3 après mesure | classement et saisie 11 → 6 requêtes | `feature/perf-lectures-imbriquees` | ✅ (L3 reporté) |
 
 Ordre recommandé (2026-11-10) : 9 → 10 (R1 d'abord) → 5 → 12 → 11 → 7 → 6.
 
@@ -369,14 +369,34 @@ règles existent déjà dans les specs : aucune spec ne change.
 - [ ] ⏳ Tests SQL : chaque garde refuse l'appel forgé ; messages TS inchangés
   (E2E existants).
 
-## Lot 12 — Lectures imbriquées (L1–L3) — ⏳
+## Lot 12 — Lectures imbriquées (L1–L3) — ✅ (L3 reporté)
 
-- [ ] ⏳ L1 : structure du classement et de la saisie en une lecture
-  imbriquée (11 → 6 requêtes). Sortie inchangée (E2E de classement).
-- [ ] ⏳ L2 : saisie coach et capitaine filtrée sur le club ou l'équipe par
-  jointure `!inner` ; vérifier la RLS du capitaine.
-- [ ] ⏸ L3 : `rencontre_id` dénormalisé sur les résultats, à décider après
-  mesure de L1/L2.
+Branche `feature/perf-lectures-imbriquees` (2026-11-10). Aucune migration,
+aucune spec modifiée, aucun changement visible : pas de test rouge possible, le
+filet est la suite E2E (sortie inchangée) et la mesure au traceur.
+
+- [x] ✅ L1 : rencontre, épreuves (état), voies, blocs avec paliers et équipes
+  (avec le nom du club) en **une** lecture imbriquée de `rencontre`, dans
+  `getClassementRencontre` et `chargerSaisie` : 11 → 6 requêtes. Blocs et
+  paliers des seules épreuves actives filtrés en TS, tris par `ordre` en TS.
+  Constat : le plafond de 1000 lignes de l'API vaut **aussi pour chaque
+  relation embarquée** (vérifié : 1100 équipes embarquées → 1000). Sans effet
+  ici : ces six lectures n'étaient déjà pas paginées et ces tables comptent
+  quelques dizaines de lignes par rencontre.
+- [x] ✅ L2 : `chargerSaisie` prend un périmètre (club, équipe ou toute la
+  rencontre). Pour un club ou une équipe, résultats de voie et de bloc, temps et
+  points de vitesse sont bornés aux grimpeurs composés par
+  `grimpeur!inner(composition!inner(…))` ; les équipes embarquées et les
+  compositions aussi. La RLS du capitaine (`composition_select_capitaine`,
+  `grimpeur_select_capitaine`) ne lui ouvre que son équipe : la jointure
+  `!inner` ne retire rien de ce qu'il voit. L'admin lit toujours toute la
+  rencontre.
+- [x] ✅ Vert : Vitest, suite E2E complète (chromium, en série, base au seed),
+  dont `classement`, `classement-volume`, `coach-saisie-resultats`,
+  `admin-saisie-resultats`, `categorie-adulte` (capitaine), `export-pdf`.
+- [ ] ⏸ L3 : `rencontre_id` dénormalisé sur les résultats. Après L1/L2, gain
+  limité aux jointures et au filtre du temps réel (les vagues ne bougent pas) ;
+  à reconsidérer avec R2 si le temps réel pèse en ④.
 
 ## Lot 8 — Rôle dans le JWT (T1) — ⏸ reporté
 
@@ -418,6 +438,8 @@ lot 0 ; l'estimation tirée de la lecture du code figure entre parenthèses.
 | `/admin/rencontres/[id]/resultats` | 3 / 12 (3 / ~12) | | 6 |
 | `/admin/jetons?rencontre=` | 3 / 5 (3 / 5) | | 6 |
 | `/admin` · `/coach` | 2 / 5 · 2 / 5 | | — |
+| Classement admin · coach (③) | 2 / 13 · 2 / 14 (après lot 10) | 2 / 8 · 2 / 9 | 12 |
+| Saisie coach · admin (③) | 2 / 13 · 3 / 13 | 2 / 8 · 3 / 8 | 12 |
 
 Points relevés par la mesure :
 
