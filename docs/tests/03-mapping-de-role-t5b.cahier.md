@@ -262,3 +262,4 @@ R3) ; aucune de ces écritures n'aboutit, l'état n'est donc pas modifié. Les c
 | | | | CT-14 | ⏳ | suppression de compte (R41–R46) |
 | | | | CT-15 | ⏳ | suppression de compte (R41–R46) |
 | 2026-11-10 | julleroyfr | | CT-16 | ✅ | local ; `test:rpc-comptages` + E2E `compteurs-volume` ; reste recette |
+| 2026-11-10 | julleroyfr (agent) | `a8ec714` | CT-16 | ✅ | local déroulé : RPC = 6 comptes non anonymes (6 anonymes présents) ; `test:rpc-comptages` 24/24 (1100 anonymes, refus anon/authenticated) ; écran : E2E `compteurs-volume` |

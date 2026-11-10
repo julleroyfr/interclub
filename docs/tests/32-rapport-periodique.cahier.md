@@ -162,4 +162,5 @@
 
 | Date | Testeur | Environnement | Résultat (OK/KO) | Remarques |
 | ------ | --------- | --------------- | ------------------ | ----------- |
+| 2026-11-10 | julleroyfr (agent) | local (`a8ec714`) | OK | CT-04 : 200, log et ligne en table, effectifs (12/0/3/5, total 20) et équipes (3 enfant, 1 ado) = SQL ; CT-01/02 : 401 sans secret et mauvais secret ; CT-09 : `sum(nombre)` = 20 = `count(grimpeur)`, `test:rpc-comptages` (droits, retour arrière) |
 | | | | | |

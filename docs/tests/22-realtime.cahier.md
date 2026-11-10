@@ -408,3 +408,5 @@ Routes utilisées :
 | 2026-10-09 | Playwright e2e | develop | CT-16 → CT-19 | ✅ | `temps-reel-engagement.spec.ts` (écritures admin posées en SQL) ; migration `202610091200` appliquée en local (2 passes) |
 | 2026-11-10 | Playwright e2e | feature/perf-temps-reel | CT-20, CT-21 | ✅ | rouges sur l'ancien code (1 relecture de trop), verts après ; reste recette |
 | 2026-11-10 | julleroyfr | feature/perf-temps-reel | CT-22 | ✅ | local : `test:points-vitesse-reecriture` 13/13 (11–12 lignes réécrites avant, 0 après) ; reste recette |
+| 2026-11-10 | julleroyfr (agent) | `a8ec714` | CT-20, CT-21 | ✅ | local déroulé (E2E `temps-reel-filtres`) : 0 relecture pour une autre rencontre / pour ma coche ; relecture pour la rencontre observée / la coche d'un autre |
+| 2026-11-10 | julleroyfr (agent) | `a8ec714` | CT-22 | ✅ | local déroulé : temps le plus lent saisi → 0 ligne existante réécrite, 1 créée ; `test:points-vitesse-reecriture` 13/13 |

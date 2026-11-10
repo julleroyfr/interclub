@@ -257,3 +257,4 @@ Liste des rencontres : bouton **« Rencontres »** → `/admin/rencontres`.
 > `src/domaine/rencontre.test.ts`). La copie du gabarit (RPC), les gardes, la RLS
 > et l'IHM se vérifient ici, sur l'app réelle — en priorité **mobile**.
 | CT-16 | local | 2026-11-10 | Playwright e2e | ✅ | rouge avant correction (écran d'erreur), vert après ; reste recette |
+| CT-16 | local | 2026-11-10 | julleroyfr (agent) | ✅ | `a8ec714` : premier voie/bloc/palier/voie de vitesse d'un parent vide ajoutés (ordres 1 puis 2), aucun écran d'erreur |
