@@ -64,7 +64,7 @@ flowchart TD
 | 2 | P2, P3, J2 | contrôle 8 → 2 ; coche 6 → 3 | `feature/perf-controle` | ✅ |
 | 3 | P5, P6 | engagement 5 → 2 ; actions −1 | `feature/perf-engagement-coach` | ✅ |
 | 4 | P4 | 7 → 2–3 (④/⑤) | `feature/perf-tdb-rencontre` | ✅ |
-| 5 | P7, J3, B2 | ≤ 10 → 2 (RPC) | `feature/perf-cloture` | ⏳ |
+| 5 | P7, J3, B2 | ≤ 10 → 2 (RPC) | `feature/perf-cloture` | ✅ |
 | 6 | P8–P11, P13–P15, J4, J5 (L4) | −1 vague par écran ou action | `feature/perf-petits-gains` | 🔄 (J4 fait) |
 | 7 | A1–A5, P15 (E6) | 3–5 → 2 | `feature/rpc-ecritures-atomiques` | ⏳ |
 | 8 | T1 | −1 sur **toutes** les requêtes | — | ⏸ reportée |
@@ -218,23 +218,38 @@ Fichier : `src/app/admin/rencontres/[id]/page.tsx` et ses loaders.
   vagues mesurées / 17 appels (au lieu de 27). Le chemin critique reste
   compte → rencontre → comptages et grimpeurs éligibles.
 
-## Lot 5 — Clôture (P7, J3) — ⏳
+## Lot 5 — Clôture (P7, J3, B2) — ✅
 
 D-P1 tranchée le 2026-10-09 : **fonction SQL**.
 
-- [ ] ⏳ Migration `…_cloture_np` : RPC `changer_phase_rencontre(id, phase)`
-  (garde admin, transition adjacente R17, garde jour J, NP automatique R18,
-  le tout dans une transaction) ; `revoke` / `grant` explicites,
-  `db:verifier`.
-- [ ] ⏳ Tests SQL (stack locale) : passage ③ → ④ → NP posés ; relance
-  idempotente ; refus non admin.
-- [ ] ⏳ `changerPhaseRencontre` appelle la RPC ; `cloture.ts` est retiré.
-- [ ] ⏳ JOURNAL des migrations, application à la main en recette.
-- [ ] ⏳ Vert : E2E `pilotage-phase`, cahier 17 (NP de clôture).
-- [ ] ⏳ B2 (2026-11-10) : la RPC conditionne la transition à la phase courante
-  (deux admins ne peuvent pas la passer ensemble) ; compositions et résultats
-  lus en SQL (plus de troncature, `resultat_bloc` filtré par rencontre).
-  **Rouge** : E2E de volume (plus de 1000 résultats de voie) sur la clôture.
+- [x] ✅ **Rouge (B2)** : `e2e/cloture-volume.spec.ts` (cahier 17 CT-19).
+  80 grimpeuses (groupe M1) ont saisi M1, M2 et M3 sur une **seconde** voie du
+  niveau, plus M4 et T1–T10 : 1120 résultats de voie. Sur l'ancien code, la
+  clôture posait **80 NP de voie au lieu de 0** : les résultats au-delà de 1000
+  étaient ignorés et le niveau passait pour « non saisi ».
+- [x] ✅ **Rouge** : `scripts/test-cloture.sh` (`npm run test:cloture`), 29 KO
+  sur 40 sans la RPC.
+- [x] ✅ Migration `202611101300_rpc_changer_phase_rencontre` : RPC
+  `changer_phase_rencontre(p_rencontre, p_phase)`, SECURITY DEFINER, dans une
+  transaction : garde admin, verrou de la rencontre (`for update`), transition
+  adjacente R17 (retour ③ → ① hors jour J), garde du jour J (spec #1 R5,
+  `current_date`), mise à jour conditionnée à la phase lue, NP automatique R18
+  en SQL (compositions et résultats lus par la base : plus de troncature,
+  `resultat_bloc` filtré par rencontre). Un NP en échec annule le changement de
+  phase. EXECUTE à `authenticated` seul ; retour arrière dans
+  `supabase/retours-arriere/`.
+- [x] ✅ `changerPhaseRencontre` garde ses contrôles TypeScript (messages clairs)
+  et appelle la RPC : 1 appel d'écriture au lieu de 2 à 8. Les refus de la base
+  (course entre deux admins, jour changé) reprennent les messages de l'écran.
+  `src/lib/rencontres/cloture.ts` est retiré, ainsi que `manquantsCloture`
+  (domaine), devenu inutile : R18 est testée par `test:cloture`.
+- [x] ✅ Vert : `test:cloture` 40/40 (dont deux clôtures simultanées : une seule
+  passe ; rejeu, retour arrière, réapplication), `db:verifier`,
+  `db:verifier-retours`, E2E `cloture-volume`, `pilotage-phase`,
+  `coach-saisie-resultats` (CT-12), `admin-controle`, suite E2E complète et
+  Vitest.
+- [x] ✅ Appliquée à la main en recette le 2026-11-10 (JOURNAL).
+- [ ] ⏳ Cahier 17 CT-19 et CT-12 en recette ; prod avant la mise en prod.
 
 ## Lot 6 — Petits gains (P8–P11, P13–P15, J4, J5) — ⏳
 
