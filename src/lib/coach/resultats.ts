@@ -123,6 +123,8 @@ export type SaisieRencontre = {
 export type SaisieTousClubs = Omit<SaisieRencontre, 'grimpeurs'> & {
   /** Grimpeurs engagés, par club de leur équipe (clubs sans grimpeur absents). */
   grimpeursParClub: Map<string, GrimpeurSaisie[]>
+  /** Nom des clubs lus (équipes et clubs d'origine), embarqués (P11). */
+  nomsClubs: Map<string, string>
 }
 
 /**
@@ -135,8 +137,7 @@ export async function getSaisieRencontre(
 ): Promise<SaisieRencontre | null> {
   const saisie = await chargerSaisie(rencontreId, { club: clubId })
   if (!saisie) return null
-  const { grimpeursParClub, ...rencontre } = saisie
-  return { ...rencontre, grimpeurs: grimpeursParClub.get(clubId) ?? [] }
+  return { ...enTete(saisie), grimpeurs: saisie.grimpeursParClub.get(clubId) ?? [] }
 }
 
 /**
@@ -151,12 +152,11 @@ export async function getSaisieEquipe(
 ): Promise<SaisieRencontre | null> {
   const saisie = await chargerSaisie(rencontreId, { equipe: equipeId })
   if (!saisie) return null
-  const { grimpeursParClub, ...rencontre } = saisie
   // Membres rangés par club d'origine (équipe adulte sans club) : un seul tri.
-  const grimpeurs = [...grimpeursParClub.values()]
+  const grimpeurs = [...saisie.grimpeursParClub.values()]
     .flat()
     .sort((a, b) => a.nom.localeCompare(b.nom, 'fr') || a.prenom.localeCompare(b.prenom, 'fr'))
-  return { ...rencontre, grimpeurs }
+  return { ...enTete(saisie), grimpeurs }
 }
 
 /**
@@ -170,6 +170,14 @@ export async function getSaisieTousClubs(rencontreId: string): Promise<SaisieTou
 }
 
 type Ligne = Record<string, unknown>
+
+/** Saisie sans ses tables (`Map`, non sérialisables vers un composant client). */
+function enTete(saisie: SaisieTousClubs): Omit<SaisieRencontre, 'grimpeurs'> {
+  const { grimpeursParClub, nomsClubs, ...rencontre } = saisie
+  void grimpeursParClub
+  void nomsClubs
+  return rencontre
+}
 
 /**
  * Périmètre lu : les grimpeurs composés d'un club (coach), d'une équipe
@@ -226,7 +234,7 @@ async function chargerSaisie(
       epreuve(type, active,
         voie_difficulte(id, niveau, cotation, repere, type_voie, ordre, points, points_prise_valorisee, points_zone1, points_zone2),
         bloc(id, code, ordre, bloc_palier(id, bloc_id, libelle, ordre, points))),
-      equipe(id, nom, club_id)`,
+      equipe(id, nom, club_id, club:club_id(nom))`,
     )
     .eq('id', rencontreId)
   const structure = clubId
@@ -322,6 +330,12 @@ async function chargerSaisie(
   }[]
   const nomEquipe = new Map(equipes.map((e) => [e.id, e.nom]))
   const clubEquipe = new Map(equipes.map((e) => [e.id, e.club_id]))
+  // Noms des clubs : ceux des équipes ici, ceux d'origine avec les grimpeurs.
+  const nomClub = new Map<string, string>()
+  for (const e of equipes) {
+    const club = premier((e as unknown as Ligne).club)
+    if (e.club_id && club) nomClub.set(e.club_id, club.nom as string)
+  }
 
   // Voies de toutes les épreuves ; blocs et paliers des épreuves actives seulement.
   const parOrdre = (a: Ligne, b: Ligne) => (a.ordre as number) - (b.ordre as number)
@@ -388,7 +402,6 @@ async function chargerSaisie(
 
   const infoGrimpeur = new Map<string, { nom: string; prenom: string; clubId: string }>()
   // Noms des clubs d'origine, embarqués avec le grimpeur (prêtés).
-  const nomClub = new Map<string, string>()
   const lignesCompo = compos.map((c) => {
     const g = premier(c.grimpeur)
     if (g) {
@@ -573,5 +586,6 @@ async function chargerSaisie(
     blocActif,
     vitesseActive,
     grimpeursParClub,
+    nomsClubs: nomClub,
   }
 }

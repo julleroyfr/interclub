@@ -10,7 +10,7 @@ import {
 import { libellePhase } from '@/domaine/rencontre'
 import { exigerUtilisateur } from '@/lib/auth/session'
 import { liensCoach } from '@/lib/coach/navigation'
-import { listerJetonsActifs, listerRencontresDuClub } from '@/lib/jetons/jetons'
+import { listerJetonsCoachDuClub, listerRencontresDuClub } from '@/lib/jetons/jetons'
 
 import { AfficheurJeton } from '../../admin/jetons/afficheur-jeton'
 
@@ -27,10 +27,11 @@ export default async function PageJetonsCoach({
   const clubId = utilisateur.clubId
 
   const { erreur } = await searchParams
-  const rencontres = await listerRencontresDuClub(clubId)
-  const jetonsParRencontre = await Promise.all(
-    rencontres.map((r) => listerJetonsActifs(r.id)),
-  )
+  // Rencontres et jetons du club en une vague (lot 6, P8).
+  const [rencontres, jetons] = await Promise.all([
+    listerRencontresDuClub(clubId),
+    listerJetonsCoachDuClub(clubId),
+  ])
 
   return (
     <Coquille liens={liensCoach({ type: 'permanent', clubId })} deconnexion>
@@ -52,11 +53,8 @@ export default async function PageJetonsCoach({
           </p>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {rencontres.map((r, i) => {
-              const jeton =
-                jetonsParRencontre[i].find(
-                  (j) => j.nature === 'coach_temporaire' && j.clubId === clubId,
-                ) ?? null
+            {rencontres.map((r) => {
+              const jeton = jetons.find((j) => j.rencontreId === r.id) ?? null
               return (
                 <div key={r.id} className="flex flex-col gap-2">
                   <div className="flex items-center justify-between">
