@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Maquette — Filtres de la liste des grimpeurs</title>
+<style>
+  :root {
+    --fond: #020617;
+    --surface: rgba(255, 255, 255, 0.04);
+    --surface-forte: rgba(255, 255, 255, 0.08);
+    --bordure: rgba(255, 255, 255, 0.12);
+    --accent: #22d3ee;
+    --accent-doux: #67e8f9;
+    --secondaire: #bef264;
+    --danger: #fb7185;
+    --attention: #fbbf24;
+    --admin: #f472b6;
+    --surclasse: #818cf8;
+    --texte-fort: #ffffff;
+    --texte: #e2e8f0;
+    --texte-attenue: #94a3b8;
+    --texte-doux: #64748b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--fond); color: var(--texte);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.4; padding: 20px clamp(12px, 3vw, 40px) 80px;
+  }
+  h1 { color: var(--texte-fort); font-size: clamp(18px, 2.4vw, 24px); margin: 0 0 6px; }
+  .intro { color: var(--texte-attenue); max-width: 880px; font-size: 14px; margin: 0 0 20px; }
+  .repli { display: inline-block; margin-top: 4px; color: var(--texte-doux); font-size: 12px; }
+  .etape { color: var(--accent); font-size: 12px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .06em; margin: 34px 0 10px; }
+
+  .app {
+    width: min(880px, 100%);
+    border: 1px solid var(--bordure); border-radius: 18px; overflow: hidden;
+    background: linear-gradient(180deg, rgba(244,114,182,0.05), rgba(2,6,23,0) 160px), var(--fond);
+    box-shadow: 0 16px 50px rgba(0,0,0,.5);
+  }
+  .app.coach { background: linear-gradient(180deg, rgba(34,211,238,0.05), rgba(2,6,23,0) 160px), var(--fond); }
+  .barre-haut {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px;
+    padding: 14px clamp(14px, 2vw, 22px); border-bottom: 1px solid var(--bordure);
+  }
+  .barre-haut .titres { margin-right: auto; }
+  .lien-retour { color: var(--texte-attenue); font-size: 12.5px; }
+  .titre-ecran { color: var(--texte-fort); font-weight: 700; font-size: clamp(15px, 1.6vw, 18px); margin-top: 2px; }
+  .badge-role { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px;
+    padding: 4px 11px; font-size: 12px; font-weight: 700; }
+  .badge-role.admin { background: rgba(244,114,182,.12); color: var(--admin); border: 1px solid rgba(244,114,182,.35); }
+  .badge-role.coach { background: rgba(34,211,238,.12); color: var(--accent); border: 1px solid rgba(34,211,238,.35); }
+
+  .contenu { padding: 18px clamp(14px, 2.2vw, 26px); }
+  .recherche {
+    width: 100%; background: rgba(0,0,0,.3); color: var(--texte-fort); color-scheme: dark;
+    border: 1px solid var(--bordure); border-radius: 10px; padding: 10px 12px; font-size: 16px; margin-bottom: 14px;
+  }
+
+  ul.liste { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+  .ligne { border: 1px solid var(--bordure); border-radius: 16px; background: rgba(0,0,0,.2); padding: 14px 16px; }
+  .ligne.focus { border-color: rgba(129,140,248,.5); box-shadow: 0 0 0 1px rgba(129,140,248,.25) inset; }
+  .tete { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+  .identite { min-width: 0; }
+  .nom { color: var(--texte-fort); font-weight: 600; font-size: 15.5px; }
+  .nom .famille { text-transform: uppercase; }
+  .meta { color: var(--texte-doux); font-size: 12px; margin-top: 4px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  .pastille { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; vertical-align: 1px;
+    border-radius: 999px; padding: 1px 8px; font-size: 10.5px; font-weight: 700; }
+  .pastille.surclasse { color: var(--surclasse); background: rgba(129,140,248,.12); border: 1px solid rgba(129,140,248,.38); }
+  .pastille.generee { color: var(--attention); background: rgba(251,191,36,.10); border: 1px solid rgba(251,191,36,.3); }
+
+  .btn { border-radius: 10px; padding: 10px 14px; font-size: 13px; font-weight: 600; cursor: pointer; min-height: 44px;
+    border: 1px solid var(--bordure); background: transparent; color: var(--texte-attenue); }
+  .btn.violet { border-color: rgba(129,140,248,.45); background: rgba(129,140,248,.14); color: var(--surclasse); }
+  .btn.danger { border-color: rgba(251,113,133,.4); background: rgba(251,113,133,.10); color: var(--danger); }
+  .btn.plein { border-color: rgba(244,114,182,.45); background: rgba(244,114,182,.15); color: var(--admin); font-weight: 700; }
+
+  .panneau { margin-top: 14px; border-top: 1px solid var(--bordure); padding-top: 14px; }
+  .panneau-titre { color: var(--texte-fort); font-size: 13.5px; font-weight: 700; margin: 0 0 8px; }
+  .champ label { display: block; color: var(--texte-attenue); font-size: 12.5px; font-weight: 600; margin-bottom: 6px; }
+  .champ select {
+    width: 100%; max-width: 320px; background: rgba(0,0,0,.3); color: var(--texte-fort); color-scheme: dark;
+    border: 1px solid var(--bordure); border-radius: 10px; padding: 10px 12px; font-size: 16px;
+  }
+  .champ select option { background: var(--fond); color: var(--texte); }
+  .aide { color: var(--texte-doux); font-size: 12px; margin: 8px 0 0; }
+  .boutons { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+
+  .alerte { border-radius: 12px; padding: 11px 14px; font-size: 13px; margin-top: 10px; }
+  .alerte.err { color: var(--danger); background: rgba(251,113,133,.08); border: 1px solid rgba(251,113,133,.3); }
+  .alerte.ok { color: var(--secondaire); background: rgba(190,242,100,.06); border: 1px solid rgba(190,242,100,.22); }
+  .alerte.att { color: var(--attention); background: rgba(251,191,36,.07); border: 1px solid rgba(251,191,36,.28); }
+
+  ul.retraits { margin: 8px 0 0; padding-left: 18px; font-size: 13px; color: var(--texte); }
+  ul.retraits li { margin-bottom: 4px; }
+  ul.retraits .phase { color: var(--texte-doux); font-size: 11.5px; }
+  .conserves { color: var(--texte-attenue); font-size: 12.5px; margin-top: 8px; }
+
+  details.histo { margin-top: 10px; }
+  details.histo summary { cursor: pointer; color: var(--texte-attenue); font-size: 12.5px; min-height: 32px;
+    display: flex; align-items: center; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th { text-align: left; color: var(--texte-doux); font-weight: 600; font-size: 11px; text-transform: uppercase;
+    letter-spacing: .04em; padding: 6px 8px; border-bottom: 1px solid var(--bordure); }
+  td { padding: 8px; border-bottom: 1px solid rgba(255,255,255,.05); }
+  td.actif { color: var(--secondaire); font-weight: 600; }
+  .table-scroll { overflow-x: auto; }
+
+  /* coach */
+  .entete-rencontre { display: flex; flex-wrap: wrap; gap: 6px 14px; color: var(--texte-attenue); font-size: 12.5px; margin-bottom: 14px; }
+  .entete-rencontre b { color: var(--texte-fort); }
+  .grille { display: grid; grid-template-columns: 1fr; gap: 16px; }
+  @media (min-width: 720px) { .grille { grid-template-columns: 1fr 1fr; } }
+  .carte { border: 1px solid var(--bordure); border-radius: 14px; background: var(--surface); padding: 12px 14px; }
+  .carte h3 { margin: 0 0 10px; color: var(--texte-fort); font-size: 14px; }
+  .item { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.05); min-height: 44px; }
+  .item:last-child { border-bottom: 0; }
+  .item .qui { font-size: 13.5px; color: var(--texte); }
+  .item .qui small { color: var(--texte-doux); }
+  .ajout { border-radius: 8px; padding: 6px 12px; font-size: 12.5px; font-weight: 600; min-height: 36px;
+    border: 1px solid rgba(34,211,238,.35); background: rgba(34,211,238,.10); color: var(--accent); cursor: pointer; }
+
+  /* classement */
+  .rang { color: var(--texte-doux); width: 34px; }
+  .pts { text-align: right; color: var(--texte-fort); font-weight: 700; }
+  tr.vise td { background: rgba(129,140,248,.07); }
+
+  .legende { max-width: 880px; margin: 40px 0 0; color: var(--texte-attenue); font-size: 13px; }
+  .legende h2 { color: var(--texte-fort); font-size: 15px; margin-bottom: 6px; }
+  .legende h3 { color: var(--admin); font-size: 13px; margin: 16px 0 4px; }
+  .legende li { margin-bottom: 6px; }
+  .legende code { background: var(--surface-forte); padding: 1px 5px; border-radius: 5px; color: var(--texte-fort); font-size: 12px; }
+</style>
+<style>
+  .filtres { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+  .filtres .recherche { flex: 1 1 220px; width: auto; margin: 0; }
+  .filtres select { background: rgba(0,0,0,.3); color: var(--texte-fort); color-scheme: dark;
+    border: 1px solid var(--bordure); border-radius: 10px; padding: 10px 12px; font-size: 16px; min-height: 48px; }
+  .filtres select option { background: var(--fond); color: var(--texte); }
+  .filtres select.actif { border-color: rgba(34,211,238,.6); }
+  .btn.accent { border-color: rgba(34,211,238,.4); background: rgba(34,211,238,.15); color: var(--accent); min-height: 48px; }
+  .compte { color: var(--texte-doux); font-size: 12px; margin: 4px 0 14px; }
+  .saison-ref { color: var(--texte-doux); font-size: 12px; margin: 0 0 6px; }
+</style>
+</head>
+<body>
+  <h1>Filtres de la liste des grimpeurs — maquette (spec #3 R26b)</h1>
+  <p class="intro">L'<strong>admin</strong> filtre le roster par <strong>club</strong> et par <strong>catégorie</strong>,
+  en plus de la recherche nom/prénom. Saison 2026-2027, âge de bascule B = 12, âge maximum ado M = 18.
+  Design « Nuit », mobile-first.
+  <span class="repli">↔ Redimensionnez la fenêtre pour voir le repli responsive.</span></p>
+
+  <div class="etape">① Filtre « Ado » (R26b, R26b-1 à R26b-3)</div>
+  <div class="app">
+    <div class="barre-haut">
+      <div class="titres">
+        <div class="lien-retour">← Tableau de bord</div>
+        <div class="titre-ecran">Grimpeurs</div>
+      </div>
+      <span class="badge-role admin">Admin</span>
+    </div>
+    <div class="contenu">
+      <form class="filtres" onsubmit="return false">
+        <input class="recherche" type="search" placeholder="Rechercher un nom ou prénom…" aria-label="Rechercher un grimpeur" />
+        <select aria-label="Club"><option>Tous les clubs</option><option>Club Alpin Bordeaux</option><option>Grimp'Océan</option></select>
+        <select aria-label="Catégorie" class="actif"><option>Toutes les catégories</option><option>Enfant</option><option selected>Ado</option><option>Adulte</option></select>
+        <button class="btn accent">Rechercher</button>
+        <button class="btn">Effacer</button>
+      </form>
+      <p class="saison-ref">Âges de la saison 2026-2027</p>
+      <p class="compte">4 résultats — Ado</p>
+      <ul class="liste">
+        <li class="ligne">
+          <div class="tete">
+            <div class="identite">
+              <div class="nom"><span class="famille">Bernard</span> Inès</div>
+              <div class="meta">Grimp'Océan · née en 2014 · Femme · licence 401122 · 2 engagements</div>
+            </div>
+            <div class="actions">
+              <button class="btn">Modifier</button>
+              <button class="btn danger">Supprimer</button>
+            </div>
+          </div>
+        </li>
+        <li class="ligne">
+          <div class="tete">
+            <div class="identite">
+              <div class="nom"><span class="famille">Durand</span> Tom
+                <span class="pastille surclasse">Surclassé ado 2026–2027</span></div>
+              <div class="meta">Grimp'Océan · né en 2015 · Homme · licence 398120 · 3 engagements</div>
+            </div>
+            <div class="actions">
+              <button class="btn">Modifier</button>
+              <button class="btn danger">Supprimer</button>
+            </div>
+          </div>
+        </li>
+        <li class="ligne">
+          <div class="tete">
+            <div class="identite">
+              <div class="nom"><span class="famille">Leroy</span> Noé</div>
+              <div class="meta">Club Alpin Bordeaux · né en 2011 · Homme · licence 377410 · 1 engagement</div>
+            </div>
+            <div class="actions">
+              <button class="btn">Modifier</button>
+              <button class="btn danger">Supprimer</button>
+            </div>
+          </div>
+        </li>
+        <li class="ligne">
+          <div class="tete">
+            <div class="identite">
+              <div class="nom"><span class="famille">Petit</span> Jade</div>
+              <div class="meta">Club Alpin Bordeaux · née en 2009 · Femme · licence 351906 · 0 engagement</div>
+            </div>
+            <div class="actions">
+              <button class="btn">Modifier</button>
+              <button class="btn danger">Supprimer</button>
+            </div>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="etape">② Âges des catégories non configurés (R26b-4)</div>
+  <div class="app">
+    <div class="barre-haut">
+      <div class="titres">
+        <div class="lien-retour">← Tableau de bord</div>
+        <div class="titre-ecran">Grimpeurs</div>
+      </div>
+      <span class="badge-role admin">Admin</span>
+    </div>
+    <div class="contenu">
+      <form class="filtres" onsubmit="return false">
+        <input class="recherche" type="search" placeholder="Rechercher un nom ou prénom…" aria-label="Rechercher un grimpeur" />
+        <select aria-label="Club"><option>Tous les clubs</option><option>Club Alpin Bordeaux</option><option>Grimp'Océan</option></select>
+        <button class="btn accent">Rechercher</button>
+      </form>
+      <p class="compte">Filtre par catégorie indisponible : âges des catégories non configurés.</p>
+      <ul class="liste">
+        <li class="ligne">
+          <div class="tete">
+            <div class="identite">
+              <div class="nom"><span class="famille">Bernard</span> Inès</div>
+              <div class="meta">Grimp'Océan · née en 2014 · Femme · licence 401122 · 2 engagements</div>
+            </div>
+            <div class="actions">
+              <button class="btn">Modifier</button>
+              <button class="btn danger">Supprimer</button>
+            </div>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="legende">
+    <h2>Règles illustrées</h2>
+    <ul>
+      <li>Club, catégorie et recherche se cumulent, portent sur tout le roster avant pagination, sont conservés d'une
+        page à l'autre ; « Effacer » remet tout à zéro (R26b).</li>
+      <li>Catégorie = éligibilité de la saison en cours : Inès (née en 2014, pivot) apparaît aussi en « Enfant » ;
+        Jade (17 ans) apparaît aussi en « Adulte » (R26b-1).</li>
+      <li>Tom (né en 2015) est retenu en « Ado » grâce à son surclassement actif (R26b-2).</li>
+      <li>La saison de référence est affichée sous les filtres (R26b-3).</li>
+      <li>Sans <code>AGE_BASCULE</code> / <code>AGE_ADO_MAX</code> valides, le filtre catégorie disparaît (R26b-4).</li>
+    </ul>
+  </div>
+</body>
+</html>
