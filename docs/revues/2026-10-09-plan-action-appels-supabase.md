@@ -311,9 +311,9 @@ D-P2 tranchée le 2026-10-09 : **une fonction SQL par opération**. Branche
   et retour arrière.
 - [x] ✅ Les actions appellent les RPC : barème 3 écritures → 1, régénérations
   2–3 → 1.
-- [x] ✅ Vert : tests SQL, Vitest, suite E2E complète (jetons, invitations,
+- [x] ✅ Vert : tests SQL, Vitest, suite E2E complète 236/236 (jetons, invitations,
   barèmes compris).
-- [x] ✅ JOURNAL ; cahier 28 CT-14. Application à la main en recette : à faire.
+- [x] ✅ JOURNAL ; cahier 28 CT-14 ; appliquée en recette le 2026-11-10.
 - [x] ✅ E6 : `revoquerInvitation` sans lecture préalable (`update … .select()`,
   aucune ligne → refus) ; `regenererJeton` ne relit plus le jeton (P15) ;
   `regenererInvitation` sans lecture (la RPC renvoie `invitation_introuvable`).
