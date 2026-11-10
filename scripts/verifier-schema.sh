@@ -48,12 +48,12 @@ else
   echo "✓ Aucune fonction surchargée dans le schéma interclub."
 fi
 
-# Contrôle 2 — aucune fonction ouverte à PUBLIC, et `anon` n'exécute que la
-#   liste blanche des RPC des sessions QR. Sans `revoke`, Postgres accorde
-#   EXECUTE à PUBLIC sur toute fonction : une RPC SECURITY DEFINER devient
-#   appelable avec la seule clé anon publique. Revue du 2026-10-03 (C1/M1),
-#   migration 202610031100.
-ANON_AUTORISEES="'ouvrir_session_qr','contexte_coach_temporaire','contexte_juge','liste_grimpeurs_vitesse'"
+# Contrôle 2 — aucune fonction ouverte à PUBLIC ni à `anon`. Sans `revoke`,
+#   Postgres accorde EXECUTE à PUBLIC sur toute fonction : une RPC SECURITY
+#   DEFINER devient appelable avec la seule clé anon publique. Revue du
+#   2026-10-03 (C1/M1), migration 202610031100 ; les RPC des sessions QR,
+#   appelées après la connexion anonyme (rôle `authenticated`), ne sont plus
+#   ouvertes à `anon` depuis 202611101400.
 
 ouvertes=$(sql "
   select p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')'
@@ -62,19 +62,18 @@ ouvertes=$(sql "
   where n.nspname = 'interclub'
     and (p.proacl is null
          or exists (select 1 from aclexplode(p.proacl) a where a.grantee = 0)
-         or (has_function_privilege('anon', p.oid, 'execute')
-             and p.proname not in ($ANON_AUTORISEES)))
+         or has_function_privilege('anon', p.oid, 'execute'))
   order by 1;
 ")
 
 if [ -n "$ouvertes" ]; then
-  echo "✗ Fonction(s) exécutable(s) par PUBLIC ou anon hors liste blanche :"
+  echo "✗ Fonction(s) exécutable(s) par PUBLIC ou anon :"
   echo "$ouvertes" | sed 's/^/    /'
   echo "  → revoke execute … from public, puis grant explicite au(x) rôle(s) requis."
   echo "    Cf. docs/conventions/03-base-de-donnees-supabase.md §5.2."
   echec=1
 else
-  echo "✓ Aucune fonction interclub ouverte à PUBLIC ; anon limité aux RPC QR."
+  echo "✓ Aucune fonction interclub ouverte à PUBLIC ni à anon."
 fi
 
 exit "$echec"
