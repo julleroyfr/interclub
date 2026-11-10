@@ -5,6 +5,10 @@ Plan de traitement des constats de
 **réduire le nombre de vagues séquentielles** par écran et par action, et
 **corriger les lectures tronquées** (J1–J5).
 
+Complété le 2026-11-10 par
+[l'analyse des traitements côté base](./2026-11-10-analyse-traitements-base.md)
+(constats B1–B4, R1–R5, L1–L4, E1–E6 ; lots 9 à 12).
+
 Statuts : ✅ fait · 🔄 en cours · ⏳ en attente (à faire) · ❓ décision requise ·
 🚫 bloqué (dépendance non levée) · ⏸ reporté
 
@@ -60,10 +64,19 @@ flowchart TD
 | 2 | P2, P3, J2 | contrôle 8 → 2 ; coche 6 → 3 | `feature/perf-controle` | ✅ |
 | 3 | P5, P6 | engagement 5 → 2 ; actions −1 | `feature/perf-engagement-coach` | ✅ |
 | 4 | P4 | 7 → 2–3 (④/⑤) | `feature/perf-tdb-rencontre` | ✅ |
-| 5 | P7, J3 | ≤ 10 → 2 (RPC) | `feature/perf-cloture` | ⏳ |
-| 6 | P8–P11, P13–P15, J4, J5 | −1 vague par écran ou action | `feature/perf-petits-gains` | ⏳ |
-| 7 | A1–A5 | 3–5 → 2 | `feature/rpc-ecritures-atomiques` | ⏳ |
+| 5 | P7, J3, B2 | ≤ 10 → 2 (RPC) | `feature/perf-cloture` | ⏳ |
+| 6 | P8–P11, P13–P15, J4, J5 (L4) | −1 vague par écran ou action | `feature/perf-petits-gains` | 🔄 (J4 fait) |
+| 7 | A1–A5, P15 (E6) | 3–5 → 2 | `feature/rpc-ecritures-atomiques` | ⏳ |
 | 8 | T1 | −1 sur **toutes** les requêtes | — | ⏸ reportée |
+| 9 | B1, B3, B4 (= J5) | correctifs | `feature/correctifs-lectures` | ⏳ |
+| 10 | R1, R3, R5 ; R2, R4 sur décision | relectures temps réel ÷ ~100 par temps de vitesse | `feature/perf-temps-reel` | ⏳ |
+| 11 | E1–E5 | gardes ajoutées en base ; ajouts de structure 3 → 2 | `feature/gardes-en-base` | ⏳ |
+| 12 | L1, L2 ; L3 après mesure | classement et saisie 11 → 6 requêtes | `feature/perf-lectures-imbriquees` | ⏳ |
+
+Ordre recommandé (2026-11-10) : 9 → 10 (R1 d'abord) → 5 → 12 → 11 → 7 → 6.
+
+Décisions du 2026-11-10 : les gardes TypeScript sont **conservées** (on ajoute
+celles qui manquent en base) ; le calcul du classement **reste en TypeScript**.
 
 ## Lot 0 — Mesure de référence — ✅
 
@@ -218,6 +231,10 @@ D-P1 tranchée le 2026-10-09 : **fonction SQL**.
 - [ ] ⏳ `changerPhaseRencontre` appelle la RPC ; `cloture.ts` est retiré.
 - [ ] ⏳ JOURNAL des migrations, application à la main en recette.
 - [ ] ⏳ Vert : E2E `pilotage-phase`, cahier 17 (NP de clôture).
+- [ ] ⏳ B2 (2026-11-10) : la RPC conditionne la transition à la phase courante
+  (deux admins ne peuvent pas la passer ensemble) ; compositions et résultats
+  lus en SQL (plus de troncature, `resultat_bloc` filtré par rencontre).
+  **Rouge** : E2E de volume (plus de 1000 résultats de voie) sur la clôture.
 
 ## Lot 6 — Petits gains (P8–P11, P13–P15, J4, J5) — ⏳
 
@@ -272,6 +289,60 @@ D-P2 tranchée le 2026-10-09 : **une fonction SQL par opération**.
 - [ ] ⏳ Les actions appellent les RPC.
 - [ ] ⏳ E2E jetons, invitations (`inscription-coach`, `invitation-admin`).
 - [ ] ⏳ JOURNAL, application à la main en recette.
+- [ ] ⏳ E6 (2026-11-10) : `revoquerInvitation` fait une lecture inutile
+  (`update … .select()` suffit) ; `regenererJeton` relit le jeton déjà lu (P15).
+
+## Lot 9 — Correctifs (B1, B3, B4) — ⏳
+
+- [ ] ⏳ B1 : `.maybeSingle()` pour le dernier ordre du gabarit (voie, bloc,
+  palier, voie de vitesse). **Rouge** : E2E ajout du premier élément d'une
+  épreuve vide du gabarit.
+- [ ] ⏳ B3 : `verifierLecture` sur les lectures `{data}` des sept actions
+  listées dans l'analyse.
+- [ ] ⏳ B4 (= J5) : revalider le bon chemin après création ou révocation d'un
+  prêt ; E2E `admin-prets` (rafraîchissement).
+
+## Lot 10 — Temps réel (R1–R5) — ⏳
+
+- [ ] ⏳ R1 : migration du trigger `recalculer_points_vitesse`, avec
+  `do update … where (rang, points) is distinct from (excluded.rang, excluded.points)`.
+  **Rouge** : script SQL comptant les lignes réécrites par temps saisi (≈ 100 → 1–2).
+- [ ] ⏳ R3 : `grimpeursAffiches` sur les trois écrans de classement.
+- [ ] ⏳ R5 : `exportDisponible` lu seulement en ⑤ (ou en une requête imbriquée).
+- [ ] ❓ R2 : ignorer les UPDATE qui ne touchent que la coche de contrôle
+  (`replica identity full` + filtre `TempsReel`, ou table de coche séparée).
+  Décision à prendre.
+- [ ] ❓ R4 : `ignorerMesEcritures` sur le contrôle. Touche la spec #11 R6bis :
+  validation explicite d'abord.
+- [ ] ⏳ Mesure au traceur : relectures par temps saisi et par coche, avant et
+  après.
+
+## Lot 11 — Gardes en base (E1–E5) — ⏳
+
+Les contrôles TypeScript restent en place (décision du 2026-11-10). Toutes ces
+règles existent déjà dans les specs : aucune spec ne change.
+
+- [ ] ⏳ E1 : garde de phase ④ pour la coche de contrôle (trigger ou RPC
+  `basculer_controle`).
+- [ ] ⏳ E2 : garde de phase ③/④ pour la saisie admin (RPC admin calquée sur
+  `saisir_resultat_voie`).
+- [ ] ⏳ E3 : trigger BEFORE INSERT/UPDATE/DELETE sur les tables de structure :
+  phase ①/② et cohérence épreuve ↔ rencontre ; `ordre`/`numero` calculés par
+  défaut (max + 1), qui suppriment la lecture préalable.
+- [ ] ⏳ E4 : triggers d'effectif (8 en enfant et ado) et de prêt (« déjà
+  engagé », « autre club »).
+- [ ] ⏳ E5 : trigger BEFORE UPDATE OF licence (licence générée conservable).
+- [ ] ⏳ Tests SQL : chaque garde refuse l'appel forgé ; messages TS inchangés
+  (E2E existants).
+
+## Lot 12 — Lectures imbriquées (L1–L3) — ⏳
+
+- [ ] ⏳ L1 : structure du classement et de la saisie en une lecture
+  imbriquée (11 → 6 requêtes). Sortie inchangée (E2E de classement).
+- [ ] ⏳ L2 : saisie coach et capitaine filtrée sur le club ou l'équipe par
+  jointure `!inner` ; vérifier la RLS du capitaine.
+- [ ] ⏸ L3 : `rencontre_id` dénormalisé sur les résultats, à décider après
+  mesure de L1/L2.
 
 ## Lot 8 — Rôle dans le JWT (T1) — ⏸ reporté
 
