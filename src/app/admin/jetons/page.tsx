@@ -31,7 +31,12 @@ export default async function PageJetonsAdmin({
   await exigerAdmin()
 
   const { rencontre: rencontreId, erreur } = await searchParams
-  const rencontres = await listerRencontres()
+  // L'identifiant vient de l'URL : la liste et les sections de la rencontre
+  // partent en une vague (lot 6, P10).
+  const [rencontres, donnees] = await Promise.all([
+    listerRencontres(),
+    rencontreId ? chargerSections(rencontreId) : Promise.resolve(null),
+  ])
   const selection = rencontres.find((r) => r.id === rencontreId) ?? null
 
   return (
@@ -76,6 +81,7 @@ export default async function PageJetonsAdmin({
           <SectionsRencontre
             rencontreId={selection.id}
             estAdulte={selection.categorie === 'adulte'}
+            donnees={donnees!}
           />
         )}
       </div>
@@ -83,20 +89,33 @@ export default async function PageJetonsAdmin({
   )
 }
 
-async function SectionsRencontre({
-  rencontreId,
-  estAdulte,
-}: {
-  rencontreId: string
-  estAdulte: boolean
-}) {
-  // Adulte : capitaines d'équipe, pas de coach temporaire (spec #20 R16, R20).
+/**
+ * Données des sections d'une rencontre. La catégorie n'est pas encore connue :
+ * clubs et équipes adultes sont lus tous deux, l'écran garde ceux qui servent.
+ */
+async function chargerSections(rencontreId: string) {
   const [clubs, equipes, { voies, vitesseDesactivee }, jetons] = await Promise.all([
-    estAdulte ? Promise.resolve([]) : listerClubsEngages(),
-    estAdulte ? listerEquipesAdultes(rencontreId) : Promise.resolve([]),
+    listerClubsEngages(),
+    listerEquipesAdultes(rencontreId),
     listerVoies(rencontreId),
     listerJetonsActifs(rencontreId),
   ])
+  return { clubs, equipes, voies, vitesseDesactivee, jetons }
+}
+
+function SectionsRencontre({
+  rencontreId,
+  estAdulte,
+  donnees,
+}: {
+  rencontreId: string
+  estAdulte: boolean
+  donnees: Awaited<ReturnType<typeof chargerSections>>
+}) {
+  // Adulte : capitaines d'équipe, pas de coach temporaire (spec #20 R16, R20).
+  const { voies, vitesseDesactivee, jetons } = donnees
+  const clubs = estAdulte ? [] : donnees.clubs
+  const equipes = estAdulte ? donnees.equipes : []
   const chemin = `/admin/jetons?rencontre=${rencontreId}`
 
   const jetonCoach = (clubId: string) =>

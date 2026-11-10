@@ -4,7 +4,7 @@ import { Coquille, EnTetePage, TitreSection } from '@/composants'
 import { CATEGORIES } from '@/domaine/rencontre'
 import { liensAdmin } from '@/lib/admin/navigation'
 import { exigerAdmin } from '@/lib/auth/session'
-import { listerGabarit } from '@/lib/gabarit/gabarit'
+import { listerGabarits } from '@/lib/gabarit/gabarit'
 
 import { PanneauGabarit } from './panneau-gabarit'
 
@@ -14,7 +14,8 @@ export default async function PageGabarit() {
   await exigerAdmin()
 
   // Un gabarit par catégorie (spec #3 R29 ; adulte : spec #20 R6).
-  const gabarits = await Promise.all(CATEGORIES.map((cat) => listerGabarit(cat.value)))
+  const parCategorie = await listerGabarits(CATEGORIES.map((cat) => cat.value))
+  const gabarits = CATEGORIES.map((cat) => parCategorie.get(cat.value) ?? [])
 
   return (
     <Coquille liens={liensAdmin()} largeur="large" deconnexion>

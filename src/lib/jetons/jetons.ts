@@ -30,6 +30,7 @@ export type EquipeVue = { id: string; nom: string }
 /** Jeton actif prêt à afficher (avec son QR encodé en data URL). */
 export type JetonVue = {
   id: string
+  rencontreId: string
   nature: NatureJeton
   clubId: string | null
   voieVitesseId: string | null
@@ -41,6 +42,7 @@ export type JetonVue = {
 /** Encode la valeur d'un jeton en QR (data URL PNG), généré côté serveur. */
 async function versJetonVue(row: {
   id: string
+  rencontre_id: string
   nature: NatureJeton
   club_id: string | null
   voie_vitesse_id: string | null
@@ -56,6 +58,7 @@ async function versJetonVue(row: {
   const qrDataUrl = await QRCode.toDataURL(contenu, { margin: 1, width: 240 })
   return {
     id: row.id,
+    rencontreId: row.rencontre_id,
     nature: row.nature,
     clubId: row.club_id,
     voieVitesseId: row.voie_vitesse_id,
@@ -182,8 +185,25 @@ export async function listerJetonsActifs(
   const supabase = await createClient()
   const { data, error } = await supabase
     .from('jeton_qr')
-    .select('id, nature, club_id, voie_vitesse_id, equipe_id, valeur')
+    .select('id, rencontre_id, nature, club_id, voie_vitesse_id, equipe_id, valeur')
     .eq('rencontre_id', rencontreId)
+    .eq('actif', true)
+  if (error) throw error
+  return Promise.all((data ?? []).map(versJetonVue))
+}
+
+/**
+ * Jetons de coach temporaire ACTIFS d'un club, toutes rencontres, en UNE
+ * lecture via la RLS (lot 6, P8 : plus une lecture par rencontre). Lancée en
+ * parallèle de la liste des rencontres : l'écran les rattache par `rencontreId`.
+ */
+export async function listerJetonsCoachDuClub(clubId: string): Promise<JetonVue[]> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('jeton_qr')
+    .select('id, rencontre_id, nature, club_id, voie_vitesse_id, equipe_id, valeur')
+    .eq('nature', 'coach_temporaire')
+    .eq('club_id', clubId)
     .eq('actif', true)
   if (error) throw error
   return Promise.all((data ?? []).map(versJetonVue))

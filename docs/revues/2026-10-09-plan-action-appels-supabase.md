@@ -65,7 +65,7 @@ flowchart TD
 | 3 | P5, P6 | engagement 5 → 2 ; actions −1 | `feature/perf-engagement-coach` | ✅ |
 | 4 | P4 | 7 → 2–3 (④/⑤) | `feature/perf-tdb-rencontre` | ✅ |
 | 5 | P7, J3, B2 | ≤ 10 → 2 (RPC) | `feature/perf-cloture` | ✅ |
-| 6 | P8–P11, P13–P15, J4, J5 (L4) | −1 vague par écran ou action | `feature/perf-petits-gains` | 🔄 (J4 fait) |
+| 6 | P8–P11, P13–P15, J4, J5 (L4) | −1 vague par écran ou action | `feature/perf-petits-gains` | ✅ |
 | 7 | A1–A5, P15 (E6) | 3–5 → 2 | `feature/rpc-ecritures-atomiques` | ✅ |
 | 8 | T1 | −1 sur **toutes** les requêtes | — | ⏸ reportée |
 | 9 | B1, B3, B4 (= J5) | correctifs | `feature/correctifs-lectures` | ✅ |
@@ -251,21 +251,31 @@ D-P1 tranchée le 2026-10-09 : **fonction SQL**.
 - [x] ✅ Appliquée à la main en recette le 2026-11-10 (JOURNAL).
 - [ ] ⏳ Cahier 17 CT-19 et CT-12 en recette ; prod avant la mise en prod.
 
-## Lot 6 — Petits gains (P8–P11, P13–P15, J4, J5) — ⏳
+## Lot 6 — Petits gains (P8–P11, P13–P15, J4, J5) — ✅
 
-- [ ] ⏳ P8 `/coach/jetons` : une seule lecture `jeton_qr`
-  `.in('rencontre_id', ids)` (ou embarquée dans la lecture des rencontres).
-- [ ] ⏳ P9 `listerGabarit` : une lecture imbriquée de `gabarit_epreuve` avec ses
-  voies, blocs (avec paliers), voies de vitesse et échelons, pour les deux
-  catégories en un appel.
-- [ ] ⏳ P10 `/admin/jetons` : lancer `listerRencontres` et les sections de la
-  rencontre en parallèle (l'id vient de l'URL).
-- [ ] ⏳ P11 `getSaisieAdminRencontre` : nom du club embarqué dans la lecture des
-  équipes de `chargerSaisie` (`club:club_id(nom)`).
-- [ ] ⏳ P13 structure : la phase et le prochain ordre sont lus en parallèle.
-- [ ] ⏳ P14 saisie admin bloc : le contexte du bloc et le palier sont lus en
-  parallèle.
-- [ ] ⏳ P15 `regenererJeton` : réutiliser la ligne lue par `jetonGerable`.
+Branche `feature/perf-petits-gains` (2026-11-10). Aucune migration, aucune spec
+modifiée, aucun changement visible : le filet est la suite E2E complète
+(sortie inchangée).
+
+- [x] ✅ P8 `/coach/jetons` : `listerJetonsCoachDuClub` lit en une requête les
+  jetons de coach temporaire actifs du club, en parallèle des rencontres
+  (1 + N requêtes en 2 vagues → 2 requêtes en 1 vague).
+- [x] ✅ P9 `listerGabarits` : une lecture imbriquée de `gabarit_epreuve` avec ses
+  voies, blocs (avec paliers), voies de vitesse et échelons, toutes catégories
+  en un appel (3 × 3 vagues, 15 requêtes → 1 requête). Tris par `ordre` en TS.
+- [x] ✅ P10 `/admin/jetons` : `listerRencontres` et les sections de la
+  rencontre en parallèle (l'id vient de l'URL) ; clubs et équipes adultes lus
+  tous deux, la catégorie n'étant pas encore connue (2 vagues → 1).
+- [x] ✅ P11 `getSaisieAdminRencontre` : nom du club embarqué dans la lecture des
+  équipes de `chargerSaisie` (`club:club_id(nom)`, policy `club_select`) ; plus
+  de lecture `service_role` à part (2 vagues → 1).
+- [x] ✅ P13 structure : sans objet, le prochain ordre est calculé en base
+  (lot 11, `attribuer_rang`).
+- [x] ✅ P14 saisie admin bloc : le contexte du bloc et les paliers sont lus en
+  parallèle (3 vagues → 2).
+- [x] ✅ P15 `regenererJeton` : traité au lot 7 (RPC `regenerer_jeton`, sans
+  relecture).
+- [x] ✅ J5 : traité au lot 9 (B4).
 - [x] ✅ J4 compteurs (2026-11-10) : comptages faits par la base, sans
   migration. Totaux du tableau de bord admin en `count: 'exact', head: true`
   (et seules les 5 dernières rencontres lues) ; nombre de grimpeurs et de
