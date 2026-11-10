@@ -1,5 +1,6 @@
 import 'server-only'
 
+import { compteEmbarque } from '@/lib/supabase/embarque'
 import { createClient } from '@/lib/supabase/server'
 
 /** Club listé pour l'écran de paramétrage, avec ses dépendances (info suppression). */
@@ -21,33 +22,20 @@ export type ClubAvecDependances = {
 export async function listerClubs(): Promise<ClubAvecDependances[]> {
   const supabase = await createClient()
 
-  const [clubsRes, rencRes, grimpRes] = await Promise.all([
-    supabase.from('club').select('id, nom').order('nom'),
-    supabase.from('rencontre').select('club_porteur_id'),
-    supabase.from('grimpeur').select('club_id'),
-  ])
+  // Compteurs agrégés côté base (count embarqué PostgREST, équivalent d'un
+  // `left join … group by`) : une seule requête, et pas de lecture des lignes
+  // `grimpeur`, qui serait plafonnée à 1000.
+  const { data, error } = await supabase
+    .from('club')
+    .select('id, nom, rencontre(count), grimpeur(count)')
+    .order('nom')
+  if (error) throw error
 
-  if (clubsRes.error) throw clubsRes.error
-  if (rencRes.error) throw rencRes.error
-  if (grimpRes.error) throw grimpRes.error
-
-  const tally = (rows: Array<Record<string, unknown>>, cle: string) => {
-    const m = new Map<string, number>()
-    for (const r of rows) {
-      const id = r[cle] as string
-      m.set(id, (m.get(id) ?? 0) + 1)
-    }
-    return m
-  }
-
-  const parRencontre = tally(rencRes.data ?? [], 'club_porteur_id')
-  const parGrimpeur = tally(grimpRes.data ?? [], 'club_id')
-
-  return (clubsRes.data ?? []).map((c) => ({
+  return (data ?? []).map((c) => ({
     id: c.id as string,
     nom: c.nom as string,
-    nbRencontres: parRencontre.get(c.id as string) ?? 0,
-    nbGrimpeurs: parGrimpeur.get(c.id as string) ?? 0,
+    nbRencontres: compteEmbarque(c.rencontre),
+    nbGrimpeurs: compteEmbarque(c.grimpeur),
   }))
 }
 

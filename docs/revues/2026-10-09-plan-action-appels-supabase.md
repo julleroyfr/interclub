@@ -8,7 +8,7 @@ Plan de traitement des constats de
 Statuts : ✅ fait · 🔄 en cours · ⏳ en attente (à faire) · ❓ décision requise ·
 🚫 bloqué (dépendance non levée) · ⏸ reporté
 
-Dernière mise à jour : 2026-10-10.
+Dernière mise à jour : 2026-11-10.
 
 ## Principes
 
@@ -234,9 +234,21 @@ D-P1 tranchée le 2026-10-09 : **fonction SQL**.
 - [ ] ⏳ P14 saisie admin bloc : le contexte du bloc et le palier sont lus en
   parallèle.
 - [ ] ⏳ P15 `regenererJeton` : réutiliser la ligne lue par `jetonGerable`.
-- [ ] ⏳ J4 compteurs : `select('id', { count: 'exact', head: true })` pour les
-  totaux ; pour le nombre par club, une RPC d'agrégat ou un comptage embarqué
-  (`grimpeur(count)`).
+- [x] ✅ J4 compteurs (2026-11-10) : comptages faits par la base, sans
+  migration. Totaux du tableau de bord admin en `count: 'exact', head: true`
+  (et seules les 5 dernières rencontres lues) ; nombre de grimpeurs et de
+  rencontres par club, d'équipes et d'épreuves par rencontre, d'équipes et de
+  grimpeurs du club sur l'accueil coach en comptage embarqué
+  (`grimpeur(count)`, `equipe(count)`, `equipe(composition(count))`, helper
+  `src/lib/supabase/embarque.ts`). Liste des clubs, liste des rencontres et
+  accueil coach passent à une seule requête. **Rouge** :
+  `e2e/compteurs-volume.spec.ts` (1100 grimpeurs, 1100 équipes) ; sur l'ancien
+  code, 980 grimpeurs et 996 équipes affichés.
+- [ ] ⏳ J6 mapping des comptes (relevé le 2026-11-10) : `listUsers` ne lit
+  qu'une page de 1000 utilisateurs, comptes anonymes des sessions QR compris
+  (jamais purgés) ; au-delà, des comptes permanents disparaissent de l'écran.
+  Piste : fonction SQL sur `auth.users` hors anonymes (migration, validation
+  requise).
 - [ ] ⏳ J5 prêts : vérifier en E2E si l'écran se rafraîchit après la création
   ou la révocation d'un prêt. Corriger le chemin (`/admin/rencontres/[id]`).
 - [ ] ⏳ Vert : E2E concernés (`admin-prets`, `navigation-routing`, jetons).

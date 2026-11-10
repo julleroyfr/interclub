@@ -1,6 +1,8 @@
 import 'server-only'
 
 import { anneeSaison, bornesSaison, type Phase } from '@/domaine/rencontre'
+import { nomEmbarque } from '@/lib/supabase/embarque'
+import { verifierLecture } from '@/lib/supabase/lecture'
 import { createClient } from '@/lib/supabase/server'
 
 export type StatsTdb = {
@@ -36,51 +38,45 @@ export async function chargerTableauDeBord(aujourdhui: string): Promise<DonneesT
   const saison = anneeSaison(aujourdhui)
   const bornes = bornesSaison(saison)
 
-  const [clubsRes, toutesRencRes, rencSaisonRes, grimpRes] = await Promise.all([
-    supabase.from('club').select('id, nom').order('nom'),
-    supabase.from('rencontre').select('id, phase'),
+  // Une vague ; tous les compteurs sont faits par la base (`count`), seules les
+  // 5 dernières rencontres de la saison sont lues, club porteur embarqué.
+  const compter = { count: 'exact', head: true } as const
+  const [clubsRes, rencontresRes, competitionRes, grimpRes, rencSaisonRes] = await Promise.all([
+    supabase.from('club').select('id', compter),
+    supabase.from('rencontre').select('id', compter),
+    supabase.from('rencontre').select('id', compter).eq('phase', 'competition'),
+    supabase.from('grimpeur').select('id', compter),
     supabase
       .from('rencontre')
-      .select('id, date_rencontre, categorie, phase, club_porteur_id')
+      .select('id, date_rencontre, categorie, phase, club:club_porteur_id(nom)', { count: 'exact' })
       .gte('date_rencontre', bornes.debut)
       .lte('date_rencontre', bornes.fin)
-      .order('date_rencontre', { ascending: false }),
-    supabase.from('grimpeur').select('id'),
+      .order('date_rencontre', { ascending: false })
+      .limit(5),
   ])
-
-  if (clubsRes.error) throw clubsRes.error
-  if (toutesRencRes.error) throw toutesRencRes.error
-  if (rencSaisonRes.error) throw rencSaisonRes.error
-  if (grimpRes.error) throw grimpRes.error
-
-  const nomParClub = new Map<string, string>()
-  for (const c of clubsRes.data ?? []) {
-    nomParClub.set(c.id as string, c.nom as string)
-  }
-
-  const rencSaison = rencSaisonRes.data ?? []
-  const cinqDernieres: RencontreTdb[] = rencSaison.slice(0, 5).map((r) => ({
-    id: r.id as string,
-    dateRencontre: r.date_rencontre as string,
-    categorie: r.categorie as string,
-    phase: r.phase as Phase,
-    clubPorteurNom: nomParClub.get(r.club_porteur_id as string) ?? '(club inconnu)',
-  }))
-
-  const toutesRencontres = toutesRencRes.data ?? []
-  const nbRencontresEnCompetition = toutesRencontres.filter(
-    (r) => r.phase === 'competition',
-  ).length
+  verifierLecture(clubsRes, 'des clubs')
+  verifierLecture(rencontresRes, 'des rencontres')
+  verifierLecture(competitionRes, 'des rencontres en compétition')
+  verifierLecture(grimpRes, 'des grimpeurs')
+  const cinqDernieres: RencontreTdb[] = (verifierLecture(rencSaisonRes, 'des rencontres de la saison') ?? []).map(
+    (r) => ({
+      id: r.id as string,
+      dateRencontre: r.date_rencontre as string,
+      categorie: r.categorie as string,
+      phase: r.phase as Phase,
+      clubPorteurNom: nomEmbarque(r.club) ?? '(club inconnu)',
+    }),
+  )
 
   return {
     stats: {
-      nbClubs: (clubsRes.data ?? []).length,
-      nbRencontres: toutesRencontres.length,
-      nbGrimpeurs: (grimpRes.data ?? []).length,
-      nbRencontresEnCompetition,
+      nbClubs: clubsRes.count ?? 0,
+      nbRencontres: rencontresRes.count ?? 0,
+      nbGrimpeurs: grimpRes.count ?? 0,
+      nbRencontresEnCompetition: competitionRes.count ?? 0,
     },
     rencontres: cinqDernieres,
-    totalRencontres: rencSaison.length,
+    totalRencontres: rencSaisonRes.count ?? 0,
     saison,
   }
 }

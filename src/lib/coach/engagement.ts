@@ -10,6 +10,7 @@ import {
 import { exigerLectureCoachDuClub } from '@/lib/auth/garde-lecture'
 import { lireBornesAge } from '@/lib/rencontres/bornes-age'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { compteEmbarque, nomEmbarque } from '@/lib/supabase/embarque'
 import { verifierLecture } from '@/lib/supabase/lecture'
 import { createClient } from '@/lib/supabase/server'
 
@@ -66,47 +67,29 @@ export async function listerRencontresCoach(options: {
   const annee = options.saison ?? anneeSaison(options.aujourdhui)
   const bornes = bornesSaison(annee)
 
-  const [rencRes, clubsRes, eqRes] = await Promise.all([
-    supabase
-      .from('rencontre')
-      .select('id, date_rencontre, categorie, phase, club_porteur_id')
-      .gte('date_rencontre', bornes.debut)
-      .lte('date_rencontre', bornes.fin),
-    supabase.from('club').select('id, nom'),
-    // Équipes du club (RLS : lecture périmètre club) + leurs compositions.
-    supabase
-      .from('equipe')
-      .select('id, rencontre_id, composition(grimpeur_id)')
-      .eq('club_id', options.clubId),
-  ])
-  if (rencRes.error) throw rencRes.error
-  if (clubsRes.error) throw clubsRes.error
-  if (eqRes.error) throw eqRes.error
+  // Une requête : club porteur embarqué ; équipes du club embarquées (RLS :
+  // lecture périmètre club), leurs grimpeurs comptés par la base.
+  const { data, error } = await supabase
+    .from('rencontre')
+    .select('id, date_rencontre, categorie, phase, club:club_porteur_id(nom), equipe(composition(count))')
+    .eq('equipe.club_id', options.clubId)
+    .gte('date_rencontre', bornes.debut)
+    .lte('date_rencontre', bornes.fin)
+  if (error) throw error
 
-  const nomParClub = new Map<string, string>()
-  for (const c of clubsRes.data ?? []) nomParClub.set(c.id as string, c.nom as string)
-
-  const nbEquipes = new Map<string, number>()
-  const nbGrimpeurs = new Map<string, number>()
-  for (const e of eqRes.data ?? []) {
-    const rid = e.rencontre_id as string
-    nbEquipes.set(rid, (nbEquipes.get(rid) ?? 0) + 1)
-    const compos = (e.composition as { grimpeur_id: string }[] | null) ?? []
-    nbGrimpeurs.set(rid, (nbGrimpeurs.get(rid) ?? 0) + compos.length)
-  }
-
-  return (rencRes.data ?? [])
+  return (data ?? [])
     .map((r) => {
       const id = r.id as string
       const phase = r.phase as Phase
+      const equipes = (r.equipe as { composition: unknown }[] | null) ?? []
       return {
         id,
         dateRencontre: r.date_rencontre as string,
         categorie: r.categorie as Categorie,
         phase,
-        clubPorteurNom: nomParClub.get(r.club_porteur_id as string) ?? '(club inconnu)',
-        nbEquipesClub: nbEquipes.get(id) ?? 0,
-        nbGrimpeursClub: nbGrimpeurs.get(id) ?? 0,
+        clubPorteurNom: nomEmbarque(r.club) ?? '(club inconnu)',
+        nbEquipesClub: equipes.length,
+        nbGrimpeursClub: equipes.reduce((n, e) => n + compteEmbarque(e.composition), 0),
         editable: estEditable(phase),
       }
     })
