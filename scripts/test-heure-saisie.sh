@@ -129,11 +129,14 @@ set local session_replication_role = replica;
 update interclub.resultat_voie set saisi_le = now() - interval '2 minutes'
  where voie_difficulte_id='99999999-9999-9999-9999-999999999901' and grimpeur_id='a0000000-0000-0000-0000-0000000000a2';
 set local session_replication_role = origin;
+-- La coche ne se pose qu'en ④ (spec #16 R13, garde en base 202611101500).
+update interclub.rencontre set phase='cloture' where id='33333333-3333-3333-3333-333333333333';
 select set_config('request.jwt.claims','{"sub":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa","role":"authenticated"}', true); set role authenticated;
 update interclub.resultat_voie set controle_le = now(), controle_par = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
  where voie_difficulte_id='99999999-9999-9999-9999-999999999901' and grimpeur_id='a0000000-0000-0000-0000-0000000000a2';
 select pg_temp.verif('R8-coche-heure-inchangee', 'true', (select (pg_temp.heure_t1() < now() - interval '1 minute')::text));
 reset role;
+update interclub.rencontre set phase='competition' where id='33333333-3333-3333-3333-333333333333';
 
 -- =========================================================================
 -- R19 — session coach absente ; R20 — compétition clôturée.

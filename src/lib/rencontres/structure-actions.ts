@@ -84,26 +84,6 @@ async function refuserSiStructureVerrouillee(
   return 'erreur' in rencontre ? rencontre : null
 }
 
-/** Prochain `ordre` pour une colonne enfant d'un parent donné. */
-async function prochainOrdre(
-  supabase: Client,
-  table: string,
-  colonneParent: string,
-  parentId: string,
-): Promise<number> {
-  const data = verifierLecture(
-    await supabase
-      .from(table)
-      .select('ordre')
-      .eq(colonneParent, parentId)
-      .order('ordre', { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    `du dernier ordre (${table})`,
-  )
-  return ((data?.ordre as number | null) ?? 0) + 1
-}
-
 /**
  * Crée une épreuve d'un type donné dans une rencontre si aucune n'existe déjà
  * (R36). Utile pour les rencontres créées sur gabarit vide (R35).
@@ -191,8 +171,7 @@ export async function ajouterVoieDifficulteRencontre(
   const refusPhase = await refuserSiStructureVerrouillee(supabase, rencontreId)
   if (refusPhase) return refusPhase
 
-  const ordre = await prochainOrdre(supabase, 'voie_difficulte', 'epreuve_id', epreuveId)
-
+  // `ordre` absent : la base prend le rang suivant (trigger `attribuer_rang`).
   const { error } = await supabase.from('voie_difficulte').insert({
     epreuve_id: epreuveId,
     niveau,
@@ -203,7 +182,6 @@ export async function ajouterVoieDifficulteRencontre(
     points_prise_valorisee: pointsPriseValorisee,
     points_zone1: pointsZone1,
     points_zone2: pointsZone2,
-    ordre,
   })
   if (error) {
     if (error.code === '23505') return { erreur: messageRepereEnDoublon(niveau, repere) }
@@ -302,11 +280,10 @@ export async function ajouterBlocRencontre(
   const refusPhase = await refuserSiStructureVerrouillee(supabase, rencontreId)
   if (refusPhase) return refusPhase
 
-  const ordre = await prochainOrdre(supabase, 'bloc', 'epreuve_id', epreuveId)
-
+  // `ordre` absent : la base prend le rang suivant (trigger `attribuer_rang`).
   const { error } = await supabase
     .from('bloc')
-    .insert({ epreuve_id: epreuveId, code, ordre })
+    .insert({ epreuve_id: epreuveId, code })
   if (error) {
     if (error.code === '23505') return { erreur: `Le bloc « ${code} » existe déjà.` }
     return { erreur: "L'ajout a échoué. Réessayez." }
@@ -333,21 +310,10 @@ export async function ajouterVoieVitesseRencontre(
   const refusPhase = await refuserSiStructureVerrouillee(supabase, rencontreId)
   if (refusPhase) return refusPhase
 
-  const derniere = verifierLecture(
-    await supabase
-      .from('voie_vitesse')
-      .select('numero')
-      .eq('rencontre_id', rencontreId)
-      .order('numero', { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    'des voies de vitesse',
-  )
-  const numero = ((derniere?.numero as number | null) ?? 0) + 1
-
+  // `numero` absent : la base prend le numéro suivant (trigger `attribuer_rang`).
   const { error } = await supabase
     .from('voie_vitesse')
-    .insert({ rencontre_id: rencontreId, numero, libelle })
+    .insert({ rencontre_id: rencontreId, libelle })
   if (error) return { erreur: "L'ajout a échoué. Réessayez." }
 
   revalidatePath(`/admin/rencontres/${rencontreId}`)
@@ -810,10 +776,10 @@ export async function ajouterPalierBlocRencontre(
   if ('erreur' in rencontre) return rencontre
   if (!bloc) return { erreur: 'Bloc introuvable.' }
 
-  const ordre = await prochainOrdre(supabase, 'bloc_palier', 'bloc_id', blocId)
+  // `ordre` absent : la base prend le rang suivant (trigger `attribuer_rang`).
   const { error } = await supabase
     .from('bloc_palier')
-    .insert({ bloc_id: blocId, libelle: palier.libelle, points: palier.points, ordre })
+    .insert({ bloc_id: blocId, libelle: palier.libelle, points: palier.points })
   if (error) return { erreur: "L'ajout a échoué. Réessayez." }
 
   revalidatePath(`/admin/rencontres/${rencontreId}`)
