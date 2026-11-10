@@ -7,6 +7,7 @@ import { CATEGORIES, PHASES, phaseEnDirect, type Categorie, type Phase } from '@
 import { liensAdmin } from '@/lib/admin/navigation'
 import { exigerAdmin } from '@/lib/auth/session'
 import { getClassementRencontre } from '@/lib/classement/classement'
+import { grimpeursDuClassement } from '@/lib/classement/grimpeurs-affiches'
 import { exportDisponible } from '@/lib/export/export-classement'
 
 import { PanneauClassement } from '@/app/coach/rencontres/[id]/classement/panneau-classement'
@@ -81,6 +82,8 @@ export default async function PageClassementAdmin({
             {/* Live : le classement bouge quand un coach/juge saisit (spec #11 R1/R3). */}
             <TempsReel
               tables={['resultat_voie', 'resultat_bloc', 'points_vitesse']}
+              // Seuls les grimpeurs de la rencontre relisent l'écran (spec #11 R8bis).
+              grimpeursAffiches={grimpeursDuClassement(classement.individuel)}
               actif={phaseEnDirect(classement.phase)}
             />
           </div>

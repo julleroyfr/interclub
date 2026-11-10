@@ -58,10 +58,12 @@ export default async function PageControle({ params }: { params: Promise<{ id: s
             >
               ← Tableau de bord
             </Link>
-            {/* Live : coches posées par les autres admins (spec #16 R12bis). */}
+            {/* Live : coches posées par les autres admins (spec #16 R12bis) ;
+                l'écho de mes propres coches est ignoré (spec #11 R6bis). */}
             <TempsReel
               tables={['resultat_voie', 'resultat_bloc']}
               actif={controle.mode === 'controle'}
+              ignorerMesCoches
             />
           </div>
         </div>

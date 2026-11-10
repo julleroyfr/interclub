@@ -6,6 +6,7 @@ import { PHASES, phaseEnDirect, type Phase } from '@/domaine/rencontre'
 import { exigerContexteCapitaine } from '@/lib/auth/session'
 import { liensCapitaine } from '@/lib/capitaine/navigation'
 import { getClassementRencontre } from '@/lib/classement/classement'
+import { grimpeursDuClassement } from '@/lib/classement/grimpeurs-affiches'
 
 import { PanneauClassement } from '../../coach/rencontres/[id]/classement/panneau-classement'
 
@@ -37,6 +38,8 @@ export default async function PageClassementCapitaine() {
             </span>
             <TempsReel
               tables={['resultat_voie', 'resultat_bloc', 'points_vitesse']}
+              // Seuls les grimpeurs de la rencontre relisent l'écran (spec #11 R8bis).
+              grimpeursAffiches={grimpeursDuClassement(classement.individuel)}
               actif={phaseEnDirect(classement.phase)}
             />
           </div>

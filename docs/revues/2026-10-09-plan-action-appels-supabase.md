@@ -69,7 +69,7 @@ flowchart TD
 | 7 | A1–A5, P15 (E6) | 3–5 → 2 | `feature/rpc-ecritures-atomiques` | ⏳ |
 | 8 | T1 | −1 sur **toutes** les requêtes | — | ⏸ reportée |
 | 9 | B1, B3, B4 (= J5) | correctifs | `feature/correctifs-lectures` | ✅ |
-| 10 | R1, R3, R5 ; R2, R4 sur décision | relectures temps réel ÷ ~100 par temps de vitesse | `feature/perf-temps-reel` | ⏳ |
+| 10 | R1, R3, R4, R5 (R2 reporté) | relectures temps réel ÷ ~100 par temps de vitesse | `feature/perf-temps-reel` | ✅ |
 | 11 | E1–E5 | gardes ajoutées en base ; ajouts de structure 3 → 2 | `feature/gardes-en-base` | ⏳ |
 | 12 | L1, L2 ; L3 après mesure | classement et saisie 11 → 6 requêtes | `feature/perf-lectures-imbriquees` | ⏳ |
 
@@ -311,20 +311,30 @@ spec modifiée.
   visible avant correction (Next re-rend la page courante après toute
   revalidation) ; non-régression `e2e/admin-prets.spec.ts`.
 
-## Lot 10 — Temps réel (R1–R5) — ⏳
+## Lot 10 — Temps réel (R1–R5) — ✅ (R2 reporté)
 
-- [ ] ⏳ R1 : migration du trigger `recalculer_points_vitesse`, avec
-  `do update … where (rang, points) is distinct from (excluded.rang, excluded.points)`.
-  **Rouge** : script SQL comptant les lignes réécrites par temps saisi (≈ 100 → 1–2).
-- [ ] ⏳ R3 : `grimpeursAffiches` sur les trois écrans de classement.
-- [ ] ⏳ R5 : `exportDisponible` lu seulement en ⑤ (ou en une requête imbriquée).
-- [ ] ❓ R2 : ignorer les UPDATE qui ne touchent que la coche de contrôle
-  (`replica identity full` + filtre `TempsReel`, ou table de coche séparée).
-  Décision à prendre.
-- [ ] ❓ R4 : `ignorerMesEcritures` sur le contrôle. Touche la spec #11 R6bis :
-  validation explicite d'abord.
-- [ ] ⏳ Mesure au traceur : relectures par temps saisi et par coche, avant et
-  après.
+Branche `feature/perf-temps-reel` (2026-11-10). Spec #11 révisée le 2026-11-10
+(R4, R6bis, R8bis), validée avant les tests.
+
+- [x] ✅ R1 : migration `202611101200_points_vitesse_sans_reecriture`, upsert
+  `where (rang, points) is distinct from …`. **Rouge** :
+  `npm run test:points-vitesse-reecriture` ; sur l'ancien code, un temps le plus
+  lent réécrivait 11 lignes et un temps sans changement de rang 12 ; après : 0.
+  Points identiques à un recalcul complet. Cahier 22 CT-22.
+- [x] ✅ R3 : `grimpeursAffiches` (grimpeurs du classement individuel) sur les
+  trois écrans de classement (spec #11 R8bis étendu). **Rouge** :
+  `e2e/temps-reel-filtres.spec.ts` CT-20 (une relecture pour une saisie d'une
+  autre rencontre). Cahier 22 CT-20.
+- [x] ✅ R4 : `ignorerMesCoches` sur l'écran de contrôle (spec #11 R6bis
+  étendu, `controle_par`). **Rouge** : CT-21 (une relecture sur l'écho de sa
+  propre coche). Cahier 22 CT-21.
+- [x] ✅ R5 : `lireEtatRencontre` (export) en une requête imbriquée.
+  Classement admin : 15 → 13 appels, toujours 2 vagues (traceur). Non-régression :
+  E2E `export-pdf`, `categorie-adulte`, `classement`.
+- [ ] ⏸ R2 (décision du 2026-11-10 : reporté) : la piste `replica identity full`
+  est impossible (sur une table sous RLS, Realtime ne livre que la clé primaire
+  de l'ancienne ligne) ; seule une table de coche séparée éviterait de relire
+  les classements à chaque coche. À reconsidérer si le contrôle en ④ pèse.
 
 ## Lot 11 — Gardes en base (E1–E5) — ⏳
 
