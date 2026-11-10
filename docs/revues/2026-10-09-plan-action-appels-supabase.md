@@ -248,8 +248,8 @@ D-P1 tranchée le 2026-10-09 : **fonction SQL**.
   `db:verifier-retours`, E2E `cloture-volume`, `pilotage-phase`,
   `coach-saisie-resultats` (CT-12), `admin-controle`, suite E2E complète et
   Vitest.
-- [ ] ⏳ Application à la main en recette (JOURNAL), puis cahier 17 CT-19 et
-  CT-12 en recette.
+- [x] ✅ Appliquée à la main en recette le 2026-11-10 (JOURNAL).
+- [ ] ⏳ Cahier 17 CT-19 et CT-12 en recette ; prod avant la mise en prod.
 
 ## Lot 6 — Petits gains (P8–P11, P13–P15, J4, J5) — ⏳
 
