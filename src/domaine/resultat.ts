@@ -157,22 +157,6 @@ export function verifierAjoutVoieAdo({
 }
 
 /**
- * Calcule les **attendus sans résultat** à passer en NP à la clôture (R18) :
- * différence ensembliste `attendus \ saisis`, en préservant l'ordre des attendus.
- * Fonction pure et **idempotente** (un attendu déjà saisi n'est pas renvoyé).
- * S'applique aux voies **attendues** de l'enfant (les 3 du groupe de départ, R9)
- * et aux blocs (B1/B2) ; les voies ado, choisies librement, n'ont pas d'attendu
- * figé (aucune ligne NP — décision 2026-09-08, R18).
- */
-export function manquantsCloture(
-  attendusIds: readonly string[],
-  saisisIds: readonly string[],
-): string[] {
-  const saisis = new Set(saisisIds)
-  return attendusIds.filter((id) => !saisis.has(id))
-}
-
-/**
  * Ce que l'écran de saisie montre à la place des voies/blocs d'un grimpeur :
  * - `avant_competition` : ①/② — la structure n'est pas encore lisible (lecture dès
  *   la ③, R6) → message unique, ni « groupe à définir » ni compteurs (R21bis) ;
