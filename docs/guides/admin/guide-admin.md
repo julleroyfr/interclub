@@ -127,8 +127,21 @@ correspondant. En l'ouvrant, un coach crée son compte, qui est
 | 2 | Nouveau grimpeur | Ouvre le formulaire de création |
 | 3 | Rechercher un nom ou prénom | Filtre la liste |
 | 4 | Tous les clubs | Restreint la liste à un club |
-| 5 | Modifier | Modifie le grimpeur, y compris son club |
-| 6 | Supprimer | Supprime le grimpeur |
+| 5 | Toutes les catégories | Restreint la liste aux grimpeurs d'une catégorie (Enfant, Ado, Adulte) |
+| 6 | Modifier | Modifie le grimpeur, y compris son club |
+| 7 | Surclasser | Autorise un enfant à concourir aussi en Ado pour une saison |
+| 8 | Supprimer | Supprime le grimpeur |
+
+La recherche, le club et la catégorie se **combinent** et portent sur
+**tous** les grimpeurs, pas seulement la page affichée. **Effacer** les remet à
+zéro.
+
+Le filtre **catégorie** montre les grimpeurs qui **peuvent concourir** dans la
+catégorie, avec leur âge de la **saison en cours** (indiquée sous les filtres).
+Un même grimpeur peut donc apparaître dans deux catégories : les grimpeurs nés
+l'année de l'âge de bascule figurent en Enfant **et** en Ado, ceux de 16 ans à
+l'âge maximum ado en Ado **et** en Adulte. En **Ado**, les enfants **surclassés**
+pour la saison sont aussi listés.
 
 Un grimpeur porte un **club**, un **nom**, un **prénom**, une **année de
 naissance**, un **sexe** et un **numéro de licence** unique. À la création,
@@ -142,6 +155,34 @@ résultats ; la confirmation le signale.
 Les numéros de licence à partir de **2 000 000 000** sont réservés aux licences
 **générées** (import CSV sans licence ou création sans numéro) ; ils sont suivis de la mention
 « générée » dans la liste.
+
+### Surclasser un enfant en Ado
+
+Un enfant peut être **surclassé** pour une saison : il reste éligible en
+Enfant et peut **aussi** être engagé dans les rencontres Ado de cette saison,
+où il grimpe comme un ado. Seul l'administrateur décide du surclassement.
+
+1. Sur la ligne du grimpeur, cliquer **Surclasser**. Le bouton n'apparaît que
+   pour un enfant plus jeune que l'âge de bascule (les grimpeurs nés en 2014
+   sont déjà éligibles aux deux catégories en 2026-2027).
+2. Choisir la **Saison** : la saison courante (proposée par défaut) ou la
+   suivante.
+3. Cliquer **Confirmer le surclassement**. Le grimpeur porte le badge
+   **Surclassé ado 2026–2027**.
+
+Le surclassement ne vaut que pour sa saison : il ne se reporte pas sur la
+suivante. Les coachs voient le grimpeur dans leurs rencontres Ado, avec la
+mention « surclassé ».
+
+**Révoquer** : cliquer **Révoquer le surclassement**. La confirmation liste
+les rencontres Ado **pas encore commencées** (① ou ②) dont le grimpeur sera
+retiré, prêts compris. Cliquer **Oui, révoquer**. Les rencontres déjà
+commencées ou terminées ne changent pas : le grimpeur y reste engagé, avec ses
+résultats et ses points dans les classements.
+
+L'**Historique des surclassements**, sous la ligne, montre chaque saison avec
+sa date d'accord et, le cas échéant, sa date de révocation. Après une
+révocation, le grimpeur peut être surclassé à nouveau.
 
 ### Importer les licenciés de la fédération
 
@@ -346,6 +387,10 @@ grimpeur apparaît alors chez les coachs du club d'accueil, qui l'engagent comme
 les leurs. Seul l'administrateur crée ou met fin à un prêt. Un grimpeur prêté
 compte pour l'équipe qui l'accueille, mais garde son club d'origine au
 classement individuel.
+
+Dans une rencontre Ado, les enfants **surclassés** pour la saison sont proposés
+aux prêts et aux équipes, avec la mention « surclassé » (voir
+[Surclasser un enfant en Ado](#surclasser-un-enfant-en-ado)).
 
 ### Équipes de tous les clubs
 
@@ -606,6 +651,10 @@ Désactiver l'épreuve en ① ou ② depuis l'onglet de la structure (voir
 **Un résultat est faux après la clôture.**
 Le corriger via **Corriger les résultats** en ④ clôture. En ⑤, revenir d'abord
 en ④.
+
+**Un enfant n'apparaît pas dans une rencontre Ado.**
+Il n'a pas l'âge de la catégorie. Pour l'y autoriser, le surclasser depuis
+**Grimpeurs** (voir [Surclasser un enfant en Ado](#surclasser-un-enfant-en-ado)).
 
 **Un grimpeur a une « licence générée ».**
 Il vient de l'import CSV sans licence ou a été créé sans numéro. Remplacer le numéro par sa vraie licence

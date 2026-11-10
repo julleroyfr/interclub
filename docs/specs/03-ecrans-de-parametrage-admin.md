@@ -1,5 +1,12 @@
 # Spec : Écrans de paramétrage (admin)
 
+- **Révision** : 2026-11-08 (**validée le 2026-11-08**) — **filtre par
+  catégorie** de la liste des grimpeurs (R26b, règle de changement) : R26
+  complétée ; éligibilité de la spec #1 R34 pour la saison en cours, surclassés
+  inclus en ado (spec #21).
+- **Révision** : 2026-11-07 (**validée le 2026-11-07**) — **surclassement**
+  (spec #21) : R26 complétée, l'écran Grimpeurs porte le badge « Surclassé
+  ado », les actions Surclasser / Révoquer et l'historique (spec #21 R18–R19).
 - **Statut** : validée (section « Configuration d'une rencontre » R40–R45 validée
   le 2026-08-28). **Barème de vitesse (R46 « barème par rang », modèle de données
   associé) ajouté et validé le 2026-09-22** — comble le report de R39 ; le
@@ -216,6 +223,32 @@ saisie, les flux CRUD, et les règles de suppression (dépendances / cascade).
   (**50 grimpeurs par page**) ; la **recherche s'applique à l'ensemble du roster**
   (tous les grimpeurs correspondants, pas seulement la page affichée), puis le
   résultat est paginé. L'affichage montre « **NOM Prénom** » (nom en premier).
+  *(Rév. 2026-11-07 : badge « Surclassé ado », actions Surclasser / Révoquer le
+  surclassement et historique des surclassements — spec #21 R18–R19.)*
+  *(Rév. 2026-11-08 : filtres par club et par catégorie, cumulables avec la
+  recherche — R26b.)*
+- **R26b.** La liste propose, à côté de la recherche, un filtre par **club**
+  (« Tous les clubs » par défaut) et un filtre par **catégorie** : « Toutes les
+  catégories » (défaut), « Enfant », « Ado », « Adulte ». Les filtres se
+  **cumulent** entre eux et avec la recherche, s'appliquent à **l'ensemble du
+  roster** avant pagination, sont **conservés** d'une page à l'autre et le
+  bouton « Effacer » les remet tous à zéro. (Source : demande produit du
+  2026-11-08.)
+  - **R26b-1.** Le filtre catégorie retient les grimpeurs **éligibles** à la
+    catégorie au sens de la spec #1 R34 (enfant, ado) et de la spec #20 R2
+    (adulte), l'âge étant calculé pour la **saison en cours** (celle de la date
+    du jour, spec #1 R37). Les catégories se **recouvrent** : un grimpeur de
+    l'année-pivot apparaît en « Enfant » et en « Ado » ; un grimpeur de 16 ans à
+    l'âge maximum ado apparaît en « Ado » et en « Adulte ».
+  - **R26b-2.** En « Ado », la liste retient **aussi** les grimpeurs portant un
+    **surclassement actif** pour la saison en cours (spec #21), même trop jeunes
+    pour l'ado par leur âge.
+  - **R26b-3.** La saison de référence est **affichée** à côté du filtre
+    (ex. « Âges de la saison 2026-2027 »).
+  - **R26b-4.** Si les âges des catégories ne sont pas configurés (spec #1
+    R34bis), le filtre catégorie n'est **pas proposé** ; la recherche et le
+    filtre club restent utilisables. Une catégorie inconnue dans l'adresse est
+    ignorée (« Toutes les catégories »).
 
 ### Saison des rencontres
 
@@ -258,7 +291,7 @@ saisie, les flux CRUD, et les règles de suppression (dépendances / cascade).
   existante, dans le gabarit comme dans une rencontre, toutes catégories — spec
   #20 R9bis.)*
 - **R33.** Le gabarit **enfant** est pré-initialisé avec le format du règlement
-  CT33 FFME 2025-2026 (§ Matin) lors du déploiement (via seed) :
+  CT33 FFME 2026-2027 (§ Matin) lors du déploiement (via seed) :
 
   | Épreuve | Contenu | Détail |
   |---------|---------|--------|
@@ -267,7 +300,7 @@ saisie, les flux CRUD, et les règles de suppression (dépendances / cascade).
   | Vitesse | 2 voies | Libellées « Filles » et « Garçons » ; **barème par rang** seedé (§ Matin : 1er = 15… au-delà 45e = 2, chute = 1, NP = 0 — R46) |
 
 - **R34.** Le gabarit **ado** est pré-initialisé avec le format du règlement CT33
-  FFME 2025-2026 (§ Après-midi) :
+  FFME 2026-2027 (§ Après-midi) :
 
   | Épreuve | Contenu | Détail |
   |---------|---------|--------|
@@ -686,6 +719,14 @@ verrouillage et aucun formulaire d'ajout (R44).
 année à 4 chiffres valide, alors le grimpeur est ajouté au roster de ce club
 (R21–R24) et le formulaire se vide (R6).
 
+### Nominal — filtrer le roster par catégorie (R26b)
+
+Étant donné un admin connecté, la saison en cours 2026-2027 et un âge de bascule
+de 12 ans, quand il choisit la catégorie « Enfant », alors la liste ne montre que
+les grimpeurs nés en 2014 ou après (pivot compris), sur tout le roster, avec le
+nombre de résultats ; choisir « Ado » montre les grimpeurs de 12 ans à l'âge
+maximum ado ainsi que les enfants surclassés pour la saison (R26b-1, R26b-2).
+
 ### Cas limites / erreurs
 
 - Nom de club déjà utilisé → refus, message d'unicité (R10).
@@ -821,4 +862,6 @@ année à 4 chiffres valide, alors le grimpeur est ajouté au roster de ce club
 - La **saisie du résultat** de vitesse (temps / chute / non-présentation) par le
   juge → **spec #10**.
 - La détermination automatique de la **catégorie** d'un grimpeur d'après son
-  année de naissance et la saison (spec #1 R34) — non calculée par ces écrans.
+  année de naissance et la saison (spec #1 R34) — non calculée ni stockée par
+  ces écrans, hormis l'éligibilité utilisée par le filtre de la liste des
+  grimpeurs (R26b), qui n'est pas affichée sur chaque grimpeur.

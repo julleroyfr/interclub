@@ -200,6 +200,13 @@ le grimpeur apparaît alors dans votre liste avec un badge « Prêté » et son 
 d'origine, et se gère comme les vôtres. Le retirer d'une équipe le remet dans
 votre liste, le prêt reste actif ; seul l'organisateur y met fin.
 
+**Grimpeurs surclassés** : l'organisateur peut **surclasser** un enfant pour
+la saison. Il reste proposé dans les rencontres Enfant et apparaît **aussi**
+dans la liste d'ajout des rencontres Ado, avec la mention « · surclassé ».
+Dans une équipe Ado, il porte le badge **Surclassé**. Il grimpe alors comme un
+ado (6 voies, pas de groupe de départ). Vous ne pouvez ni accorder ni retirer
+un surclassement : adressez-vous à l'organisateur.
+
 ### Créer une équipe
 
 <img src="captures/07-engagement-nouvelle-equipe.png" alt="Bloc Nouvelle équipe" width="400">
@@ -437,6 +444,11 @@ figée. Seul l'organisateur peut encore la modifier.
 Il est peut-être déjà engagé dans une autre équipe de la rencontre, ou il n'a
 pas l'âge de la catégorie. S'il n'est pas du tout enregistré dans le club,
 demandez à l'organisateur de l'ajouter.
+
+**Un enfant surclassé a disparu de mon équipe Ado.**
+L'organisateur a retiré son surclassement : il est alors retiré des rencontres
+Ado qui n'ont pas encore commencé. Les rencontres déjà disputées ne changent
+pas : ses résultats et ses points restent au classement.
 
 **La saisie affiche « en attente » : le résultat est-il enregistré ?**
 Il est gardé sur le téléphone et sera envoyé dès que possible. Laissez l'écran

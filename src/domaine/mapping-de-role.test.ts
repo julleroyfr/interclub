@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest'
 import {
-  comptesPermanents,
   creerMappingDeRole,
   MappingDeRoleInvalideError,
   SuppressionCompteRefuseeError,
@@ -100,18 +99,5 @@ describe('spec #2 — Suppression d’un compte permanent (R41–R46)', () => {
     expect(() => verifierSuppressionCompte({ demandeur: admin, cibleId: '  ' })).toThrow(
       SuppressionCompteRefuseeError,
     )
-  })
-
-  it('ne liste que les comptes permanents, pas les comptes anonymes des sessions QR (R46)', () => {
-    expect(
-      comptesPermanents([
-        { id: 'a', email: 'a@x.fr', is_anonymous: false },
-        { id: 'q', email: undefined, is_anonymous: true },
-        { id: 'b', email: 'b@x.fr' },
-      ]),
-    ).toEqual([
-      { id: 'a', email: 'a@x.fr' },
-      { id: 'b', email: 'b@x.fr' },
-    ])
   })
 })

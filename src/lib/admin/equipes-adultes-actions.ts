@@ -96,13 +96,18 @@ export async function ajouterGrimpeurEquipeAdulte(
   if (!grimpeurId) return { erreur: 'Sélectionnez un grimpeur.' }
 
   const supabase = await createClient()
-  const [{ data: rencontre }, { data: grimpeur }, { data: membres }, { data: engages }] =
+  const [rencontreRes, grimpeurRes, membresRes, engagesRes] =
     await Promise.all([
       supabase.from('rencontre').select('categorie, date_rencontre, phase').eq('id', rencontreId).maybeSingle(),
       supabase.from('grimpeur').select('annee_naissance').eq('id', grimpeurId).maybeSingle(),
       supabase.from('composition').select('grimpeur_id').eq('equipe_id', equipeId),
       supabase.from('composition').select('grimpeur_id').eq('rencontre_id', rencontreId),
     ])
+  // Une lecture en échec n'est pas « introuvable » ni « équipe vide » (B3).
+  const rencontre = verifierLecture(rencontreRes, 'de la rencontre')
+  const grimpeur = verifierLecture(grimpeurRes, 'du grimpeur')
+  const membres = verifierLecture(membresRes, "des membres de l'équipe")
+  const engages = verifierLecture(engagesRes, 'des engagés de la rencontre')
   if (!rencontre || rencontre.categorie !== 'adulte') return { erreur: 'Rencontre adulte introuvable.' }
   const gel = refusSiFigees(rencontre.phase)
   if (gel) return gel

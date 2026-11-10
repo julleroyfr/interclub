@@ -21,7 +21,6 @@
 -- Tables CONSERVÉES :
 --   interclub.version                          — journal des migrations
 --   interclub.club                             — clubs (données réelles)
---   interclub.coach                            — coaches permanents (identité)
 --   interclub.compte                           — comptes applicatifs (identité)
 --   interclub.invitation_coach                 — config onboarding par club
 --   interclub.gabarit_epreuve                  — paramètre règlement

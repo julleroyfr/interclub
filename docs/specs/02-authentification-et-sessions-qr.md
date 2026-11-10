@@ -10,7 +10,7 @@
   juge/coach temporaire (R17/R22). Détails : `12-navigation-et-routing.md`.
 - **Sources** : décision produit du 2026-07-22 (mécanisme d'authentification,
   cycle de vie des sessions QR éphémères, affectation juge) ; règlement CT33 FFME
-  2025-2026 **enfant/ado** (voies de vitesse filles / garçons, résultat de
+  2026-2027 **enfant/ado** (voies de vitesse filles / garçons, résultat de
   vitesse). S'appuie sur la **spec #1 — Rôles & autorisations**
   (`01-roles-et-autorisations.md`), qui reste la vérité pour « qui peut faire
   quoi ».

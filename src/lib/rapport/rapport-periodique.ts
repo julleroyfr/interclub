@@ -10,6 +10,7 @@ import {
 import { anneeSaison, bornesSaison } from '@/domaine/rencontre'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { lireBornesAge } from '@/lib/rencontres/bornes-age'
+import { compteEmbarque } from '@/lib/supabase/embarque'
 import { verifierLecture } from '@/lib/supabase/lecture'
 import { lireToutesLesPages } from '@/lib/supabase/pagination'
 
@@ -19,35 +20,36 @@ import { lireToutesLesPages } from '@/lib/supabase/pagination'
 // session utilisateur : la garde est le secret du déclencheur (R4, R5), vérifié
 // AVANT toute lecture — exception à l'ADR 0005 (R19).
 
-/** Lit, en une vague, les données de la saison courante (R8–R13). */
+/**
+ * Lit, en une vague, les données de la saison courante (R8–R13). Les comptages
+ * sont faits par la base : effectifs par club et année de naissance (RPC
+ * `effectifs_grimpeurs`), équipes par rencontre (comptage embarqué).
+ */
 async function lireDonnees(saison: number): Promise<DonneesRapport> {
   const admin = createAdminClient()
   const { debut, fin } = bornesSaison(saison)
-  const [clubs, grimpeurs, rencontres, equipes] = await Promise.all([
+  const [clubs, effectifs, rencontres] = await Promise.all([
     admin.from('club').select('id, nom').then((r) => verifierLecture(r, 'des clubs') ?? []),
+    // Une ligne par club et année de naissance : paginée par sûreté.
     lireToutesLesPages(
-      (de, a) => admin.from('grimpeur').select('club_id, annee_naissance').order('id').range(de, a),
-      'des grimpeurs',
+      (de, a) => admin.rpc('effectifs_grimpeurs').order('club_id').order('annee_naissance').range(de, a),
+      'des effectifs',
     ),
     admin
       .from('rencontre')
-      .select('id, date_rencontre, categorie, phase, club_porteur_id')
+      .select('id, date_rencontre, categorie, phase, club_porteur_id, equipe(count)')
       .gte('date_rencontre', debut)
       .lte('date_rencontre', fin)
       .then((r) => verifierLecture(r, 'des rencontres') ?? []),
-    lireToutesLesPages(
-      (de, a) =>
-        admin
-          .from('equipe')
-          .select('rencontre_id, rencontre!inner(date_rencontre)')
-          .gte('rencontre.date_rencontre', debut)
-          .lte('rencontre.date_rencontre', fin)
-          .order('id')
-          .range(de, a),
-      'des équipes',
-    ),
   ])
-  return { clubs, grimpeurs, rencontres: rencontres as DonneesRapport['rencontres'], equipes }
+  return {
+    clubs,
+    effectifs: effectifs as DonneesRapport['effectifs'],
+    rencontres: rencontres.map(({ equipe, ...r }) => ({
+      ...(r as Omit<DonneesRapport['rencontres'][number], 'nb_equipes'>),
+      nb_equipes: compteEmbarque(equipe),
+    })),
+  }
 }
 
 function json(statut: number, corps: unknown): Response {

@@ -7,6 +7,13 @@ import {
   EnTetePage,
   TitreSection,
 } from '@/composants'
+import { filtreCategorieGrimpeurs } from '@/domaine/filtre-grimpeurs'
+import {
+  BornesAgeNonConfigureesError,
+  CATEGORIES,
+  anneeSaison,
+  labelSaison,
+} from '@/domaine/rencontre'
 import { liensAdmin } from '@/lib/admin/navigation'
 import { exigerAdmin } from '@/lib/auth/session'
 import {
@@ -14,6 +21,8 @@ import {
   listerClubsOptions,
   rechercherGrimpeurs,
 } from '@/lib/grimpeurs/grimpeurs'
+import { chargerSurclassementsPage } from '@/lib/grimpeurs/surclassement'
+import { lireBornesAge } from '@/lib/rencontres/bornes-age'
 
 import { FormulaireGrimpeur } from './formulaire-grimpeur'
 import { ListeGrimpeurs } from './liste-grimpeurs'
@@ -22,7 +31,12 @@ export const metadata: Metadata = {
   title: 'Grimpeurs — Interclub',
 }
 
-type Params = { recherche?: string; page?: string; club?: string }
+type Params = {
+  recherche?: string
+  page?: string
+  club?: string
+  categorie?: string
+}
 
 export default async function PageGrimpeurs({
   searchParams,
@@ -39,16 +53,35 @@ export default async function PageGrimpeurs({
   const page = Math.max(1, Number(sp.page) || 1)
   const clubFiltre = sp.club ?? ''
 
+  // Âges non configurés (spec #1 R34bis) : ni filtre catégorie (R26b-4), ni
+  // accord de surclassement (historique visible).
+  const aujourdhui = aujourdhuiISO()
+  const bornesAge = bornesAgeOuNull()
+  const saison = anneeSaison(aujourdhui)
+  // Éligibilité de la saison en cours, surclassés inclus en ado (R26b-1/2).
+  // Catégorie inconnue dans l'URL : ignorée (R26b-4).
+  const filtreCategorie = filtreCategorieGrimpeurs(sp.categorie, saison, bornesAge)
+  const categorieFiltre = filtreCategorie?.categorie ?? ''
+
   const [{ grimpeurs, total }, clubs] = await Promise.all([
-    rechercherGrimpeurs(recherche, page, clubFiltre || undefined),
+    rechercherGrimpeurs(recherche, page, clubFiltre || undefined, filtreCategorie),
     listerClubsOptions(),
   ])
+
+  // Surclassements des grimpeurs de la page (spec #21 R18–R19).
+  const etatsSurclassement = await chargerSurclassementsPage(
+    grimpeurs,
+    aujourdhui,
+    bornesAge,
+  )
+  const filtreActif = Boolean(recherche || clubFiltre || categorieFiltre)
 
   const nbPages = Math.max(1, Math.ceil(total / GRIMPEURS_PAR_PAGE))
   const hrefPage = (p: number) => {
     const params = new URLSearchParams()
     if (recherche) params.set('recherche', recherche)
     if (clubFiltre) params.set('club', clubFiltre)
+    if (categorieFiltre) params.set('categorie', categorieFiltre)
     if (p > 1) params.set('page', String(p))
     const qs = params.toString()
     return qs ? `/admin/grimpeurs?${qs}` : '/admin/grimpeurs'
@@ -95,9 +128,16 @@ export default async function PageGrimpeurs({
         <section className="flex flex-col gap-3">
           <TitreSection>Grimpeurs ({total})</TitreSection>
 
-          {/* Recherche server-side : porte sur TOUT le roster (pas seulement la
-              page affichée). Un envoi GET remet à la page 1 (R26). */}
-          <form method="get" className="flex flex-wrap items-center gap-2">
+          {/* Recherche et filtres server-side : portent sur TOUT le roster (pas
+              seulement la page affichée). Un envoi GET remet à la page 1 (R26,
+              R26b). La clé remonte le formulaire quand les filtres changent :
+              après « Effacer » (navigation client), les champs non contrôlés
+              reprennent leur valeur par défaut. */}
+          <form
+            key={`${recherche}|${clubFiltre}|${categorieFiltre}`}
+            method="get"
+            className="flex flex-wrap items-center gap-2"
+          >
             <input
               type="search"
               name="recherche"
@@ -108,6 +148,7 @@ export default async function PageGrimpeurs({
             />
             <select
               name="club"
+              aria-label="Club"
               defaultValue={clubFiltre}
               className="h-12 rounded-xl border border-bordure bg-black/30 px-3 text-base text-texte-fort [color-scheme:dark] focus:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent/20"
             >
@@ -120,13 +161,30 @@ export default async function PageGrimpeurs({
                 </option>
               ))}
             </select>
+            {bornesAge && (
+              <select
+                name="categorie"
+                aria-label="Catégorie"
+                defaultValue={categorieFiltre}
+                className="h-12 rounded-xl border border-bordure bg-black/30 px-3 text-base text-texte-fort [color-scheme:dark] focus:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent/20"
+              >
+                <option value="" className="bg-fond text-texte">
+                  Toutes les catégories
+                </option>
+                {CATEGORIES.map((c) => (
+                  <option key={c.value} value={c.value} className="bg-fond text-texte">
+                    {c.labelCourt}
+                  </option>
+                ))}
+              </select>
+            )}
             <button
               type="submit"
               className="inline-flex min-h-12 items-center rounded-xl border border-accent/40 bg-accent/15 px-4 text-sm font-semibold text-accent hover:bg-accent/25"
             >
               Rechercher
             </button>
-            {(recherche || clubFiltre) && (
+            {filtreActif && (
               <Link
                 href="/admin/grimpeurs"
                 className="inline-flex min-h-12 items-center rounded-xl border border-bordure px-4 text-sm font-medium text-texte-attenue hover:bg-white/5"
@@ -136,17 +194,31 @@ export default async function PageGrimpeurs({
             )}
           </form>
 
-          {(recherche || clubFiltre) && (
+          {/* Saison de référence du filtre catégorie (R26b-3). */}
+          <p className="text-xs text-texte-doux">
+            {bornesAge
+              ? `Âges de la saison ${labelSaison(saison)}`
+              : 'Filtre par catégorie indisponible : âges des catégories non configurés.'}
+          </p>
+
+          {filtreActif && (
             <p className="text-xs text-texte-doux">
               {total} résultat{total > 1 ? 's' : ''}
               {recherche ? ` pour « ${recherche} »` : ''}
               {clubFiltre
                 ? ` — ${clubs.find((c) => c.id === clubFiltre)?.nom ?? ''}`
                 : ''}
+              {categorieFiltre
+                ? ` — ${CATEGORIES.find((c) => c.value === categorieFiltre)?.labelCourt}`
+                : ''}
             </p>
           )}
 
-          <ListeGrimpeurs grimpeurs={grimpeurs} clubs={clubs} />
+          <ListeGrimpeurs
+            grimpeurs={grimpeurs}
+            clubs={clubs}
+            surclassements={Object.fromEntries(etatsSurclassement)}
+          />
 
           {nbPages > 1 && (
             <nav className="mt-2 flex flex-wrap items-center justify-between gap-3">
@@ -169,6 +241,22 @@ export default async function PageGrimpeurs({
       </div>
     </Coquille>
   )
+}
+
+/** Date du jour (calendrier local) au format ISO `AAAA-MM-JJ`. */
+function aujourdhuiISO(): string {
+  const d = new Date()
+  const p = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
+}
+
+function bornesAgeOuNull() {
+  try {
+    return lireBornesAge()
+  } catch (e) {
+    if (e instanceof BornesAgeNonConfigureesError) return null
+    throw e
+  }
 }
 
 function LienPage({

@@ -56,7 +56,7 @@
     d'où la colonne `grimpeur.sexe` (`'F'`/`'G'`, obligatoire). Le **calcul** des
     points de vitesse et leur intégration au classement relèvent de la spec #7
     (**hors** de cette spec, qui s'arrête à la **saisie du résultat brut**).
-  - **Règlement** « 2025 Interclubs — Reglement v3 » (CT33 FFME), p. 5 (matin) et
+  - **Règlement** « 2027 Interclubs — Reglement v3 » (CT33 FFME), p. 5 (matin) et
     p. 8 (après-midi) : l'épreuve de vitesse est **chronométrée** ; « **non
     présentation** à la voie = **0 pt** » (fonde la forme **non-présentation**) ;
     une **chute** invalide le passage (fonde la forme **chute**) ; les voies de

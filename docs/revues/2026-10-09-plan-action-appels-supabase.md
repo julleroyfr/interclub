@@ -5,10 +5,14 @@ Plan de traitement des constats de
 **réduire le nombre de vagues séquentielles** par écran et par action, et
 **corriger les lectures tronquées** (J1–J5).
 
+Complété le 2026-11-10 par
+[l'analyse des traitements côté base](./2026-11-10-analyse-traitements-base.md)
+(constats B1–B4, R1–R5, L1–L4, E1–E6 ; lots 9 à 12).
+
 Statuts : ✅ fait · 🔄 en cours · ⏳ en attente (à faire) · ❓ décision requise ·
 🚫 bloqué (dépendance non levée) · ⏸ reporté
 
-Dernière mise à jour : 2026-10-10.
+Dernière mise à jour : 2026-11-10.
 
 ## Principes
 
@@ -60,10 +64,19 @@ flowchart TD
 | 2 | P2, P3, J2 | contrôle 8 → 2 ; coche 6 → 3 | `feature/perf-controle` | ✅ |
 | 3 | P5, P6 | engagement 5 → 2 ; actions −1 | `feature/perf-engagement-coach` | ✅ |
 | 4 | P4 | 7 → 2–3 (④/⑤) | `feature/perf-tdb-rencontre` | ✅ |
-| 5 | P7, J3 | ≤ 10 → 2 (RPC) | `feature/perf-cloture` | ⏳ |
-| 6 | P8–P11, P13–P15, J4, J5 | −1 vague par écran ou action | `feature/perf-petits-gains` | ⏳ |
-| 7 | A1–A5 | 3–5 → 2 | `feature/rpc-ecritures-atomiques` | ⏳ |
+| 5 | P7, J3, B2 | ≤ 10 → 2 (RPC) | `feature/perf-cloture` | ✅ |
+| 6 | P8–P11, P13–P15, J4, J5 (L4) | −1 vague par écran ou action | `feature/perf-petits-gains` | ✅ |
+| 7 | A1–A5, P15 (E6) | 3–5 → 2 | `feature/rpc-ecritures-atomiques` | ✅ |
 | 8 | T1 | −1 sur **toutes** les requêtes | — | ⏸ reportée |
+| 9 | B1, B3, B4 (= J5) | correctifs | `feature/correctifs-lectures` | ✅ |
+| 10 | R1, R3, R4, R5 (R2 reporté) | relectures temps réel ÷ ~100 par temps de vitesse | `feature/perf-temps-reel` | ✅ |
+| 11 | E1–E5 | gardes ajoutées en base ; ajouts de structure 3 → 2 | `feature/gardes-en-base` | ✅ |
+| 12 | L1, L2 ; L3 après mesure | classement et saisie 11 → 6 requêtes | `feature/perf-lectures-imbriquees` | ✅ (L3 reporté) |
+
+Ordre recommandé (2026-11-10) : 9 → 10 (R1 d'abord) → 5 → 12 → 11 → 7 → 6.
+
+Décisions du 2026-11-10 : les gardes TypeScript sont **conservées** (on ajoute
+celles qui manquent en base) ; le calcul du classement **reste en TypeScript**.
 
 ## Lot 0 — Mesure de référence — ✅
 
@@ -205,55 +218,229 @@ Fichier : `src/app/admin/rencontres/[id]/page.tsx` et ses loaders.
   vagues mesurées / 17 appels (au lieu de 27). Le chemin critique reste
   compte → rencontre → comptages et grimpeurs éligibles.
 
-## Lot 5 — Clôture (P7, J3) — ⏳
+## Lot 5 — Clôture (P7, J3, B2) — ✅
 
 D-P1 tranchée le 2026-10-09 : **fonction SQL**.
 
-- [ ] ⏳ Migration `…_cloture_np` : RPC `changer_phase_rencontre(id, phase)`
-  (garde admin, transition adjacente R17, garde jour J, NP automatique R18,
-  le tout dans une transaction) ; `revoke` / `grant` explicites,
-  `db:verifier`.
-- [ ] ⏳ Tests SQL (stack locale) : passage ③ → ④ → NP posés ; relance
-  idempotente ; refus non admin.
-- [ ] ⏳ `changerPhaseRencontre` appelle la RPC ; `cloture.ts` est retiré.
-- [ ] ⏳ JOURNAL des migrations, application à la main en recette.
-- [ ] ⏳ Vert : E2E `pilotage-phase`, cahier 17 (NP de clôture).
+- [x] ✅ **Rouge (B2)** : `e2e/cloture-volume.spec.ts` (cahier 17 CT-19).
+  80 grimpeuses (groupe M1) ont saisi M1, M2 et M3 sur une **seconde** voie du
+  niveau, plus M4 et T1–T10 : 1120 résultats de voie. Sur l'ancien code, la
+  clôture posait **80 NP de voie au lieu de 0** : les résultats au-delà de 1000
+  étaient ignorés et le niveau passait pour « non saisi ».
+- [x] ✅ **Rouge** : `scripts/test-cloture.sh` (`npm run test:cloture`), 29 KO
+  sur 40 sans la RPC.
+- [x] ✅ Migration `202611101300_rpc_changer_phase_rencontre` : RPC
+  `changer_phase_rencontre(p_rencontre, p_phase)`, SECURITY DEFINER, dans une
+  transaction : garde admin, verrou de la rencontre (`for update`), transition
+  adjacente R17 (retour ③ → ① hors jour J), garde du jour J (spec #1 R5,
+  `current_date`), mise à jour conditionnée à la phase lue, NP automatique R18
+  en SQL (compositions et résultats lus par la base : plus de troncature,
+  `resultat_bloc` filtré par rencontre). Un NP en échec annule le changement de
+  phase. EXECUTE à `authenticated` seul ; retour arrière dans
+  `supabase/retours-arriere/`.
+- [x] ✅ `changerPhaseRencontre` garde ses contrôles TypeScript (messages clairs)
+  et appelle la RPC : 1 appel d'écriture au lieu de 2 à 8. Les refus de la base
+  (course entre deux admins, jour changé) reprennent les messages de l'écran.
+  `src/lib/rencontres/cloture.ts` est retiré, ainsi que `manquantsCloture`
+  (domaine), devenu inutile : R18 est testée par `test:cloture`.
+- [x] ✅ Vert : `test:cloture` 40/40 (dont deux clôtures simultanées : une seule
+  passe ; rejeu, retour arrière, réapplication), `db:verifier`,
+  `db:verifier-retours`, E2E `cloture-volume`, `pilotage-phase`,
+  `coach-saisie-resultats` (CT-12), `admin-controle`, suite E2E complète et
+  Vitest.
+- [x] ✅ Appliquée à la main en recette le 2026-11-10 (JOURNAL).
+- [ ] ⏳ Cahier 17 CT-19 et CT-12 en recette ; prod avant la mise en prod.
 
-## Lot 6 — Petits gains (P8–P11, P13–P15, J4, J5) — ⏳
+## Lot 6 — Petits gains (P8–P11, P13–P15, J4, J5) — ✅
 
-- [ ] ⏳ P8 `/coach/jetons` : une seule lecture `jeton_qr`
-  `.in('rencontre_id', ids)` (ou embarquée dans la lecture des rencontres).
-- [ ] ⏳ P9 `listerGabarit` : une lecture imbriquée de `gabarit_epreuve` avec ses
-  voies, blocs (avec paliers), voies de vitesse et échelons, pour les deux
-  catégories en un appel.
-- [ ] ⏳ P10 `/admin/jetons` : lancer `listerRencontres` et les sections de la
-  rencontre en parallèle (l'id vient de l'URL).
-- [ ] ⏳ P11 `getSaisieAdminRencontre` : nom du club embarqué dans la lecture des
-  équipes de `chargerSaisie` (`club:club_id(nom)`).
-- [ ] ⏳ P13 structure : la phase et le prochain ordre sont lus en parallèle.
-- [ ] ⏳ P14 saisie admin bloc : le contexte du bloc et le palier sont lus en
-  parallèle.
-- [ ] ⏳ P15 `regenererJeton` : réutiliser la ligne lue par `jetonGerable`.
-- [ ] ⏳ J4 compteurs : `select('id', { count: 'exact', head: true })` pour les
-  totaux ; pour le nombre par club, une RPC d'agrégat ou un comptage embarqué
-  (`grimpeur(count)`).
-- [ ] ⏳ J5 prêts : vérifier en E2E si l'écran se rafraîchit après la création
-  ou la révocation d'un prêt. Corriger le chemin (`/admin/rencontres/[id]`).
+Branche `feature/perf-petits-gains` (2026-11-10). Aucune migration, aucune spec
+modifiée, aucun changement visible : le filet est la suite E2E complète
+(sortie inchangée).
+
+- [x] ✅ P8 `/coach/jetons` : `listerJetonsCoachDuClub` lit en une requête les
+  jetons de coach temporaire actifs du club, en parallèle des rencontres
+  (1 + N requêtes en 2 vagues → 2 requêtes en 1 vague).
+- [x] ✅ P9 `listerGabarits` : une lecture imbriquée de `gabarit_epreuve` avec ses
+  voies, blocs (avec paliers), voies de vitesse et échelons, toutes catégories
+  en un appel (3 × 3 vagues, 15 requêtes → 1 requête). Tris par `ordre` en TS.
+- [x] ✅ P10 `/admin/jetons` : `listerRencontres` et les sections de la
+  rencontre en parallèle (l'id vient de l'URL) ; clubs et équipes adultes lus
+  tous deux, la catégorie n'étant pas encore connue (2 vagues → 1).
+- [x] ✅ P11 `getSaisieAdminRencontre` : nom du club embarqué dans la lecture des
+  équipes de `chargerSaisie` (`club:club_id(nom)`, policy `club_select`) ; plus
+  de lecture `service_role` à part (2 vagues → 1).
+- [x] ✅ P13 structure : sans objet, le prochain ordre est calculé en base
+  (lot 11, `attribuer_rang`).
+- [x] ✅ P14 saisie admin bloc : le contexte du bloc et les paliers sont lus en
+  parallèle (3 vagues → 2).
+- [x] ✅ P15 `regenererJeton` : traité au lot 7 (RPC `regenerer_jeton`, sans
+  relecture).
+- [x] ✅ J5 : traité au lot 9 (B4).
+- [x] ✅ J4 compteurs (2026-11-10) : comptages faits par la base, sans
+  migration. Totaux du tableau de bord admin en `count: 'exact', head: true`
+  (et seules les 5 dernières rencontres lues) ; nombre de grimpeurs et de
+  rencontres par club, d'équipes et d'épreuves par rencontre, d'équipes et de
+  grimpeurs du club sur l'accueil coach en comptage embarqué
+  (`grimpeur(count)`, `equipe(count)`, `equipe(composition(count))`, helper
+  `src/lib/supabase/embarque.ts`). Liste des clubs, liste des rencontres et
+  accueil coach passent à une seule requête. **Rouge** :
+  `e2e/compteurs-volume.spec.ts` (1100 grimpeurs, 1100 équipes) ; sur l'ancien
+  code, 980 grimpeurs et 996 équipes affichés.
+- [x] ✅ J6 mapping des comptes (2026-11-10) : `listUsers` ne lisait qu'une
+  page de 1000 utilisateurs, comptes anonymes des sessions QR compris (jamais
+  purgés) ; au-delà, des comptes permanents disparaissaient de l'écran. RPC
+  `lister_comptes_permanents` (migration `202611101000`) : anonymes exclus,
+  mapping et club joints, en une requête. **Rouge** : `compteurs-volume` (1100
+  anonymes) ; sur l'ancien code, `coach@test.local` absent de l'écran.
+- [x] ✅ Rapport périodique (2026-11-10) : effectifs par club et année de
+  naissance comptés en base (RPC `effectifs_grimpeurs`, migration
+  `202611101100`) au lieu de lire tous les grimpeurs ; équipes par rencontre en
+  comptage embarqué au lieu de lire toutes les équipes de la saison. Tests SQL :
+  `npm run test:rpc-comptages`.
+- [x] ✅ J5 prêts : chemin corrigé au lot 9 (B4).
 - [ ] ⏳ Vert : E2E concernés (`admin-prets`, `navigation-routing`, jetons).
 
-## Lot 7 — Écritures atomiques (A1–A5) — ⏳
+## Lot 7 — Écritures atomiques (A1–A5) — ✅
 
-D-P2 tranchée le 2026-10-09 : **une fonction SQL par opération**.
+D-P2 tranchée le 2026-10-09 : **une fonction SQL par opération**. Branche
+`feature/rpc-ecritures-atomiques` (2026-11-10), migration
+`202611101600_rpc_ecritures_atomiques`. Aucune spec modifiée.
 
-- [ ] ⏳ Migration : RPC `mettre_a_jour_bareme_vitesse` (rencontre et
-  gabarit), `regenerer_jeton`, `regenerer_invitation_coach`,
-  `generer_invitation_admin`. Gardes de rôle dans la fonction, `grant` au strict
-  nécessaire, `db:verifier`.
-- [ ] ⏳ Tests SQL : succès, refus, atomicité (un échec à mi-parcours ne laisse
-  rien).
-- [ ] ⏳ Les actions appellent les RPC.
-- [ ] ⏳ E2E jetons, invitations (`inscription-coach`, `invitation-admin`).
-- [ ] ⏳ JOURNAL, application à la main en recette.
+- [x] ✅ Migration : RPC `mettre_a_jour_bareme_vitesse` (rencontre) et
+  `mettre_a_jour_bareme_vitesse_gabarit`, `regenerer_jeton`,
+  `regenerer_invitation_coach`, `generer_invitation_admin`. **SECURITY
+  INVOKER** : la RLS reste la frontière (admin ; coach pour le jeton de coach
+  temporaire de son club), la transaction de l'appel donne l'atomicité. Garde
+  `est_admin()` en tête des opérations admin ; R55e revérifiée en base ; phase
+  du barème de rencontre gardée par le trigger du lot 11. EXECUTE à
+  `authenticated` seul, `db:verifier` vert.
+- [x] ✅ Rouge : `scripts/test-ecritures-atomiques.sh`
+  (`npm run test:ecritures-atomiques`), 26 KO sur 39 sans la migration ; vert
+  39/39 : succès, refus, atomicité (création forcée en échec : l'ancien jeton
+  ou l'ancienne invitation reste actif, le barème reste intact), droits, rejeu
+  et retour arrière.
+- [x] ✅ Les actions appellent les RPC : barème 3 écritures → 1, régénérations
+  2–3 → 1.
+- [x] ✅ Vert : tests SQL, Vitest, suite E2E complète 236/236 (jetons, invitations,
+  barèmes compris).
+- [x] ✅ JOURNAL ; cahier 28 CT-14 ; appliquée en recette le 2026-11-10.
+- [x] ✅ E6 : `revoquerInvitation` sans lecture préalable (`update … .select()`,
+  aucune ligne → refus) ; `regenererJeton` ne relit plus le jeton (P15) ;
+  `regenererInvitation` sans lecture (la RPC renvoie `invitation_introuvable`).
+
+## Lot 9 — Correctifs (B1, B3, B4) — ✅
+
+Branche `feature/correctifs-lectures` (2026-11-10). Aucune migration, aucune
+spec modifiée.
+
+- [x] ✅ B1 : `.maybeSingle()` pour le dernier ordre du gabarit (voie, bloc,
+  palier, voie de vitesse). **Rouge** : `e2e/gabarit-premier-element.spec.ts`
+  (gabarit adulte vidé puis restauré) ; sur l'ancien code, écran « Une erreur
+  est survenue » dès le premier ajout. Cahier 11 CT-16.
+- [x] ✅ B3 : `verifierLecture` sur les lectures des sept actions.
+  **Rouge** : `e2e/lectures-verifiees.spec.ts`, droit `select` retiré juste
+  avant l'action. Sur l'ancien code, l'échec de lecture passait pour une
+  absence : prêt créé, grimpeur ajouté à une équipe (enfant et adulte) sans
+  contrôle des membres, et « introuvable » affiché pour la modification, le
+  surclassement, la révocation et l'import CSV. Après correction : écran
+  d'erreur, rien n'est écrit. Non déroulable en recette (panne simulée).
+- [x] ✅ B4 (= J5) : prêts revalidés sur `/admin/rencontres/[id]`. Pas d'effet
+  visible avant correction (Next re-rend la page courante après toute
+  revalidation) ; non-régression `e2e/admin-prets.spec.ts`.
+
+## Lot 10 — Temps réel (R1–R5) — ✅ (R2 reporté)
+
+Branche `feature/perf-temps-reel` (2026-11-10). Spec #11 révisée le 2026-11-10
+(R4, R6bis, R8bis), validée avant les tests.
+
+- [x] ✅ R1 : migration `202611101200_points_vitesse_sans_reecriture`, upsert
+  `where (rang, points) is distinct from …`. **Rouge** :
+  `npm run test:points-vitesse-reecriture` ; sur l'ancien code, un temps le plus
+  lent réécrivait 11 lignes et un temps sans changement de rang 12 ; après : 0.
+  Points identiques à un recalcul complet. Cahier 22 CT-22.
+- [x] ✅ R3 : `grimpeursAffiches` (grimpeurs du classement individuel) sur les
+  trois écrans de classement (spec #11 R8bis étendu). **Rouge** :
+  `e2e/temps-reel-filtres.spec.ts` CT-20 (une relecture pour une saisie d'une
+  autre rencontre). Cahier 22 CT-20.
+- [x] ✅ R4 : `ignorerMesCoches` sur l'écran de contrôle (spec #11 R6bis
+  étendu, `controle_par`). **Rouge** : CT-21 (une relecture sur l'écho de sa
+  propre coche). Cahier 22 CT-21.
+- [x] ✅ R5 : `lireEtatRencontre` (export) en une requête imbriquée.
+  Classement admin : 15 → 13 appels, toujours 2 vagues (traceur). Non-régression :
+  E2E `export-pdf`, `categorie-adulte`, `classement`.
+- [ ] ⏸ R2 (décision du 2026-11-10 : reporté) : la piste `replica identity full`
+  est impossible (sur une table sous RLS, Realtime ne livre que la clé primaire
+  de l'ancienne ligne) ; seule une table de coche séparée éviterait de relire
+  les classements à chaque coche. À reconsidérer si le contrôle en ④ pèse.
+
+## Lot 11 — Gardes en base (E1–E5) — ✅
+
+Branche `feature/gardes-en-base` (2026-11-10). Les contrôles TypeScript restent
+en place (décision du 2026-11-10). Toutes ces règles existent déjà dans les
+specs : aucune spec ne change. Une migration, `202611101500_gardes_en_base`.
+Les gardes ne contraignent pas le chemin sans JWT (seed, psql), comme
+`proteger_audit_resultat`.
+
+- [x] ✅ E1 : trigger `*_verifier_controle` sur `resultat_voie` / `resultat_bloc` :
+  `controle_le` / `controle_par` ne changent qu'en ④ (spec #16 R13). Passe après
+  `*_proteger_audit` : la coche d'un coach y est déjà neutralisée.
+- [x] ✅ E2 : branche `est_admin()` des 6 policies d'écriture des résultats
+  bornée à ③/④ (spec #9 R5), via `phase_de_voie` / `phase_de_bloc`. Policy
+  plutôt que RPC : un appel forgé vise la table, pas la RPC. Les cascades et les
+  fonctions SECURITY DEFINER (NP de clôture) échappent à la RLS.
+- [x] ✅ E3 : trigger `*_structure_modifiable` (épreuve, voie, bloc, palier,
+  voie de vitesse, barème) : ① ou ② (spec #3 R51), repère seul jusqu'en ③
+  (R49d). Phase lue par le vrai parent (ancien et nouveau) : couvre la
+  cohérence épreuve ↔ rencontre. Parent introuvable = suppression en cascade
+  (vérifié : la ligne parente n'est plus visible), laissée passer. Trigger
+  `*_rang` (`attribuer_rang`) : `ordre` / `numero` = max + 1 sous verrou
+  consultatif du parent, structure et gabarit ; les lectures préalables sont
+  retirées de `structure-actions.ts` et `gabarit/actions.ts` (ajouts 3 → 2).
+  **Le code dépend de la migration.**
+- [x] ✅ E4 : `composition_effectif` (enfant/ado ≤ 8 ; adulte inchangé à 4) et
+  `pret_verifier` (« autre club », « déjà engagé »).
+- [x] ✅ E5 : `grimpeur_licence_generee`, BEFORE UPDATE OF licence. L'insertion
+  n'est pas gardée : les RPC d'import et d'ajout (SECURITY INVOKER) posent les
+  licences générées sous l'identité de l'admin.
+- [x] ✅ Rouge : `scripts/test-gardes-base.sh` (`npm run test:gardes-base`),
+  39 KO sur 60 sans la migration ; vert 60/60 (dont course de deux ajouts,
+  rejeu et retour arrière).
+- [x] ✅ Vert : tests SQL, Vitest 713/713, suite E2E complète (chromium, en
+  série, base au seed). Deux mises en place de test cochaient en ③, ce que la
+  spec interdit : `test-heure-saisie.sh` et CT-08 de
+  `securite-appels-directs.spec.ts` passent en ④ pour la coche, assertions
+  inchangées. Constat hors lot : `test-t6.sh` échoue quand il suit
+  `test-t5a`–`t5c` (aussi sans la migration), passe seul après reset.
+- [x] ✅ Cahier 28 CT-13 (recette).
+
+## Lot 12 — Lectures imbriquées (L1–L3) — ✅ (L3 reporté)
+
+Branche `feature/perf-lectures-imbriquees` (2026-11-10). Aucune migration,
+aucune spec modifiée, aucun changement visible : pas de test rouge possible, le
+filet est la suite E2E (sortie inchangée) et la mesure au traceur.
+
+- [x] ✅ L1 : rencontre, épreuves (état), voies, blocs avec paliers et équipes
+  (avec le nom du club) en **une** lecture imbriquée de `rencontre`, dans
+  `getClassementRencontre` et `chargerSaisie` : 11 → 6 requêtes. Blocs et
+  paliers des seules épreuves actives filtrés en TS, tris par `ordre` en TS.
+  Constat : le plafond de 1000 lignes de l'API vaut **aussi pour chaque
+  relation embarquée** (vérifié : 1100 équipes embarquées → 1000). Sans effet
+  ici : ces six lectures n'étaient déjà pas paginées et ces tables comptent
+  quelques dizaines de lignes par rencontre.
+- [x] ✅ L2 : `chargerSaisie` prend un périmètre (club, équipe ou toute la
+  rencontre). Pour un club ou une équipe, résultats de voie et de bloc, temps et
+  points de vitesse sont bornés aux grimpeurs composés par
+  `grimpeur!inner(composition!inner(…))` ; les équipes embarquées et les
+  compositions aussi. La RLS du capitaine (`composition_select_capitaine`,
+  `grimpeur_select_capitaine`) ne lui ouvre que son équipe : la jointure
+  `!inner` ne retire rien de ce qu'il voit. L'admin lit toujours toute la
+  rencontre.
+- [x] ✅ Vert : Vitest, suite E2E complète (chromium, en série, base au seed),
+  dont `classement`, `classement-volume`, `coach-saisie-resultats`,
+  `admin-saisie-resultats`, `categorie-adulte` (capitaine), `export-pdf`.
+- [ ] ⏸ L3 : `rencontre_id` dénormalisé sur les résultats. Après L1/L2, gain
+  limité aux jointures et au filtre du temps réel (les vagues ne bougent pas) ;
+  à reconsidérer avec R2 si le temps réel pèse en ④.
 
 ## Lot 8 — Rôle dans le JWT (T1) — ⏸ reporté
 
@@ -295,6 +482,8 @@ lot 0 ; l'estimation tirée de la lecture du code figure entre parenthèses.
 | `/admin/rencontres/[id]/resultats` | 3 / 12 (3 / ~12) | | 6 |
 | `/admin/jetons?rencontre=` | 3 / 5 (3 / 5) | | 6 |
 | `/admin` · `/coach` | 2 / 5 · 2 / 5 | | — |
+| Classement admin · coach (③) | 2 / 13 · 2 / 14 (après lot 10) | 2 / 8 · 2 / 9 | 12 |
+| Saisie coach · admin (③) | 2 / 13 · 3 / 13 | 2 / 8 · 3 / 8 | 12 |
 
 Points relevés par la mesure :
 

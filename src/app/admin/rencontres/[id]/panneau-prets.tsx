@@ -162,7 +162,7 @@ function FormulairePret({
                 : 'Aucun grimpeur pour ce filtre'
             }
             defaultValue={grimpeursFiltres.length === 1 ? grimpeursFiltres[0].id : undefined}
-            options={grimpeursFiltres.map((g) => ({ value: g.id, label: `${g.prenom} ${g.nom}` }))}
+            options={grimpeursFiltres.map((g) => ({ value: g.id, label: `${g.prenom} ${g.nom}${g.surclasse ? ' · surclassé' : ''}` }))}
           />
         </>
       )}

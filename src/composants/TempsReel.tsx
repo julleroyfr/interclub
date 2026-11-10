@@ -41,6 +41,7 @@ export function TempsReel({
   tables,
   actif = true,
   ignorerMesEcritures = false,
+  ignorerMesCoches = false,
   grimpeursAffiches,
   infobulle = 'Les résultats se mettent à jour automatiquement',
 }: {
@@ -53,8 +54,14 @@ export function TempsReel({
    */
   ignorerMesEcritures?: boolean
   /**
-   * Écrans de SAISIE uniquement (R8bis) : grimpeurs affichés ; une écriture
-   * concernant un autre grimpeur (autre club, autre rencontre) est ignorée.
+   * Écran de CONTRÔLE (R6bis, rév. 2026-11-10) : ignore l'écho de ses propres
+   * coches (`controle_par`), déjà relues par la Server Action.
+   */
+  ignorerMesCoches?: boolean
+  /**
+   * Écrans de SAISIE et de CLASSEMENT (R8bis, rév. 2026-11-10) : grimpeurs
+   * affichés ; une écriture concernant un autre grimpeur (autre club, autre
+   * rencontre) est ignorée.
    */
   grimpeursAffiches?: readonly string[]
   /** Texte d'aide de l'indicateur, selon ce que l'écran affiche. */
@@ -95,6 +102,7 @@ export function TempsReel({
       if (
         doitRelire(evenement, {
           ignorerMesEcritures,
+          ignorerMesCoches,
           utilisateurId,
           grimpeursAffiches: affiches.current,
         })
@@ -153,7 +161,7 @@ export function TempsReel({
       window.removeEventListener('online', surEnLigne)
       void supabase.removeChannel(canal) // désabonnement au démontage (R7)
     }
-  }, [actif, cleTables, ignorerMesEcritures, router])
+  }, [actif, cleTables, ignorerMesEcritures, ignorerMesCoches, router])
 
   if (!actif) return null
 

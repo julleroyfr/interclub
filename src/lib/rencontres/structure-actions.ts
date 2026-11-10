@@ -34,7 +34,7 @@ import {
 } from '@/domaine/structure'
 import { BaremeVitesseInvalideError, type EchelonBareme } from '@/domaine/vitesse'
 import { getUtilisateurCourant } from '@/lib/auth/session'
-import { lireEchelonsSoumis } from '@/lib/bareme-vitesse'
+import { echelonsSql, lireEchelonsSoumis } from '@/lib/bareme-vitesse'
 import { verifierLecture } from '@/lib/supabase/lecture'
 import { createClient } from '@/lib/supabase/server'
 
@@ -82,26 +82,6 @@ async function refuserSiStructureVerrouillee(
 ): Promise<EtatStructure | null> {
   const rencontre = await lireRencontreEditable(supabase, rencontreId)
   return 'erreur' in rencontre ? rencontre : null
-}
-
-/** Prochain `ordre` pour une colonne enfant d'un parent donné. */
-async function prochainOrdre(
-  supabase: Client,
-  table: string,
-  colonneParent: string,
-  parentId: string,
-): Promise<number> {
-  const data = verifierLecture(
-    await supabase
-      .from(table)
-      .select('ordre')
-      .eq(colonneParent, parentId)
-      .order('ordre', { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    `du dernier ordre (${table})`,
-  )
-  return ((data?.ordre as number | null) ?? 0) + 1
 }
 
 /**
@@ -191,8 +171,7 @@ export async function ajouterVoieDifficulteRencontre(
   const refusPhase = await refuserSiStructureVerrouillee(supabase, rencontreId)
   if (refusPhase) return refusPhase
 
-  const ordre = await prochainOrdre(supabase, 'voie_difficulte', 'epreuve_id', epreuveId)
-
+  // `ordre` absent : la base prend le rang suivant (trigger `attribuer_rang`).
   const { error } = await supabase.from('voie_difficulte').insert({
     epreuve_id: epreuveId,
     niveau,
@@ -203,7 +182,6 @@ export async function ajouterVoieDifficulteRencontre(
     points_prise_valorisee: pointsPriseValorisee,
     points_zone1: pointsZone1,
     points_zone2: pointsZone2,
-    ordre,
   })
   if (error) {
     if (error.code === '23505') return { erreur: messageRepereEnDoublon(niveau, repere) }
@@ -302,11 +280,10 @@ export async function ajouterBlocRencontre(
   const refusPhase = await refuserSiStructureVerrouillee(supabase, rencontreId)
   if (refusPhase) return refusPhase
 
-  const ordre = await prochainOrdre(supabase, 'bloc', 'epreuve_id', epreuveId)
-
+  // `ordre` absent : la base prend le rang suivant (trigger `attribuer_rang`).
   const { error } = await supabase
     .from('bloc')
-    .insert({ epreuve_id: epreuveId, code, ordre })
+    .insert({ epreuve_id: epreuveId, code })
   if (error) {
     if (error.code === '23505') return { erreur: `Le bloc « ${code} » existe déjà.` }
     return { erreur: "L'ajout a échoué. Réessayez." }
@@ -333,21 +310,10 @@ export async function ajouterVoieVitesseRencontre(
   const refusPhase = await refuserSiStructureVerrouillee(supabase, rencontreId)
   if (refusPhase) return refusPhase
 
-  const derniere = verifierLecture(
-    await supabase
-      .from('voie_vitesse')
-      .select('numero')
-      .eq('rencontre_id', rencontreId)
-      .order('numero', { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    'des voies de vitesse',
-  )
-  const numero = ((derniere?.numero as number | null) ?? 0) + 1
-
+  // `numero` absent : la base prend le numéro suivant (trigger `attribuer_rang`).
   const { error } = await supabase
     .from('voie_vitesse')
-    .insert({ rencontre_id: rencontreId, numero, libelle })
+    .insert({ rencontre_id: rencontreId, libelle })
   if (error) return { erreur: "L'ajout a échoué. Réessayez." }
 
   revalidatePath(`/admin/rencontres/${rencontreId}`)
@@ -440,34 +406,16 @@ export async function mettreAJourBaremeVitesse(
   const refusSaisies = refusBaremeVitesse(saisies.count ?? 0)
   if (refusSaisies) return { erreur: refusSaisies }
 
-  const { error: errEp } = await supabase
-    .from('epreuve')
-    .update({
-      points_chute: pointsChute,
-      points_non_presentation: pointsNonPresentation,
-    })
-    .eq('id', epreuveId)
-  if (errEp) return { erreur: 'La mise à jour du barème a échoué. Réessayez.' }
-
-  // Remplacement du jeu d'échelons (R47) : suppression puis insertion du set validé.
-  // Aucune saisie de vitesse (R55e) : pas de `points_vitesse` matérialisé à
-  // préserver, la fenêtre delete→insert est sûre.
-  const { error: errDel } = await supabase
-    .from('bareme_vitesse_echelon')
-    .delete()
-    .eq('epreuve_id', epreuveId)
-  if (errDel) return { erreur: 'La mise à jour du barème a échoué. Réessayez.' }
-
-  const lignes = echelons.map((e, i) => ({
-    epreuve_id: epreuveId,
-    rang_min: e.rangMin,
-    rang_max: e.rangMax,
-    points: e.points,
-    decrement: e.decrement,
-    ordre: i + 1,
-  }))
-  const { error: errIns } = await supabase.from('bareme_vitesse_echelon').insert(lignes)
-  if (errIns) return { erreur: 'La mise à jour du barème a échoué. Réessayez.' }
+  // Points fixes et remplacement du jeu d'échelons (R47) en une transaction
+  // (lot 7, A1) : un échec ne laisse jamais l'épreuve sans échelons. La base
+  // revérifie le rôle, la phase (R51) et l'absence de saisie (R55e).
+  const { error } = await supabase.rpc('mettre_a_jour_bareme_vitesse', {
+    p_epreuve: epreuveId,
+    p_points_chute: pointsChute,
+    p_points_non_presentation: pointsNonPresentation,
+    p_echelons: echelonsSql(echelons),
+  })
+  if (error) return { erreur: 'La mise à jour du barème a échoué. Réessayez.' }
 
   revalidatePath(`/admin/rencontres/${rencontreId}`)
   return { succes: 'Barème de vitesse mis à jour.' }
@@ -810,10 +758,10 @@ export async function ajouterPalierBlocRencontre(
   if ('erreur' in rencontre) return rencontre
   if (!bloc) return { erreur: 'Bloc introuvable.' }
 
-  const ordre = await prochainOrdre(supabase, 'bloc_palier', 'bloc_id', blocId)
+  // `ordre` absent : la base prend le rang suivant (trigger `attribuer_rang`).
   const { error } = await supabase
     .from('bloc_palier')
-    .insert({ bloc_id: blocId, libelle: palier.libelle, points: palier.points, ordre })
+    .insert({ bloc_id: blocId, libelle: palier.libelle, points: palier.points })
   if (error) return { erreur: "L'ajout a échoué. Réessayez." }
 
   revalidatePath(`/admin/rencontres/${rencontreId}`)

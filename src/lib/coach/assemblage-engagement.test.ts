@@ -25,6 +25,7 @@ function donnees(partiel: Partial<DonneesEngagementClub> = {}): DonneesEngagemen
     grimpeursCompo: new Map(),
     rosterClub: [],
     pretes: [],
+    surclassements: [],
     ...partiel,
   }
 }
@@ -100,7 +101,15 @@ describe('spec #5 — Roster disponible (R12/R13/R14)', () => {
       CLUB_A,
     )
     expect(e.roster).toEqual([
-      { id: 'g1', nom: 'Local', prenom: 'L', dejaEngage: false, prete: false, clubOrigineNom: null },
+      {
+        id: 'g1',
+        nom: 'Local',
+        prenom: 'L',
+        dejaEngage: false,
+        prete: false,
+        clubOrigineNom: null,
+        surclasse: false,
+      },
       {
         id: 'g9',
         nom: 'Prêté',
@@ -108,6 +117,7 @@ describe('spec #5 — Roster disponible (R12/R13/R14)', () => {
         dejaEngage: false,
         prete: true,
         clubOrigineNom: 'Vertical Mérignac',
+        surclasse: false,
       },
     ])
   })
@@ -139,5 +149,62 @@ describe('spec #5 — Roster disponible (R12/R13/R14)', () => {
       CLUB_A,
     )
     expect(e.equipes[0]!.membres[0]).toMatchObject({ prete: true, clubOrigineNom: 'Vertical Mérignac' })
+  })
+})
+
+describe('spec #21 — Surclassement dans l’engagement (R7, R20, R21)', () => {
+  const enfants = [
+    { id: 'g1', nom: 'Surclassé', prenom: 'S', clubId: CLUB_A, anneeNaissance: 2015 },
+    { id: 'g2', nom: 'Enfant', prenom: 'E', clubId: CLUB_A, anneeNaissance: 2015 },
+  ]
+
+  it('propose en ado un enfant surclassé pour la saison, avec badge (R7, R20)', () => {
+    const e = assemblerEngagementClub(
+      donnees({ rosterClub: enfants, surclassements: [{ grimpeurId: 'g1', saison: 2026 }] }),
+      CLUB_A,
+    )
+    expect(e.roster.map((g) => [g.id, g.surclasse])).toEqual([['g1', true]])
+  })
+
+  it('un surclassement d’une autre saison est sans effet (spec #21 R5)', () => {
+    const e = assemblerEngagementClub(
+      donnees({ rosterClub: enfants, surclassements: [{ grimpeurId: 'g1', saison: 2025 }] }),
+      CLUB_A,
+    )
+    expect(e.roster).toEqual([])
+  })
+
+  it('un prêté surclassé est proposé avec badge (R9, R20)', () => {
+    const e = assemblerEngagementClub(
+      donnees({
+        pretes: [{ id: 'g9', nom: 'Prêté', prenom: 'P', clubId: CLUB_B, anneeNaissance: 2015 }],
+        surclassements: [{ grimpeurId: 'g9', saison: 2026 }],
+      }),
+      CLUB_A,
+    )
+    expect(e.roster.map((g) => [g.id, g.prete, g.surclasse])).toEqual([['g9', true, true]])
+  })
+
+  it('badge sur le membre surclassé d’une équipe ado ; aucun badge une fois révoqué (R20, R21)', () => {
+    const avec = (surclassements: DonneesEngagementClub['surclassements']) =>
+      assemblerEngagementClub(
+        donnees({
+          equipes: [{ id: 'e1', nom: 'E1', composition: [{ grimpeurId: 'g1', groupeDepart: null }] }],
+          grimpeursCompo: new Map([['g1', { id: 'g1', nom: 'Surclassé', prenom: 'S', clubId: CLUB_A }]]),
+          surclassements,
+        }),
+        CLUB_A,
+      ).equipes[0]!.membres[0]!.surclasse
+    expect(avec([{ grimpeurId: 'g1', saison: 2026 }])).toBe(true)
+    expect(avec([])).toBe(false)
+  })
+
+  it('pas de badge en rencontre enfant (R20)', () => {
+    const d = donnees({ rosterClub: enfants, surclassements: [{ grimpeurId: 'g1', saison: 2026 }] })
+    d.rencontre.categorie = 'enfant'
+    expect(assemblerEngagementClub(d, CLUB_A).roster.map((g) => [g.id, g.surclasse])).toEqual([
+      ['g1', false],
+      ['g2', false],
+    ])
   })
 })

@@ -9,7 +9,7 @@ import {
   type DonneesRapport,
 } from './rapport'
 
-const VIDE: DonneesRapport = { clubs: [], grimpeurs: [], rencontres: [], equipes: [] }
+const VIDE: DonneesRapport = { clubs: [], effectifs: [], rencontres: [] }
 
 describe('verifierSecret — garde du déclencheur', () => {
   it('accepte l’en-tête Bearer portant le secret configuré (R4)', () => {
@@ -72,22 +72,23 @@ describe('construireRapport', () => {
       { id: 'c-a', nom: 'ASM Grimpe' },
       { id: 'c-e', nom: 'Écureuils' },
     ],
-    grimpeurs: [
-      { club_id: 'c-a', annee_naissance: 2015 }, // enfant (11)
-      { club_id: 'c-a', annee_naissance: 2014 }, // pivot (12, bascule 12)
-      { club_id: 'c-a', annee_naissance: 2010 }, // ado (16)
-      { club_id: 'c-z', annee_naissance: 2013 }, // ado (13)
-      { club_id: 'c-z', annee_naissance: 2000 }, // adulte (spec #20 R33)
+    // Effectifs agrégés par la base : grimpeurs par club et année de naissance.
+    effectifs: [
+      { club_id: 'c-a', annee_naissance: 2015, nombre: 2 }, // enfant (11)
+      { club_id: 'c-a', annee_naissance: 2014, nombre: 1 }, // pivot (12, bascule 12)
+      { club_id: 'c-a', annee_naissance: 2010, nombre: 1 }, // ado (16)
+      { club_id: 'c-z', annee_naissance: 2013, nombre: 3 }, // ado (13)
+      { club_id: 'c-z', annee_naissance: 2012, nombre: 1 }, // ado (14) : même tranche, autre année
+      { club_id: 'c-z', annee_naissance: 2000, nombre: 1 }, // adulte (spec #20 R33)
     ],
     rencontres: [
-      { id: 'r-avant', date_rencontre: '2026-08-31', categorie: 'enfant', phase: 'resultats_publics', club_porteur_id: 'c-a' },
-      { id: 'r-ado', date_rencontre: '2026-11-07', categorie: 'ado', phase: 'pre_competition', club_porteur_id: 'c-z' },
-      { id: 'r-enf', date_rencontre: '2026-11-07', categorie: 'enfant', phase: 'pre_competition', club_porteur_id: 'c-z' },
-      { id: 'r-debut', date_rencontre: '2026-09-01', categorie: 'enfant', phase: 'cloture', club_porteur_id: 'c-a' },
-      { id: 'r-fin', date_rencontre: '2027-08-31', categorie: 'ado', phase: 'pre_competition', club_porteur_id: 'c-e' },
-      { id: 'r-apres', date_rencontre: '2027-09-01', categorie: 'ado', phase: 'pre_competition', club_porteur_id: 'c-e' },
+      { id: 'r-avant', date_rencontre: '2026-08-31', categorie: 'enfant', phase: 'resultats_publics', club_porteur_id: 'c-a', nb_equipes: 1 },
+      { id: 'r-ado', date_rencontre: '2026-11-07', categorie: 'ado', phase: 'pre_competition', club_porteur_id: 'c-z', nb_equipes: 1 },
+      { id: 'r-enf', date_rencontre: '2026-11-07', categorie: 'enfant', phase: 'pre_competition', club_porteur_id: 'c-z', nb_equipes: 2 },
+      { id: 'r-debut', date_rencontre: '2026-09-01', categorie: 'enfant', phase: 'cloture', club_porteur_id: 'c-a', nb_equipes: 0 },
+      { id: 'r-fin', date_rencontre: '2027-08-31', categorie: 'ado', phase: 'pre_competition', club_porteur_id: 'c-e', nb_equipes: 0 },
+      { id: 'r-apres', date_rencontre: '2027-09-01', categorie: 'ado', phase: 'pre_competition', club_porteur_id: 'c-e', nb_equipes: 0 },
     ],
-    equipes: [{ rencontre_id: 'r-enf' }, { rencontre_id: 'r-enf' }, { rencontre_id: 'r-ado' }, { rencontre_id: 'r-avant' }],
   }
   const rapport = construireRapport(donnees, '2026-10-16', BORNES)
 
@@ -103,14 +104,14 @@ describe('construireRapport', () => {
 
   it('détaille chaque club par tranche, trié par nom sans tenir compte des accents ; club vide à 0 (R9)', () => {
     expect(rapport.clubs).toEqual([
-      { nom: 'ASM Grimpe', enfant: 1, pivot: 1, ado: 1, adulte: 0, total: 3 },
+      { nom: 'ASM Grimpe', enfant: 2, pivot: 1, ado: 1, adulte: 0, total: 4 },
       { nom: 'Écureuils', enfant: 0, pivot: 0, ado: 0, adulte: 0, total: 0 },
-      { nom: 'Zénith Escalade', enfant: 0, pivot: 0, ado: 1, adulte: 1, total: 2 },
+      { nom: 'Zénith Escalade', enfant: 0, pivot: 0, ado: 4, adulte: 1, total: 5 },
     ])
   })
 
   it('donne les totaux tous clubs, total général = somme des clubs (R10)', () => {
-    expect(rapport.totaux).toEqual({ enfant: 1, pivot: 1, ado: 2, adulte: 1, total: 5 })
+    expect(rapport.totaux).toEqual({ enfant: 2, pivot: 1, ado: 5, adulte: 1, total: 9 })
     expect(rapport.clubs.reduce((s, c) => s + c.total, 0)).toBe(rapport.totaux.total)
   })
 
@@ -145,9 +146,9 @@ describe('construireRapport', () => {
       {
         ...VIDE,
         rencontres: [
-          { id: 'a', date_rencontre: '2026-11-07', categorie: 'adulte', phase: 'pre_competition', club_porteur_id: 'x' },
-          { id: 'b', date_rencontre: '2026-11-07', categorie: 'ado', phase: 'pre_competition', club_porteur_id: 'x' },
-          { id: 'c', date_rencontre: '2026-11-07', categorie: 'enfant', phase: 'pre_competition', club_porteur_id: 'x' },
+          { id: 'a', date_rencontre: '2026-11-07', categorie: 'adulte', phase: 'pre_competition', club_porteur_id: 'x', nb_equipes: 0 },
+          { id: 'b', date_rencontre: '2026-11-07', categorie: 'ado', phase: 'pre_competition', club_porteur_id: 'x', nb_equipes: 0 },
+          { id: 'c', date_rencontre: '2026-11-07', categorie: 'enfant', phase: 'pre_competition', club_porteur_id: 'x', nb_equipes: 0 },
         ],
       },
       '2027-03-10',

@@ -8,14 +8,12 @@ import {
   type VoieOption,
 } from '@/lib/coach/resultats'
 import { exigerLectureAdmin } from '@/lib/auth/garde-lecture'
-import { createAdminClient } from '@/lib/supabase/admin'
-import { verifierLecture } from '@/lib/supabase/lecture'
 
 // Assemblage de la saisie des résultats pour l'ADMIN (spec #9) : TOUS les clubs
 // engagés d'une rencontre, lus en une seule série de lectures par le loader
 // partagé avec le coach (`getSaisieTousClubs` — sous session admin, la RLS
-// `est_admin()` ouvre tous les clubs). Le client `service_role` ne sert qu'à lire
-// le nom des clubs (catalogue transverse, ADR 0002/0003).
+// `est_admin()` ouvre tous les clubs). Le nom des clubs est embarqué dans cette
+// même lecture (P11 : plus de vague à part).
 
 /** Grimpeurs engagés d'un club, pour la liste maître (R10). */
 export type SaisieClub = {
@@ -52,20 +50,10 @@ export async function getSaisieAdminRencontre(
   const saisie = await getSaisieTousClubs(rencontreId)
   if (!saisie) return null
 
-  const clubIds = [...saisie.grimpeursParClub.keys()]
-  const nomClub = new Map<string, string>()
-  if (clubIds.length) {
-    const clubs = verifierLecture(
-      await createAdminClient().from('club').select('id, nom').in('id', clubIds),
-      'des clubs',
-    )
-    for (const c of clubs ?? []) nomClub.set(c.id as string, c.nom as string)
-  }
-
-  const clubs: SaisieClub[] = clubIds
+  const clubs: SaisieClub[] = [...saisie.grimpeursParClub.keys()]
     .map((clubId) => ({
       clubId,
-      clubNom: nomClub.get(clubId) ?? '(club inconnu)',
+      clubNom: saisie.nomsClubs.get(clubId) ?? '(club inconnu)',
       grimpeurs: saisie.grimpeursParClub.get(clubId) ?? [],
     }))
     .sort((a, b) => a.clubNom.localeCompare(b.clubNom, 'fr'))

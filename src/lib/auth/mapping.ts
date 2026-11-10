@@ -1,8 +1,10 @@
 import 'server-only'
 
-import { comptesPermanents, type RoleApplicatif } from '@/domaine/mapping-de-role'
+import { type RoleApplicatif } from '@/domaine/mapping-de-role'
 import { exigerLectureAdmin } from '@/lib/auth/garde-lecture'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { verifierLecture } from '@/lib/supabase/lecture'
+import { lireToutesLesPages } from '@/lib/supabase/pagination'
 
 /** Compte Supabase existant, cible potentielle d'un mapping. */
 export type CompteSupabase = { id: string; email: string | null }
@@ -28,58 +30,40 @@ export type ContexteMapping = {
   listeComptes: CompteListe[]
 }
 
+/** Ligne renvoyée par la RPC `lister_comptes_permanents`. */
+type CompteLu = { utilisateur_id: string; email: string | null; role: RoleApplicatif | null; club_nom: string | null }
+
 /**
- * Charge le contexte de l'écran de mapping (comptes Supabase, clubs, mappings
- * existants). Lecture via le client **service_role** : la liste des comptes
- * (`auth.admin`) et le catalogue `club` ne sont pas accessibles en RLS
- * `authenticated` (cf. ADR 0002, T6). À n'appeler que derrière une garde admin.
+ * Charge le contexte de l'écran de mapping (comptes permanents, clubs, mappings
+ * existants). Lecture via le client **service_role** : `auth.users` et le
+ * catalogue `club` ne sont pas accessibles en RLS `authenticated` (cf. ADR 0002,
+ * T6). À n'appeler que derrière une garde admin.
+ *
+ * Les comptes viennent de la RPC `lister_comptes_permanents` : la base exclut
+ * les comptes anonymes des sessions QR (R46), joint le mapping et le club, et
+ * trie par e-mail — sans le plafond d'une page `listUsers` (constat J6).
  */
 export async function chargerContexteMapping(): Promise<ContexteMapping> {
   await exigerLectureAdmin('mapping des comptes')
   const admin = createAdminClient()
 
-  const [comptesRes, clubsRes, mappingsRes] = await Promise.all([
-    admin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
+  const [comptesRes, clubsRes] = await Promise.all([
+    lireToutesLesPages<CompteLu>(
+      (debut, fin) => admin.rpc('lister_comptes_permanents').range(debut, fin),
+      'des comptes permanents',
+    ),
     admin.from('club').select('id, nom').order('nom'),
-    admin.from('compte').select('utilisateur_id, role, club:club_id (nom)'),
   ])
+  const clubsLus = verifierLecture(clubsRes, 'des clubs') ?? []
 
-  if (comptesRes.error) throw comptesRes.error
-  if (clubsRes.error) throw clubsRes.error
-  if (mappingsRes.error) throw mappingsRes.error
-
-  // Les comptes anonymes des sessions QR ne sont pas des comptes permanents :
-  // ni listés, ni proposés à l'attribution (R46).
-  const comptes: CompteSupabase[] = comptesPermanents(comptesRes.data.users)
-
-  const clubs: ClubOption[] = (clubsRes.data ?? []).map((c) => ({
-    id: c.id as string,
-    nom: c.nom as string,
+  const listeComptes: CompteListe[] = comptesRes.map((c) => ({
+    utilisateurId: c.utilisateur_id,
+    email: c.email,
+    role: c.role,
+    clubNom: c.club_nom,
   }))
-
-  const mappingParId = new Map((mappingsRes.data ?? []).map((m) => {
-    // `club:club_id (nom)` : jointure to-one — un objet (ou null pour un admin).
-    // Selon la version du client, une jointure peut être typée/renvoyée en
-    // tableau : on aplati les deux formes.
-    const brut = m.club as
-      | { nom: string }
-      | { nom: string }[]
-      | null
-    const club = Array.isArray(brut) ? (brut[0] ?? null) : brut
-    return [
-      m.utilisateur_id as string,
-      { role: m.role as RoleApplicatif, clubNom: club?.nom ?? null },
-    ] as const
-  }))
-
-  const listeComptes: CompteListe[] = comptes
-    .map((c) => ({
-      utilisateurId: c.id,
-      email: c.email,
-      role: mappingParId.get(c.id)?.role ?? null,
-      clubNom: mappingParId.get(c.id)?.clubNom ?? null,
-    }))
-    .sort((a, b) => (a.email ?? a.utilisateurId).localeCompare(b.email ?? b.utilisateurId))
+  const comptes: CompteSupabase[] = listeComptes.map((c) => ({ id: c.utilisateurId, email: c.email }))
+  const clubs: ClubOption[] = clubsLus.map((c) => ({ id: c.id as string, nom: c.nom as string }))
 
   return { comptes, clubs, listeComptes }
 }

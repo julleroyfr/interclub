@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 
 import {
   estPhaseJourJ,
+  libellePhase,
   normaliserSaisieRencontre,
   peutEntrerEnPhase,
   peutTransiter,
@@ -15,7 +16,6 @@ import { getUtilisateurCourant } from '@/lib/auth/session'
 import { verifierLecture } from '@/lib/supabase/lecture'
 import { createClient } from '@/lib/supabase/server'
 
-import { materialiserNpCloture } from './cloture'
 import { type EtatRencontre } from './rencontres'
 
 // CRUD des rencontres (spec #1 R12) — réservé à l'admin. Server Actions :
@@ -167,26 +167,34 @@ export async function changerPhaseRencontre(
     }
   }
 
-  const { error } = await supabase
-    .from('rencontre')
-    .update({ phase: phase as Phase })
-    .eq('id', id)
-  if (error) return { erreur: messageErreur(error.code, 'ecriture') }
-
-  // Passage en clôture (③→④) : poser le NP automatique sur les attendus non
-  // saisis (spec #6 R18). Idempotent, exécuté en tant qu'admin. La phase est déjà
-  // changée : un échec du NP ne l'annule pas, mais il est SIGNALÉ à l'admin
-  // (jamais un faux succès, revue 2026-10-03 M5) — repasser en compétition puis
-  // en clôture le repose.
-  let npEnEchec = false
-  if (phase === 'cloture') {
-    try {
-      await materialiserNpCloture(supabase, id)
-    } catch (e) {
-      // Trace serveur de l'erreur technique ; l'admin reçoit un message lisible.
-      console.error('NP automatique de clôture non posé', e)
-      npEnEchec = true
+  // Une seule transaction en base (lot 5, constats P7/J3/B2) : garde admin,
+  // transition adjacente (R17) et jour J revérifiées sous verrou, mise à jour
+  // conditionnée à la phase lue (deux admins ne passent pas la même
+  // transition) et, au passage ③→④, NP automatique (spec #6 R18). Un échec
+  // annule tout : la phase ne change jamais sans ses NP.
+  const { error } = await supabase.rpc('changer_phase_rencontre', {
+    p_rencontre: id,
+    p_phase: phase,
+  })
+  if (error) {
+    // Course perdue (second admin, changement de jour) : la base a changé depuis
+    // la lecture ci-dessus ; le détail porte la phase en base.
+    if (error.message === 'transition_refusee') {
+      return {
+        erreur: `La rencontre est en phase « ${libellePhase(error.details || courante)} » : ce changement de phase n'est plus possible. Rechargez la page.`,
+      }
     }
+    if (error.message === 'hors_jour_j') {
+      const quoi = phase === 'preparation' ? 'La préparation' : 'La compétition'
+      return { erreur: `${quoi} ne peut être activée que le jour de la rencontre.` }
+    }
+    if (error.message === 'non_admin') {
+      return { erreur: 'Seul un administrateur peut gérer les rencontres.' }
+    }
+    if (error.message === 'rencontre_introuvable') return { erreur: 'Rencontre introuvable.' }
+    // Trace serveur de l'erreur technique ; l'admin reçoit un message lisible.
+    console.error('Changement de phase en échec', error)
+    return { erreur: 'Le changement de phase a échoué. Réessayez.' }
   }
 
   // Deux surfaces pour la même action (spec #3 R41a) : la liste ET le tableau de
@@ -194,14 +202,6 @@ export async function changerPhaseRencontre(
   revalidatePath('/admin/rencontres')
   revalidatePath(`/admin/rencontres/${id}`)
   const label = PHASES.find((p) => p.value === phase)?.label ?? phase
-  if (npEnEchec) {
-    return {
-      erreur:
-        `Phase : ${label}. Attention : les non-présentations automatiques n'ont pas ` +
-        'pu être posées (erreur technique). Repassez en compétition puis en clôture ' +
-        'pour les poser.',
-    }
-  }
   return { succes: `Phase : ${label}.` }
 }
 

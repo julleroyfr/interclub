@@ -69,77 +69,51 @@ export type EpreuveGabaritVue = {
   baremeVitesse: BaremeVitesseGabaritVue | null
 }
 
-/** Gabarit complet d'une catégorie (toutes épreuves + voies). */
-export async function listerGabarit(categorie: Categorie): Promise<EpreuveGabaritVue[]> {
+type Ligne = Record<string, unknown>
+
+/** Relation embarquée de cardinalité multiple, triée par `ordre`. */
+function parOrdre(v: unknown): Ligne[] {
+  return (Array.isArray(v) ? (v as Ligne[]) : []).sort(
+    (a, b) => (a.ordre as number) - (b.ordre as number),
+  )
+}
+
+/**
+ * Gabarits complets des catégories demandées (toutes épreuves, voies, blocs avec
+ * paliers, voies et barème de vitesse), en UNE lecture imbriquée (lot 6, P9).
+ * Le plafond de 1000 lignes vaut pour chaque relation embarquée : un gabarit en
+ * compte quelques dizaines.
+ */
+export async function listerGabarits(
+  categories: Categorie[],
+): Promise<Map<Categorie, EpreuveGabaritVue[]>> {
   await exigerLectureAdmin('gabarit de rencontre')
-  const admin = createAdminClient()
-
-  const { data: epreuves, error: errEpreuves } = await admin
+  const { data: epreuves, error } = await createAdminClient()
     .from('gabarit_epreuve')
-    .select('id, categorie, type, points_chute, points_non_presentation')
-    .eq('categorie', categorie)
+    .select(
+      `id, categorie, type, points_chute, points_non_presentation,
+      gabarit_voie_difficulte(id, niveau, type_voie, cotation, points, points_prise_valorisee, points_zone1, points_zone2, ordre),
+      gabarit_bloc(id, code, ordre, gabarit_bloc_palier(id, libelle, points, ordre)),
+      gabarit_voie_vitesse(id, libelle, ordre),
+      gabarit_bareme_vitesse_echelon(id, rang_min, rang_max, points, decrement, ordre)`,
+    )
+    .in('categorie', categories)
     .order('type')
-  if (errEpreuves) throw errEpreuves
+  if (error) throw error
 
-  if (!epreuves || epreuves.length === 0) return []
+  const parCategorie = new Map<Categorie, EpreuveGabaritVue[]>(categories.map((c) => [c, []]))
+  for (const e of epreuves ?? []) {
+    parCategorie.get(e.categorie as Categorie)?.push(versEpreuveVue(e))
+  }
+  return parCategorie
+}
 
-  const ids = epreuves.map((e) => e.id as string)
-  const epreuveVitesse = epreuves.find((e) => e.type === 'vitesse')
-
-  const [
-    { data: voies, error: errVoies },
-    { data: blocs, error: errBlocs },
-    { data: vitesses, error: errVitesses },
-    { data: echelons, error: errEchelons },
-  ] = await Promise.all([
-    admin
-      .from('gabarit_voie_difficulte')
-      .select(
-        'id, gabarit_epreuve_id, niveau, type_voie, cotation, points, points_prise_valorisee, points_zone1, points_zone2, ordre',
-      )
-      .in('gabarit_epreuve_id', ids)
-      .order('ordre'),
-    admin
-      .from('gabarit_bloc')
-      .select('id, gabarit_epreuve_id, code, ordre')
-      .in('gabarit_epreuve_id', ids)
-      .order('ordre'),
-    admin
-      .from('gabarit_voie_vitesse')
-      .select('id, gabarit_epreuve_id, libelle, ordre')
-      .in('gabarit_epreuve_id', ids)
-      .order('ordre'),
-    epreuveVitesse
-      ? admin
-          .from('gabarit_bareme_vitesse_echelon')
-          .select('id, rang_min, rang_max, points, decrement, ordre')
-          .eq('gabarit_epreuve_id', epreuveVitesse.id as string)
-          .order('ordre')
-      : Promise.resolve({ data: [] as Record<string, unknown>[], error: null }),
-  ])
-  if (errVoies) throw errVoies
-  if (errBlocs) throw errBlocs
-  if (errVitesses) throw errVitesses
-  if (errEchelons) throw errEchelons
-
-  // Paliers de blocs (R39) — chargés séparément puis regroupés par bloc.
-  const blocIds = (blocs ?? []).map((b) => b.id as string)
-  const { data: paliers, error: errPaliers } =
-    blocIds.length === 0
-      ? { data: [], error: null }
-      : await admin
-          .from('gabarit_bloc_palier')
-          .select('id, gabarit_bloc_id, libelle, points, ordre')
-          .in('gabarit_bloc_id', blocIds)
-          .order('ordre')
-  if (errPaliers) throw errPaliers
-
-  return epreuves.map((e) => ({
+function versEpreuveVue(e: Ligne): EpreuveGabaritVue {
+  return {
     id: e.id as string,
     categorie: e.categorie as Categorie,
     type: e.type as TypeEpreuve,
-    voiesDifficulte: (voies ?? [])
-      .filter((v) => v.gabarit_epreuve_id === e.id)
+    voiesDifficulte: parOrdre(e.gabarit_voie_difficulte)
       .map((v) => ({
         id: v.id as string,
         niveau: v.niveau as string,
@@ -151,14 +125,12 @@ export async function listerGabarit(categorie: Categorie): Promise<EpreuveGabari
         pointsZone2: (v.points_zone2 as number | null) ?? null,
         ordre: v.ordre as number,
       })),
-    blocs: (blocs ?? [])
-      .filter((b) => b.gabarit_epreuve_id === e.id)
+    blocs: parOrdre(e.gabarit_bloc)
       .map((b) => ({
         id: b.id as string,
         code: b.code as string,
         ordre: b.ordre as number,
-        paliers: (paliers ?? [])
-          .filter((p) => p.gabarit_bloc_id === b.id)
+        paliers: parOrdre(b.gabarit_bloc_palier)
           .map((p) => ({
             id: p.id as string,
             libelle: p.libelle as string,
@@ -166,8 +138,7 @@ export async function listerGabarit(categorie: Categorie): Promise<EpreuveGabari
             ordre: p.ordre as number,
           })),
       })),
-    voiesVitesse: (vitesses ?? [])
-      .filter((vv) => vv.gabarit_epreuve_id === e.id)
+    voiesVitesse: parOrdre(e.gabarit_voie_vitesse)
       .map((vv) => ({
         id: vv.id as string,
         libelle: vv.libelle as string,
@@ -179,7 +150,7 @@ export async function listerGabarit(categorie: Categorie): Promise<EpreuveGabari
             gabaritEpreuveId: e.id as string,
             pointsChute: (e.points_chute as number | null) ?? null,
             pointsNonPresentation: (e.points_non_presentation as number | null) ?? null,
-            echelons: (echelons ?? []).map((ech) => ({
+            echelons: parOrdre(e.gabarit_bareme_vitesse_echelon).map((ech) => ({
               id: ech.id as string,
               rangMin: ech.rang_min as number,
               rangMax: (ech.rang_max as number | null) ?? null,
@@ -189,5 +160,5 @@ export async function listerGabarit(categorie: Categorie): Promise<EpreuveGabari
             })),
           }
         : null,
-  }))
+  }
 }

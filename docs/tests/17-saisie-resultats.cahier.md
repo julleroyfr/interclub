@@ -283,6 +283,32 @@ Cas particuliers à préparer à la main :
   bascules ne les rechargent pas.
 - **Automatisé** : `e2e/coach-saisie-resultats.spec.ts` (CT-18).
 
+### CT-19 `[mixte]` — Clôture en une transaction, au-delà de 1000 résultats   (couvre : R18 ; spec #3 R17 ; lot 5, 2026-11-10)
+
+- **Rôle / compte** : `admin@test.local`.
+- **Pré-condition** : migration `202611101300_rpc_changer_phase_rencontre`
+  appliquée ; rencontre **enfant** en ③, jour J, avec des grimpeurs dont
+  certains niveaux sont saisis sur une **seconde voie** du niveau (pas la plus
+  petite en `ordre`).
+- **Étapes** :
+  1. Passer la rencontre en **④ clôture** depuis son tableau de bord.
+  2. Dans un second onglet resté en ③, cliquer à nouveau « Avancer ».
+  3. SQL Editor : compter les NP de la rencontre (`resultat_voie`,
+     `resultat_bloc`, `issue = 'np'`).
+- **Résultat attendu** :
+  1. phase ④, message « Phase : Clôture. » ; NP posés sur les seuls attendus
+     non saisis (blocs de l'épreuve active ; niveaux du groupe de départ pour
+     l'enfant) ; aucun NP sur un niveau déjà saisi, même sur sa seconde voie ;
+  2. refus « La rencontre est en phase « Clôture » : ce changement de phase
+     n'est plus possible. Rechargez la page. », aucune écriture ;
+  3. aucun NP en double.
+- **Automatisé** : `e2e/cloture-volume.spec.ts` (80 grimpeuses, 1120
+  résultats de voie : aucun NP de voie, 160 NP de bloc) ; `npm run test:cloture`
+  (`scripts/test-cloture.sh` : garde admin, R17, jour J, R18 enfant/ado/adulte,
+  idempotence, échec du NP → phase inchangée, deux clôtures simultanées → une
+  seule passe, droits, rejeu et retour arrière). Reste à dérouler en recette :
+  étapes 1 et 2 sur une rencontre réelle.
+
 ## Registre d'exécution
 
 > **Automatisé** (rév. 2026-10-03) : CT-16 par `e2e/integrite-engagement.spec.ts`
@@ -315,3 +341,4 @@ Cas particuliers à préparer à la main :
 | 2026-10-02 | agent/playwright | develop | CT-01 → CT-12, CT-14 | ✅ | `e2e/coach-saisie-resultats.spec.ts` (14 tests). Résidus manuels : couleurs des pastilles (CT-04), geste de balayage (CT-03), rendu des deux vues (CT-02) |
 | 2026-10-02 | agent/playwright | develop | CT-15 | ✅ | R21bis (rév. spec #6 2026-10-02) — message avant la ③, sans compteurs ni « groupe à définir » |
 | 2026-10-09 | Playwright e2e | develop | CT-18 | ✅ | 0 requête pendant 10 bascules de vue / grimpeur (garde-fou TODO D3) |
+| 2026-11-10 | agent (local) | feature/perf-cloture | CT-19 | ✅ (local) | Rouge sur l'ancien code : 80 NP de voie posés à tort (1120 résultats). Vert après la RPC : `cloture-volume` + `test:cloture` 40/40 ; CT-12 inchangé. Recette : à dérouler après application de la migration |

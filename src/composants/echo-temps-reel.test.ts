@@ -80,3 +80,30 @@ describe('spec #11 — Pertinence pour l’écran (R8bis)', () => {
     expect(doitRelire(ecriture('g-ailleurs'), { ignorerMesEcritures: false, utilisateurId: MOI })).toBe(true)
   })
 })
+
+describe('spec #11 — Écho de ses propres coches de contrôle (R6bis, rév. 2026-11-10)', () => {
+  const coche = (controlePar: string | null) => ({
+    eventType: 'UPDATE' as const,
+    new: { auteur_utilisateur_id: AUTRE, controle_par: controlePar, grimpeur_id: 'g-1' },
+    old: { id: 'r-1' },
+  })
+  const options = { ignorerMesEcritures: false, ignorerMesCoches: true, utilisateurId: MOI }
+
+  it('écran de contrôle : ignore la coche que je viens de poser', () => {
+    expect(doitRelire(coche(MOI), options)).toBe(false)
+  })
+
+  it('relit une décoche (controle_par effacé) et la coche d’un autre admin', () => {
+    expect(doitRelire(coche(null), options)).toBe(true)
+    expect(doitRelire(coche(AUTRE), options)).toBe(true)
+  })
+
+  it('relit une saisie ou une suppression (pas une coche)', () => {
+    expect(doitRelire(insert(AUTRE), options)).toBe(true)
+    expect(doitRelire({ eventType: 'DELETE', new: {}, old: { id: 'r-1' } }, options)).toBe(true)
+  })
+
+  it('hors écran de contrôle, ma coche relit (classement)', () => {
+    expect(doitRelire(coche(MOI), { ignorerMesEcritures: false, utilisateurId: MOI })).toBe(true)
+  })
+})

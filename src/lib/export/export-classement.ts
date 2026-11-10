@@ -11,6 +11,8 @@ import type { Categorie, Phase } from '@/domaine/rencontre'
 import { getContexteCoach, getUtilisateurCourant } from '@/lib/auth/session'
 import { getClassementRencontre } from '@/lib/classement/classement'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { nomEmbarque } from '@/lib/supabase/embarque'
+import { verifierLecture } from '@/lib/supabase/lecture'
 
 import { rendrePdf } from './rendu-pdf'
 
@@ -41,40 +43,34 @@ type EtatRencontre = { phase: Phase; clubPorteurNom: string; clubsEngages: strin
 
 /**
  * Phase, club porteur et clubs engagés de la rencontre ; `null` si introuvable.
- * En adulte, les clubs engagés sont ceux des grimpeurs composés (spec #20 R32) :
- * les deux sont lus dans la même vague, la catégorie n'étant connue qu'au retour.
+ * En adulte, les clubs engagés sont ceux des grimpeurs composés (spec #20 R32).
+ * UNE requête (constat R5 du 2026-11-10) : équipes et compositions embarquées
+ * dans la rencontre — lue à chaque rechargement du classement, temps réel compris.
  */
 async function lireEtatRencontre(rencontreId: string): Promise<EtatRencontre | null> {
-  const admin = createAdminClient()
-  const [rencontreRes, equipesRes, compositionsRes] = await Promise.all([
-    admin
+  const rencontre = verifierLecture(
+    await createAdminClient()
       .from('rencontre')
-      .select('phase, categorie, club:club_porteur_id (nom)')
+      .select('phase, categorie, club:club_porteur_id (nom), equipe (club_id), composition (grimpeur:grimpeur_id (club_id))')
       .eq('id', rencontreId)
       .maybeSingle(),
-    admin.from('equipe').select('club_id').eq('rencontre_id', rencontreId),
-    admin.from('composition').select('grimpeur:grimpeur_id (club_id)').eq('rencontre_id', rencontreId),
-  ])
-  if (rencontreRes.error) throw new Error(`Lecture de la rencontre impossible : ${rencontreRes.error.message}`)
-  if (equipesRes.error) throw new Error(`Lecture des équipes impossible : ${equipesRes.error.message}`)
-  if (compositionsRes.error) {
-    throw new Error(`Lecture des compositions impossible : ${compositionsRes.error.message}`)
-  }
-  if (!rencontreRes.data) return null
+    "de l'état de la rencontre",
+  )
+  if (!rencontre) return null
 
-  const clubsDesGrimpeurs = (compositionsRes.data ?? []).map((c) => {
+  const equipes = (rencontre.equipe as { club_id: string | null }[] | null) ?? []
+  const compositions = (rencontre.composition as { grimpeur: unknown }[] | null) ?? []
+  const clubsDesGrimpeurs = compositions.map((c) => {
     const g = c.grimpeur as { club_id: string | null } | { club_id: string | null }[] | null
     return (Array.isArray(g) ? g[0]?.club_id : g?.club_id) ?? null
   })
 
-  const club = rencontreRes.data.club as { nom: string } | { nom: string }[] | null
-  const clubPorteurNom = (Array.isArray(club) ? club[0]?.nom : club?.nom) ?? ''
   return {
-    phase: rencontreRes.data.phase as Phase,
-    clubPorteurNom,
+    phase: rencontre.phase as Phase,
+    clubPorteurNom: nomEmbarque(rencontre.club) ?? '',
     clubsEngages: clubsEngagesExport(
-      rencontreRes.data.categorie as Categorie,
-      (equipesRes.data ?? []).map((e) => (e.club_id as string | null) ?? null),
+      rencontre.categorie as Categorie,
+      equipes.map((e) => e.club_id ?? null),
       clubsDesGrimpeurs,
     ),
   }

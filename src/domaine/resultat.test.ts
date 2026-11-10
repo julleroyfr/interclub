@@ -5,11 +5,9 @@ import {
   validerIssueVoie,
   validerResultatBloc,
   verifierAjoutVoieAdo,
-  manquantsCloture,
   PLAFOND_VOIES_ADO,
   ResultatInvalideError,
 } from './resultat'
-import { voiesDuGroupeDepart } from './engagement'
 
 describe('spec #6 — issues de voie saisissables selon catégorie/type (R10/R12)', () => {
   it('enfant tête : Top, Prise valorisée, Échec (R10)', () => {
@@ -136,20 +134,6 @@ describe("spec #6 — ajout d'une voie ado — unicité et plafond (R11/R13/R14)
     expect(() =>
       verifierAjoutVoieAdo({ voiesSaisiesIds: ['v_t5a'], voieCandidateId: 'v_t5b' }),
     ).not.toThrow()
-  })
-})
-
-describe('spec #6 — NP automatique à la clôture (R9/R18)', () => {
-  it('enfant : passe en NP les voies attendues (3 du groupe) non saisies (R9/R18)', () => {
-    // Groupe M2 → M2·M3·M4 : 3 voies attendues (R9, cf. R20 spec #5)
-    const attendus = voiesDuGroupeDepart('M2')
-    expect(manquantsCloture(attendus, ['M2'])).toEqual(['M3', 'M4'])
-  })
-  it('ne touche pas un attendu déjà saisi (idempotent, R18)', () => {
-    expect(manquantsCloture(['B1', 'B2'], ['B1', 'B2'])).toEqual([])
-  })
-  it('blocs : passe en NP B1/B2 non saisis (R18)', () => {
-    expect(manquantsCloture(['B1', 'B2'], ['B1'])).toEqual(['B2'])
   })
 })
 

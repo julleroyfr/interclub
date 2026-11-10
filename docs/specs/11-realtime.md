@@ -32,6 +32,15 @@
   pas l'écho de ses propres écritures. Motif : un grimpeur prêté au club (ou une
   modification d'équipe faite par l'admin) pendant que le coach compose son
   équipe n'apparaissait qu'après rechargement de la page.
+- **Révision** : 2026-11-10 (validée le 2026-11-10) — lot 10 du plan « appels
+  Supabase » (constats R3 et R4 de l'analyse du 2026-11-10) : **R8bis** s'étend
+  aux **écrans de classement** (admin, coach, capitaine) : un classement ne se
+  relit que pour une écriture concernant un grimpeur **composé dans la
+  rencontre** ; **R6bis** s'étend à l'**écran de contrôle** : l'écho de ses
+  **propres coches** (`controle_par` = utilisateur courant) est ignoré ; **R4**
+  ajoute `controle_par` aux usages admis de la charge utile. Motif : chaque
+  saisie d'une autre rencontre en cours relisait en entier les classements
+  ouverts, et chaque coche relisait deux fois l'écran de son auteur.
 - **Sources** :
   - **Spec #6 — Saisie des résultats** (`06-saisie-des-resultats.md`) : « Temps réel
     (pousser les MAJ sur les autres écrans) » noté **évolution future différée**
@@ -143,6 +152,9 @@ se **rafraîchissent d'eux-mêmes**, sans action ni rechargement de l'utilisateu
   charge utile sont d'en lire l'**auteur** de l'écriture, pour ignorer l'écho de
   ses propres saisies (R6bis), et le **grimpeur** concerné, pour ignorer ce qui
   ne concerne pas l'écran (R8bis) ; aucune valeur reçue n'est affichée.
+  *(Rév. 2026-11-10.)* Sur l'écran de **contrôle**, l'auteur de la **coche**
+  (`controle_par`) est lu au même titre, pour ignorer l'écho de ses propres
+  coches (R6bis).
 
   **Compromis assumé (relecture vs. diff appliqué).** On **ne** met **pas** à jour
   l'écran avec la seule ligne reçue, parce qu'**une écriture ne correspond pas à une
@@ -186,9 +198,16 @@ se **rafraîchissent d'eux-mêmes**, sans action ni rechargement de l'utilisateu
     dérivée par trigger) ;
   - la **reconnexion** du canal (R11).
 
-  Les écrans de **classement** (#7) et de **contrôle** (#16) ne sont **pas**
-  concernés : ils se relisent à **toute** écriture, y compris celles du même
-  compte (ex. l'admin saisit dans un onglet et suit le classement dans un autre).
+  Les écrans de **classement** (#7) ne sont **pas** concernés : ils se relisent
+  à **toute** écriture, y compris celles du même compte (ex. l'admin saisit dans
+  un onglet et suit le classement dans un autre).
+
+  *(Rév. 2026-11-10.)* Sur l'écran de **contrôle** (#16), un `UPDATE` dont
+  l'auteur de la **coche** (`controle_par`, spec #16) est l'utilisateur courant ne
+  déclenche pas de relecture : la Server Action de la coche a déjà relu son
+  écran. Une **décoche** (`controle_par` effacé) et les saisies ou corrections
+  d'un autre utilisateur déclenchent toujours une relecture. Même limite que
+  ci-dessus pour un même compte ouvert sur deux appareils.
   L'écran d'**engagement** (#5) non plus *(rév. 2026-10-09)* : `pret`, `equipe`
   et `composition` ne portent pas d'auteur ; une écriture du coach relit donc son
   écran une seconde fois après la Server Action (coût accepté : écritures rares,
@@ -227,7 +246,13 @@ se **rafraîchissent d'eux-mêmes**, sans action ni rechargement de l'utilisateu
   dont la charge utile ne porte que la clé) déclenche **toujours** une relecture,
   ainsi que la **reconnexion** (R11). Les points de vitesse recalculés pour les
   grimpeurs affichés (rangs, spec #7 R20) les concernent et déclenchent donc une
-  relecture. Les écrans de **classement** et de **contrôle** ne sont pas concernés.
+  relecture. L'écran de **contrôle** n'est pas concerné.
+
+  *(Rév. 2026-11-10.)* La règle s'applique aussi aux **écrans de classement**
+  (admin, coach, capitaine) : les grimpeurs affichés sont les grimpeurs
+  **composés dans la rencontre** (toutes équipes). Les saisies des **autres
+  rencontres** en cours ne relisent donc plus le classement ; un évènement sans
+  grimpeur identifiable et la reconnexion le relisent toujours.
 
 - **R9.** **Anti-rebond.** Les évènements **rapprochés** sont **regroupés** en un
   **seul** rafraîchissement (anti-rebond court), pour éviter une rafale de

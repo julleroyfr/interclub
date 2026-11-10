@@ -214,6 +214,19 @@ Liste des rencontres : bouton **« Rencontres »** → `/admin/rencontres`.
   - `<select>` lisibles (fond sombre, `color-scheme: dark`) ; focus clavier
     visible ; messages d'erreur/succès reliés (lecteur d'écran).
 
+### CT-16 — Premier élément d'une épreuve ou d'un bloc vide (lot 9, B1)
+
+- **Rôle / compte** : `admin@test.local`.
+- **Étapes** : sur `/admin/gabarit`, dans une catégorie :
+  1. ajouter un bloc (code `BX1`) : il s'affiche avec « Aucun palier. » ;
+  2. ajouter un premier palier à ce bloc (`Top`, 5 pts) ;
+  3. supprimer ensuite le palier puis le bloc (remise en état).
+- **Attendu** : le palier s'ajoute (aucun écran « Une erreur est survenue ») ;
+  il reçoit l'ordre 1. De même pour la première voie de difficulté, le premier
+  bloc ou la première voie de vitesse d'une épreuve vide.
+- **Automatisé** : `e2e/gabarit-premier-element.spec.ts` (gabarit adulte vidé
+  puis restauré : voie, bloc, palier, voie de vitesse ; ordres 1 puis 2).
+
 ## Registre d'exécution
 
 | Cas | Environnement | Date | Testeur | Verdict | Notes |
@@ -243,3 +256,5 @@ Liste des rencontres : bouton **« Rencontres »** → `/admin/rencontres`.
 > Vitest (`npm run test`, `src/domaine/gabarit.test.ts`,
 > `src/domaine/rencontre.test.ts`). La copie du gabarit (RPC), les gardes, la RLS
 > et l'IHM se vérifient ici, sur l'app réelle — en priorité **mobile**.
+| CT-16 | local | 2026-11-10 | Playwright e2e | ✅ | rouge avant correction (écran d'erreur), vert après ; reste recette |
+| CT-16 | local | 2026-11-10 | julleroyfr (agent) | ✅ | `a8ec714` : premier voie/bloc/palier/voie de vitesse d'un parent vide ajoutés (ordres 1 puis 2), aucun écran d'erreur |

@@ -139,18 +139,16 @@ export async function saisirResultatBlocAdmin(
   if (!blocId || !grimpeurId) return { erreur: 'Bloc et grimpeur requis.' }
 
   const supabase = await createClient()
-  const ctx = await chargerContexteBloc(supabase, blocId)
+  // Contexte et paliers du bloc en une vague (lot 6, P14).
+  const [ctx, paliersRes] = await Promise.all([
+    chargerContexteBloc(supabase, blocId),
+    supabase.from('bloc_palier').select('id').eq('bloc_id', blocId),
+  ])
   if (!ctx) return { erreur: 'Bloc introuvable.' }
   const refus = refuserSiHorsFenetre(ctx.phase)
   if (refus) return refus
 
-  const paliers = verifierLecture(
-    await supabase
-      .from('bloc_palier')
-      .select('id')
-      .eq('bloc_id', blocId),
-    'des paliers',
-  )
+  const paliers = verifierLecture(paliersRes, 'des paliers')
   const paliersDuBloc = (paliers ?? []).map((p) => p.id as string)
 
   try {

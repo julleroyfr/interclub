@@ -337,6 +337,57 @@ Routes utilisées :
   aucun canal `temps-reel:composition,equipe,pret` ; (2) en ②, l'indicateur est
   présent pour le coach temporaire ✅
 
+### CT-20 — Classement : une saisie d'une autre rencontre ne le relit pas (couvre : R8bis ; rév. 2026-11-10)
+
+- **Rôle** : `admin@test.local` (observateur) ; une saisie dans une **autre**
+  rencontre en ③ le même jour (coach ou juge de cette rencontre).
+- **Pré-condition** : deux rencontres en ③ ; DevTools → **Network** (filtre
+  `_rsc`) sur la fenêtre du classement.
+- **Étapes** :
+  1. Ouvrir le classement de la rencontre 1, attendre « En direct ».
+  2. Saisir un résultat pour un grimpeur de la rencontre 2.
+  3. Saisir un résultat pour un grimpeur de la rencontre 1.
+- **Résultat attendu** : (2) **aucune** relecture `classement?_rsc=` ;
+  (3) le classement **se relit** et reflète la saisie ✅ Idem sur les classements
+  coach et capitaine.
+- **Automatisé** : `e2e/temps-reel-filtres.spec.ts` (CT-20).
+
+### CT-21 — Contrôle : l'écho de ses propres coches ne relit pas l'écran (couvre : R6bis ; rév. 2026-11-10)
+
+- **Rôles** : `admin@test.local` et un second admin, deux navigateurs.
+- **Pré-condition** : rencontre en **④** ; DevTools → **Network** (filtre
+  `_rsc`) sur la fenêtre du premier admin.
+- **Étapes** :
+  1. Les deux admins ouvrent le contrôle, même support, « En direct ».
+  2. Le premier admin coche une ligne.
+  3. Le second admin coche une autre ligne.
+- **Résultat attendu** : (2) la coche s'affiche chez le premier admin **sans**
+  relecture `controle?_rsc=` (la Server Action a déjà relu l'écran) et apparaît
+  en direct chez le second ; (3) l'écran du premier admin **se relit** et affiche
+  la coche du second ✅
+- **Automatisé** : `e2e/temps-reel-filtres.spec.ts` (CT-21).
+
+### CT-22 — Un temps de vitesse ne réécrit que les points qui changent (couvre : R4 ; migration `202611101200`)
+
+- **Rôle** : juge vitesse (jeton de la rencontre) ; SQL Editor.
+- **Pré-condition** : rencontre en ③ avec plusieurs temps déjà saisis sur
+  l'épreuve de vitesse ; migration `202611101200_points_vitesse_sans_reecriture`
+  appliquée.
+- **Étapes** :
+  1. Noter l'heure, puis saisir un temps **plus lent** que tous les autres.
+  2. SQL Editor :
+
+     ```sql
+     select count(*) from interclub.points_vitesse
+      where epreuve_id = '<épreuve de vitesse>' and updated_at > '<heure notée>';
+     ```
+
+- **Résultat attendu** : `0` ligne existante réécrite (seule la nouvelle ligne
+  est créée) ; les classements et écrans de saisie ouverts ne se relisent
+  qu'**une** fois ✅ Les points affichés sont inchangés par rapport à avant la
+  migration.
+- **Automatisé** : `npm run test:points-vitesse-reecriture` (RV-01 à RV-05).
+
 ## Registre d'exécution
 
 | Date | Testeur | Version/commit | Cas | Résultat | Remarque |
@@ -355,3 +406,7 @@ Routes utilisées :
 | 2026-09-25 | julleroyfr | a76fcdf | CT-12 | ✅ | payload = 6 Ko — relecture légère, choix confirmé |
 | 2026-09-25 | julleroyfr | 45c55e0 | CT-13 | ✅ | |
 | 2026-10-09 | Playwright e2e | develop | CT-16 → CT-19 | ✅ | `temps-reel-engagement.spec.ts` (écritures admin posées en SQL) ; migration `202610091200` appliquée en local (2 passes) |
+| 2026-11-10 | Playwright e2e | feature/perf-temps-reel | CT-20, CT-21 | ✅ | rouges sur l'ancien code (1 relecture de trop), verts après ; reste recette |
+| 2026-11-10 | julleroyfr | feature/perf-temps-reel | CT-22 | ✅ | local : `test:points-vitesse-reecriture` 13/13 (11–12 lignes réécrites avant, 0 après) ; reste recette |
+| 2026-11-10 | julleroyfr (agent) | `a8ec714` | CT-20, CT-21 | ✅ | local déroulé (E2E `temps-reel-filtres`) : 0 relecture pour une autre rencontre / pour ma coche ; relecture pour la rencontre observée / la coche d'un autre |
+| 2026-11-10 | julleroyfr (agent) | `a8ec714` | CT-22 | ✅ | local déroulé : temps le plus lent saisi → 0 ligne existante réécrite, 1 créée ; `test:points-vitesse-reecriture` 13/13 |

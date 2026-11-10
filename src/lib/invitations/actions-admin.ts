@@ -28,21 +28,16 @@ function retour(erreur?: string): never {
  * Génère une invitation administrateur (spec #2 R35–R37) : désactive d'abord
  * l'invitation active éventuelle (au plus une valable, R37), puis en crée une
  * nouvelle — valeur, échéance à 15 minutes : défauts SQL. Garde applicative
- * (admin) ; les écritures passent par la RLS (policies admin), vraie frontière.
+ * (admin) ; une transaction (RPC `generer_invitation_admin`, lot 7, A5) sous la
+ * RLS (policies admin), vraie frontière : un échec laisse l'active en place.
  */
 export async function genererInvitationAdmin(): Promise<void> {
   const utilisateur = await getUtilisateurCourant()
   if (!peutGererInvitationAdmin({ role: utilisateur?.role ?? null })) retour('refuse')
 
   const supabase = await createClient()
-  const { error: eRevoke } = await supabase
-    .from('invitation_admin')
-    .update({ actif: false })
-    .eq('actif', true)
-  if (eRevoke) retour('generation')
-
-  const { error: eInsert } = await supabase.from('invitation_admin').insert({})
-  if (eInsert) retour('generation')
+  const { error } = await supabase.rpc('generer_invitation_admin')
+  if (error) retour('generation')
   retour()
 }
 

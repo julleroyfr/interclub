@@ -22,7 +22,7 @@
   trigger en base** à chaque changement de temps (R19–R20), pour la cohérence et le
   **realtime** ; **voie et bloc restent calculés à la lecture** (R10).
 - **Sources** :
-  - **Règlement** « CT33 FFME — 2025-2026 » (dernière version, `docs/reglement/`)
+  - **Règlement** « CT33 FFME — 2026-2027 » (dernière version, `docs/reglement/`)
     §8 (« Classements ») : « un classement **individuel** et **d'équipes de clubs**
     est établi et communiqué ». Le règlement **ne détaille pas** la formule
     d'agrégation équipe/club → arbitrages produit (décision du 2026-09-08). Le

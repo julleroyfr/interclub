@@ -8,7 +8,14 @@
 > réservée à `service_role` (M1), colonnes de contrôle et d'auteur protégées
 > (M2). Constats et plan : [revue](../revues/2026-10-03-revue-globale.md),
 > [plan d'action](../revues/2026-10-03-plan-action.md).
-> **Automatisé** : `npm run test:cahier:securite` (`e2e/securite-appels-directs.spec.ts`, stack locale) rejoue CT-01 → CT-07, CT-09 et CT-10 ; CT-08 = suites E2E existantes. En recette, les appels `curl` ci-dessous restent le mode d'exécution.
+> Couvre aussi `202611101400_durcissement_droits_anon` (CT-01, CT-11, CT-12) :
+> RPC des sessions QR fermées à `anon`, `search_path` de `set_updated_at`,
+> `(select auth.uid())` dans les policies `compte` et `session_qr`.
+> Couvre enfin `202611101500_gardes_en_base` (CT-13) : gardes de phase, d'effectif,
+> de prêt et de licence portées par la base (lot 11 du plan « appels Supabase »).
+> Et `202611101600_rpc_ecritures_atomiques` (CT-14) : écritures en plusieurs étapes
+> faites en une transaction (lot 7).
+> **Automatisé** : `npm run test:cahier:securite` (`e2e/securite-appels-directs.spec.ts`, stack locale) rejoue CT-01 → CT-07 et CT-09 → CT-12 ; CT-08 = suites E2E existantes. En recette, les appels `curl` ci-dessous restent le mode d'exécution.
 > Règles : [docs/conventions/06-cahier-de-test.md](../conventions/06-cahier-de-test.md).
 
 - **Spec de référence** : `docs/specs/03-ecrans-de-parametrage-admin.md` (R12),
@@ -59,10 +66,10 @@ ligne de résultat créée puis supprimée dans le cas.
 
 ## Cas de test
 
-### CT-01 `[auto]` — Aucune fonction ouverte à PUBLIC ; anon limité aux RPC QR   (couvre : C1, M1, fermeture par défaut)
+### CT-01 `[auto]` — Aucune fonction ouverte à PUBLIC ni à anon   (couvre : C1, M1, fermeture par défaut)
 
 - **Rôle / compte** : SQL Editor (recette) ou `npm run db:verifier` (local).
-- **Pré-condition** : migration `202610031100` appliquée.
+- **Pré-condition** : migrations `202610031100` et `202611101400` appliquées.
 - **Étapes** :
   1. En local : `npm run db:verifier`.
   2. En recette (SQL Editor) :
@@ -82,9 +89,10 @@ ligne de résultat créée puis supprimée dans le cas.
 
 - **Résultat attendu** :
   1. Les deux contrôles affichent ✓ ; code de sortie 0.
-  2. Exactement 4 lignes, toutes `anon = true` et `public = false` :
-     `contexte_coach_temporaire`, `contexte_juge`, `liste_grimpeurs_vitesse`,
-     `ouvrir_session_qr`.
+  2. **Aucune ligne.** Les 4 RPC des sessions QR (`contexte_coach_temporaire`,
+     `contexte_juge`, `liste_grimpeurs_vitesse`, `ouvrir_session_qr`) ne sont
+     plus exécutables par `anon` depuis `202611101400` : l'app les appelle
+     après la connexion anonyme, avec le rôle `authenticated` (CT-11).
 - **RLS / sécurité** : toute autre fonction listée est une régression.
 
 ### CT-02 `[auto]` — Création de rencontre refusée sans compte   (couvre : C1, spec #3 R12)
@@ -237,6 +245,134 @@ ligne de résultat créée puis supprimée dans le cas.
 - **Résultat attendu** : session anonyme sans QR et compte sans rôle → **listes
   vides** pour les trois tables ; coach → listes **non vides**.
 
+### CT-11 `[mixte]` — RPC des sessions QR : refusées sans session, ouvertes après connexion anonyme   (couvre : ADR 0001, spec #2 R7/R12, spec #5 R16, spec #10 R1/R2 ; migration 202611101400)
+
+- **Rôle / compte** : clé `anon` seule, puis sessions **anonymes** (`POST
+  $URL/auth/v1/signup` avec `{}`), puis téléphone.
+- **Pré-condition** : migration `202611101400` appliquée ; une rencontre en
+  ③ compétition **du jour**, avec un jeton juge et un jeton coach temporaire
+  actifs.
+- **Étapes** :
+  1. Sans en-tête `Authorization`, appeler les 4 RPC :
+
+     ```bash
+     curl -s -X POST "$URL/rest/v1/rpc/contexte_juge" \
+       -H "apikey: $ANON" -H "Content-Profile: interclub" \
+       -H "Content-Type: application/json" -d '{}'
+     ```
+
+     (idem `contexte_coach_temporaire`, `ouvrir_session_qr` avec
+     `{"p_valeur":"<jeton juge>"}`, `liste_grimpeurs_vitesse` avec
+     `{"p_epreuve":"<épreuve vitesse>"}`).
+  2. Avec le jeton d'une session anonyme **sans scan** : `contexte_juge`,
+     `contexte_coach_temporaire`, `liste_grimpeurs_vitesse`.
+  3. Avec une nouvelle session anonyme : `ouvrir_session_qr` (jeton juge), puis
+     `contexte_juge` et `liste_grimpeurs_vitesse`.
+  4. Idem avec le jeton coach temporaire, puis `contexte_coach_temporaire`.
+  5. `[manuel]` Sur téléphone, scanner le QR juge puis le QR coach temporaire.
+- **Résultat attendu** :
+  1. Erreur `42501` (« permission denied for function … ») pour les 4 ; aucune
+     ligne `session_qr` créée.
+  2. HTTP 200 : `null`, `null`, `[]` (aucun périmètre).
+  3. Session ouverte ; contexte = rencontre et épreuve de vitesse du jeton ;
+     roster non vide.
+  4. Session ouverte ; contexte = club et rencontre du jeton.
+  5. Arrivée sur `/juge` puis sur l'espace coach, sans message d'erreur.
+- **RLS / sécurité** : un 200 en étape 1 est une régression (droit `anon`
+  rétabli).
+
+### CT-12 `[auto]` — Policies `compte` / `session_qr` et trigger `set_updated_at`   (couvre : spec #2 mapping de rôle, ADR 0001 ; migration 202611101400)
+
+- **Rôle / compte** : SQL Editor ; JD-COACH-A, JD-ADMIN ; deux sessions
+  anonymes (juge, coach temporaire).
+- **Pré-condition** : migration `202611101400` appliquée ; rencontre en
+  ③ compétition du jour (sessions QR).
+- **Étapes** :
+  1. SQL Editor :
+
+     ```sql
+     select policyname, qual from pg_policies
+     where schemaname = 'interclub'
+       and policyname in ('lecture de son compte ou admin', 'session_qr_select_own');
+     select proconfig from pg_proc
+     where oid = 'interclub.set_updated_at()'::regprocedure;
+     ```
+
+  2. `GET …/compte?select=utilisateur_id` avec le jeton coach, puis admin.
+  3. Ouvrir deux sessions QR (juge, coach temporaire) ; avec le jeton du juge,
+     `GET …/session_qr?select=utilisateur_id`.
+- **Résultat attendu** :
+  1. Les deux `qual` contiennent `( SELECT auth.uid() AS uid)` ;
+     `proconfig = {search_path=""}`.
+  2. Coach → sa seule ligne ; admin → toutes les lignes de `compte`.
+  3. Une seule ligne : celle du juge.
+
+### CT-13 `[mixte]` — Gardes en base : phase, effectif, prêt, licence   (couvre : spec #16 R13, spec #9 R5, spec #3 R51/R49d/R21c, spec #5 R15, spec #1 R14/R35 ; migration 202611101500)
+
+- **Automatisé** : `npm run test:gardes-base` (stack locale, 60 assertions,
+  appels forgés sous l'identité admin ou coach). En recette : étapes ci-dessous.
+- **Rôle / compte** : SQL Editor ; JD-ADMIN (jeton `ADMIN=$(jeton admin@test.local)`).
+- **Pré-condition** : migration `202611101500_gardes_en_base` appliquée ; une
+  rencontre `$R3` en ③ compétition avec un résultat de voie `$RES` et une
+  épreuve de bloc `$EPB`.
+- **Étapes** :
+  1. SQL Editor :
+
+     ```sql
+     select count(*) from pg_trigger
+     where not tgisinternal
+       and tgname ~ '(_verifier_controle|_structure_modifiable|_rang|^composition_effectif$|^pret_verifier$|^grimpeur_licence_generee$)';
+     select count(*) from pg_policies
+     where schemaname = 'interclub' and tablename in ('resultat_voie', 'resultat_bloc')
+       and coalesce(qual, with_check) ~ 'phase_de_';
+     ```
+
+  2. Coche forgée en ③ :
+     `PATCH …/resultat_voie?id=eq.$RES` avec le jeton admin et
+     `{"controle_le":"2026-01-01T00:00:00Z"}`.
+  3. Ajout de bloc forgé en ③ : `POST …/bloc` avec le jeton admin et
+     `{"epreuve_id":"$EPB","code":"FORGE"}`.
+  4. Dans l'interface, en ① : ajouter une voie, un bloc, un palier et une voie
+     de vitesse à une rencontre, puis au gabarit.
+- **Résultat attendu** :
+  1. `19` triggers ; `6` policies.
+  2. Erreur `controle_hors_cloture` ; la coche reste vide.
+  3. Erreur `structure_figee` ; aucun bloc créé.
+  4. Chaque élément ajouté prend le rang suivant (affiché en dernier) ; aucun
+     message d'erreur.
+- **RLS / sécurité** : un 2xx en étape 2 ou 3 est une régression.
+
+### CT-14 `[mixte]` — Écritures atomiques : barèmes, jetons, invitations   (couvre : spec #3 R46–R48/R55e, spec #2 R23/R29/R37 ; migration 202611101600)
+
+- **Automatisé** : `npm run test:ecritures-atomiques` (stack locale, 39
+  assertions dont l'atomicité : une écriture forcée en échec ne laisse rien).
+  En recette : étapes ci-dessous.
+- **Rôle / compte** : JD-ADMIN, JD-COACH-A ; SQL Editor.
+- **Pré-condition** : migration `202611101600_rpc_ecritures_atomiques` appliquée ;
+  une rencontre en ① avec une épreuve de vitesse.
+- **Étapes** :
+  1. SQL Editor :
+
+     ```sql
+     select proname, prosecdef from pg_proc
+     where pronamespace = 'interclub'::regnamespace
+       and proname in ('mettre_a_jour_bareme_vitesse', 'mettre_a_jour_bareme_vitesse_gabarit',
+                       'regenerer_jeton', 'regenerer_invitation_coach', 'generer_invitation_admin');
+     ```
+
+  2. Admin : modifier le barème de vitesse de la rencontre (un échelon de plus),
+     puis celui du gabarit.
+  3. Admin : régénérer un jeton juge ; coach A : régénérer son jeton de coach
+     temporaire.
+  4. Admin : régénérer l'invitation coach d'un club ; générer deux fois
+     l'invitation administrateur.
+- **Résultat attendu** :
+  1. Cinq lignes, `prosecdef = false` (SECURITY INVOKER).
+  2. Barèmes enregistrés, échelons dans l'ordre saisi.
+  3. Ancien QR inutilisable, nouveau QR affiché, même périmètre.
+  4. Une seule invitation active pour le club ; une seule invitation
+     administrateur valable (la dernière).
+
 ## Registre d'exécution
 
 | Date | Testeur | Version/commit | Cas | Résultat | Remarque |
@@ -251,3 +387,7 @@ ligne de résultat créée puis supprimée dans le cas.
 | | | | CT-08 | ✅ / ❌ | |
 | | | | CT-09 | ✅ / ❌ | |
 | | | | CT-10 | ✅ / ❌ | |
+| | | | CT-11 | ✅ / ❌ | |
+| | | | CT-12 | ✅ / ❌ | |
+| | | | CT-13 | ✅ / ❌ | |
+| | | | CT-14 | ✅ / ❌ | |

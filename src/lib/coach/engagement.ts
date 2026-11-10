@@ -10,6 +10,7 @@ import {
 import { exigerLectureCoachDuClub } from '@/lib/auth/garde-lecture'
 import { lireBornesAge } from '@/lib/rencontres/bornes-age'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { compteEmbarque, nomEmbarque } from '@/lib/supabase/embarque'
 import { verifierLecture } from '@/lib/supabase/lecture'
 import { createClient } from '@/lib/supabase/server'
 
@@ -66,47 +67,29 @@ export async function listerRencontresCoach(options: {
   const annee = options.saison ?? anneeSaison(options.aujourdhui)
   const bornes = bornesSaison(annee)
 
-  const [rencRes, clubsRes, eqRes] = await Promise.all([
-    supabase
-      .from('rencontre')
-      .select('id, date_rencontre, categorie, phase, club_porteur_id')
-      .gte('date_rencontre', bornes.debut)
-      .lte('date_rencontre', bornes.fin),
-    supabase.from('club').select('id, nom'),
-    // Équipes du club (RLS : lecture périmètre club) + leurs compositions.
-    supabase
-      .from('equipe')
-      .select('id, rencontre_id, composition(grimpeur_id)')
-      .eq('club_id', options.clubId),
-  ])
-  if (rencRes.error) throw rencRes.error
-  if (clubsRes.error) throw clubsRes.error
-  if (eqRes.error) throw eqRes.error
+  // Une requête : club porteur embarqué ; équipes du club embarquées (RLS :
+  // lecture périmètre club), leurs grimpeurs comptés par la base.
+  const { data, error } = await supabase
+    .from('rencontre')
+    .select('id, date_rencontre, categorie, phase, club:club_porteur_id(nom), equipe(composition(count))')
+    .eq('equipe.club_id', options.clubId)
+    .gte('date_rencontre', bornes.debut)
+    .lte('date_rencontre', bornes.fin)
+  if (error) throw error
 
-  const nomParClub = new Map<string, string>()
-  for (const c of clubsRes.data ?? []) nomParClub.set(c.id as string, c.nom as string)
-
-  const nbEquipes = new Map<string, number>()
-  const nbGrimpeurs = new Map<string, number>()
-  for (const e of eqRes.data ?? []) {
-    const rid = e.rencontre_id as string
-    nbEquipes.set(rid, (nbEquipes.get(rid) ?? 0) + 1)
-    const compos = (e.composition as { grimpeur_id: string }[] | null) ?? []
-    nbGrimpeurs.set(rid, (nbGrimpeurs.get(rid) ?? 0) + compos.length)
-  }
-
-  return (rencRes.data ?? [])
+  return (data ?? [])
     .map((r) => {
       const id = r.id as string
       const phase = r.phase as Phase
+      const equipes = (r.equipe as { composition: unknown }[] | null) ?? []
       return {
         id,
         dateRencontre: r.date_rencontre as string,
         categorie: r.categorie as Categorie,
         phase,
-        clubPorteurNom: nomParClub.get(r.club_porteur_id as string) ?? '(club inconnu)',
-        nbEquipesClub: nbEquipes.get(id) ?? 0,
-        nbGrimpeursClub: nbGrimpeurs.get(id) ?? 0,
+        clubPorteurNom: nomEmbarque(r.club) ?? '(club inconnu)',
+        nbEquipesClub: equipes.length,
+        nbGrimpeursClub: equipes.reduce((n, e) => n + compteEmbarque(e.composition), 0),
         editable: estEditable(phase),
       }
     })
@@ -161,7 +144,7 @@ export async function getEngagementRencontre(
   // UNE vague (lot 3 du plan « appels Supabase ») : la rencontre est lue avec le
   // reste (le filtre ne dépend que de `rencontreId` et `clubId`) ; noms des
   // clubs et fiches des grimpeurs composés ou prêtés sont embarqués.
-  const [rencRes, clubRes, equipesRes, rosterRes, pretsRes] = await Promise.all([
+  const [rencRes, clubRes, equipesRes, rosterRes, pretsRes, surclRes] = await Promise.all([
     supabase
       .from('rencontre')
       .select('id, date_rencontre, categorie, phase, club_porteur_id, club:club_porteur_id(nom)')
@@ -190,6 +173,10 @@ export async function getEngagementRencontre(
       .select('grimpeur:grimpeur_id(id, nom, prenom, club_id, annee_naissance, club:club_id(nom))')
       .eq('rencontre_id', rencontreId)
       .eq('club_accueil_id', clubId),
+    // Surclassements actifs des grimpeurs visibles (RLS : ceux du club et les
+    // prêtés), toutes saisons : l'assemblage retient la saison de la rencontre,
+    // inconnue avant cette vague (spec #21 R7, R20).
+    supabase.from('surclassement').select('grimpeur_id, saison').is('revoque_le', null),
   ])
   const rencontre = verifierLecture(rencRes, 'de la rencontre')
   if (!rencontre) return null
@@ -255,6 +242,10 @@ export async function getEngagementRencontre(
       grimpeursCompo,
       rosterClub: roster.map((g) => versGrimpeurLu({ ...g, club_id: clubId })),
       pretes,
+      surclassements: (verifierLecture(surclRes, 'des surclassements') ?? []).map((s) => ({
+        grimpeurId: s.grimpeur_id as string,
+        saison: s.saison as number,
+      })),
     },
     clubId,
   )

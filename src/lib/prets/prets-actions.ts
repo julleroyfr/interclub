@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 
 import { creerPret, PretInvalideError } from '@/domaine/pret'
 import { getUtilisateurCourant } from '@/lib/auth/session'
+import { verifierLecture } from '@/lib/supabase/lecture'
 import { createClient } from '@/lib/supabase/server'
 
 import { type EtatPret } from './prets'
@@ -26,7 +27,7 @@ export async function creerPretAction(
   const clubAccueilId = String(formData.get('clubAccueilId') ?? '')
 
   const supabase = await createClient()
-  const [{ data: grimpeur }, { data: engage }] = await Promise.all([
+  const [grimpeurRes, engageRes] = await Promise.all([
     supabase.from('grimpeur').select('club_id').eq('id', grimpeurId).maybeSingle(),
     // Déjà engagé (toute équipe) dans cette rencontre → indisponible au prêt (R14).
     supabase
@@ -36,6 +37,9 @@ export async function creerPretAction(
       .eq('grimpeur_id', grimpeurId)
       .maybeSingle(),
   ])
+  // Une lecture en échec n'est pas « introuvable » ni « non engagé » (B3).
+  const grimpeur = verifierLecture(grimpeurRes, 'du grimpeur')
+  const engage = verifierLecture(engageRes, 'de la composition')
 
   let pret
   try {
@@ -69,7 +73,7 @@ export async function creerPretAction(
     return { erreur: 'La création du prêt a échoué. Réessayez.' }
   }
 
-  revalidatePath('/admin/prets')
+  revalidatePath(`/admin/rencontres/${rencontreId}`)
   return { succes: 'Prêt créé.' }
 }
 
@@ -94,6 +98,6 @@ export async function revoquerPretAction(
     .eq('grimpeur_id', grimpeurId)
   if (error) return { erreur: 'La révocation a échoué. Réessayez.' }
 
-  revalidatePath('/admin/prets')
+  revalidatePath(`/admin/rencontres/${rencontreId}`)
   return { succes: 'Prêt révoqué.' }
 }

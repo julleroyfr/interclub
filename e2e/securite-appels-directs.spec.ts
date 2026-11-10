@@ -1,9 +1,15 @@
 import type { APIRequestContext, APIResponse } from '@playwright/test'
 
 import { infosApi } from './helpers/api'
-import { COMPTES, CLUB_A, JETON, RENCONTRE_PILOTE_DATE } from './helpers/donnees'
+import { COMPTES, CLUB_A, JETON, RENCONTRE_PILOTE, RENCONTRE_PILOTE_DATE } from './helpers/donnees'
 import { expect, test } from './helpers/fixtures'
-import { execSql, nettoyerSessionsQr, poserDate, poserPhase } from './helpers/sql'
+import {
+  compterSessionsQr,
+  execSql,
+  nettoyerSessionsQr,
+  poserDate,
+  poserPhase,
+} from './helpers/sql'
 
 // Cahier 28 — sécurité en base, appels PostgREST DIRECTS (revue du 2026-10-03,
 // lot 1, migration 202610031100_durcissement_securite). Aucun écran : chaque cas
@@ -16,7 +22,9 @@ const RENCONTRE_ADO = 'adadadad-adad-adad-adad-adadadadadad'
 const EPREUVE_VITESSE = '88888888-8888-8888-8888-888888888803'
 const ADMIN_ID = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
 const COACH_ID = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
-const RPC_ANON = [
+// RPC des sessions QR : appelées APRÈS la connexion anonyme (rôle
+// `authenticated`), fermées à `anon` depuis 202611101400 (CT-01, CT-11).
+const RPC_QR = [
   'contexte_coach_temporaire',
   'contexte_juge',
   'liste_grimpeurs_vitesse',
@@ -95,7 +103,7 @@ test.describe('Cahier 28 — sécurité en base, appels PostgREST directs', () =
     supprimerRencontresDuJourTest()
   })
 
-  test('CT-01 — aucune fonction ouverte à PUBLIC ; anon limité aux RPC QR', () => {
+  test('CT-01 — aucune fonction ouverte à PUBLIC ni à anon', () => {
     const ouvertesPublic = execSql(
       `select p.proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace
         where n.nspname = 'interclub'
@@ -110,7 +118,7 @@ test.describe('Cahier 28 — sécurité en base, appels PostgREST directs', () =
         where n.nspname = 'interclub' and has_function_privilege('anon', p.oid, 'execute')
         order by 1;`,
     )
-    expect(anon.split('\n')).toEqual(RPC_ANON)
+    expect(anon).toBe('')
   })
 
   test('CT-02 — création de rencontre refusée sans compte (C1, spec #3 R12)', async ({
@@ -283,12 +291,16 @@ test.describe('Cahier 28 — sécurité en base, appels PostgREST directs', () =
       const { url } = infosApi()
       const filtre = `voie_difficulte_id=eq.${voie}&grimpeur_id=eq.${grimpeur}`
 
+      // La coche ne se pose qu'en ④ (spec #16 R13, garde en base 202611101500) ;
+      // le coach corrige après un retour en ③.
+      execSql(`update interclub.rencontre set phase = 'cloture' where id = '${RENCONTRE_ADO}';`)
       const coche = await request.patch(`${url}/rest/v1/resultat_voie?${filtre}`, {
         headers: { ...entetes(jetonAdmin, true), Prefer: 'return=representation' },
         data: { controle_le: new Date().toISOString(), controle_par: ADMIN_ID },
       })
       expect(coche.status()).toBe(200)
       expect((await coche.json())[0].controle_par).toBe(ADMIN_ID)
+      execSql(`update interclub.rencontre set phase = 'competition' where id = '${RENCONTRE_ADO}';`)
 
       // Correction du coach qui tente au passage d'effacer la coche.
       const correction = await request.patch(`${url}/rest/v1/resultat_voie?${filtre}`, {
@@ -441,6 +453,180 @@ test.describe('Cahier 28 — sécurité en base, appels PostgREST directs', () =
 
       expect((await patch(jetonAdmin, { actif: true })).status()).toBe(204)
       expect(actif()).toBe('t')
+    })
+  })
+
+  test.describe('CT-11 — RPC des sessions QR : refusées sans session, ouvertes après connexion anonyme (202611101400)', () => {
+    test.beforeAll(() => {
+      nettoyerSessionsQr()
+      poserPhase('competition')
+      poserDate('today')
+    })
+
+    test.afterAll(() => {
+      nettoyerSessionsQr()
+      poserPhase('pre_competition')
+      poserDate(RENCONTRE_PILOTE_DATE)
+    })
+
+    /** Connexion anonyme Supabase, comme `signInAnonymously` sur /scan (ADR 0001). */
+    async function connexionAnonyme(request: APIRequestContext): Promise<string> {
+      const { url, anon } = infosApi()
+      const rep = await request.post(`${url}/auth/v1/signup`, {
+        headers: { apikey: anon, 'Content-Type': 'application/json' },
+        data: {},
+      })
+      expect(rep.ok()).toBe(true)
+      return (await rep.json()).access_token as string
+    }
+
+    test('sans session (clé anon seule) : refus de privilège, aucune session ouverte', async ({
+      request,
+    }) => {
+      const corps: Record<string, object> = {
+        ouvrir_session_qr: { p_valeur: JETON.juge },
+        liste_grimpeurs_vitesse: { p_epreuve: EPREUVE_VITESSE },
+      }
+      for (const fonction of RPC_QR) {
+        const rep = await appelerRpc(request, fonction, corps[fonction] ?? {})
+        await attendrePermissionRefusee(rep, fonction)
+      }
+      expect(compterSessionsQr()).toBe(0)
+    })
+
+    test('connexion anonyme sans scan : RPC exécutées, aucun périmètre', async ({ request }) => {
+      const jeton = await connexionAnonyme(request)
+      for (const fonction of ['contexte_juge', 'contexte_coach_temporaire']) {
+        const rep = await appelerRpc(request, fonction, {}, jeton)
+        expect(rep.status()).toBe(200)
+        expect(await rep.json()).toBeNull()
+      }
+      const liste = await appelerRpc(
+        request,
+        'liste_grimpeurs_vitesse',
+        { p_epreuve: EPREUVE_VITESSE },
+        jeton,
+      )
+      expect(liste.status()).toBe(200)
+      expect(await liste.json()).toEqual([])
+    })
+
+    test('scan du jeton juge : session ouverte, contexte et roster lisibles (spec #10 R1/R2)', async ({
+      request,
+    }) => {
+      const jeton = await connexionAnonyme(request)
+      const scan = await appelerRpc(request, 'ouvrir_session_qr', { p_valeur: JETON.juge }, jeton)
+      expect(scan.ok()).toBe(true)
+
+      const contexte = await appelerRpc(request, 'contexte_juge', {}, jeton)
+      expect(contexte.ok()).toBe(true)
+      expect(await contexte.json()).toMatchObject({
+        rencontre_id: RENCONTRE_PILOTE,
+        epreuve_vitesse_id: EPREUVE_VITESSE,
+      })
+
+      const liste = await appelerRpc(
+        request,
+        'liste_grimpeurs_vitesse',
+        { p_epreuve: EPREUVE_VITESSE },
+        jeton,
+      )
+      expect(liste.ok()).toBe(true)
+      expect(((await liste.json()) as unknown[]).length).toBeGreaterThan(0)
+    })
+
+    test('scan du jeton coach temporaire : session ouverte, contexte lisible (spec #5 R16)', async ({
+      request,
+    }) => {
+      const jeton = await connexionAnonyme(request)
+      const scan = await appelerRpc(
+        request,
+        'ouvrir_session_qr',
+        { p_valeur: JETON.coachTemp },
+        jeton,
+      )
+      expect(scan.ok()).toBe(true)
+
+      const contexte = await appelerRpc(request, 'contexte_coach_temporaire', {}, jeton)
+      expect(contexte.ok()).toBe(true)
+      expect(await contexte.json()).toMatchObject({
+        club_id: CLUB_A,
+        rencontre_id: RENCONTRE_PILOTE,
+      })
+    })
+  })
+
+  test.describe('CT-12 — policies compte / session_qr et trigger set_updated_at (202611101400)', () => {
+    test.afterAll(() => {
+      nettoyerSessionsQr()
+      poserPhase('pre_competition')
+      poserDate(RENCONTRE_PILOTE_DATE)
+    })
+
+    test('auth.uid() évalué une fois par requête ; search_path figé', () => {
+      const policies = execSql(
+        `select policyname || '=' || (qual like '%( SELECT auth.uid() AS uid)%')::text
+           from pg_policies
+          where schemaname = 'interclub'
+            and policyname in ('lecture de son compte ou admin', 'session_qr_select_own')
+          order by 1;`,
+      )
+      expect(policies.split('\n')).toEqual([
+        'lecture de son compte ou admin=true',
+        'session_qr_select_own=true',
+      ])
+      expect(
+        execSql(
+          `select array_to_string(proconfig, ',') from pg_proc
+            where oid = 'interclub.set_updated_at()'::regprocedure;`,
+        ),
+      ).toBe('search_path=""')
+    })
+
+    test('compte : chacun lit le sien, l’admin lit tout (spec #2 mapping de rôle)', async ({
+      request,
+    }) => {
+      const { url } = infosApi()
+      const lireComptes = async (jeton: string) => {
+        const rep = await request.get(`${url}/rest/v1/compte?select=utilisateur_id`, {
+          headers: entetes(jeton),
+        })
+        expect(rep.ok()).toBe(true)
+        return ((await rep.json()) as { utilisateur_id: string }[]).map((c) => c.utilisateur_id)
+      }
+      expect(await lireComptes(jetonCoach)).toEqual([COACH_ID])
+      expect((await lireComptes(jetonAdmin)).length).toBe(
+        Number(execSql('select count(*) from interclub.compte;')),
+      )
+    })
+
+    test('session_qr : un utilisateur anonyme ne lit que sa session (ADR 0001)', async ({
+      request,
+    }) => {
+      nettoyerSessionsQr()
+      poserPhase('competition')
+      poserDate('today')
+      const { url, anon } = infosApi()
+      const ouvrir = async (valeur: string) => {
+        const inscription = await request.post(`${url}/auth/v1/signup`, {
+          headers: { apikey: anon, 'Content-Type': 'application/json' },
+          data: {},
+        })
+        const { access_token: jeton, user } = await inscription.json()
+        expect((await appelerRpc(request, 'ouvrir_session_qr', { p_valeur: valeur }, jeton)).ok()).toBe(
+          true,
+        )
+        return { jeton: jeton as string, id: user.id as string }
+      }
+      const juge = await ouvrir(JETON.juge)
+      await ouvrir(JETON.coachTemp)
+      expect(compterSessionsQr()).toBe(2)
+
+      const rep = await request.get(`${url}/rest/v1/session_qr?select=utilisateur_id`, {
+        headers: entetes(juge.jeton),
+      })
+      expect(rep.ok()).toBe(true)
+      expect(await rep.json()).toEqual([{ utilisateur_id: juge.id }])
     })
   })
 })

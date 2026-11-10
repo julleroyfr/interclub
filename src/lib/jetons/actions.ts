@@ -106,8 +106,9 @@ export async function revoquerJeton(formData: FormData): Promise<void> {
 
 /**
  * Régénère un jeton (R23) : révoque l'ancien PUIS crée un nouveau jeton de même
- * périmètre (valeur distincte via le défaut SQL). L'ordre importe : révoquer
- * d'abord libère l'index unique « un actif par voie / club » avant l'insert.
+ * périmètre (valeur distincte via le défaut SQL), en une transaction (RPC
+ * `regenerer_jeton`, lot 7, A3) : un échec laisse l'ancien jeton actif. Le
+ * jeton n'est plus relu (P15).
  */
 export async function regenererJeton(formData: FormData): Promise<void> {
   const chemin = cheminDeRetour(formData.get('chemin'), '/')
@@ -120,31 +121,8 @@ export async function regenererJeton(formData: FormData): Promise<void> {
   }
 
   const supabase = await createClient()
-  const { data: ancien, error: eRead } = await supabase
-    .from('jeton_qr')
-    .select('rencontre_id, nature, club_id, voie_vitesse_id, equipe_id')
-    .eq('id', jetonId)
-    .single()
-  if (eRead || !ancien) {
-    redirect(`${chemin}${chemin.includes('?') ? '&' : '?'}erreur=regeneration`)
-  }
-
-  const { error: eRevoke } = await supabase
-    .from('jeton_qr')
-    .update({ actif: false })
-    .eq('id', jetonId)
-  if (eRevoke) {
-    redirect(`${chemin}${chemin.includes('?') ? '&' : '?'}erreur=regeneration`)
-  }
-
-  const { error: eInsert } = await supabase.from('jeton_qr').insert({
-    rencontre_id: ancien.rencontre_id,
-    nature: ancien.nature,
-    club_id: ancien.club_id,
-    voie_vitesse_id: ancien.voie_vitesse_id,
-    equipe_id: ancien.equipe_id,
-  })
-  if (eInsert) {
+  const { error } = await supabase.rpc('regenerer_jeton', { p_jeton: jetonId })
+  if (error) {
     redirect(`${chemin}${chemin.includes('?') ? '&' : '?'}erreur=regeneration`)
   }
   retour(chemin)

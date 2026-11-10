@@ -7,7 +7,7 @@
 > IHM : [08-ihm-responsive.md](../conventions/08-ihm-responsive.md).
 
 - **Spec de référence** : `docs/specs/03-ecrans-de-parametrage-admin.md` (écran
-  Grimpeurs, R20–R26) ; `docs/specs/01-roles-et-autorisations.md` (R18 : le
+  Grimpeurs, R20–R26b — filtre par catégorie R26b ajouté le 2026-11-08) ; `docs/specs/01-roles-et-autorisations.md` (R18 : le
   coach gère les grimpeurs de son club ; R11/R13 : l'admin paramètre ; R6 :
   roster éditable hors phase). Cet écran est le **volet admin** (gère tout club) ;
   le volet **coach** (son seul club) relèvera d'une tranche coach ultérieure.
@@ -164,6 +164,52 @@ Depuis l'accueil (connecté **admin**) : bouton **« Grimpeurs »** →
   migration passe directement (aucun backfill) ; le **seed** porte le sexe des
   grimpeurs de test.
 
+### CT-11 — Filtrer la liste par catégorie (R26b, R26b-1 à R26b-3)
+
+- **Pré-requis** : migration
+  `202611081000_rpc_rechercher_grimpeurs_filtre_categorie` appliquée ; saison
+  2026-2027, `AGE_BASCULE = 12`, `AGE_ADO_MAX = 18`. Grimpeurs nés en 2016,
+  2014 (pivot), 2011, 2009 (17 ans), 1990, et un enfant né en 2016 **surclassé**
+  pour 2026-2027 (spec #21).
+- **Étapes** :
+  1. Ouvrir `/admin/grimpeurs` : sous les filtres, la mention « Âges de la
+     saison 2026–2027 » est affichée.
+  2. Choisir **Enfant** → **Rechercher**, puis **Ado**, puis **Adulte**.
+  3. Combiner **Ado** avec un **club** et un nom dans la recherche.
+  4. Avec plus de 50 résultats, passer à la page suivante.
+  5. Cliquer **Effacer**.
+- **Attendu** :
+  1. Enfant : nés en 2014 ou après (2016, pivot 2014, surclassé). Ado : nés de
+     2008 à 2014 **et** le surclassé. Adulte : nés en 2010 ou avant (2009, 1990).
+     Le pivot apparaît en Enfant et en Ado ; le 17 ans en Ado et en Adulte.
+  2. Le compteur « N résultats … — Ado » reflète le roster **entier** filtré.
+  3. Les filtres se cumulent.
+  4. La pagination conserve recherche, club et catégorie (`?categorie=…` dans
+     l'adresse).
+  5. Tous les filtres reviennent à « Tous les clubs » / « Toutes les
+     catégories », champ de recherche vide.
+- **Automatisé** : `e2e/filtre-categorie-grimpeurs.spec.ts` (étapes 1–3, 5 ;
+  catégorie inconnue ignorée). Pagination (étape 4) à vérifier à la main.
+
+### CT-12 — Âges des catégories non configurés (R26b-4)
+
+- **Étapes** : en local, retirer `AGE_BASCULE` de `.env.local`, relancer
+  `npm run dev`, ouvrir `/admin/grimpeurs` (puis remettre la variable).
+- **Attendu** : pas de sélecteur de catégorie ; la mention « Filtre par
+  catégorie indisponible : âges des catégories non configurés. » s'affiche ; la
+  recherche et le filtre club fonctionnent.
+
+### CT-13 — Application de la migration du filtre catégorie (recette, prod)
+
+- **Étapes** : exécuter
+  `202611081000_rpc_rechercher_grimpeurs_filtre_categorie.sql` dans le SQL
+  Editor, puis ouvrir `/admin/grimpeurs` (avec et sans filtre catégorie).
+- **Attendu** : une seule fonction `interclub.rechercher_grimpeurs` (signature à
+  7 paramètres, aucune erreur PGRST203) ; ligne présente dans
+  `interclub.version` ; la liste s'affiche comme avant sans filtre.
+- **Local** : réversibilité et idempotence vérifiées par
+  `npm run db:verifier-retours -- 202611081000_rpc_rechercher_grimpeurs_filtre_categorie`.
+
 ## Registre d'exécution
 
 | Cas | Environnement | Date | Testeur | Verdict | Notes |
@@ -180,6 +226,9 @@ Depuis l'accueil (connecté **admin**) : bouton **« Grimpeurs »** →
 | CT-08 | | | | ⬜ | |
 | CT-09 | | | | ⬜ | |
 | CT-10 | | | | ⬜ | |
+| CT-11 | local | 2026-11-08 | Claude (E2E) | ✅ | étapes 1–3, 5 automatisées ; pagination (4) à vérifier en recette |
+| CT-12 | | | | ⬜ | |
+| CT-13 | local | 2026-11-08 | Claude (`db:verifier-retours`) | ✅ | à appliquer en recette puis prod |
 
 > Le domaine (`normaliserSaisieGrimpeur`) est couvert par Vitest (`npm run test`,
 > `src/domaine/grimpeur.test.ts`). Le reste (UI, RLS, garde) se vérifie ici, sur

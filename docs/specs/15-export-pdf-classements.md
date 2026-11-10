@@ -7,7 +7,7 @@
     **fichier PDF** reprenant les classements **individuel**, **par équipe** et
     **par club** de la rencontre. Fonction accessible aux **coachs** et aux
     **admins**.
-  - **Règlement** « CT33 FFME — 2025-2026 » §8 (« Classements ») : « un
+  - **Règlement** « CT33 FFME — 2026-2027 » §8 (« Classements ») : « un
     classement individuel et d'équipes de clubs est établi et **communiqué** » —
     le PDF est le support de cette communication.
   - **Spec #7 — Classement** (`07-classement.md`) : source **unique** du calcul

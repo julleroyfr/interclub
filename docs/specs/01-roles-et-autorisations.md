@@ -2,7 +2,7 @@
 
 - **Statut** : validée (le 2026-07-12)
 - **Sources** : décision produit du 2026-07-12 (rôles, droits, cycle de vie
-  d'une rencontre) ; règlement CT33 FFME 2025-2026 **enfant/ado** et v3.1 Adultes
+  d'une rencontre) ; règlement CT33 FFME 2026-2027 **enfant/ado** et Addendum Adultes
   (épreuves voie / bloc / vitesse, résultat de vitesse, catégories matin /
   après-midi, prêts de grimpeurs). ⚠️ La dernière version du règlement prime
   toujours (cf. `docs/conventions/01-workflow-spec-first-tdd.md` §4).
@@ -102,6 +102,11 @@
   plus tôt), et non plus 19 ; il est lui aussi lu dans une variable
   d'environnement serveur, **`AGE_ADO_MAX`** (R34bis). Specs qui en héritent :
   #5 R12, #19 R7, #20 R3.
+- **Révision** : 2026-11-07 (**validée le 2026-11-07**) — **surclassement**
+  enfant → ado (spec #21, règle de changement). **R34 complétée** : un grimpeur
+  **surclassé** pour la saison est éligible ado en plus de l'enfant ; **R35
+  complétée** : il peut être prêté sur une rencontre ado, et son prêt est
+  supprimé à la révocation tant que la rencontre est en ① ou ②.
 
 ## Objectif
 
@@ -261,6 +266,10 @@ conditionne les accès temporels.
   (12 ans) est éligible enfant **et** ado ; né en 2013 (13 ans), ado seulement ;
   né en 2015 (11 ans), enfant seulement ; né en 2008 (18 ans), ado ; né en 2007
   (19 ans), **pas** ado.
+  *(Surclassement, rév. 2026-11-07 : un grimpeur d'âge < B **surclassé** par
+  l'admin pour la saison est **aussi** éligible ado pour les rencontres de cette
+  saison ; l'éligibilité n'est jamais réexaminée a posteriori — spec #21 R7,
+  R12, R16.)*
   *(Catégorie adulte, rév. 2026-10-23 : troisième catégorie **adulte**, éligible
   dès 16 ans en saison, sans âge maximal ; prêts sans objet en adulte — spec #20
   R1–R3, R11.)*
@@ -362,7 +371,9 @@ conditionne les accès temporels.
   **révoquer** un prêt. Un grimpeur **déjà engagé** dans une équipe de la rencontre
   (R14) **ne peut être prêté** — il ne joue que pour **une** équipe par rencontre ;
   seuls les grimpeurs **disponibles** (non engagés, non déjà prêtés) sont proposés
-  au prêt. Il doit aussi être **éligible à la catégorie** de la rencontre (R34).
+  au prêt. Il doit aussi être **éligible à la catégorie** de la rencontre (R34),
+  surclassement compris (spec #21 R9) ; à la révocation d'un surclassement, ses
+  prêts sur les rencontres ado en ① ou ② sont supprimés (spec #21 R12).
 - **R36.** Tant qu'un prêt est actif (R35), le **coach du club d'accueil gère le
   grimpeur prêté comme un grimpeur de son club** pour cette rencontre : il peut
   l'**affecter à une équipe, l'en retirer, le déplacer** entre ses équipes

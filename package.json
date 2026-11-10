@@ -25,6 +25,7 @@
     "test:cahier:integrite": "playwright test integrite-engagement --project=chromium --workers=1",
     "test:cahier:phase": "playwright test pilotage-phase --project=chromium --workers=1",
     "test:cahier:erreur": "playwright test ecran-erreur --project=chromium --workers=1",
+    "test:cahier:surclassement": "playwright test surclassement --project=chromium --workers=1",
     "test:t5a": "bash scripts/test-t5a.sh",
     "test:t5b": "bash scripts/test-t5b.sh",
     "test:t5c": "bash scripts/test-t5c.sh",
@@ -36,6 +37,12 @@
     "test:invitation": "bash scripts/test-invitation.sh",
     "test:import-csv": "bash scripts/test-import-csv.sh",
     "test:adulte": "bash scripts/test-categorie-adulte.sh",
+    "test:surclassement": "bash scripts/test-surclassement.sh",
+    "test:rpc-comptages": "bash scripts/test-rpc-comptages.sh",
+    "test:points-vitesse-reecriture": "bash scripts/test-points-vitesse-reecriture.sh",
+    "test:cloture": "bash scripts/test-cloture.sh",
+    "test:gardes-base": "bash scripts/test-gardes-base.sh",
+    "test:ecritures-atomiques": "bash scripts/test-ecritures-atomiques.sh",
     "db:reset": "supabase db reset && npm run db:verifier",
     "db:consolider": "bash scripts/consolider-archive.sh",
     "db:verifier": "bash scripts/verifier-schema.sh",
@@ -76,5 +83,9 @@
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.1.10"
+  },
+  "allowScripts": {
+    "sharp@0.34.5": true,
+    "unrs-resolver@1.12.2": true
   }
 }

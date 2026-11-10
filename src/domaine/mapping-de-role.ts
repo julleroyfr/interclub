@@ -111,18 +111,3 @@ export function verifierSuppressionCompte(demande: DemandeSuppressionCompte): st
   }
   return cibleId
 }
-
-/** Utilisateur Supabase Auth, réduit à ce qui sert ici. */
-type UtilisateurAuth = { id: string; email?: string | null; is_anonymous?: boolean }
-
-/**
- * Comptes permanents parmi les utilisateurs Supabase Auth : les comptes
- * **anonymes** des sessions QR éphémères (R6) en sont exclus (R46).
- */
-export function comptesPermanents(
-  utilisateurs: UtilisateurAuth[],
-): { id: string; email: string | null }[] {
-  return utilisateurs
-    .filter((u) => !u.is_anonymous)
-    .map((u) => ({ id: u.id, email: u.email ?? null }))
-}

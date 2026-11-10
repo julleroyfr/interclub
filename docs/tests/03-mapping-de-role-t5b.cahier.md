@@ -219,6 +219,29 @@ R3) ; aucune de ces écritures n'aboutit, l'état n'est donc pas modifié. Les c
 - **Résultat attendu** : « Seul un administrateur peut supprimer un compte. » ;
   rien n'est supprimé.
 
+### CT-16 — Tous les comptes permanents listés, anonymes exclus   (couvre : R46 ; volume)
+
+- **Pré-requis** : migration **`202611101000_rpc_lister_comptes_permanents`**
+  appliquée à la main (RPC `lister_comptes_permanents`, EXECUTE à
+  `service_role` seul).
+- **Rôle / compte** : `admin@test.local`.
+- **Étapes** :
+  1. SQL Editor :
+
+     ```sql
+     select count(*) from auth.users where not coalesce(is_anonymous, false);
+     select count(*) from auth.users where is_anonymous;
+     select count(*) from interclub.lister_comptes_permanents();
+     ```
+
+  2. Ouvrir `/admin/mapping`.
+- **Résultat attendu** : la RPC renvoie autant de lignes que de comptes
+  **non anonymes**, quel que soit le nombre d'anonymes (sessions QR). L'écran
+  liste chacun de ces comptes, avec son rôle et son club ; aucun compte anonyme
+  n'apparaît. Appel de la RPC avec la clé `anon` ou une session admin : refusé.
+- **Automatisé** : `npm run test:rpc-comptages` (1100 anonymes, droits, retour
+  arrière) et `e2e/compteurs-volume.spec.ts` (écran).
+
 ## Registre d'exécution
 
 | Date | Testeur | Version/commit | Cas | Résultat | Remarque |
@@ -238,3 +261,5 @@ R3) ; aucune de ces écritures n'aboutit, l'état n'est donc pas modifié. Les c
 | | | | CT-13 | ⏳ | suppression de compte (R41–R46) |
 | | | | CT-14 | ⏳ | suppression de compte (R41–R46) |
 | | | | CT-15 | ⏳ | suppression de compte (R41–R46) |
+| 2026-11-10 | julleroyfr | | CT-16 | ✅ | local ; `test:rpc-comptages` + E2E `compteurs-volume` ; reste recette |
+| 2026-11-10 | julleroyfr (agent) | `a8ec714` | CT-16 | ✅ | local déroulé : RPC = 6 comptes non anonymes (6 anonymes présents) ; `test:rpc-comptages` 24/24 (1100 anonymes, refus anon/authenticated) ; écran : E2E `compteurs-volume` |

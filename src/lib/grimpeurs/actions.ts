@@ -8,6 +8,7 @@ import {
   normaliserSaisieGrimpeur,
 } from '@/domaine/grimpeur'
 import { getUtilisateurCourant } from '@/lib/auth/session'
+import { verifierLecture } from '@/lib/supabase/lecture'
 import { createClient } from '@/lib/supabase/server'
 
 import { type EtatGrimpeur } from './grimpeurs'
@@ -135,11 +136,10 @@ export async function modifierGrimpeur(
   const supabase = await createClient()
   // Licence actuelle lue en base (pas depuis le formulaire) : seule une licence
   // générée déjà portée peut être conservée (spec #3 R21c).
-  const { data: actuel } = await supabase
-    .from('grimpeur')
-    .select('licence')
-    .eq('id', id)
-    .maybeSingle()
+  const actuel = verifierLecture(
+    await supabase.from('grimpeur').select('licence').eq('id', id).maybeSingle(),
+    'du grimpeur',
+  )
   if (!actuel) return { erreur: 'Grimpeur introuvable.' }
 
   let saisie
