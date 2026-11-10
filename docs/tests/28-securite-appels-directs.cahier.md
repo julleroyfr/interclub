@@ -13,6 +13,8 @@
 > `(select auth.uid())` dans les policies `compte` et `session_qr`.
 > Couvre enfin `202611101500_gardes_en_base` (CT-13) : gardes de phase, d'effectif,
 > de prêt et de licence portées par la base (lot 11 du plan « appels Supabase »).
+> Et `202611101600_rpc_ecritures_atomiques` (CT-14) : écritures en plusieurs étapes
+> faites en une transaction (lot 7).
 > **Automatisé** : `npm run test:cahier:securite` (`e2e/securite-appels-directs.spec.ts`, stack locale) rejoue CT-01 → CT-07 et CT-09 → CT-12 ; CT-08 = suites E2E existantes. En recette, les appels `curl` ci-dessous restent le mode d'exécution.
 > Règles : [docs/conventions/06-cahier-de-test.md](../conventions/06-cahier-de-test.md).
 
@@ -340,6 +342,37 @@ ligne de résultat créée puis supprimée dans le cas.
      message d'erreur.
 - **RLS / sécurité** : un 2xx en étape 2 ou 3 est une régression.
 
+### CT-14 `[mixte]` — Écritures atomiques : barèmes, jetons, invitations   (couvre : spec #3 R46–R48/R55e, spec #2 R23/R29/R37 ; migration 202611101600)
+
+- **Automatisé** : `npm run test:ecritures-atomiques` (stack locale, 39
+  assertions dont l'atomicité : une écriture forcée en échec ne laisse rien).
+  En recette : étapes ci-dessous.
+- **Rôle / compte** : JD-ADMIN, JD-COACH-A ; SQL Editor.
+- **Pré-condition** : migration `202611101600_rpc_ecritures_atomiques` appliquée ;
+  une rencontre en ① avec une épreuve de vitesse.
+- **Étapes** :
+  1. SQL Editor :
+
+     ```sql
+     select proname, prosecdef from pg_proc
+     where pronamespace = 'interclub'::regnamespace
+       and proname in ('mettre_a_jour_bareme_vitesse', 'mettre_a_jour_bareme_vitesse_gabarit',
+                       'regenerer_jeton', 'regenerer_invitation_coach', 'generer_invitation_admin');
+     ```
+
+  2. Admin : modifier le barème de vitesse de la rencontre (un échelon de plus),
+     puis celui du gabarit.
+  3. Admin : régénérer un jeton juge ; coach A : régénérer son jeton de coach
+     temporaire.
+  4. Admin : régénérer l'invitation coach d'un club ; générer deux fois
+     l'invitation administrateur.
+- **Résultat attendu** :
+  1. Cinq lignes, `prosecdef = false` (SECURITY INVOKER).
+  2. Barèmes enregistrés, échelons dans l'ordre saisi.
+  3. Ancien QR inutilisable, nouveau QR affiché, même périmètre.
+  4. Une seule invitation active pour le club ; une seule invitation
+     administrateur valable (la dernière).
+
 ## Registre d'exécution
 
 | Date | Testeur | Version/commit | Cas | Résultat | Remarque |
@@ -357,3 +390,4 @@ ligne de résultat créée puis supprimée dans le cas.
 | | | | CT-11 | ✅ / ❌ | |
 | | | | CT-12 | ✅ / ❌ | |
 | | | | CT-13 | ✅ / ❌ | |
+| | | | CT-14 | ✅ / ❌ | |

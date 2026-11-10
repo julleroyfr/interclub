@@ -34,7 +34,7 @@ import {
 } from '@/domaine/structure'
 import { BaremeVitesseInvalideError, type EchelonBareme } from '@/domaine/vitesse'
 import { getUtilisateurCourant } from '@/lib/auth/session'
-import { lireEchelonsSoumis } from '@/lib/bareme-vitesse'
+import { echelonsSql, lireEchelonsSoumis } from '@/lib/bareme-vitesse'
 import { verifierLecture } from '@/lib/supabase/lecture'
 import { createClient } from '@/lib/supabase/server'
 
@@ -406,34 +406,16 @@ export async function mettreAJourBaremeVitesse(
   const refusSaisies = refusBaremeVitesse(saisies.count ?? 0)
   if (refusSaisies) return { erreur: refusSaisies }
 
-  const { error: errEp } = await supabase
-    .from('epreuve')
-    .update({
-      points_chute: pointsChute,
-      points_non_presentation: pointsNonPresentation,
-    })
-    .eq('id', epreuveId)
-  if (errEp) return { erreur: 'La mise à jour du barème a échoué. Réessayez.' }
-
-  // Remplacement du jeu d'échelons (R47) : suppression puis insertion du set validé.
-  // Aucune saisie de vitesse (R55e) : pas de `points_vitesse` matérialisé à
-  // préserver, la fenêtre delete→insert est sûre.
-  const { error: errDel } = await supabase
-    .from('bareme_vitesse_echelon')
-    .delete()
-    .eq('epreuve_id', epreuveId)
-  if (errDel) return { erreur: 'La mise à jour du barème a échoué. Réessayez.' }
-
-  const lignes = echelons.map((e, i) => ({
-    epreuve_id: epreuveId,
-    rang_min: e.rangMin,
-    rang_max: e.rangMax,
-    points: e.points,
-    decrement: e.decrement,
-    ordre: i + 1,
-  }))
-  const { error: errIns } = await supabase.from('bareme_vitesse_echelon').insert(lignes)
-  if (errIns) return { erreur: 'La mise à jour du barème a échoué. Réessayez.' }
+  // Points fixes et remplacement du jeu d'échelons (R47) en une transaction
+  // (lot 7, A1) : un échec ne laisse jamais l'épreuve sans échelons. La base
+  // revérifie le rôle, la phase (R51) et l'absence de saisie (R55e).
+  const { error } = await supabase.rpc('mettre_a_jour_bareme_vitesse', {
+    p_epreuve: epreuveId,
+    p_points_chute: pointsChute,
+    p_points_non_presentation: pointsNonPresentation,
+    p_echelons: echelonsSql(echelons),
+  })
+  if (error) return { erreur: 'La mise à jour du barème a échoué. Réessayez.' }
 
   revalidatePath(`/admin/rencontres/${rencontreId}`)
   return { succes: 'Barème de vitesse mis à jour.' }

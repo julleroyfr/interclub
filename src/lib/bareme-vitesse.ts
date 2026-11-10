@@ -44,3 +44,16 @@ export function lireEchelonsSoumis(formData: FormData): EchelonBareme[] {
     }),
   )
 }
+
+/**
+ * Échelons au format attendu par les RPC `mettre_a_jour_bareme_vitesse*`
+ * (lot 7) : la base les insère dans l'ordre du tableau (`ordre` = position).
+ */
+export function echelonsSql(echelons: EchelonBareme[]) {
+  return echelons.map((e) => ({
+    rang_min: e.rangMin,
+    rang_max: e.rangMax,
+    points: e.points,
+    decrement: e.decrement,
+  }))
+}

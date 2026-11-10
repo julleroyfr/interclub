@@ -16,7 +16,6 @@ import {
 import { getUtilisateurCourant } from '@/lib/auth/session'
 import { cheminDeRetour } from '@/lib/chemin-retour'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { verifierLecture } from '@/lib/supabase/lecture'
 import { createClient } from '@/lib/supabase/server'
 
 import { resoudreInvitation } from './invitations'
@@ -112,21 +111,10 @@ export async function genererInvitation(formData: FormData): Promise<void> {
   retour(chemin)
 }
 
-/** Lit une invitation via la RLS (null si non visible) et vérifie le droit. */
-async function invitationGerable(invitationId: string) {
+/** Droit de gérer les invitations (admin, R29) ; la RLS reste la frontière. */
+async function peutGererInvitations(): Promise<boolean> {
   const utilisateur = await getUtilisateurCourant()
-  if (!peutGererInvitation({ role: utilisateur?.role ?? null })) return null
-
-  const supabase = await createClient()
-  const data = verifierLecture(
-    await supabase
-      .from('invitation_coach')
-      .select('id, club_id')
-      .eq('id', invitationId)
-      .maybeSingle(),
-    "de l'invitation",
-  )
-  return data ?? null
+  return peutGererInvitation({ role: utilisateur?.role ?? null })
 }
 
 /** Révoque une invitation : elle devient inactive immédiatement (R29). */
@@ -134,49 +122,45 @@ export async function revoquerInvitation(formData: FormData): Promise<void> {
   const chemin = cheminDeRetour(formData.get('chemin'), '/admin/clubs')
   const invitationId = String(formData.get('invitationId') ?? '')
 
-  if (!(await invitationGerable(invitationId))) {
+  if (!(await peutGererInvitations())) {
     redirect(`${chemin}${chemin.includes('?') ? '&' : '?'}erreur=refuse`)
   }
 
+  // Sans lecture préalable (E6) : une invitation invisible ne met à jour aucune ligne.
   const supabase = await createClient()
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('invitation_coach')
     .update({ actif: false })
     .eq('id', invitationId)
+    .select('id')
   if (error) {
     redirect(`${chemin}${chemin.includes('?') ? '&' : '?'}erreur=revocation`)
+  }
+  if (!data?.length) {
+    redirect(`${chemin}${chemin.includes('?') ? '&' : '?'}erreur=refuse`)
   }
   retour(chemin)
 }
 
 /**
  * Régénère l'invitation d'un club (R29) : révoque l'ancienne PUIS crée une
- * nouvelle (valeur distincte via le défaut SQL). L'ordre importe : révoquer
- * d'abord libère l'index unique « une active par club » avant l'insert.
+ * nouvelle (valeur distincte via le défaut SQL), en une transaction (RPC
+ * `regenerer_invitation_coach`, lot 7, A4) : un échec laisse l'ancienne active.
  */
 export async function regenererInvitation(formData: FormData): Promise<void> {
   const chemin = cheminDeRetour(formData.get('chemin'), '/admin/clubs')
   const invitationId = String(formData.get('invitationId') ?? '')
 
-  const invitation = await invitationGerable(invitationId)
-  if (!invitation) {
+  if (!(await peutGererInvitations())) {
     redirect(`${chemin}${chemin.includes('?') ? '&' : '?'}erreur=refuse`)
   }
 
   const supabase = await createClient()
-  const { error: eRevoke } = await supabase
-    .from('invitation_coach')
-    .update({ actif: false })
-    .eq('id', invitationId)
-  if (eRevoke) {
-    redirect(`${chemin}${chemin.includes('?') ? '&' : '?'}erreur=regeneration`)
-  }
-
-  const { error: eInsert } = await supabase
-    .from('invitation_coach')
-    .insert({ club_id: invitation.club_id })
-  if (eInsert) {
-    redirect(`${chemin}${chemin.includes('?') ? '&' : '?'}erreur=regeneration`)
+  const { error } = await supabase.rpc('regenerer_invitation_coach', { p_invitation: invitationId })
+  if (error) {
+    // Invitation invisible ou inconnue : même refus qu'avant.
+    const motif = error.message === 'invitation_introuvable' ? 'refuse' : 'regeneration'
+    redirect(`${chemin}${chemin.includes('?') ? '&' : '?'}erreur=${motif}`)
   }
   retour(chemin)
 }

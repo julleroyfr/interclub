@@ -42,6 +42,7 @@
     "test:points-vitesse-reecriture": "bash scripts/test-points-vitesse-reecriture.sh",
     "test:cloture": "bash scripts/test-cloture.sh",
     "test:gardes-base": "bash scripts/test-gardes-base.sh",
+    "test:ecritures-atomiques": "bash scripts/test-ecritures-atomiques.sh",
     "db:reset": "supabase db reset && npm run db:verifier",
     "db:consolider": "bash scripts/consolider-archive.sh",
     "db:verifier": "bash scripts/verifier-schema.sh",

@@ -13,7 +13,7 @@ import { aVoiesLibres, type Categorie } from '@/domaine/rencontre'
 import { BaremeVitesseInvalideError, type EchelonBareme } from '@/domaine/vitesse'
 import { LibelleVoieVitesseInvalideError, normaliserLibelleVoieVitesse } from '@/domaine/voie'
 import { getUtilisateurCourant } from '@/lib/auth/session'
-import { lireEchelonsSoumis } from '@/lib/bareme-vitesse'
+import { echelonsSql, lireEchelonsSoumis } from '@/lib/bareme-vitesse'
 import { createClient } from '@/lib/supabase/server'
 
 export type EtatGabarit = { erreur?: string; succes?: string } | undefined
@@ -376,31 +376,15 @@ export async function mettreAJourBaremeVitesseGabarit(
 
   const supabase = await createClient()
 
-  const { error: errEp } = await supabase
-    .from('gabarit_epreuve')
-    .update({ points_chute: pointsChute, points_non_presentation: pointsNonPresentation })
-    .eq('id', gabaritEpreuveId)
-  if (errEp) return { erreur: 'La mise à jour du barème a échoué. Réessayez.' }
-
-  // Remplacement du jeu d'échelons (R47) : suppression puis insertion du set validé.
-  const { error: errDel } = await supabase
-    .from('gabarit_bareme_vitesse_echelon')
-    .delete()
-    .eq('gabarit_epreuve_id', gabaritEpreuveId)
-  if (errDel) return { erreur: 'La mise à jour du barème a échoué. Réessayez.' }
-
-  const lignes = echelons.map((e, i) => ({
-    gabarit_epreuve_id: gabaritEpreuveId,
-    rang_min: e.rangMin,
-    rang_max: e.rangMax,
-    points: e.points,
-    decrement: e.decrement,
-    ordre: i + 1,
-  }))
-  const { error: errIns } = await supabase
-    .from('gabarit_bareme_vitesse_echelon')
-    .insert(lignes)
-  if (errIns) return { erreur: 'La mise à jour du barème a échoué. Réessayez.' }
+  // Points fixes et remplacement du jeu d'échelons (R47) en une transaction
+  // (lot 7, A2) : un échec ne laisse jamais l'épreuve sans échelons.
+  const { error } = await supabase.rpc('mettre_a_jour_bareme_vitesse_gabarit', {
+    p_gabarit_epreuve: gabaritEpreuveId,
+    p_points_chute: pointsChute,
+    p_points_non_presentation: pointsNonPresentation,
+    p_echelons: echelonsSql(echelons),
+  })
+  if (error) return { erreur: 'La mise à jour du barème a échoué. Réessayez.' }
 
   revalidatePath('/admin/gabarit')
   return { succes: 'Barème de vitesse mis à jour.' }
