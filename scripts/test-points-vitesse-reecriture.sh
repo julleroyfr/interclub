@@ -11,7 +11,7 @@
 #   - RV-03 : nouveau meilleur temps (F) → seules les F classées au temps sont
 #             réécrites (8), aucune ligne H.
 #   - RV-04 : points identiques à un recalcul complet (comportement inchangé).
-#   - RV-05 : rejeu de la migration, retour arrière puis réapplication.
+#   - RV-05 : rejeu idempotent de la migration (archivée, retour arrière supprimé).
 #
 # Le nombre d'UPDATE est compté par un trigger posé DANS la transaction, annulée
 # à la fin : la base locale n'est pas modifiée.
@@ -144,10 +144,9 @@ while IFS='|' read -r etat id attendu obtenu; do
   esac
 done <<< "$(printf '%s\n' "$SORTIE" | grep -E '^(OK|KO)\|')"
 
-echo "== RV-05 Migration rejouée, retour arrière, réapplication =="
+echo "== RV-05 Migration rejouée (idempotence) =="
 VERSION="202611101200_points_vitesse_sans_reecriture"
-MIGRATION="supabase/migrations/$VERSION.sql"
-RETOUR="supabase/retours-arriere/${VERSION}_retour_arriere.sql"
+MIGRATION="supabase/migrations/archive/$VERSION.sql"
 sql() { docker exec "$CONTENEUR" psql -U postgres -tA -v ON_ERROR_STOP=1 -c "$1"; }
 appliquer() { docker exec -i "$CONTENEUR" psql -U postgres -q -v ON_ERROR_STOP=1 < "$1" >/dev/null 2>&1; }
 etat() {
@@ -157,10 +156,6 @@ etat() {
 verifie() { if [ "$2" = "$3" ]; then ok "$1"; else ko "$1 — obtenu « $2 », attendu « $3 »"; fi; }
 if appliquer "$MIGRATION"; then ok "rejeu de la migration"; else ko "rejeu de la migration en erreur"; fi
 verifie "fonction sans réécriture, version enregistrée" "$(etat)" "true/1"
-if appliquer "$RETOUR"; then ok "retour arrière"; else ko "retour arrière en erreur"; fi
-verifie "fonction d'origine, version retirée" "$(etat)" "false/0"
-if appliquer "$MIGRATION"; then ok "réapplication"; else ko "réapplication en erreur"; fi
-verifie "fonction sans réécriture après réapplication" "$(etat)" "true/1"
 
 echo
 echo "Résultat : $PASS OK, $FAIL KO"

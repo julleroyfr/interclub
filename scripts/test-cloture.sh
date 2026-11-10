@@ -19,7 +19,7 @@
 #   - CL-08 : NP en échec → phase inchangée (une seule transaction).
 #   - CL-09 : droits (anon refusé, authenticated permis).
 #   - CL-10 : deux clôtures simultanées : une seule passe.
-#   - CL-11 : rejeu de la migration, retour arrière puis réapplication.
+#   - CL-11 : rejeu idempotent de la migration (archivée, retour arrière supprimé).
 #
 # CL-01 à CL-09 tournent dans une transaction annulée ; CL-10 écrit puis purge
 # sa rencontre d'essai. La base locale est rendue dans son état.
@@ -298,10 +298,9 @@ verifie "phase finale" "$(sql "select phase from interclub.rencontre where id = 
 purger
 rm -rf "$T"
 
-echo "== CL-11 Migration rejouée, retour arrière, réapplication =="
+echo "== CL-11 Migration rejouée (idempotence) =="
 VERSION="202611101300_rpc_changer_phase_rencontre"
-MIGRATION="supabase/migrations/$VERSION.sql"
-RETOUR="supabase/retours-arriere/${VERSION}_retour_arriere.sql"
+MIGRATION="supabase/migrations/archive/$VERSION.sql"
 appliquer() { docker exec -i "$CONTENEUR" psql -U postgres -q -v ON_ERROR_STOP=1 < "$1" >/dev/null 2>&1; }
 etat() {
   sql "select (to_regprocedure('interclub.changer_phase_rencontre(uuid, text)') is not null)::text
@@ -309,10 +308,6 @@ etat() {
 }
 if [ -f "$MIGRATION" ] && appliquer "$MIGRATION"; then ok "rejeu de la migration"; else ko "rejeu de la migration en erreur"; fi
 verifie "fonction présente, version enregistrée" "$(etat)" "true/1"
-if [ -f "$RETOUR" ] && appliquer "$RETOUR"; then ok "retour arrière"; else ko "retour arrière en erreur"; fi
-verifie "fonction et version retirées" "$(etat)" "false/0"
-if [ -f "$MIGRATION" ] && appliquer "$MIGRATION"; then ok "réapplication"; else ko "réapplication en erreur"; fi
-verifie "fonction présente après réapplication" "$(etat)" "true/1"
 
 echo
 echo "Résultat : $PASS OK, $FAIL KO"

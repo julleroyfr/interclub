@@ -306,7 +306,8 @@ Cas particuliers à préparer à la main :
   résultats de voie : aucun NP de voie, 160 NP de bloc) ; `npm run test:cloture`
   (`scripts/test-cloture.sh` : garde admin, R17, jour J, R18 enfant/ado/adulte,
   idempotence, échec du NP → phase inchangée, deux clôtures simultanées → une
-  seule passe, droits, rejeu et retour arrière). Reste à dérouler en recette :
+  seule passe, droits, rejeu ; retour arrière supprimé à l'archivage du
+  2026-11-10). Reste à dérouler en recette :
   étapes 1 et 2 sur une rencontre réelle.
 
 ## Registre d'exécution

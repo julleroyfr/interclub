@@ -16,7 +16,7 @@
 #   - GB-05 (E5) : licence générée non posée en modification (spec #3 R21c).
 #   - GB-06 : chemin serveur sans JWT (seed) non contraint.
 #   - GB-07 : deux ajouts simultanés reçoivent deux rangs distincts.
-#   - GB-08 : rejeu de la migration, retour arrière puis réapplication.
+#   - GB-08 : rejeu idempotent de la migration (archivée, retour arrière supprimé).
 #
 # GB-01 à GB-06 tournent dans une transaction annulée ; GB-07 écrit puis purge
 # sa rencontre d'essai. La base locale est rendue dans son état.
@@ -344,10 +344,9 @@ verifie "rangs distincts 1 et 2" "$(sql "select string_agg(ordre::text, ',' orde
 purger
 rm -rf "$T"
 
-echo "== GB-08 Migration rejouée, retour arrière, réapplication =="
+echo "== GB-08 Migration rejouée (idempotence) =="
 VERSION="202611101500_gardes_en_base"
-MIGRATION="supabase/migrations/$VERSION.sql"
-RETOUR="supabase/retours-arriere/${VERSION}_retour_arriere.sql"
+MIGRATION="supabase/migrations/archive/$VERSION.sql"
 appliquer() { docker exec -i "$CONTENEUR" psql -U postgres -q -v ON_ERROR_STOP=1 < "$1" >/dev/null 2>&1; }
 etat() {
   sql "select (select count(*) from pg_trigger where not tgisinternal and tgname ~ '(_verifier_controle|_structure_modifiable|_rang|^composition_effectif$|^pret_verifier$|^grimpeur_licence_generee$)')
@@ -357,10 +356,6 @@ etat() {
 }
 if [ -f "$MIGRATION" ] && appliquer "$MIGRATION"; then ok "rejeu de la migration"; else ko "rejeu de la migration en erreur"; fi
 verifie "19 triggers, 6 policies, version enregistrée" "$(etat)" "19/6/1"
-if [ -f "$RETOUR" ] && appliquer "$RETOUR"; then ok "retour arrière"; else ko "retour arrière en erreur"; fi
-verifie "triggers, policies et version retirés" "$(etat)" "0/0/0"
-if [ -f "$MIGRATION" ] && appliquer "$MIGRATION"; then ok "réapplication"; else ko "réapplication en erreur"; fi
-verifie "présents après réapplication" "$(etat)" "19/6/1"
 
 echo
 echo "Résultat : $PASS OK, $FAIL KO"

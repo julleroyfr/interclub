@@ -141,7 +141,8 @@
 - **Résultat attendu** : les deux nombres sont égaux ; le rapport de CT-04 est
   inchangé (mêmes effectifs par club et par tranche, même nombre d'équipes par
   rencontre). Appel de la RPC avec la clé `anon` ou une session admin : refusé.
-- **Automatisé** : `npm run test:rpc-comptages` (somme, droits, retour arrière).
+- **Automatisé** : `npm run test:rpc-comptages` (somme, droits, rejeu de la
+  migration ; retour arrière supprimé à l'archivage du 2026-11-10).
 
 ## Traçabilité règles ↔ cas
 
