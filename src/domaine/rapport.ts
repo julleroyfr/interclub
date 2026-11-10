@@ -11,18 +11,22 @@ export type TrancheAge = 'enfant' | 'pivot' | 'ado' | 'adulte'
 /** Issue de la vérification du secret du déclencheur (R4, R5). */
 export type VerificationSecret = 'ok' | 'refuse' | 'non_configure'
 
-/** Lignes lues en base, nécessaires au rapport. */
+/**
+ * Lignes lues en base, nécessaires au rapport. Les comptages sont faits par la
+ * base : `effectifs` = nombre de grimpeurs par club et année de naissance,
+ * `nb_equipes` = nombre d'équipes de la rencontre.
+ */
 export type DonneesRapport = {
   clubs: { id: string; nom: string }[]
-  grimpeurs: { club_id: string; annee_naissance: number }[]
+  effectifs: { club_id: string; annee_naissance: number; nombre: number }[]
   rencontres: {
     id: string
     date_rencontre: string
     categorie: Categorie
     phase: string
     club_porteur_id: string
+    nb_equipes: number
   }[]
-  equipes: { rencontre_id: string }[]
 }
 
 /** Effectifs par tranche d'âge (R9, R10). */
@@ -98,14 +102,14 @@ export function construireRapport(
   // R9, R10 — effectifs par club et totaux.
   const parClub = new Map(donnees.clubs.map((c) => [c.id, effectifsVides()]))
   const totaux = effectifsVides()
-  for (const g of donnees.grimpeurs) {
+  for (const g of donnees.effectifs) {
     const club = parClub.get(g.club_id)
     // Garantie par la clé étrangère ; ignorée sinon pour que total = Σ clubs (R10).
     if (!club) continue
     const cle = CLE_TRANCHE[trancheAge(g.annee_naissance, saison, bornes)]
     for (const e of [club, totaux]) {
-      e[cle] += 1
-      e.total += 1
+      e[cle] += g.nombre
+      e.total += g.nombre
     }
   }
   const clubs = donnees.clubs
@@ -115,10 +119,6 @@ export function construireRapport(
   // R11–R13 — rencontres de la saison.
   const { debut, fin } = bornesSaison(saison)
   const nomClub = new Map(donnees.clubs.map((c) => [c.id, c.nom]))
-  const equipesParRencontre = new Map<string, number>()
-  for (const e of donnees.equipes) {
-    equipesParRencontre.set(e.rencontre_id, (equipesParRencontre.get(e.rencontre_id) ?? 0) + 1)
-  }
   const rencontres = donnees.rencontres
     .filter((r) => r.date_rencontre >= debut && r.date_rencontre <= fin)
     .sort(
@@ -130,7 +130,7 @@ export function construireRapport(
       clubPorteur: nomClub.get(r.club_porteur_id) ?? '',
       categorie: r.categorie,
       phase: r.phase,
-      equipes: equipesParRencontre.get(r.id) ?? 0,
+      equipes: r.nb_equipes,
     }))
   const compter = (categorie: Categorie) => rencontres.filter((r) => r.categorie === categorie).length
 

@@ -12,7 +12,8 @@ import { execSql } from './helpers/sql'
  * la saison à 1100 équipes. Attendu : « 1100 grimpeurs » sur la liste des clubs,
  * « 1100 équipes » sur la liste des rencontres, et partout le compte réel en
  * base. Un club sans grimpeur ni rencontre (« Club Vide ») reste listé, à 0, et
- * supprimable.
+ * supprimable. 1100 utilisateurs anonymes (sessions QR) n'empêchent pas l'écran
+ * « Mapping de rôle » de lister tous les comptes permanents (spec #2 R46).
  *
  * Série + un seul worker : ajoute des données visibles de tous les écrans.
  */
@@ -22,8 +23,12 @@ const CLUB_VIDE = 'c1c1c1c1-0000-0000-0000-000000000002'
 const RENCONTRE_VOLUME = 'c1c1c1c1-0000-0000-0000-0000000000a1'
 const NB_GRIMPEURS = 1100
 const NB_EQUIPES = 1100
+const NB_ANONYMES = 1100
 
 function purgerVolume(): void {
+  execSql(
+    `delete from auth.users where is_anonymous and raw_app_meta_data ->> 'test' = 'compteurs-volume';`,
+  )
   execSql(
     `delete from interclub.rencontre where id = '${RENCONTRE_VOLUME}';
      delete from interclub.grimpeur where club_id = '${CLUB_VOLUME}';
@@ -45,7 +50,11 @@ test.describe('Compteurs au-delà de 1000 lignes', () => {
          values ('${RENCONTRE_VOLUME}', current_date, '${CLUB_VOLUME}', 'enfant');
        insert into interclub.equipe (rencontre_id, club_id, nom)
          select '${RENCONTRE_VOLUME}', '${CLUB_VOLUME}', 'Équipe ' || lpad(i::text, 4, '0')
-           from generate_series(1, ${NB_EQUIPES}) i;`,
+           from generate_series(1, ${NB_EQUIPES}) i;
+       insert into auth.users (instance_id, id, aud, role, is_anonymous, raw_app_meta_data, created_at, updated_at)
+         select '00000000-0000-0000-0000-000000000000', gen_random_uuid(), 'authenticated', 'authenticated',
+                true, '{"test": "compteurs-volume"}'::jsonb, now(), now()
+           from generate_series(1, ${NB_ANONYMES});`,
     )
   })
 
@@ -56,6 +65,7 @@ test.describe('Compteurs au-delà de 1000 lignes', () => {
   test('le jeu dépasse bien le plafond de l’API', () => {
     expect(Number(execSql('select count(*) from interclub.grimpeur;'))).toBeGreaterThan(1000)
     expect(Number(execSql('select count(*) from interclub.equipe;'))).toBeGreaterThan(1000)
+    expect(Number(execSql('select count(*) from auth.users;'))).toBeGreaterThan(1000)
   })
 
   test('la liste des clubs compte tous les grimpeurs de chaque club', async ({ page }) => {
@@ -123,5 +133,19 @@ test.describe('Compteurs au-delà de 1000 lignes', () => {
     await expect(stat('En compétition')).toContainText(competition!)
     // La rencontre de la saison la plus récente remonte, club porteur embarqué.
     await expect(page.getByText('Club Volume').first()).toBeVisible()
+  })
+
+  test('le mapping liste tous les comptes permanents malgré les anonymes (spec #2 R46)', async ({ page }) => {
+    const emails = execSql(
+      `select email from auth.users where not coalesce(is_anonymous, false) and email is not null;`,
+    ).split('\n')
+    expect(emails.length).toBeGreaterThan(0)
+
+    await commeAdmin(page)
+    await page.goto('/admin/mapping')
+
+    for (const email of emails) {
+      await expect(page.getByRole('cell', { name: email, exact: true })).toBeVisible()
+    }
   })
 })

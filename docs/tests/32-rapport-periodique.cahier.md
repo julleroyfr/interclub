@@ -124,6 +124,25 @@
 - **Résultat attendu** : refus (`permission denied`) ou liste vide ; aucune
   donnée de rapport n'est renvoyée. Tentative d'`insert` refusée.
 
+### CT-09 — Effectifs comptés par la base (couvre : R9, R10, R11)
+
+- **Pré-requis** : migration **`202611101100_rpc_effectifs_grimpeurs`**
+  appliquée à la main (RPC `effectifs_grimpeurs`, EXECUTE à `service_role`
+  seul).
+- **Étapes** :
+  1. SQL Editor :
+
+     ```sql
+     select sum(nombre) from interclub.effectifs_grimpeurs();
+     select count(*) from interclub.grimpeur;
+     ```
+
+  2. Rejouer CT-04.
+- **Résultat attendu** : les deux nombres sont égaux ; le rapport de CT-04 est
+  inchangé (mêmes effectifs par club et par tranche, même nombre d'équipes par
+  rencontre). Appel de la RPC avec la clé `anon` ou une session admin : refusé.
+- **Automatisé** : `npm run test:rpc-comptages` (somme, droits, retour arrière).
+
 ## Traçabilité règles ↔ cas
 
 | Règle | Cas | Automatisé (Vitest) |
@@ -132,7 +151,7 @@
 | R2 | CT-06 | — |
 | R4 | CT-01, CT-02 | `verifierSecret` |
 | R5 | CT-03 | `verifierSecret` |
-| R6–R13 | CT-04 | `construireRapport`, `trancheAge` |
+| R6–R13 | CT-04, CT-09 | `construireRapport`, `trancheAge` |
 | R14 | CT-04 | `ligneLog` |
 | R15, R16, R18 | CT-04 | — |
 | R17 | — (échec de lecture non provoquable sans casser la base) | — |

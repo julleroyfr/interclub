@@ -38,6 +38,7 @@
     "test:import-csv": "bash scripts/test-import-csv.sh",
     "test:adulte": "bash scripts/test-categorie-adulte.sh",
     "test:surclassement": "bash scripts/test-surclassement.sh",
+    "test:rpc-comptages": "bash scripts/test-rpc-comptages.sh",
     "db:reset": "supabase db reset && npm run db:verifier",
     "db:consolider": "bash scripts/consolider-archive.sh",
     "db:verifier": "bash scripts/verifier-schema.sh",

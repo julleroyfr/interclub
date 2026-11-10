@@ -244,11 +244,17 @@ D-P1 tranchée le 2026-10-09 : **fonction SQL**.
   accueil coach passent à une seule requête. **Rouge** :
   `e2e/compteurs-volume.spec.ts` (1100 grimpeurs, 1100 équipes) ; sur l'ancien
   code, 980 grimpeurs et 996 équipes affichés.
-- [ ] ⏳ J6 mapping des comptes (relevé le 2026-11-10) : `listUsers` ne lit
-  qu'une page de 1000 utilisateurs, comptes anonymes des sessions QR compris
-  (jamais purgés) ; au-delà, des comptes permanents disparaissent de l'écran.
-  Piste : fonction SQL sur `auth.users` hors anonymes (migration, validation
-  requise).
+- [x] ✅ J6 mapping des comptes (2026-11-10) : `listUsers` ne lisait qu'une
+  page de 1000 utilisateurs, comptes anonymes des sessions QR compris (jamais
+  purgés) ; au-delà, des comptes permanents disparaissaient de l'écran. RPC
+  `lister_comptes_permanents` (migration `202611101000`) : anonymes exclus,
+  mapping et club joints, en une requête. **Rouge** : `compteurs-volume` (1100
+  anonymes) ; sur l'ancien code, `coach@test.local` absent de l'écran.
+- [x] ✅ Rapport périodique (2026-11-10) : effectifs par club et année de
+  naissance comptés en base (RPC `effectifs_grimpeurs`, migration
+  `202611101100`) au lieu de lire tous les grimpeurs ; équipes par rencontre en
+  comptage embarqué au lieu de lire toutes les équipes de la saison. Tests SQL :
+  `npm run test:rpc-comptages`.
 - [ ] ⏳ J5 prêts : vérifier en E2E si l'écran se rafraîchit après la création
   ou la révocation d'un prêt. Corriger le chemin (`/admin/rencontres/[id]`).
 - [ ] ⏳ Vert : E2E concernés (`admin-prets`, `navigation-routing`, jetons).
