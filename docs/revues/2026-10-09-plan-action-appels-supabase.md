@@ -66,7 +66,7 @@ flowchart TD
 | 4 | P4 | 7 → 2–3 (④/⑤) | `feature/perf-tdb-rencontre` | ✅ |
 | 5 | P7, J3, B2 | ≤ 10 → 2 (RPC) | `feature/perf-cloture` | ✅ |
 | 6 | P8–P11, P13–P15, J4, J5 (L4) | −1 vague par écran ou action | `feature/perf-petits-gains` | 🔄 (J4 fait) |
-| 7 | A1–A5, P15 (E6) | 3–5 → 2 | `feature/rpc-ecritures-atomiques` | ⏳ |
+| 7 | A1–A5, P15 (E6) | 3–5 → 2 | `feature/rpc-ecritures-atomiques` | ✅ |
 | 8 | T1 | −1 sur **toutes** les requêtes | — | ⏸ reportée |
 | 9 | B1, B3, B4 (= J5) | correctifs | `feature/correctifs-lectures` | ✅ |
 | 10 | R1, R3, R4, R5 (R2 reporté) | relectures temps réel ÷ ~100 par temps de vitesse | `feature/perf-temps-reel` | ✅ |
@@ -290,21 +290,33 @@ D-P1 tranchée le 2026-10-09 : **fonction SQL**.
 - [x] ✅ J5 prêts : chemin corrigé au lot 9 (B4).
 - [ ] ⏳ Vert : E2E concernés (`admin-prets`, `navigation-routing`, jetons).
 
-## Lot 7 — Écritures atomiques (A1–A5) — ⏳
+## Lot 7 — Écritures atomiques (A1–A5) — ✅
 
-D-P2 tranchée le 2026-10-09 : **une fonction SQL par opération**.
+D-P2 tranchée le 2026-10-09 : **une fonction SQL par opération**. Branche
+`feature/rpc-ecritures-atomiques` (2026-11-10), migration
+`202611101600_rpc_ecritures_atomiques`. Aucune spec modifiée.
 
-- [ ] ⏳ Migration : RPC `mettre_a_jour_bareme_vitesse` (rencontre et
-  gabarit), `regenerer_jeton`, `regenerer_invitation_coach`,
-  `generer_invitation_admin`. Gardes de rôle dans la fonction, `grant` au strict
-  nécessaire, `db:verifier`.
-- [ ] ⏳ Tests SQL : succès, refus, atomicité (un échec à mi-parcours ne laisse
-  rien).
-- [ ] ⏳ Les actions appellent les RPC.
-- [ ] ⏳ E2E jetons, invitations (`inscription-coach`, `invitation-admin`).
-- [ ] ⏳ JOURNAL, application à la main en recette.
-- [ ] ⏳ E6 (2026-11-10) : `revoquerInvitation` fait une lecture inutile
-  (`update … .select()` suffit) ; `regenererJeton` relit le jeton déjà lu (P15).
+- [x] ✅ Migration : RPC `mettre_a_jour_bareme_vitesse` (rencontre) et
+  `mettre_a_jour_bareme_vitesse_gabarit`, `regenerer_jeton`,
+  `regenerer_invitation_coach`, `generer_invitation_admin`. **SECURITY
+  INVOKER** : la RLS reste la frontière (admin ; coach pour le jeton de coach
+  temporaire de son club), la transaction de l'appel donne l'atomicité. Garde
+  `est_admin()` en tête des opérations admin ; R55e revérifiée en base ; phase
+  du barème de rencontre gardée par le trigger du lot 11. EXECUTE à
+  `authenticated` seul, `db:verifier` vert.
+- [x] ✅ Rouge : `scripts/test-ecritures-atomiques.sh`
+  (`npm run test:ecritures-atomiques`), 26 KO sur 39 sans la migration ; vert
+  39/39 : succès, refus, atomicité (création forcée en échec : l'ancien jeton
+  ou l'ancienne invitation reste actif, le barème reste intact), droits, rejeu
+  et retour arrière.
+- [x] ✅ Les actions appellent les RPC : barème 3 écritures → 1, régénérations
+  2–3 → 1.
+- [x] ✅ Vert : tests SQL, Vitest, suite E2E complète 236/236 (jetons, invitations,
+  barèmes compris).
+- [x] ✅ JOURNAL ; cahier 28 CT-14 ; appliquée en recette le 2026-11-10.
+- [x] ✅ E6 : `revoquerInvitation` sans lecture préalable (`update … .select()`,
+  aucune ligne → refus) ; `regenererJeton` ne relit plus le jeton (P15) ;
+  `regenererInvitation` sans lecture (la RPC renvoie `invitation_introuvable`).
 
 ## Lot 9 — Correctifs (B1, B3, B4) — ✅
 
