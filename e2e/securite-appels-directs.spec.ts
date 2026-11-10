@@ -291,12 +291,16 @@ test.describe('Cahier 28 — sécurité en base, appels PostgREST directs', () =
       const { url } = infosApi()
       const filtre = `voie_difficulte_id=eq.${voie}&grimpeur_id=eq.${grimpeur}`
 
+      // La coche ne se pose qu'en ④ (spec #16 R13, garde en base 202611101500) ;
+      // le coach corrige après un retour en ③.
+      execSql(`update interclub.rencontre set phase = 'cloture' where id = '${RENCONTRE_ADO}';`)
       const coche = await request.patch(`${url}/rest/v1/resultat_voie?${filtre}`, {
         headers: { ...entetes(jetonAdmin, true), Prefer: 'return=representation' },
         data: { controle_le: new Date().toISOString(), controle_par: ADMIN_ID },
       })
       expect(coche.status()).toBe(200)
       expect((await coche.json())[0].controle_par).toBe(ADMIN_ID)
+      execSql(`update interclub.rencontre set phase = 'competition' where id = '${RENCONTRE_ADO}';`)
 
       // Correction du coach qui tente au passage d'effacer la coche.
       const correction = await request.patch(`${url}/rest/v1/resultat_voie?${filtre}`, {

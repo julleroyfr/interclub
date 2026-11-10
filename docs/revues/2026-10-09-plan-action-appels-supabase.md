@@ -70,7 +70,7 @@ flowchart TD
 | 8 | T1 | −1 sur **toutes** les requêtes | — | ⏸ reportée |
 | 9 | B1, B3, B4 (= J5) | correctifs | `feature/correctifs-lectures` | ✅ |
 | 10 | R1, R3, R4, R5 (R2 reporté) | relectures temps réel ÷ ~100 par temps de vitesse | `feature/perf-temps-reel` | ✅ |
-| 11 | E1–E5 | gardes ajoutées en base ; ajouts de structure 3 → 2 | `feature/gardes-en-base` | ⏳ |
+| 11 | E1–E5 | gardes ajoutées en base ; ajouts de structure 3 → 2 | `feature/gardes-en-base` | ✅ |
 | 12 | L1, L2 ; L3 après mesure | classement et saisie 11 → 6 requêtes | `feature/perf-lectures-imbriquees` | ✅ (L3 reporté) |
 
 Ordre recommandé (2026-11-10) : 9 → 10 (R1 d'abord) → 5 → 12 → 11 → 7 → 6.
@@ -351,23 +351,45 @@ Branche `feature/perf-temps-reel` (2026-11-10). Spec #11 révisée le 2026-11-10
   de l'ancienne ligne) ; seule une table de coche séparée éviterait de relire
   les classements à chaque coche. À reconsidérer si le contrôle en ④ pèse.
 
-## Lot 11 — Gardes en base (E1–E5) — ⏳
+## Lot 11 — Gardes en base (E1–E5) — ✅
 
-Les contrôles TypeScript restent en place (décision du 2026-11-10). Toutes ces
-règles existent déjà dans les specs : aucune spec ne change.
+Branche `feature/gardes-en-base` (2026-11-10). Les contrôles TypeScript restent
+en place (décision du 2026-11-10). Toutes ces règles existent déjà dans les
+specs : aucune spec ne change. Une migration, `202611101500_gardes_en_base`.
+Les gardes ne contraignent pas le chemin sans JWT (seed, psql), comme
+`proteger_audit_resultat`.
 
-- [ ] ⏳ E1 : garde de phase ④ pour la coche de contrôle (trigger ou RPC
-  `basculer_controle`).
-- [ ] ⏳ E2 : garde de phase ③/④ pour la saisie admin (RPC admin calquée sur
-  `saisir_resultat_voie`).
-- [ ] ⏳ E3 : trigger BEFORE INSERT/UPDATE/DELETE sur les tables de structure :
-  phase ①/② et cohérence épreuve ↔ rencontre ; `ordre`/`numero` calculés par
-  défaut (max + 1), qui suppriment la lecture préalable.
-- [ ] ⏳ E4 : triggers d'effectif (8 en enfant et ado) et de prêt (« déjà
-  engagé », « autre club »).
-- [ ] ⏳ E5 : trigger BEFORE UPDATE OF licence (licence générée conservable).
-- [ ] ⏳ Tests SQL : chaque garde refuse l'appel forgé ; messages TS inchangés
-  (E2E existants).
+- [x] ✅ E1 : trigger `*_verifier_controle` sur `resultat_voie` / `resultat_bloc` :
+  `controle_le` / `controle_par` ne changent qu'en ④ (spec #16 R13). Passe après
+  `*_proteger_audit` : la coche d'un coach y est déjà neutralisée.
+- [x] ✅ E2 : branche `est_admin()` des 6 policies d'écriture des résultats
+  bornée à ③/④ (spec #9 R5), via `phase_de_voie` / `phase_de_bloc`. Policy
+  plutôt que RPC : un appel forgé vise la table, pas la RPC. Les cascades et les
+  fonctions SECURITY DEFINER (NP de clôture) échappent à la RLS.
+- [x] ✅ E3 : trigger `*_structure_modifiable` (épreuve, voie, bloc, palier,
+  voie de vitesse, barème) : ① ou ② (spec #3 R51), repère seul jusqu'en ③
+  (R49d). Phase lue par le vrai parent (ancien et nouveau) : couvre la
+  cohérence épreuve ↔ rencontre. Parent introuvable = suppression en cascade
+  (vérifié : la ligne parente n'est plus visible), laissée passer. Trigger
+  `*_rang` (`attribuer_rang`) : `ordre` / `numero` = max + 1 sous verrou
+  consultatif du parent, structure et gabarit ; les lectures préalables sont
+  retirées de `structure-actions.ts` et `gabarit/actions.ts` (ajouts 3 → 2).
+  **Le code dépend de la migration.**
+- [x] ✅ E4 : `composition_effectif` (enfant/ado ≤ 8 ; adulte inchangé à 4) et
+  `pret_verifier` (« autre club », « déjà engagé »).
+- [x] ✅ E5 : `grimpeur_licence_generee`, BEFORE UPDATE OF licence. L'insertion
+  n'est pas gardée : les RPC d'import et d'ajout (SECURITY INVOKER) posent les
+  licences générées sous l'identité de l'admin.
+- [x] ✅ Rouge : `scripts/test-gardes-base.sh` (`npm run test:gardes-base`),
+  39 KO sur 60 sans la migration ; vert 60/60 (dont course de deux ajouts,
+  rejeu et retour arrière).
+- [x] ✅ Vert : tests SQL, Vitest 713/713, suite E2E complète (chromium, en
+  série, base au seed). Deux mises en place de test cochaient en ③, ce que la
+  spec interdit : `test-heure-saisie.sh` et CT-08 de
+  `securite-appels-directs.spec.ts` passent en ④ pour la coche, assertions
+  inchangées. Constat hors lot : `test-t6.sh` échoue quand il suit
+  `test-t5a`–`t5c` (aussi sans la migration), passe seul après reset.
+- [x] ✅ Cahier 28 CT-13 (recette).
 
 ## Lot 12 — Lectures imbriquées (L1–L3) — ✅ (L3 reporté)
 

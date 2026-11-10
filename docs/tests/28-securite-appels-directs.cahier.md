@@ -11,6 +11,8 @@
 > Couvre aussi `202611101400_durcissement_droits_anon` (CT-01, CT-11, CT-12) :
 > RPC des sessions QR fermées à `anon`, `search_path` de `set_updated_at`,
 > `(select auth.uid())` dans les policies `compte` et `session_qr`.
+> Couvre enfin `202611101500_gardes_en_base` (CT-13) : gardes de phase, d'effectif,
+> de prêt et de licence portées par la base (lot 11 du plan « appels Supabase »).
 > **Automatisé** : `npm run test:cahier:securite` (`e2e/securite-appels-directs.spec.ts`, stack locale) rejoue CT-01 → CT-07 et CT-09 → CT-12 ; CT-08 = suites E2E existantes. En recette, les appels `curl` ci-dessous restent le mode d'exécution.
 > Règles : [docs/conventions/06-cahier-de-test.md](../conventions/06-cahier-de-test.md).
 
@@ -303,6 +305,41 @@ ligne de résultat créée puis supprimée dans le cas.
   2. Coach → sa seule ligne ; admin → toutes les lignes de `compte`.
   3. Une seule ligne : celle du juge.
 
+### CT-13 `[mixte]` — Gardes en base : phase, effectif, prêt, licence   (couvre : spec #16 R13, spec #9 R5, spec #3 R51/R49d/R21c, spec #5 R15, spec #1 R14/R35 ; migration 202611101500)
+
+- **Automatisé** : `npm run test:gardes-base` (stack locale, 60 assertions,
+  appels forgés sous l'identité admin ou coach). En recette : étapes ci-dessous.
+- **Rôle / compte** : SQL Editor ; JD-ADMIN (jeton `ADMIN=$(jeton admin@test.local)`).
+- **Pré-condition** : migration `202611101500_gardes_en_base` appliquée ; une
+  rencontre `$R3` en ③ compétition avec un résultat de voie `$RES` et une
+  épreuve de bloc `$EPB`.
+- **Étapes** :
+  1. SQL Editor :
+
+     ```sql
+     select count(*) from pg_trigger
+     where not tgisinternal
+       and tgname ~ '(_verifier_controle|_structure_modifiable|_rang|^composition_effectif$|^pret_verifier$|^grimpeur_licence_generee$)';
+     select count(*) from pg_policies
+     where schemaname = 'interclub' and tablename in ('resultat_voie', 'resultat_bloc')
+       and coalesce(qual, with_check) ~ 'phase_de_';
+     ```
+
+  2. Coche forgée en ③ :
+     `PATCH …/resultat_voie?id=eq.$RES` avec le jeton admin et
+     `{"controle_le":"2026-01-01T00:00:00Z"}`.
+  3. Ajout de bloc forgé en ③ : `POST …/bloc` avec le jeton admin et
+     `{"epreuve_id":"$EPB","code":"FORGE"}`.
+  4. Dans l'interface, en ① : ajouter une voie, un bloc, un palier et une voie
+     de vitesse à une rencontre, puis au gabarit.
+- **Résultat attendu** :
+  1. `19` triggers ; `6` policies.
+  2. Erreur `controle_hors_cloture` ; la coche reste vide.
+  3. Erreur `structure_figee` ; aucun bloc créé.
+  4. Chaque élément ajouté prend le rang suivant (affiché en dernier) ; aucun
+     message d'erreur.
+- **RLS / sécurité** : un 2xx en étape 2 ou 3 est une régression.
+
 ## Registre d'exécution
 
 | Date | Testeur | Version/commit | Cas | Résultat | Remarque |
@@ -319,3 +356,4 @@ ligne de résultat créée puis supprimée dans le cas.
 | | | | CT-10 | ✅ / ❌ | |
 | | | | CT-11 | ✅ / ❌ | |
 | | | | CT-12 | ✅ / ❌ | |
+| | | | CT-13 | ✅ / ❌ | |
