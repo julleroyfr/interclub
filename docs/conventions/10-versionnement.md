@@ -120,5 +120,5 @@ corresponde.
 
 ## 6. À ADAPTER pour un autre projet
 
-- Les variables de déploiement si l'hébergeur n'est ni Netlify ni Vercel.
+- Les variables de déploiement si l'hébergeur n'est pas Vercel.
 - La version de départ et la date de la décision.

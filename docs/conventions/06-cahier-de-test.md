@@ -68,7 +68,7 @@ Règles de marquage :
 
 - **Spec de référence** : docs/specs/<spec>.md
 - **Pré-requis** : (comptes de test, données initiales, migrations appliquées …)
-- **Environnement** : (local / Netlify preview / prod) + version/commit
+- **Environnement** : (local / Preview Vercel / prod) + version/commit
 
 ## Jeu de données initial
 Ce qu'il faut avoir en base avant de commencer (équipes, joueurs, comptes…).

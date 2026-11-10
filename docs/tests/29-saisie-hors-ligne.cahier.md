@@ -18,7 +18,7 @@
 - **Pré-requis** : rencontre pilote en **③ compétition** ; comptes du jeu de test ;
   DevTools → **Network** pour CT-03 et CT-05 (limitation « Slow 4G » recommandée
   pour rendre l'attente visible).
-- **Environnement** : recette (déploiement de branche Netlify) ou local —
+- **Environnement** : recette (Preview Vercel de la branche) ou local —
   version/commit : `______`
 
 ## Jeu de données initial

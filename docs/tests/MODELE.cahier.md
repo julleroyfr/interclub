@@ -6,7 +6,7 @@
 
 - **Spec de référence** : `docs/specs/<spec>.md`
 - **Pré-requis** : (comptes de test, données initiales, migrations appliquées…)
-- **Environnement** : (local / preview Netlify / prod) — version/commit : `______`
+- **Environnement** : (local / Preview Vercel / prod) — version/commit : `______`
 
 ## Jeu de données initial
 

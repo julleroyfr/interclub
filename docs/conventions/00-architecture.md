@@ -10,7 +10,7 @@ Application web de gestion de compétitions **interclub**.
 | Backend / Données | **Supabase** (PostgreSQL) | Base de données, API auto-générée, RLS |
 | Auth | **Supabase Auth** | Authentification, sessions, gestion des rôles |
 | Temps réel | **Supabase Realtime** | Messagerie et mises à jour live |
-| Hébergement | **Netlify** | Déploiement automatique au `push` |
+| Hébergement | **Vercel** | Déploiement automatique au `push`, fonctions à Dublin (`dub1`) |
 
 > ⚠️ **Cette version de Next.js n'est PAS celle que vous connaissez.**
 > Elle contient des _breaking changes_ (APIs, conventions, structure de fichiers).
@@ -93,7 +93,7 @@ supabase/
   seul `src/proxy.ts`, minimal ; ce n'est pas une couche d'autorisation.
   cf. [07-standards-nextjs-16.md](./07-standards-nextjs-16.md) §5.
 - ❌ ORM tiers (Prisma, Drizzle…) : on utilise le client Supabase + SQL.
-- ❌ GitHub Actions pour le déploiement : Netlify déploie directement au `push`.
+- ❌ GitHub Actions pour le déploiement : Vercel déploie directement au `push`.
   cf. [05-git-et-deploiement.md](./05-git-et-deploiement.md).
 - ❌ State manager global (Redux…) tant que Server Components + realtime suffisent.
 

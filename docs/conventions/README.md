@@ -2,7 +2,7 @@
 
 Ce dossier rassemble les **règles de fonctionnement et d'architecture** du projet.
 Il est conçu pour être **réutilisable** sur d'autres projets partageant la même
-architecture (Next.js + Supabase + Netlify, spec-first / TDD, code et BDD en français).
+architecture (Next.js + Supabase + Vercel, spec-first / TDD, code et BDD en français).
 
 > Pour réutiliser ces conventions ailleurs : copier `docs/conventions/` et
 > `.claude/skills/`, puis adapter uniquement les points marqués `À ADAPTER`.
@@ -36,7 +36,7 @@ Détail et types de diagrammes : [01-workflow-spec-first-tdd.md](./01-workflow-s
 | [02-conventions-code.md](./02-conventions-code.md) | Langue, nommage, structure `src/`, style TypeScript/React |
 | [03-base-de-donnees-supabase.md](./03-base-de-donnees-supabase.md) | Modèle de données, migrations, RLS, auth, realtime |
 | [04-tests.md](./04-tests.md) | Vitest, Testing Library, tests auto vs manuels (pas de Docker/CLI Supabase) |
-| [05-git-et-deploiement.md](./05-git-et-deploiement.md) | Branches, commits, déploiement Netlify sur push |
+| [05-git-et-deploiement.md](./05-git-et-deploiement.md) | Branches, commits, déploiement Vercel sur push |
 | [06-cahier-de-test.md](./06-cahier-de-test.md) | Tests manuels : format, cas de test, traçabilité (base réelle, RLS, realtime) |
 | [07-standards-nextjs-16.md](./07-standards-nextjs-16.md) | Standards Next.js 16 : Server/Client, request APIs async, Server Actions, proxy, structure |
 | [08-ihm-responsive.md](./08-ihm-responsive.md) | IHM responsive mobile-first, Tailwind v4, cibles tactiles, accessibilité |

@@ -25,7 +25,7 @@ Points non négociables :
   base réelle via **cahier de test manuel**. (cf.
   `docs/conventions/03-base-de-donnees-supabase.md` §5, `06-cahier-de-test.md`)
 - Supabase-first, **pas de middleware ni d'API custom** sauf besoin justifié.
-- **Push = déploiement Netlify** (pas de GitHub Actions).
+- **Push = déploiement Vercel** (pas de GitHub Actions).
 
 Skills workflow disponibles : `nouvelle-fonctionnalite`, `rediger-spec`,
 `cycle-tdd`, `rediger-cahier-de-test`, `mettre-a-jour-guides`,

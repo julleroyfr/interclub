@@ -56,7 +56,7 @@ description: Travailler correctement avec CETTE version de Next.js (16.2.6, App 
 5. **Accès données** : côté serveur via `src/lib/supabase/server.ts`, côté client
    via `src/lib/supabase/client.ts`.
 6. Vérifier **lint + typecheck** (`npm run lint`, `npx tsc --noEmit`) avant push
-   (push = déploiement Netlify).
+   (push = déploiement Vercel).
 
 ## Réflexe avant d'écrire
 
