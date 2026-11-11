@@ -1,12 +1,16 @@
 {
   "mcpServers": {
-    "supabase": {
+    "supabase-interclub-recette": {
       "type": "http",
       "url": "https://mcp.supabase.com/mcp?project_ref=xwftkogxalgvrmgezwxa&read_only=true&features=docs%2Caccount%2Cdatabase%2Cdebugging%2Cdevelopment%2Cfunctions%2Cbranching%2Cfeedback%2Cnotebooks"
     },
-    "supabase-prod": {
+    "supabase-interclub-prod": {
       "type": "http",
       "url": "https://mcp.supabase.com/mcp?project_ref=ohfwfhxjqyeuvokfwwcs&read_only=true&features=docs%2Caccount%2Cdatabase%2Cdebugging%2Cdevelopment%2Cfunctions%2Cbranching%2Cfeedback%2Cnotebooks"
+    },
+    "supabase-prod-gestion-cours": {
+      "type": "http",
+      "url": "https://mcp.supabase.com/mcp?project_ref=fcmalsjfkoipgluphoyw&read_only=true&features=docs%2Caccount%2Cdatabase%2Cdebugging%2Cdevelopment%2Cfunctions%2Cbranching%2Cfeedback%2Cnotebooks"
     }
   }
 }
