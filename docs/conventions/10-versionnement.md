@@ -100,9 +100,10 @@ La version est injectée **au build** et publiée dans une balise meta du
 | Recette / preview (autre branche) | `X.Y.Z-<branche>+<commit>` | `1.5.0-develop+abc1234`, `1.5.0-feature-classement+9f8e7d6` |
 | Local (pas d'info de déploiement) | `X.Y.Z-local` | `1.5.0-local` |
 
-- `<commit>` = 7 premiers caractères du SHA. Sources : Netlify (`CONTEXT`,
-  `BRANCH`, `COMMIT_REF`) ou Vercel (`VERCEL_ENV`, `VERCEL_GIT_COMMIT_REF`,
-  `VERCEL_GIT_COMMIT_SHA`).
+- `<commit>` = 7 premiers caractères du SHA. Sources : variables Vercel
+  (`VERCEL_ENV`, `VERCEL_GIT_COMMIT_REF`, `VERCEL_GIT_COMMIT_SHA`) ; les
+  variables Netlify (`CONTEXT`, `BRANCH`, `COMMIT_REF`) ne sont plus lues
+  depuis l'abandon de Netlify (2026-11-11).
 - Le nom de branche est normalisé (minuscules, tout caractère hors `a-z0-9` →
   `-`).
 - Logique : `src/lib/version.ts` (testée), lue par `next.config.ts`, publiée par
