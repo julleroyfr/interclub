@@ -1,22 +1,22 @@
-# Déploiement sur Vercel (mesure des performances)
+# Déploiement sur Vercel
 
-> **Statut : expérimental.** L'hébergement de référence reste **Netlify**
+> **Statut : hébergeur unique.** Vercel héberge la recette et la production
 > (cf. [05-git-et-deploiement.md](conventions/05-git-et-deploiement.md)).
-> Vercel est déployé **en parallèle** pour comparer les temps de réponse.
-> `netlify.toml` est conservé tel quel : chaque hébergeur ignore la
-> configuration de l'autre.
+> Netlify, hébergeur d'origine, n'est plus utilisé.
+>
+> Production : <https://interclub-virid.vercel.app>.
 
-## 1. Pourquoi
+## 1. Pourquoi Vercel
 
-Diagnostic du 2026-10-07 : les fonctions Netlify (offre gratuite) tournent en
-**Ohio (CMH)** alors que Supabase recette est à **Dublin (eu-west-1)**. Chaque
-aller-retour serveur ↔ base coûte 130–1000 ms. Vercel, même en offre gratuite
-(Hobby), permet de **choisir la région des fonctions** : on la fixe à `dub1`
-(Dublin), au plus près de la base.
+Diagnostic du 2026-10-07 : les fonctions de l'ancien hébergeur (Netlify, offre
+gratuite) tournaient en **Ohio (CMH)** alors que Supabase est à **Dublin
+(eu-west-1)**. Chaque aller-retour serveur ↔ base coûtait 130–1000 ms. Vercel,
+même en offre gratuite (Hobby), permet de **choisir la région des fonctions** :
+on la fixe à `dub1` (Dublin), au plus près de la base.
 
 ```mermaid
 flowchart LR
-  N["Netlify<br/>fonctions Ohio (CMH)"] -- "~100 ms+ / requête" --> S[("Supabase recette<br/>eu-west-1 Dublin")]
+  N["Avant : Netlify<br/>fonctions Ohio (CMH)"] -- "~100 ms+ / requête" --> S[("Supabase recette<br/>eu-west-1 Dublin")]
   V["Vercel<br/>fonctions dub1 (Dublin)"] -- "~1–5 ms / requête" --> S
 ```
 
@@ -45,7 +45,7 @@ flowchart LR
 | Clé | Valeur | Effet |
 |-----|--------|-------|
 | `framework` | `nextjs` | Détection explicite du framework |
-| `buildCommand` | `npm run build` | Même build que Netlify |
+| `buildCommand` | `npm run build` | Build du projet (`next build`) |
 | `regions` | `["dub1"]` | Fonctions (Server Components, Server Actions, routes, `proxy.ts`) exécutées à Dublin |
 
 Rien d'autre ne change dans le code : `next.config.ts`, `proxy.ts` et les
@@ -139,15 +139,12 @@ Bascule du 2026-10-11 : `vercel.json` ne bloque plus `main` (étape 3 faite).
 | Git (automatique) | `git push` sur une `feature/*` | Preview, URL dédiée |
 | CLI (ponctuel) | `npx vercel` | Preview depuis le poste, sans pousser |
 
-Netlify déploie **aussi** à chaque `push` : les deux hébergeurs tournent en
-parallèle sur la même base recette.
-
 Pour la CLI, la première fois : `npx vercel login` puis `npx vercel link`
 (crée `.vercel/`, déjà ignoré par git).
 
-## 7. Comparer les performances
+## 7. Mesurer les performances
 
-Toujours comparer **la même page, même compte, mêmes données**, après un
+Toujours mesurer **la même page, même compte, mêmes données**, après un
 premier chargement « à chaud » (le démarrage à froid d'une fonction fausse la
 première mesure).
 
@@ -156,10 +153,9 @@ première mesure).
    code est le point d'entrée CDN, le second la région d'exécution (doit être
    `dub1`).
 2. **Temps serveur** — colonne *Waiting for server response (TTFB)* de la
-   requête document et des requêtes POST de Server Actions, sur Netlify puis
-   sur Vercel. Faire 5 mesures et garder la médiane.
-3. **Logs** — *Vercel → Project → Logs* affiche la durée de chaque invocation ;
-   à rapprocher des logs de fonctions Netlify.
+   requête document et des requêtes POST de Server Actions. Faire 5 mesures
+   et garder la médiane.
+3. **Logs** — *Vercel → Project → Logs* affiche la durée de chaque invocation.
 
 Écrans conseillés (les plus riches en requêtes) : classement d'une rencontre,
 contrôle des résultats, saisie coach, écran juge vitesse.
@@ -171,10 +167,4 @@ contrôle des résultats, saisie coach, écran juge vitesse.
   licenciés, spec #13). Un fichier `.xlsx` de plus de 4,5 Mo échouera sur
   Vercel (erreur 413).
 - **Offre Hobby** : usage non commercial, quotas mensuels (invocations, bande
-  passante) largement suffisants pour un test.
-
-## 9. Revenir en arrière
-
-Pour arrêter l'essai : supprimer le projet sur Vercel (*Settings → Advanced →
-Delete Project*) puis supprimer `vercel.json` et ce guide. Netlify n'est pas
-touché.
+  passante) largement suffisants pour le volume des interclubs.

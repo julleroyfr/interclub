@@ -13,7 +13,7 @@ Tous les diagrammes de ce projet sont en **Mermaid** (pas d'images PNG/SVG). Sto
 - **Sequence** — interactions temporelles, échanges de données
 - **ER (Entity-Relationship)** — schéma base de données
 - **State** — transitions d'état (ex. : statut rencontre, statut inscription)
-- **Deployment** — architecture infrastructure (Next / Supabase / Netlify)
+- **Deployment** — architecture infrastructure (Next / Supabase / Vercel)
 - **Git Graph** — branches, stratégie de versioning
 
 ## Workflow

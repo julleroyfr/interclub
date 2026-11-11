@@ -2,21 +2,18 @@
 
 ## 1. Déploiement
 
-- **Netlify déploie automatiquement au `push`.** Il n'y a **pas de GitHub
+- **Vercel déploie automatiquement au `push`.** Il n'y a **pas de GitHub
   Actions** ni de pipeline CI externe.
-- Configuration dans `netlify.toml` (+ `@netlify/plugin-nextjs`).
+- Configuration dans `vercel.json` (fonctions en région `dub1`, au plus près de
+  Supabase). Guide : [deploiement-vercel.md](../deploiement-vercel.md).
 - Mapping branche → environnement (cf.
   [09-environnements-et-donnees.md](./09-environnements-et-donnees.md)) :
-  - `main` → **production** (base Supabase prod).
-  - `develop` → **recette** (base Supabase recette).
-  - `feature/*` → **preview** Netlify, sur base **recette**.
+  - `main` → **Production** Vercel (base Supabase prod).
+  - `develop` → **Preview** Vercel, URL de branche stable (base Supabase
+    recette).
+  - `feature/*` → **Preview** Vercel, sur base **recette**.
 - **Conséquence directe : un `push` sur `main` = mise en ligne prod.** On n'y
   arrive qu'après passage en recette et cahier de test joué.
-- **Essai Vercel (expérimental, mesure de performance)** : `vercel.json`
-  déploie `develop` et `feature/*` en **Preview** Vercel (région `dub1`, base
-  recette) et `main` en **Production** Vercel (base prod, depuis le 2026-10-11).
-  Netlify reste l'hébergeur de référence. Guide :
-  [deploiement-vercel.md](../deploiement-vercel.md).
 
 ### Garde-fou avant commit (toute branche)
 
@@ -95,5 +92,5 @@ flowchart LR
 
 ## 5. À ADAPTER pour un autre projet
 
-- Le nom de l'hébergeur si différent de Netlify (le principe « push = déploiement »
+- Le nom de l'hébergeur si différent de Vercel (le principe « push = déploiement »
   et le garde-fou avant push restent valables).

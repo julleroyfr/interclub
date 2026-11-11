@@ -80,4 +80,4 @@ résumé).
 
 Vérifier la checklist de `docs/conventions/01-workflow-spec-first-tdd.md` §6
 avant de considérer la fonctionnalité terminée. Committer/pousser seulement si
-l'utilisateur le demande (push = déploiement Netlify).
+l'utilisateur le demande (push = déploiement Vercel).

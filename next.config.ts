@@ -5,7 +5,7 @@ import type { NextConfig } from "next";
 import { libelleVersion } from "./src/lib/version";
 
 // Version exposée dans la balise meta `version` (convention 10 §5), figée au
-// build depuis package.json et les variables de déploiement Netlify / Vercel.
+// build depuis package.json et les variables de déploiement Vercel.
 const { version } = JSON.parse(readFileSync("./package.json", "utf8")) as { version: string };
 
 const nextConfig: NextConfig = {

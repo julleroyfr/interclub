@@ -398,7 +398,7 @@ sequenceDiagram
   ligne) — **tranché le 2026-10-07** : **accepté en l'état** ; le cas échéant, le
   résultat est **ressaisi** ou retiré à nouveau.
 - **Déploiement pendant une compétition** — **tranché le 2026-10-07** : **pas de
-  push sur `main`** pendant une rencontre en ③ (push = déploiement Netlify) ; en
+  push sur `main`** pendant une rencontre en ③ (push = déploiement Vercel) ; en
   cas de déploiement malgré tout, la perte des saisies en attente est **acceptée**
   (R21).
 
