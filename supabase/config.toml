@@ -58,7 +58,7 @@ enable_anonymous_sign_ins = true
 enable_signup = true
 enable_confirmations = false
 
-[inbucket]
+[local_smtp]
 # Capture les e-mails locaux (magic links, confirmations) — aucun envoi réel.
 enabled = true
 port = 54324
