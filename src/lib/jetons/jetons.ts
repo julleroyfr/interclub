@@ -50,7 +50,7 @@ async function versJetonVue(row: {
   valeur: string
 }): Promise<JetonVue> {
   // Encode l'URL de scan complète (T5d, ADR 0003). Le host est lu depuis les
-  // en-têtes HTTP : fonctionne en local, preview Netlify et prod sans config.
+  // en-têtes HTTP : fonctionne en local, Preview Vercel et prod sans config.
   const hdrs = await headers()
   const host = hdrs.get('host') ?? 'localhost:3000'
   const proto = host.startsWith('localhost') ? 'http' : 'https'

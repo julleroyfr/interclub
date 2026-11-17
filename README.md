@@ -1,12 +1,12 @@
 # Interclub
 
-Next.js + Supabase + Netlify
+Next.js + Supabase + Vercel
 
 ## Stack
 
 - **Framework**: Next.js (App Router)
 - **Base de données / Auth**: Supabase
-- **Déploiement**: Netlify
+- **Déploiement**: Vercel
 
 ## Démarrage
 

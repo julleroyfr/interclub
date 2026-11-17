@@ -37,6 +37,9 @@ export const PLAFOND_VOIES_ADO = 6
 /** Message du refus d'une 7ᵉ voie ado (R14), partagé avec la traduction du refus de la base. */
 export const MESSAGE_PLAFOND_VOIES_ADO = `Un grimpeur ado réalise au plus ${PLAFOND_VOIES_ADO} voies.`
 
+/** Message du refus d'une voie hors des 3 niveaux du groupe de départ d'un enfant (R14, rév. 2026-11-17). */
+export const MESSAGE_VOIE_HORS_GROUPE = 'Cette voie ne fait pas partie du groupe de départ du grimpeur.'
+
 /** Saisie de résultat invalide (issue incohérente, palier absent, plafond, doublon). */
 export class ResultatInvalideError extends Error {
   constructor(message: string) {
@@ -173,4 +176,54 @@ export function affichageVoiesBlocs(
   if (phase === 'pre_competition' || phase === 'preparation') return 'avant_competition'
   if (categorie === 'enfant' && !groupeDepart) return 'groupe_a_definir'
   return 'voies'
+}
+
+/** Ligne de saisie enfant d'un niveau du groupe de départ (R9bis). */
+export type VoieDuNiveau<V> = {
+  niveau: string
+  /** Voie retenue : celle qui porte un résultat, sinon celle de plus petit `ordre`. */
+  voie: V
+  /** Voies du niveau triées par `ordre` quand il est doublé (≥ 2), sinon vide. */
+  variantes: V[]
+}
+
+/**
+ * Lignes de saisie d'un enfant, une par niveau de son groupe de départ (R9/R9bis,
+ * rév. 2026-11-17). Un niveau doublé ou triplé expose ses variantes pour que la
+ * saisie porte sur la voie réellement grimpée ; la voie retenue est celle qui
+ * porte déjà un résultat (`voiesAvecResultat`), à défaut celle de plus petit
+ * `ordre` (départage par identifiant). Un niveau sans voie dans l'épreuve ne
+ * donne pas de ligne.
+ */
+export function voiesEnfantParNiveau<
+  V extends { voieDifficulteId: string; niveau: string; ordre: number },
+>(
+  niveaux: readonly string[],
+  voiesEpreuve: readonly V[],
+  voiesAvecResultat: ReadonlySet<string>,
+): VoieDuNiveau<V>[] {
+  const lignes: VoieDuNiveau<V>[] = []
+  for (const niveau of niveaux) {
+    const candidates = voiesEpreuve
+      .filter((v) => v.niveau === niveau)
+      .sort((a, b) => a.ordre - b.ordre || a.voieDifficulteId.localeCompare(b.voieDifficulteId))
+    if (candidates.length === 0) continue
+    lignes.push({
+      niveau,
+      voie: candidates.find((v) => voiesAvecResultat.has(v.voieDifficulteId)) ?? candidates[0],
+      variantes: candidates.length > 1 ? candidates : [],
+    })
+  }
+  return lignes
+}
+
+/**
+ * Texte d'une voie dans le choix d'un niveau doublé (R9bis a, précision
+ * 2026-11-17) : le niveau est déjà affiché à côté, la voie est désignée par son
+ * repère seul (« Rouge ») ou, sans repère, par sa lettre (« b ») — c'est-à-dire
+ * son libellé (spec #3 R50) privé du préfixe « <niveau> ».
+ */
+export function libelleVariante(voie: { niveau: string; libelle: string }): string {
+  const prefixe = `${voie.niveau} `
+  return voie.libelle.startsWith(prefixe) ? voie.libelle.slice(prefixe.length) : voie.libelle
 }

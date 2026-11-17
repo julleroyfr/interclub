@@ -4,25 +4,26 @@
 
 | Environnement | Base de données | Déployé depuis | Usage |
 |---------------|-----------------|----------------|-------|
-| **Recette** | Projet Supabase **recette** | branche `develop` **et** branches de feature (previews Netlify) | Intégration, tests manuels (cahier), validation avant prod |
+| **Recette** | Projet Supabase **recette** | branche `develop` **et** branches de feature (Preview Vercel) | Intégration, tests manuels (cahier), validation avant prod |
 | **Production** | Projet Supabase **prod** | branche `main` | Utilisateurs réels |
 
 Règles :
 
 - **Les branches de feature pointent vers la base de recette.** Jamais vers la
-  prod. Idem pour les preview deploys Netlify.
+  prod. Idem pour les déploiements Preview Vercel.
 - **Une migration est d'abord appliquée en recette**, validée, puis rejouée en
   prod (application manuelle — cf. [03-base-de-donnees-supabase.md](./03-base-de-donnees-supabase.md) §5).
 - Chaque environnement a son **jeu de variables** (`.env.local` en local pointant
-  vers la recette ; variables Netlify par contexte de déploiement).
+  vers la recette ; variables Vercel par environnement).
 - **Ne jamais** exécuter un cahier de test destructeur sur la prod.
 
 ### Variables par environnement
 
 - Local & recette : `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY`
   du projet **recette**.
-- Netlify : définir les variables par **contexte** (`production` ← projet prod ;
-  `deploy-preview` / `branch-deploy` ← projet recette).
+- Vercel : définir les variables par **environnement** (`Production` ← projet
+  prod ; `Preview` ← projet recette), cf.
+  [deploiement-vercel.md](../deploiement-vercel.md) §4.3 et §5.
 - La clé `service_role` (si utilisée côté serveur) reste secrète, jamais exposée
   au client, différente par environnement.
 
@@ -35,7 +36,7 @@ flowchart LR
   F["feature/*<br/>preview · base recette"] --> D["develop<br/>recette · base recette"] --> M["main<br/>prod · base prod"]
 ```
 
-- `feature/*` → preview Netlify sur **base recette**.
+- `feature/*` → Preview Vercel sur **base recette**.
 - `develop` → environnement **recette**.
 - `main` → **production**.
 

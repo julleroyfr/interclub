@@ -6,8 +6,8 @@
 - **Pré-requis** :
   - Migration **`202611071100_surclassement`** appliquée à la main (recette
     seulement tant que la branche `feature/surclassement` n'est pas fusionnée).
-  - Retour arrière disponible :
-    `supabase/retours-arriere/202611071100_surclassement_retour_arriere.sql`.
+  - Retour arrière : supprimé à l'archivage de la migration, après sa mise en
+    prod du 2026-11-10 (récupérable dans l'historique git).
   - Variables `AGE_BASCULE` (12) et `AGE_ADO_MAX` (18) configurées (spec #1
     R34bis).
 - **Environnement** : local, puis recette (preview `feature/surclassement`) —
@@ -240,14 +240,14 @@ Les tests automatisés créent puis suppriment leurs propres données (grimpeurs
        'interclub.revoquer_surclassement(uuid, int, boolean)', 'execute');
      ```
 
-  3. En cas de retour arrière : exécuter
-     `202611071100_surclassement_retour_arriere.sql`.
+  3. En cas de retour arrière : sans objet depuis la mise en prod du
+     2026-11-10 (script supprimé à l'archivage).
 - **Résultat attendu** : (1) aucune erreur au rejeu. (2) une ligne de version ;
   index `uq_surclassement_actif` et `idx_surclassement_grimpeur_id` ; `false`
   pour anon. (3) table et fonction supprimées, ligne de version retirée.
-- **Automatisé (local)** : `npm run test:surclassement` (rejeu, contrôles,
-  retour arrière puis réapplication) et `npm run db:verifier-retours --
-  202611071100_surclassement`.
+- **Automatisé (local)** : `npm run test:surclassement` (rejeu de la migration
+  archivée et contrôles). Le retour arrière, vérifié avant la mise en prod
+  (`db:verifier-retours`), n'est plus testé depuis l'archivage.
 
 ## Couverture hors cahier
 

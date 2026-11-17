@@ -86,6 +86,13 @@ grant execute on function pg_temp.lire(text, boolean, text) to authenticated;
 -- (E2E) la remettent en ① ; on fixe l'état attendu (transaction annulée à la fin).
 update interclub.rencontre set phase='competition' where id='33333333-3333-3333-3333-333333333333';
 
+-- Groupes de départ couvrant les voies écrites ci-dessous (spec #6 R14, garanti
+-- en base depuis 202611171200) : Ana M4 → M4·T1·T2 ; Bob M3 → M3·M4·T1.
+update interclub.composition set groupe_depart = 'M4'
+ where rencontre_id = '33333333-3333-3333-3333-333333333333' and grimpeur_id = 'a0000000-0000-0000-0000-0000000000a1';
+update interclub.composition set groupe_depart = 'M3'
+ where rencontre_id = '33333333-3333-3333-3333-333333333333' and grimpeur_id = 'a0000000-0000-0000-0000-0000000000a2';
+
 -- Rencontre ADO (club A, compétition) + épreuve voie + voie tête ado.
 insert into interclub.rencontre (id, date_rencontre, club_porteur_id, categorie, phase)
 values ('d3333333-3333-3333-3333-333333333330', '2026-09-19',
@@ -111,7 +118,7 @@ select set_config('request.jwt.claims','{"sub":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa
 
 -- R10 — « prise_valorisee » : voies tête ENFANT uniquement.
 select pg_temp.essai('R10-pv-tete-enfant-OK',   true,  $$insert into interclub.resultat_voie (voie_difficulte_id,grimpeur_id,issue) values ('99999999-9999-9999-9999-999999999901','a0000000-0000-0000-0000-0000000000a2','prise_valorisee')$$);
-select pg_temp.essai('R10-pv-moulinette-KO',     false, $$insert into interclub.resultat_voie (voie_difficulte_id,grimpeur_id,issue) values ('99999999-9999-9999-9999-999999999911','a0000000-0000-0000-0000-0000000000a2','prise_valorisee')$$);
+select pg_temp.essai('R10-pv-moulinette-KO',     false, $$insert into interclub.resultat_voie (voie_difficulte_id,grimpeur_id,issue) values ('99999999-9999-9999-9999-999999999913','a0000000-0000-0000-0000-0000000000a2','prise_valorisee')$$);
 select pg_temp.essai('R10-pv-tete-ado-KO',       false, $$insert into interclub.resultat_voie (voie_difficulte_id,grimpeur_id,issue) values ('d9999999-9999-9999-9999-999999999901','a0000000-0000-0000-0000-0000000000a2','prise_valorisee')$$);
 
 -- R12 — « zone1 »/« zone2 » : catégorie ADO uniquement.
@@ -119,7 +126,7 @@ select pg_temp.essai('R12-zone2-ado-OK',         true,  $$insert into interclub.
 select pg_temp.essai('R12-zone1-enfant-KO',      false, $$insert into interclub.resultat_voie (voie_difficulte_id,grimpeur_id,issue) values ('99999999-9999-9999-9999-999999999901','a0000000-0000-0000-0000-0000000000a2','zone1')$$);
 
 -- Issues neutres admises partout (top / echec / np).
-select pg_temp.essai('base-top-moulinette-OK',   true,  $$insert into interclub.resultat_voie (voie_difficulte_id,grimpeur_id,issue) values ('99999999-9999-9999-9999-999999999911','a0000000-0000-0000-0000-0000000000a2','top')$$);
+select pg_temp.essai('base-top-moulinette-OK',   true,  $$insert into interclub.resultat_voie (voie_difficulte_id,grimpeur_id,issue) values ('99999999-9999-9999-9999-999999999913','a0000000-0000-0000-0000-0000000000a2','top')$$);
 select pg_temp.essai('base-np-tete-ado-OK',      true,  $$insert into interclub.resultat_voie (voie_difficulte_id,grimpeur_id,issue) values ('d9999999-9999-9999-9999-999999999901','a0000000-0000-0000-0000-0000000000a2','np')$$);
 
 -- R13 — une seule issue par (voie, grimpeur) : (9901, Ana) existe déjà (top).

@@ -8,6 +8,12 @@ import { ListeSaisies, type ResumeSaisie } from '@/composants/saisie-hors-ligne/
 import { indicateurCible } from '@/composants/saisie-hors-ligne/etat-cible'
 import { useFileSaisies } from '@/composants/saisie-hors-ligne/useFileSaisies'
 import { useSuiviEnvoi } from '@/composants/saisie-hors-ligne/useSuiviEnvoi'
+import { BoutonEffacer } from '@/composants/saisie-resultats/BoutonEffacer'
+import {
+  AvisRemplacement,
+  SelecteurVoieNiveau,
+  useVoieChoisie,
+} from '@/composants/saisie-resultats/ChoixVoieNiveau'
 import type { IssueEnvoi } from '@/domaine/hors-ligne'
 import { aVoiesLibres } from '@/domaine/rencontre'
 import { affichageVoiesBlocs, issuesVoieSaisissables, type IssueVoie } from '@/domaine/resultat'
@@ -641,7 +647,6 @@ function SectionVoies({ saisie, grimpeur }: { saisie: SaisieRencontre; grimpeur:
             saisie={saisie}
             grimpeur={grimpeur}
             voie={v}
-            retirable={estAdo}
           />
         ))}
       </ul>
@@ -653,21 +658,21 @@ function SectionVoies({ saisie, grimpeur }: { saisie: SaisieRencontre; grimpeur:
   )
 }
 
-/** Une voie : issue courante + boutons d'issue (si saisie ouverte), retrait ado. */
+/** Une voie : issue courante + boutons d'issue et Effacer (si saisie ouverte, R13ter). */
 function LigneVoie({
   saisie,
   grimpeur,
   voie,
-  retirable,
 }: {
   saisie: SaisieRencontre
   grimpeur: GrimpeurSaisie
   voie: SaisieVoie
-  retirable: boolean
 }) {
   const { surSoumission } = useEnvoi()
-  const issues = issuesVoieSaisissables(saisie.categorie, voie.typeVoie)
-  const cible = { grimpeurId: grimpeur.grimpeurId, voieDifficulteId: voie.voieDifficulteId }
+  // Enfant, niveau doublé : voie grimpée au choix (spec #6 R9bis, R21).
+  const { choisie, setChoisieId, issue: issueCourante, remplace } = useVoieChoisie(voie, voie.variantes)
+  const issues = issuesVoieSaisissables(saisie.categorie, choisie.typeVoie)
+  const cible = { grimpeurId: grimpeur.grimpeurId, voieDifficulteId: choisie.voieDifficulteId }
   const cle = cleSaisie({ type: 'voie', ...cible, issue: 'top' })
   const nomGrimpeur = `${grimpeur.prenom} ${grimpeur.nom}`
   const suivi = useSuiviEnvoi(!!voie.enAttente)
@@ -675,21 +680,37 @@ function LigneVoie({
   return (
     <li className="flex flex-col gap-2 py-2" data-en-attente={voie.enAttente ? '' : undefined}>
       <div className="flex items-center gap-2">
-        <span className="min-w-9 font-bold text-texte-fort">{voie.libelle}</span>
-        <span className="text-[11px] text-texte-doux">{voie.cotation}</span>
+        {voie.variantes ? (
+          <>
+            <span className="min-w-9 font-bold text-texte-fort">{voie.niveau}</span>
+            <SelecteurVoieNiveau
+              niveau={voie.niveau}
+              variantes={voie.variantes}
+              valeur={choisie.voieDifficulteId}
+              onChange={setChoisieId}
+            />
+          </>
+        ) : (
+          <span className="min-w-9 font-bold text-texte-fort">{voie.libelle}</span>
+        )}
+        <span className="text-[11px] text-texte-doux">{choisie.cotation}</span>
         <span className="ml-auto flex items-center gap-2">
           <EtatEnvoi cle={cle} enAttente={voie.enAttente} suivi={suivi} />
-          {voie.issue && (
+          {issueCourante && (
             <span
-              className={`rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${classeIssue(voie.issue)} ${
+              className={`rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${classeIssue(issueCourante)} ${
                 voie.enAttente && suivi.attenteLongue ? 'border-dashed' : ''
               }`}
             >
-              {LIBELLE_ISSUE[voie.issue]}
+              {LIBELLE_ISSUE[issueCourante]}
             </span>
           )}
         </span>
       </div>
+
+      {saisie.ouverteSaisie && remplace && voie.issue && (
+        <AvisRemplacement libelle={voie.libelle} issue={LIBELLE_ISSUE[voie.issue]} />
+      )}
 
       {saisie.ouverteSaisie && (
         <div className="flex flex-wrap items-center gap-1.5">
@@ -698,13 +719,13 @@ function LigneVoie({
               const issue = String(fd.get('issue')) as IssueVoie
               return {
                 s: { type: 'voie', ...cible, issue },
-                resume: { grimpeur: nomGrimpeur, cible: `Voie ${voie.libelle}`, valeur: LIBELLE_ISSUE[issue] },
+                resume: { grimpeur: nomGrimpeur, cible: `Voie ${choisie.libelle}`, valeur: LIBELLE_ISSUE[issue] },
               }
             })}
             className="flex flex-wrap gap-1.5"
           >
             <input type="hidden" name="rencontreId" value={saisie.id} />
-            <input type="hidden" name="voieDifficulteId" value={voie.voieDifficulteId} />
+            <input type="hidden" name="voieDifficulteId" value={choisie.voieDifficulteId} />
             <input type="hidden" name="grimpeurId" value={grimpeur.grimpeurId} />
             {issues.map((iss) => (
               <button
@@ -713,7 +734,7 @@ function LigneVoie({
                 name="issue"
                 value={iss}
                 className={`min-h-11 rounded-lg border px-2.5 py-1 text-[11.5px] font-semibold disabled:opacity-50 ${
-                  voie.issue === iss
+                  issueCourante === iss
                     ? classeIssue(iss)
                     : 'border-bordure bg-black/20 text-texte-attenue hover:bg-surface-forte'
                 }`}
@@ -722,23 +743,18 @@ function LigneVoie({
               </button>
             ))}
           </form>
-          {retirable && voie.issue && (
+          {/* Effacer (R13ter) : porte sur la voie qui porte le résultat (R13ter c). */}
+          {voie.issue && (
             <form
               onSubmit={surSoumission(() => ({
-                s: { type: 'retrait_voie', ...cible },
-                resume: { grimpeur: nomGrimpeur, cible: `Voie ${voie.libelle}`, valeur: 'Retrait' },
+                s: { type: 'retrait_voie', grimpeurId: grimpeur.grimpeurId, voieDifficulteId: voie.voieDifficulteId },
+                resume: { grimpeur: nomGrimpeur, cible: `Voie ${voie.libelle}`, valeur: 'Effacé' },
               }))}
             >
               <input type="hidden" name="rencontreId" value={saisie.id} />
               <input type="hidden" name="voieDifficulteId" value={voie.voieDifficulteId} />
               <input type="hidden" name="grimpeurId" value={grimpeur.grimpeurId} />
-              <button
-                type="submit"
-                aria-label={`Retirer la voie ${voie.libelle}`}
-                className="min-h-11 min-w-11 rounded-lg border border-danger/40 px-2 py-1 text-sm text-danger hover:bg-danger/10"
-              >
-                ×
-              </button>
+              <BoutonEffacer cible={`de la voie ${voie.libelle}`} />
             </form>
           )}
         </div>
@@ -959,6 +975,20 @@ function LigneBloc({
               Échec
             </button>
           </form>
+          {/* Effacer (R13ter). */}
+          {bloc.issue && (
+            <form
+              onSubmit={surSoumission(() => ({
+                s: { type: 'retrait_bloc', grimpeurId: grimpeur.grimpeurId, blocId: bloc.blocId },
+                resume: resume('Effacé'),
+              }))}
+            >
+              <input type="hidden" name="rencontreId" value={saisie.id} />
+              <input type="hidden" name="blocId" value={bloc.blocId} />
+              <input type="hidden" name="grimpeurId" value={grimpeur.grimpeurId} />
+              <BoutonEffacer cible={`du bloc ${bloc.code}`} />
+            </form>
+          )}
         </div>
       )}
       <MotifRejet cle={cle} />

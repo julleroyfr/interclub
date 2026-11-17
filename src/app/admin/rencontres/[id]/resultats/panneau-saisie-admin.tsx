@@ -2,11 +2,19 @@
 
 import { useMemo, useState } from 'react'
 
+import { BoutonEffacer } from '@/composants/saisie-resultats/BoutonEffacer'
+import {
+  AvisRemplacement,
+  SelecteurVoieNiveau,
+  useVoieChoisie,
+} from '@/composants/saisie-resultats/ChoixVoieNiveau'
 import { accorder } from '@/domaine/accord'
+import { libelleGroupeDepart } from '@/domaine/engagement'
 import { aVoiesLibres, type Categorie } from '@/domaine/rencontre'
 import { issuesVoieSaisissables, type IssueVoie } from '@/domaine/resultat'
 import {
   retirerResultatVoieAdmin,
+  retirerResultatBlocAdmin,
   saisirResultatBlocAdmin,
   saisirResultatVoieAdmin,
   type EtatSaisie,
@@ -280,7 +288,7 @@ function DetailGrimpeur({
             {saisie.categorie} · <strong>{grimpeur.clubNom}</strong> ·{' '}
             {grimpeur.equipeNom}
             {grimpeur.prete ? ' · prêté' : ''}
-            {grimpeur.groupeDepart ? ` · groupe ${grimpeur.groupeDepart}` : ''}
+            {grimpeur.groupeDepart ? ` · ${libelleGroupeDepart(grimpeur.groupeDepart).toLowerCase()}` : ''}
           </p>
         </div>
         <div className="flex items-center gap-3 rounded-xl border border-secondaire/25 bg-secondaire/5 px-4 py-2">
@@ -343,7 +351,6 @@ function SectionVoies({
             saisie={saisie}
             grimpeur={grimpeur}
             voie={v}
-            retirable={estAdo}
           />
         ))}
       </ul>
@@ -363,35 +370,51 @@ function LigneVoie({
   saisie,
   grimpeur,
   voie,
-  retirable,
 }: {
   saisie: SaisieAdminRencontre
   grimpeur: GrimpeurSaisie
   voie: SaisieVoie
-  retirable: boolean
 }) {
   const [etat, action, enCours] = useActionState(saisirResultatVoieAdmin, etatInitial)
   const [etatRetrait, actionRetrait] = useActionState(retirerResultatVoieAdmin, etatInitial)
-  const issues = issuesVoieSaisissables(saisie.categorie, voie.typeVoie)
+  // Enfant, niveau doublé : voie grimpée au choix (spec #6 R9bis, spec #9 R7).
+  const { choisie, setChoisieId, issue: issueCourante, remplace } = useVoieChoisie(voie, voie.variantes)
+  const issues = issuesVoieSaisissables(saisie.categorie, choisie.typeVoie)
 
   return (
     <li className="flex flex-col gap-2 py-2">
       <div className="flex items-center gap-2">
-        <span className="min-w-9 font-bold text-texte-fort">{voie.libelle}</span>
-        <span className="text-[11px] text-texte-doux">{voie.cotation}</span>
-        {voie.issue && (
+        {voie.variantes ? (
+          <>
+            <span className="min-w-9 font-bold text-texte-fort">{voie.niveau}</span>
+            <SelecteurVoieNiveau
+              niveau={voie.niveau}
+              variantes={voie.variantes}
+              valeur={choisie.voieDifficulteId}
+              onChange={setChoisieId}
+            />
+          </>
+        ) : (
+          <span className="min-w-9 font-bold text-texte-fort">{voie.libelle}</span>
+        )}
+        <span className="text-[11px] text-texte-doux">{choisie.cotation}</span>
+        {issueCourante && (
           <span
-            className={`ml-auto rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${classeIssue(voie.issue)}`}
+            className={`ml-auto rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${classeIssue(issueCourante)}`}
           >
-            {LIBELLE_ISSUE[voie.issue]}
+            {LIBELLE_ISSUE[issueCourante]}
           </span>
         )}
       </div>
 
+      {saisie.ouverteSaisie && remplace && voie.issue && (
+        <AvisRemplacement libelle={voie.libelle} issue={LIBELLE_ISSUE[voie.issue]} />
+      )}
+
       {saisie.ouverteSaisie && (
         <div className="flex flex-wrap items-center gap-1.5">
           <form action={action} className="flex flex-wrap gap-1.5">
-            <input type="hidden" name="voieDifficulteId" value={voie.voieDifficulteId} />
+            <input type="hidden" name="voieDifficulteId" value={choisie.voieDifficulteId} />
             <input type="hidden" name="grimpeurId" value={grimpeur.grimpeurId} />
             {issues.map((iss) => (
               <button
@@ -401,7 +424,7 @@ function LigneVoie({
                 value={iss}
                 disabled={enCours}
                 className={`min-h-11 rounded-lg border px-2.5 py-1 lg:min-h-9 text-[11.5px] font-semibold disabled:opacity-50 ${
-                  voie.issue === iss
+                  issueCourante === iss
                     ? classeIssue(iss)
                     : 'border-bordure bg-black/20 text-texte-attenue hover:bg-surface-forte'
                 }`}
@@ -410,17 +433,12 @@ function LigneVoie({
               </button>
             ))}
           </form>
-          {retirable && voie.issue && (
+          {/* Effacer (spec #6 R13ter, spec #9 R8) : la voie qui porte le résultat. */}
+          {voie.issue && (
             <form action={actionRetrait}>
               <input type="hidden" name="voieDifficulteId" value={voie.voieDifficulteId} />
               <input type="hidden" name="grimpeurId" value={grimpeur.grimpeurId} />
-              <button
-                type="submit"
-                aria-label={`Retirer la voie ${voie.libelle}`}
-                className="min-h-11 rounded-lg border border-danger/40 px-2 py-1 lg:min-h-9 text-sm text-danger hover:bg-danger/10"
-              >
-                ×
-              </button>
+              <BoutonEffacer cible={`de la voie ${voie.libelle}`} />
             </form>
           )}
         </div>
@@ -539,6 +557,7 @@ function LigneBloc({
   paliers: BlocConfig['paliers']
 }) {
   const [etat, action, enCours] = useActionState(saisirResultatBlocAdmin, etatInitial)
+  const [etatRetrait, actionRetrait] = useActionState(retirerResultatBlocAdmin, etatInitial)
 
   const libelleCourant =
     bloc.issue === 'palier'
@@ -605,11 +624,19 @@ function LigneBloc({
               Échec
             </button>
           </form>
+          {/* Effacer (spec #6 R13ter, spec #9 R8). */}
+          {bloc.issue && (
+            <form action={actionRetrait}>
+              <input type="hidden" name="blocId" value={bloc.blocId} />
+              <input type="hidden" name="grimpeurId" value={grimpeur.grimpeurId} />
+              <BoutonEffacer cible={`du bloc ${bloc.code}`} />
+            </form>
+          )}
         </div>
       )}
-      {etat?.erreur && (
+      {(etat?.erreur || etatRetrait?.erreur) && (
         <p role="alert" className="text-xs text-danger">
-          {etat.erreur}
+          {etat?.erreur ?? etatRetrait?.erreur}
         </p>
       )}
     </li>

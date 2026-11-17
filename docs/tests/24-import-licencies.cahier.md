@@ -9,7 +9,7 @@
   - Un **compte admin**, un **compte coach**, et pouvoir tester **non connecté**.
   - **Fichier réel** `docs/reglement/Licenciés 2027.xlsx` (non versionné) pour les
     cas nominaux, + quelques **fichiers forgés** (voir Jeu de données).
-- **Environnement** : recette (preview Netlify) — version/commit : `______`
+- **Environnement** : recette (Preview Vercel) — version/commit : `______`
 
 ## Jeu de données initial
 

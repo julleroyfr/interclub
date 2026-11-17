@@ -3,7 +3,12 @@ import { describe, expect, it } from 'vitest'
 import type { GrimpeurSaisie, SaisieRencontre } from '@/lib/coach/resultats'
 import type { GrimpeurVitesse } from '@/lib/juge/vitesse'
 
-import { appliquerSaisieOptimiste, appliquerScore, appliquerVitesseOptimiste } from './saisie-optimiste'
+import {
+  appliquerSaisieOptimiste,
+  appliquerScore,
+  appliquerVitesseOptimiste,
+  cleSaisie,
+} from './saisie-optimiste'
 
 // Spec #17 R22 / spec #6 R20bis / spec #10 R14bis : une saisie est affichée dès
 // sa validation, « en attente », et les compteurs en tiennent compte.
@@ -100,14 +105,90 @@ describe('spec #17 — Affichage immédiat d’une saisie voie/bloc (R22, spec #
     expect(premier(s).progression.voiesFaites).toBe(2)
   })
 
-  it('retrait d’une voie ado : elle disparaît et la progression baisse', () => {
-    const s = appliquerSaisieOptimiste(saisie(), {
+  it('enfant, niveau doublé : une saisie sur la variante remplace la ligne du niveau (spec #6 R9bis)', () => {
+    const variantes = [
+      { voieDifficulteId: 'v2', niveau: 'T2', libelle: 'T2 Rouge', cotation: '5b', typeVoie: 'tete' as const, ordre: 2 },
+      { voieDifficulteId: 'v2n', niveau: 'T2', libelle: 'T2 Noire', cotation: '5c', typeVoie: 'tete' as const, ordre: 4 },
+    ]
+    const g = grimpeur({
+      voies: [
+        { voieDifficulteId: 'v1', niveau: 'T1', libelle: 'T1', cotation: '5a', typeVoie: 'tete', issue: 'top' },
+        { ...variantes[0]!, issue: 'echec', variantes },
+      ],
+      progression: { voiesFaites: 2, voiesTotal: 3, blocsFaites: 1, blocsTotal: 2 },
+    })
+    const base = saisie(g)
+    const s = appliquerSaisieOptimiste({ ...base, voiesEpreuve: [...base.voiesEpreuve, variantes[1]!] }, {
+      type: 'voie',
+      grimpeurId: 'g1',
+      voieDifficulteId: 'v2n',
+      issue: 'top',
+    })
+    expect(premier(s).voies).toHaveLength(2)
+    expect(premier(s).voies[1]).toMatchObject({
+      voieDifficulteId: 'v2n',
+      libelle: 'T2 Noire',
+      cotation: '5c',
+      issue: 'top',
+      enAttente: true,
+      variantes,
+    })
+    expect(premier(s).progression.voiesFaites).toBe(2)
+  })
+
+  it('retrait d’une voie ado : elle disparaît et la progression baisse (spec #6 R13ter b)', () => {
+    const s = appliquerSaisieOptimiste(saisie(grimpeur(), 'ado'), {
       type: 'retrait_voie',
       grimpeurId: 'g1',
       voieDifficulteId: 'v1',
     })
     expect(premier(s).voies.map((v) => v.voieDifficulteId)).toEqual(['v2'])
     expect(premier(s).progression.voiesFaites).toBe(0)
+  })
+
+  it('effacer une voie enfant : la ligne reste, « à saisir », la progression baisse (spec #6 R13ter b)', () => {
+    const s = appliquerSaisieOptimiste(saisie(), {
+      type: 'retrait_voie',
+      grimpeurId: 'g1',
+      voieDifficulteId: 'v1',
+    })
+    expect(premier(s).voies.map((v) => v.voieDifficulteId)).toEqual(['v1', 'v2'])
+    expect(premier(s).voies[0]).toMatchObject({ issue: null, enAttente: true })
+    expect(premier(s).progression.voiesFaites).toBe(0)
+  })
+
+  it('effacer la variante d’un niveau doublé : la ligne revient à la voie de plus petit ordre (spec #6 R13ter c)', () => {
+    const variantes = [
+      { voieDifficulteId: 'v2', niveau: 'T2', libelle: 'T2 Rouge', cotation: '5b', typeVoie: 'tete' as const, ordre: 2 },
+      { voieDifficulteId: 'v2n', niveau: 'T2', libelle: 'T2 Noire', cotation: '5c', typeVoie: 'tete' as const, ordre: 4 },
+    ]
+    const g = grimpeur({
+      voies: [
+        { voieDifficulteId: 'v1', niveau: 'T1', libelle: 'T1', cotation: '5a', typeVoie: 'tete', issue: 'top' },
+        { ...variantes[1]!, issue: 'top', variantes },
+      ],
+    })
+    const s = appliquerSaisieOptimiste(saisie(g), { type: 'retrait_voie', grimpeurId: 'g1', voieDifficulteId: 'v2n' })
+    expect(premier(s).voies[1]).toMatchObject({
+      voieDifficulteId: 'v2',
+      libelle: 'T2 Rouge',
+      cotation: '5b',
+      issue: null,
+      variantes,
+    })
+    expect(premier(s).progression.voiesFaites).toBe(1)
+  })
+
+  it('effacer un bloc : « à saisir », palier retiré, la progression baisse (spec #6 R13ter b)', () => {
+    const s = appliquerSaisieOptimiste(saisie(), { type: 'retrait_bloc', grimpeurId: 'g1', blocId: 'b2' })
+    expect(premier(s).blocs[1]).toMatchObject({ issue: null, palierId: null, palierLibelle: null, enAttente: true })
+    expect(premier(s).progression.blocsFaites).toBe(0)
+  })
+
+  it('effacer un bloc : même cible qu’une saisie de ce bloc (spec #17 R14)', () => {
+    expect(cleSaisie({ type: 'retrait_bloc', grimpeurId: 'g1', blocId: 'b2' })).toBe(
+      cleSaisie({ type: 'bloc', grimpeurId: 'g1', blocId: 'b2', issue: 'echec', palierId: null }),
+    )
   })
 
   it('bloc : le palier s’affiche avec son libellé, en attente', () => {

@@ -8,7 +8,7 @@ description: Publier une version de l'application (mise en production develop �
 Référence : [`docs/conventions/10-versionnement.md`](../../../docs/conventions/10-versionnement.md).
 En cas d'écart entre ce skill et la convention, **la convention fait foi**.
 
-**Rappel** : un push sur `main` = **mise en production** (Netlify et Vercel).
+**Rappel** : un push sur `main` = **mise en production** (Vercel).
 On ne pousse **jamais** sans accord explicite de l'utilisateur, donné pour
 cette version.
 

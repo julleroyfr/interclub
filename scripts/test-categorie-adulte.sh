@@ -228,6 +228,14 @@ select b.id as b1, p.id as p1 from interclub.bloc b join interclub.bloc_palier p
   join interclub.epreuve e on e.id = b.epreuve_id where e.rencontre_id = :'rid' and b.code = 'B1' and p.libelle = 'Zone' \gset
 select pg_temp.essai('R18-capitaine-bloc-membre-OK', true,
   format($$select interclub.saisir_resultat_bloc(%L, 'a0000000-0000-0000-0000-0000000000a3', 'palier', %L)$$, :'b1', :'p1'));
+-- R18 (retirer) et spec #6 R13ter : effacer une voie ou un bloc d'un membre ;
+-- refus hors équipe.
+select pg_temp.essai('R18-capitaine-efface-voie-membre-OK', true,
+  format($$select interclub.retirer_resultat_voie(%L, 'a0000000-0000-0000-0000-0000000000a3')$$, :'v1'));
+select pg_temp.essai('R18-capitaine-efface-bloc-membre-OK', true,
+  format($$select interclub.retirer_resultat_bloc(%L, 'a0000000-0000-0000-0000-0000000000a3')$$, :'b1'));
+select pg_temp.essai('R18-capitaine-efface-bloc-autre-equipe-KO', false,
+  format($$select interclub.retirer_resultat_bloc(%L, 'a0000000-0000-0000-0000-0000000000a6')$$, :'b1'));
 select pg_temp.essai('R18-capitaine-voie-autre-equipe-KO', false,
   format($$select interclub.saisir_resultat_voie(%L, 'a0000000-0000-0000-0000-0000000000a6', 'top')$$, :'v1'));
 select pg_temp.essai('R18-capitaine-vitesse-KO', false,

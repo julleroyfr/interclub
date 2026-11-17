@@ -18,7 +18,7 @@
 #   - EA-05 (A5) : invitation administrateur — une seule active après deux
 #             générations, refus coach, atomicité.
 #   - EA-06 : droits (anon refusé, authenticated permis).
-#   - EA-07 : rejeu de la migration, retour arrière puis réapplication.
+#   - EA-07 : rejeu idempotent de la migration (archivée, retour arrière supprimé).
 #
 # EA-01 à EA-06 tournent dans une transaction annulée. La base locale est
 # rendue dans son état.
@@ -245,11 +245,10 @@ while IFS=$'\t' read -r etat id attendu obtenu; do
   esac
 done <<< "$(printf '%s\n' "$SORTIE" | grep -E '^(OK|KO)'$'\t')"
 
-echo "== EA-07 Migration rejouée, retour arrière, réapplication =="
+echo "== EA-07 Migration rejouée (idempotence) =="
 sql() { docker exec "$CONTENEUR" psql -U postgres -tA -v ON_ERROR_STOP=1 -c "$1"; }
 VERSION="202611101600_rpc_ecritures_atomiques"
-MIGRATION="supabase/migrations/$VERSION.sql"
-RETOUR="supabase/retours-arriere/${VERSION}_retour_arriere.sql"
+MIGRATION="supabase/migrations/archive/$VERSION.sql"
 appliquer() { docker exec -i "$CONTENEUR" psql -U postgres -q -v ON_ERROR_STOP=1 < "$1" >/dev/null 2>&1; }
 etat() {
   sql "select (select count(*) from pg_proc where pronamespace = 'interclub'::regnamespace
@@ -259,10 +258,6 @@ etat() {
 }
 if [ -f "$MIGRATION" ] && appliquer "$MIGRATION"; then ok "rejeu de la migration"; else ko "rejeu de la migration en erreur"; fi
 verifie "5 fonctions, version enregistrée" "$(etat)" "5/1"
-if [ -f "$RETOUR" ] && appliquer "$RETOUR"; then ok "retour arrière"; else ko "retour arrière en erreur"; fi
-verifie "fonctions et version retirées" "$(etat)" "0/0"
-if [ -f "$MIGRATION" ] && appliquer "$MIGRATION"; then ok "réapplication"; else ko "réapplication en erreur"; fi
-verifie "présentes après réapplication" "$(etat)" "5/1"
 
 echo
 echo "Résultat : $PASS OK, $FAIL KO"

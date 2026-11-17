@@ -306,8 +306,146 @@ Cas particuliers à préparer à la main :
   résultats de voie : aucun NP de voie, 160 NP de bloc) ; `npm run test:cloture`
   (`scripts/test-cloture.sh` : garde admin, R17, jour J, R18 enfant/ado/adulte,
   idempotence, échec du NP → phase inchangée, deux clôtures simultanées → une
-  seule passe, droits, rejeu et retour arrière). Reste à dérouler en recette :
+  seule passe, droits, rejeu ; retour arrière supprimé à l'archivage du
+  2026-11-10). Reste à dérouler en recette :
   étapes 1 et 2 sur une rencontre réelle.
+
+### Niveau doublé en enfant (rév. 2026-11-17)
+
+> **Pré-condition commune (CT-20 à CT-23)** : migration
+> `202611171200_voies_doublees_enfant` appliquée ; rencontre **enfant** en ③,
+> jour J ; dans sa structure (admin), le niveau **T2** compte deux voies de
+> repères **« Rouge »** (plus petit `ordre`) et **« Noire »** ; un grimpeur du
+> club du coach a le groupe de départ **T1** (T1 · T2 · T3) et aucun résultat.
+> En local : Bob Alpha, voie Noire ajoutée par
+> `e2e/voies-doublees-enfant.spec.ts`.
+
+### CT-20 `[mixte]` — Une ligne par niveau, choix de la voie sur le niveau doublé   (couvre : R9bis a/b, R21)
+
+- **Rôle / compte** : `coach@test.local`.
+- **Étapes** : ouvrir la saisie du grimpeur.
+- **Résultat attendu** :
+  - 3 lignes de voie (T1, T2, T3), compteur `0/3` ;
+  - la ligne **T2** affiche un menu *Rouge / Noire* (repère seul), **Rouge**
+    présélectionnée ; T1 et T3 n'ont pas de menu ;
+  - *(à l'œil, sur téléphone)* le menu est lisible (fond sombre) et se
+    touche facilement (≥ 44 px).
+- **Automatisé** : `e2e/voies-doublees-enfant.spec.ts` (CT-20).
+
+### CT-21 `[mixte]` — Saisie sur la voie choisie, présélection ensuite   (couvre : R9bis b/c, R21)
+
+- **Rôle / compte** : `coach@test.local`.
+- **Étapes** :
+  1. Ligne T2 : choisir **T2 Noire** (sans saisir) ; SQL Editor : lire les
+     résultats T2 du grimpeur.
+  2. Saisir **Top** ; relire en SQL ; noter le score.
+  3. Recharger l'écran et rouvrir le grimpeur.
+- **Résultat attendu** :
+  1. aucun résultat (changer de voie n'écrit rien) ;
+  2. un seul résultat T2, sur **T2 Noire** (`top`) ; récapitulatif « Voie
+     T2 Noire — Top » ; le score compte les points de **T2 Noire** ;
+     compteur `1/3` ;
+  3. le menu s'ouvre sur **T2 Noire**, pastille **Top**.
+- **Automatisé** : `e2e/voies-doublees-enfant.spec.ts` (CT-21), sauf le score.
+
+### CT-22 `[mixte]` — Changement de voie : remplacement annoncé puis effectif   (couvre : R9bis d)
+
+- **Rôle / compte** : `coach@test.local` (suite de CT-21).
+- **Étapes** :
+  1. Ligne T2 : choisir **T2 Rouge**.
+  2. Saisir **Échec** ; relire en SQL.
+- **Résultat attendu** :
+  1. message « ⚠ Remplacera le résultat de T2 Noire (Top). » ; pas de
+     pastille sur la ligne (T2 Rouge n'a pas de résultat) ;
+  2. un seul résultat T2, sur **T2 Rouge** (`echec`) ; plus rien sur T2
+     Noire ; le message disparaît ; compteur toujours `1/3`.
+- **Automatisé** : `e2e/voies-doublees-enfant.spec.ts` (CT-22).
+
+### CT-23 `[auto]` — Revenir sur la voie courante sans saisir   (couvre : R21)
+
+- **Rôle / compte** : `coach@test.local` (suite de CT-22).
+- **Étapes** : choisir T2 Noire (le message de remplacement s'affiche), puis
+  revenir sur T2 Rouge.
+- **Résultat attendu** : le message disparaît ; la base est inchangée
+  (`Rouge:echec`).
+- **Automatisé** : `e2e/voies-doublees-enfant.spec.ts` (CT-23).
+
+### CT-24 `[auto]` — Garde en base : groupe de départ, un résultat par niveau   (couvre : R9bis c/d/e, R14, R18)
+
+- **Rôle / compte** : coach (fonction d'enregistrement) et admin (écriture
+  directe), par appel d'API.
+- **Étapes** (SQL / appels directs) : saisir une voie **hors** des 3 niveaux
+  du groupe ; saisir pour un enfant **sans groupe** ; saisir sur l'autre voie
+  du niveau ; rejouer une saisie **plus ancienne** que le résultat existant ;
+  passer en ④ avec un niveau doublé non saisi.
+- **Résultat attendu** : refus `voie_hors_groupe` (message « Cette voie ne
+  fait pas partie du groupe de départ du grimpeur. ») ; remplacement (un seul
+  résultat par niveau, coach comme admin) ; refus `saisie_plus_ancienne`
+  (« Une saisie plus récente existe déjà. ») sans toucher au résultat
+  existant ; NP de clôture sur la voie de **plus petit `ordre`** du niveau non
+  saisi, aucun NP sur un niveau saisi sur l'une de ses voies ; ado non
+  concerné (deux T5 permises).
+- **Automatisé** : `npm run test:voies-doublees`
+  (`scripts/test-voies-doublees.sh`, 24 assertions, rejeu de la migration
+  compris).
+
+### Effacer une saisie (rév. 2026-11-17)
+
+> **Pré-condition commune (CT-25 à CT-28)** : migration
+> `202611171400_retirer_resultat_bloc` appliquée ; rencontre **enfant** en ③ ;
+> un grimpeur du club du coach (groupe M2 en local : Ana Alpha) sans résultat.
+
+### CT-25 `[auto]` — Pas de croix d'effacement sur une ligne « à saisir »   (couvre : R13ter a)
+
+- **Rôle / compte** : `coach@test.local`.
+- **Étapes** : ouvrir la saisie du grimpeur.
+- **Résultat attendu** : aucune ligne de voie ni de bloc ne montre la croix **×**.
+- **Automatisé** : `e2e/effacer-saisie.spec.ts` (CT-25).
+
+### CT-26 `[mixte]` — Top sur la mauvaise voie, effacé   (couvre : R13ter a/b, R20, R23)
+
+- **Rôle / compte** : `coach@test.local`.
+- **Étapes** :
+  1. Saisir **Top** sur la 2ᵉ voie (au lieu de la 1ʳᵉ) ; noter le score.
+  2. Toucher la croix **×** de cette ligne ; SQL Editor : lire ses résultats.
+- **Résultat attendu** :
+  1. la ligne affiche Top, une croix rouge **×** apparaît à la suite des
+     issues ;
+  2. sans confirmation, la ligne revient « à saisir » (elle reste affichée),
+     le compteur et le score diminuent ; plus aucun résultat en base.
+  *(À l'œil, sur téléphone : le bouton se touche sans risque d'appuyer sur une
+  issue voisine.)*
+- **Automatisé** : `e2e/effacer-saisie.spec.ts` (CT-26), sauf score et rendu.
+
+### CT-27 `[auto]` — Bloc saisi puis effacé   (couvre : R13ter a/b, R17)
+
+- **Rôle / compte** : `coach@test.local`.
+- **Étapes** : saisir **1er essai** sur B1, puis toucher sa croix **×**.
+- **Résultat attendu** : B1 revient « à saisir », compteur des blocs diminué,
+  plus de résultat en base.
+- **Automatisé** : `e2e/effacer-saisie.spec.ts` (CT-27).
+
+### CT-28 `[mixte]` — Ado, niveau doublé et refus   (couvre : R13ter b/c/d/e)
+
+- **Rôle / compte** : `coach@test.local`.
+- **Étapes** :
+  1. Rencontre **ado** : effacer une voie saisie.
+  2. Rencontre enfant, niveau doublé : effacer le résultat porté par la
+     seconde voie du niveau.
+  3. Hors ligne : effacer un résultat, puis le faire corriger par l'admin
+     avant le retour du réseau.
+  4. Passer la rencontre en ④ : rouvrir la saisie.
+- **Résultat attendu** :
+  1. la voie quitte la liste, `n/6` diminue (même croix **×** qu'avant) ;
+  2. la ligne revient « à saisir » sur la voie de plus petit ordre ;
+  3. au retour du réseau, l'effacement est **rejeté** (« Une saisie plus
+     récente existe déjà. »), la correction de l'admin reste ;
+  4. plus aucune croix ; un effacement par appel direct est refusé.
+- **Automatisé** : `npm run test:effacer-saisie`
+  (`scripts/test-effacer-saisie.sh` : bloc, sans effet, plus ancien, autre
+  club, voie enfant, ④, admin, droits, rejeu) ; Vitest
+  `saisie-optimiste.test.ts` (étapes 1 et 2). Reste manuel : étape 3 de bout
+  en bout.
 
 ## Registre d'exécution
 
@@ -341,4 +479,6 @@ Cas particuliers à préparer à la main :
 | 2026-10-02 | agent/playwright | develop | CT-01 → CT-12, CT-14 | ✅ | `e2e/coach-saisie-resultats.spec.ts` (14 tests). Résidus manuels : couleurs des pastilles (CT-04), geste de balayage (CT-03), rendu des deux vues (CT-02) |
 | 2026-10-02 | agent/playwright | develop | CT-15 | ✅ | R21bis (rév. spec #6 2026-10-02) — message avant la ③, sans compteurs ni « groupe à définir » |
 | 2026-10-09 | Playwright e2e | develop | CT-18 | ✅ | 0 requête pendant 10 bascules de vue / grimpeur (garde-fou TODO D3) |
+| 2026-11-17 | agent (local) | feature/effacer-saisie | CT-25 → CT-28 | ✅ (local) | `e2e/effacer-saisie.spec.ts` 4/4 ; `test:effacer-saisie` 17/17 ; Vitest. Recette : à dérouler après application de la migration 202611171400 (rendu sur téléphone, étape 3 de CT-28) |
+| 2026-11-17 | agent (local) | feature/voies-doublees-enfant | CT-20 → CT-24 | ✅ (local) | `e2e/voies-doublees-enfant.spec.ts` 5/5 ; `test:voies-doublees` 24/24. Recette : à dérouler après application de la migration (lisibilité du menu sur téléphone, score CT-21) |
 | 2026-11-10 | agent (local) | feature/perf-cloture | CT-19 | ✅ (local) | Rouge sur l'ancien code : 80 NP de voie posés à tort (1120 résultats). Vert après la RPC : `cloture-volume` + `test:cloture` 40/40 ; CT-12 inchangé. Recette : à dérouler après application de la migration |

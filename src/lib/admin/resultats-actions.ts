@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { aVoiesLibres, type Phase } from '@/domaine/rencontre'
 import {
   MESSAGE_PLAFOND_VOIES_ADO,
+  MESSAGE_VOIE_HORS_GROUPE,
   type IssueBloc,
   type IssueVoie,
   ResultatInvalideError,
@@ -54,6 +55,8 @@ function messageEcriture(erreur: { code?: string; message?: string }): string {
   // Plafond de 6 voies ado garanti en base (spec #6 R14, rév. 2026-10-03) :
   // même message que le contrôle préalable du domaine.
   if (erreur.message === 'plafond_voies_ado') return MESSAGE_PLAFOND_VOIES_ADO
+  // Enfant : voie hors des 3 niveaux du groupe de départ (spec #6 R14, rév. 2026-11-17).
+  if (erreur.message === 'voie_hors_groupe') return MESSAGE_VOIE_HORS_GROUPE
   if (erreur.code === '42501') {
     return 'Écriture non autorisée : rôle ou phase invalide.'
   }
@@ -176,8 +179,9 @@ export async function saisirResultatBlocAdmin(
 }
 
 /**
- * Retire le résultat d'un grimpeur sur une voie (ado : libère un des 6 emplacements).
- * Réservé à l'admin, en ③/④ (R5).
+ * Efface le résultat d'un grimpeur sur une voie, enfant comme ado (spec #6
+ * R13ter, spec #9 R8) — ado : libère un des 6 emplacements. Réservé à l'admin,
+ * en ③/④ (R5).
  */
 export async function retirerResultatVoieAdmin(
   _etat: EtatSaisie,
@@ -204,5 +208,37 @@ export async function retirerResultatVoieAdmin(
   if (error) return { erreur: messageEcriture(error) }
 
   revalidatePath(`/admin/rencontres/${ctx.rencontreId}/resultats`)
-  return { succes: 'Résultat retiré.' }
+  return { succes: 'Résultat effacé.' }
+}
+
+/**
+ * Efface le résultat d'un grimpeur sur un bloc (spec #6 R13ter, spec #9 R8) :
+ * le bloc revient à « à saisir ». Réservé à l'admin, en ③/④ (R5).
+ */
+export async function retirerResultatBlocAdmin(
+  _etat: EtatSaisie,
+  formData: FormData,
+): Promise<EtatSaisie> {
+  const admin = await verifierAdminSaisie()
+  if ('erreur' in admin) return admin
+
+  const blocId = String(formData.get('blocId') ?? '')
+  const grimpeurId = String(formData.get('grimpeurId') ?? '')
+  if (!blocId || !grimpeurId) return { erreur: 'Bloc et grimpeur requis.' }
+
+  const supabase = await createClient()
+  const ctx = await chargerContexteBloc(supabase, blocId)
+  if (!ctx) return { erreur: 'Bloc introuvable.' }
+  const refus = refuserSiHorsFenetre(ctx.phase)
+  if (refus) return refus
+
+  const { error } = await supabase
+    .from('resultat_bloc')
+    .delete()
+    .eq('bloc_id', blocId)
+    .eq('grimpeur_id', grimpeurId)
+  if (error) return { erreur: messageEcriture(error) }
+
+  revalidatePath(`/admin/rencontres/${ctx.rencontreId}/resultats`)
+  return { succes: 'Résultat effacé.' }
 }

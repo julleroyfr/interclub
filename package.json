@@ -41,6 +41,8 @@
     "test:rpc-comptages": "bash scripts/test-rpc-comptages.sh",
     "test:points-vitesse-reecriture": "bash scripts/test-points-vitesse-reecriture.sh",
     "test:cloture": "bash scripts/test-cloture.sh",
+    "test:voies-doublees": "bash scripts/test-voies-doublees.sh",
+    "test:effacer-saisie": "bash scripts/test-effacer-saisie.sh",
     "test:gardes-base": "bash scripts/test-gardes-base.sh",
     "test:ecritures-atomiques": "bash scripts/test-ecritures-atomiques.sh",
     "db:reset": "supabase db reset && npm run db:verifier",
@@ -63,7 +65,6 @@
     "react-dom": "19.2.4"
   },
   "devDependencies": {
-    "@netlify/plugin-nextjs": "^5.15.12",
     "@playwright/test": "^1.61.1",
     "@tailwindcss/postcss": "^4",
     "@testing-library/dom": "^10.4.1",

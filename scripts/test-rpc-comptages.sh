@@ -8,7 +8,7 @@
 #   - `effectifs_grimpeurs` (spec #19 R9/R10) : somme des effectifs = nombre
 #     de grimpeurs, une ligne par club et année ; EXECUTE refusé à anon et
 #     authenticated.
-#   - Rejeu des deux migrations, retour arrière puis réapplication.
+#   - Rejeu idempotent des deux migrations (archivées, retours arrière supprimés).
 #
 # Rejouable : les utilisateurs anonymes créés ici sont supprimés à la fin.
 #
@@ -100,14 +100,13 @@ verifie "une ligne par club et année de naissance" \
 verifie "appel refusé à anon" "$(rpc "" effectifs_grimpeurs)" "401"
 verifie "appel refusé à authenticated (admin connecté)" "$(rpc "$TA" effectifs_grimpeurs)" "403"
 
-echo "== Migrations rejouées, retour arrière, réapplication =="
+echo "== Migrations rejouées (idempotence) =="
 appliquer() { docker exec -i "$CONTENEUR" psql -U postgres -q -v ON_ERROR_STOP=1 < "$1" >/dev/null 2>&1; }
 for m in 202611101000_rpc_lister_comptes_permanents:lister_comptes_permanents \
          202611101100_rpc_effectifs_grimpeurs:effectifs_grimpeurs; do
   version=${m%%:*}
   fonction=${m##*:}
-  migration="supabase/migrations/$version.sql"
-  retour="supabase/retours-arriere/${version}_retour_arriere.sql"
+  migration="supabase/migrations/archive/$version.sql"
   controles() {
     sql "select (to_regprocedure('interclub.$fonction()') is not null)::text || '/' ||
                 (select count(*) from interclub.version where version = '$version') || '/' ||
@@ -116,12 +115,6 @@ for m in 202611101000_rpc_lister_comptes_permanents:lister_comptes_permanents \
   }
   if appliquer "$migration"; then ok "$version : rejeu sans erreur"; else ko "$version : rejeu en erreur"; fi
   verifie "$version : fonction, version et droits" "$(controles)" "true/1/false/true"
-  if appliquer "$retour"; then ok "$version : retour arrière sans erreur"; else ko "$version : retour arrière en erreur"; fi
-  verifie "$version : fonction et version retirées" \
-    "$(sql "select (to_regprocedure('interclub.$fonction()') is null)::text || '/' ||
-                   (select count(*) from interclub.version where version = '$version');")" "true/0"
-  if appliquer "$migration"; then ok "$version : réapplication"; else ko "$version : réapplication en erreur"; fi
-  verifie "$version : fonction, version et droits après réapplication" "$(controles)" "true/1/false/true"
 done
 
 echo

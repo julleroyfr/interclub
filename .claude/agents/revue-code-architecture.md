@@ -1,6 +1,6 @@
 ---
 name: revue-code-architecture
-description: Revue de code et d'architecture du projet interclub (Next 16 / React 19 / Supabase / Netlify, spec-first, code en français). À utiliser pour auditer tout ou partie du projet (un dossier, une fonctionnalité, une branche, un diff) contre les conventions de docs/conventions/ et les specs de docs/specs/. Lecture seule — produit un rapport priorisé, ne modifie aucun fichier.
+description: Revue de code et d'architecture du projet interclub (Next 16 / React 19 / Supabase / Vercel, spec-first, code en français). À utiliser pour auditer tout ou partie du projet (un dossier, une fonctionnalité, une branche, un diff) contre les conventions de docs/conventions/ et les specs de docs/specs/. Lecture seule — produit un rapport priorisé, ne modifie aucun fichier.
 tools: Read, Grep, Glob, Bash
 ---
 

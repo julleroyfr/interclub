@@ -104,7 +104,7 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
   rencontre, R10). Un POST direct ajoutant un grimpeur **hors tranche d'âge** est
   **refusé** côté serveur (message R34).
 
-### CT-03 `[auto]` — Groupe de départ (rencontre enfant)   (couvre : R19, R20, R21 ; nominal)
+### CT-03 `[auto]` — Groupe de départ (rencontre enfant)   (couvre : R19, R20, R21, R21bis ; nominal)
 
 - **Rôle / compte** : `coach@test.local`.
 - **Pré-condition** : phase `pre_competition` ; A2 contient au moins un grimpeur
@@ -114,8 +114,9 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
   2. Observer l'indice de voies avant validation.
 - **Résultat attendu** :
   - L'indice affiche **« M2 · M3 · M4 »** (3 voies croissantes, R20).
-  - La liste des groupes s'arrête à **T8** (pas de T9/T10, R19).
-  - Après ajout, le grimpeur porte le badge **« Groupe M2 »** ; un grimpeur sans
+  - La liste des groupes va de **« Groupe M1/1 »** à **« Groupe T8/12 »** (numéro
+    du règlement, R21bis) et s'arrête à **T8** (pas de T9/T10, R19).
+  - Après ajout, le grimpeur porte le badge **« Groupe M2/2 »** ; un grimpeur sans
     groupe porte **« à définir »** (R21). L'éditeur inline permet de changer le groupe.
 - **RLS / sécurité** : sur une rencontre **ado**, aucun champ ni badge de groupe
   n'apparaît (R19).

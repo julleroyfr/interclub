@@ -81,7 +81,7 @@ select pg_temp.essai('A-coachA-grimpeurA',  true,  $$insert into interclub.grimp
 select pg_temp.essai('A-coachA-grimpeurB',  false, $$insert into interclub.grimpeur (club_id,nom,prenom,annee_naissance,sexe,licence) values ('22222222-2222-2222-2222-222222222222','r','b',2016,'F',9999002)$$);
 select pg_temp.essai('A-coachA-equipeA-p1', true,  $$insert into interclub.equipe (rencontre_id,club_id,nom) values ('33333333-3333-3333-3333-333333333333','11111111-1111-1111-1111-111111111111','A2')$$);
 select pg_temp.essai('A-coachA-equipeB',    false, $$insert into interclub.equipe (rencontre_id,club_id,nom) values ('33333333-3333-3333-3333-333333333333','22222222-2222-2222-2222-222222222222','B2')$$);
-select pg_temp.essai('A-coachA-resultat-p1',false, $$insert into interclub.resultat_voie (voie_difficulte_id,grimpeur_id,issue) values ('99999999-9999-9999-9999-999999999901','a0000000-0000-0000-0000-0000000000a1','top')$$);
+select pg_temp.essai('A-coachA-resultat-p1',false, $$insert into interclub.resultat_voie (voie_difficulte_id,grimpeur_id,issue) values ('99999999-9999-9999-9999-999999999912','a0000000-0000-0000-0000-0000000000a1','top')$$);
 reset role;
 
 -- Coach temporaire : aucune session valide en phase ① pré-compétition (R28) —
@@ -105,7 +105,7 @@ select set_config('request.jwt.claims','{"sub":"d0000000-0000-0000-0000-00000000
 select pg_temp.essai('P-coachTemp-equipe',     true,  $$insert into interclub.equipe (rencontre_id,club_id,nom) values ('33333333-3333-3333-3333-333333333333','11111111-1111-1111-1111-111111111111','TMPP')$$);
 select pg_temp.essai('P-coachTemp-composition',true,  $$delete from interclub.composition where equipe_id='66666666-6666-6666-6666-666666666666' and grimpeur_id='a0000000-0000-0000-0000-0000000000a1'$$);
 select pg_temp.essai('P-coachTemp-equipeAutre',false, $$insert into interclub.equipe (rencontre_id,club_id,nom) values ('33333333-3333-3333-3333-333333333333','22222222-2222-2222-2222-222222222222','TMPPB')$$);
-select pg_temp.essai('P-coachTemp-resultat',   false, $$insert into interclub.resultat_voie (voie_difficulte_id,grimpeur_id,issue) values ('99999999-9999-9999-9999-999999999901','a0000000-0000-0000-0000-0000000000a1','top')$$);
+select pg_temp.essai('P-coachTemp-resultat',   false, $$insert into interclub.resultat_voie (voie_difficulte_id,grimpeur_id,issue) values ('99999999-9999-9999-9999-999999999912','a0000000-0000-0000-0000-0000000000a1','top')$$);
 reset role;
 
 -- =========================== BLOC B : phase ② compétition =================
@@ -114,7 +114,7 @@ update interclub.rencontre set phase='competition' where id='33333333-3333-3333-
 -- Coach permanent Club A.
 select set_config('request.jwt.claims','{"sub":"cccccccc-cccc-cccc-cccc-cccccccccccc"}', true); set role authenticated;
 select pg_temp.essai('B-coachA-equipe-p2',   false, $$insert into interclub.equipe (rencontre_id,club_id,nom) values ('33333333-3333-3333-3333-333333333333','11111111-1111-1111-1111-111111111111','A3')$$);
-select pg_temp.essai('B-coachA-resultat',    true,  $$insert into interclub.resultat_voie (voie_difficulte_id,grimpeur_id,issue) values ('99999999-9999-9999-9999-999999999901','a0000000-0000-0000-0000-0000000000a1','top')$$);
+select pg_temp.essai('B-coachA-resultat',    true,  $$insert into interclub.resultat_voie (voie_difficulte_id,grimpeur_id,issue) values ('99999999-9999-9999-9999-999999999912','a0000000-0000-0000-0000-0000000000a1','top')$$);
 select pg_temp.essai('B-coachA-resultatPrete',true, $$insert into interclub.resultat_voie (voie_difficulte_id,grimpeur_id,issue) values ('99999999-9999-9999-9999-999999999901','b0000000-0000-0000-0000-0000000000b2','top')$$);
 select pg_temp.essai('B-coachA-composePrete',false, $$insert into interclub.composition (equipe_id,grimpeur_id) values ('66666666-6666-6666-6666-666666666602','b0000000-0000-0000-0000-0000000000b1')$$);
 reset role;
@@ -132,7 +132,7 @@ reset role;
 -- Juge (session, phase ②).
 select set_config('request.jwt.claims','{"sub":"e0000000-0000-0000-0000-0000000000c8"}', true); set role authenticated;
 select pg_temp.essai('B-juge-tempsVitesse',  true,  $$insert into interclub.temps_vitesse (epreuve_id,grimpeur_id,temps,issue) values ('88888888-8888-8888-8888-888888888803','a0000000-0000-0000-0000-0000000000a1',7.2,'temps')$$);
-select pg_temp.essai('B-juge-resultatVoie',  false, $$insert into interclub.resultat_voie (voie_difficulte_id,grimpeur_id,issue) values ('99999999-9999-9999-9999-999999999901','a0000000-0000-0000-0000-0000000000a1','top')$$);
+select pg_temp.essai('B-juge-resultatVoie',  false, $$insert into interclub.resultat_voie (voie_difficulte_id,grimpeur_id,issue) values ('99999999-9999-9999-9999-999999999912','a0000000-0000-0000-0000-0000000000a1','top')$$);
 select pg_temp.essai('B-juge-tempsSurVoie',  false, $$insert into interclub.temps_vitesse (epreuve_id,grimpeur_id,temps,issue) values ('88888888-8888-8888-8888-888888888801','a0000000-0000-0000-0000-0000000000a1',7.2,'temps')$$);
 reset role;
 

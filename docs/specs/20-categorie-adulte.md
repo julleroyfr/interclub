@@ -169,7 +169,9 @@ catégories **enfant** et **ado** reste **inchangé**.
   ou à sa régénération (spec #2 R12/R13/R22).
 - **R18.** Une session capitaine permet **uniquement** de saisir, modifier et
   retirer les résultats de **voie** et de **bloc** des **grimpeurs de son
-  équipe**, dans la rencontre du jeton. Toute écriture sur un autre grimpeur,
+  équipe**, dans la rencontre du jeton. *(Rév. 2026-11-17 : le retrait se fait
+  par la croix d'effacement **×** de l'écran de saisie, voie comme bloc — spec
+  #6 R13ter ; le retrait d'un bloc n'existait pas encore.)* Toute écriture sur un autre grimpeur,
   une autre équipe, la vitesse ou la composition est **refusée**.
 - **R19.** La session capitaine **consulte** les résultats et le score des
   grimpeurs de son équipe, ainsi que le classement de la rencontre (lecture dès

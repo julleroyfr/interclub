@@ -2,7 +2,12 @@ import 'server-only'
 
 import { GroupeDepartInvalideError, voiesDuGroupeDepart } from '@/domaine/engagement'
 import { type TypeVoie } from '@/domaine/gabarit'
-import { PLAFOND_VOIES_ADO, type IssueBloc, type IssueVoie } from '@/domaine/resultat'
+import {
+  PLAFOND_VOIES_ADO,
+  voiesEnfantParNiveau,
+  type IssueBloc,
+  type IssueVoie,
+} from '@/domaine/resultat'
 import { type Categorie, type Phase } from '@/domaine/rencontre'
 import { scoreBloc, scoreVoie, type BaremeVoie } from '@/domaine/score'
 import { libellesVoies } from '@/domaine/voie'
@@ -34,6 +39,8 @@ export type SaisieVoie = {
   issue: IssueVoie | null
   /** Saisie affichée avant la réponse du serveur (spec #17 R22) ; absent = valeur serveur. */
   enAttente?: boolean
+  /** Enfant, niveau doublé : voies du niveau au choix, triées par ordre (R9bis) ; absent sinon. */
+  variantes?: VoieOption[]
 }
 
 /** Issue d'un bloc pour un grimpeur ; `null` = à saisir. */
@@ -374,12 +381,6 @@ async function chargerSaisie(
       pointsZone2: (v.points_zone2 as number | null) ?? null,
     })
   }
-  // Voie représentative par niveau (plus petit ordre) — cible du résultat enfant.
-  const voieParNiveau = new Map<string, VoieOption>()
-  for (const v of voies) {
-    const cur = voieParNiveau.get(v.niveau)
-    if (!cur || v.ordre < cur.ordre) voieParNiveau.set(v.niveau, v)
-  }
 
   const paliersParBloc = new Map<string, PalierOption[]>()
   for (const p of paliers) {
@@ -455,7 +456,8 @@ async function chargerSaisie(
     const prete = !!info && info.clubId !== clubDeLEquipe
     const issuesVoie = issueVoieParGrimpeur.get(c.grimpeurId) ?? new Map<string, IssueVoie>()
 
-    // Voies : enfant → les 3 du groupe de départ (voie représentative par niveau) ;
+    // Voies : enfant → une ligne par niveau du groupe de départ, voie grimpée au
+    // choix sur un niveau doublé (R9/R9bis) ;
     // ado → les voies réalisées (résultats existants).
     let voiesGrimpeur: SaisieVoie[]
     if (categorie === 'enfant') {
@@ -467,17 +469,17 @@ async function chargerSaisie(
           if (!(e instanceof GroupeDepartInvalideError)) throw e
         }
       }
-      voiesGrimpeur = niveaux
-        .map((niv) => voieParNiveau.get(niv))
-        .filter((v): v is VoieOption => v != null)
-        .map((v) => ({
+      voiesGrimpeur = voiesEnfantParNiveau(niveaux, voies, new Set(issuesVoie.keys())).map(
+        ({ voie: v, variantes }) => ({
           voieDifficulteId: v.voieDifficulteId,
           niveau: v.niveau,
           libelle: v.libelle,
           cotation: v.cotation,
           typeVoie: v.typeVoie,
           issue: issuesVoie.get(v.voieDifficulteId) ?? null,
-        }))
+          ...(variantes.length > 0 && { variantes }),
+        }),
+      )
     } else {
       voiesGrimpeur = [...issuesVoie.entries()]
         .map(([voieId, issue]): SaisieVoie | null => {

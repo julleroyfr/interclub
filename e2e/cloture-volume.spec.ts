@@ -1,7 +1,13 @@
 import { expect, test } from './helpers/fixtures'
 import { commeAdmin } from './helpers/auth'
 import { CLUB_B, RENCONTRE_PILOTE, RENCONTRE_PILOTE_DATE } from './helpers/donnees'
-import { execSql, poserDate, poserPhase, reinitialiserEngagement } from './helpers/sql'
+import {
+  SANS_GARDE_VOIES_ENFANT,
+  execSql,
+  poserDate,
+  poserPhase,
+  reinitialiserEngagement,
+} from './helpers/sql'
 
 /**
  * NP automatique de clôture au-delà du plafond de l'API (spec #6 R18 ; constats
@@ -66,6 +72,7 @@ test.describe('Clôture au-delà de 1000 résultats de voie (spec #6 R18, B2)', 
            from generate_series(1, ${NB_GRIMPEUSES}) i;
        insert into interclub.composition (equipe_id, grimpeur_id, groupe_depart)
          select '${EQUIPE_VOLUME}', ${ID_GRIMPEUSE}, 'M1' from generate_series(1, ${NB_GRIMPEUSES}) i;
+       ${SANS_GARDE_VOIES_ENFANT.debut}
        insert into interclub.resultat_voie (voie_difficulte_id, grimpeur_id, issue)
          select v.id, ${ID_GRIMPEUSE}, 'top'
            from generate_series(1, ${NB_GRIMPEUSES}) i
@@ -75,7 +82,8 @@ test.describe('Clôture au-delà de 1000 résultats de voie (spec #6 R18, B2)', 
        insert into interclub.resultat_voie (voie_difficulte_id, grimpeur_id, issue)
          select v.id, ${ID_GRIMPEUSE}, 'top'
            from generate_series(1, ${NB_GRIMPEUSES}) i
-           cross join (${VOIES_BIS}) v;`,
+           cross join (${VOIES_BIS}) v;
+       ${SANS_GARDE_VOIES_ENFANT.fin}`,
     )
   })
 

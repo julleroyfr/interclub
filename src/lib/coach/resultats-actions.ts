@@ -41,7 +41,13 @@ export async function enregistrerSaisieCoach(
             p_grimpeur: s.grimpeurId,
             p_saisi_le: saisiLe,
           })
-        : await supabase.rpc('saisir_resultat_bloc', {
+        : s.type === 'retrait_bloc'
+          ? await supabase.rpc('retirer_resultat_bloc', {
+              p_bloc: s.blocId,
+              p_grimpeur: s.grimpeurId,
+              p_saisi_le: saisiLe,
+            })
+          : await supabase.rpc('saisir_resultat_bloc', {
             p_bloc: s.blocId,
             p_grimpeur: s.grimpeurId,
             p_issue: s.issue,

@@ -7,6 +7,7 @@ import {
   nomEquipeAdulteParDefaut,
   verifierAjoutCompositionAdulte,
   GROUPES_DEPART,
+  libelleGroupeDepart,
   EngagementInvalideError,
   GroupeDepartInvalideError,
   compositionModifiableParCoach,
@@ -108,6 +109,28 @@ describe('spec #5 — Groupe de départ — liste sélectionnable (R19)', () => 
   it('exclut T9 et T10 (départs ne laissant pas 3 voies)', () => {
     expect(GROUPES_DEPART).not.toContain('T9')
     expect(GROUPES_DEPART).not.toContain('T10')
+  })
+})
+
+describe('spec #5 — Groupe de départ — libellé avec numéro du règlement (R21bis)', () => {
+  it.each([
+    ['M1', 'Groupe M1/1'],
+    ['M3', 'Groupe M3/3'],
+    ['M4', 'Groupe M4/4'],
+    ['T1', 'Groupe T1/5'],
+    ['T8', 'Groupe T8/12'],
+  ])('%s ⇒ « %s »', (groupe, libelle) => {
+    expect(libelleGroupeDepart(groupe)).toBe(libelle)
+  })
+
+  it('numérote 1 à 12 dans l’ordre de la liste R19', () => {
+    expect(GROUPES_DEPART.map(libelleGroupeDepart)).toEqual(
+      GROUPES_DEPART.map((g, i) => `Groupe ${g}/${i + 1}`),
+    )
+  })
+
+  it('valeur hors liste (T9) ⇒ libellé sans numéro', () => {
+    expect(libelleGroupeDepart('T9')).toBe('Groupe T9')
   })
 })
 
