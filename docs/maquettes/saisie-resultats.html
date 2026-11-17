@@ -266,6 +266,20 @@
   }
   .barre-auto { color: var(--texte-doux); font-size: 11px; text-decoration: line-through; }
 
+  /* --- effacer une saisie (R13ter) --- */
+  .btn-effacer {
+    min-height: 44px; min-width: 44px; padding: 4px 8px;
+    background: transparent; color: var(--danger); border: 1px solid rgba(251,113,133,.4);
+    border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer;
+  }
+  .btn-effacer:hover { background: rgba(251,113,133,.10); }
+  .ligne-saisie { padding: 9px 8px; }
+  .ligne-saisie + .ligne-saisie { border-top: 1px solid rgba(255,255,255,.05); }
+  .ligne-saisie .tete { display: flex; align-items: center; gap: 8px; }
+  .ligne-saisie .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-top: 7px; }
+  .ligne-saisie .actions .seg { margin-left: 0; }
+  .erreur-saisie { outline: 2px dashed rgba(251,191,36,.6); outline-offset: 2px; border-radius: 8px; }
+
   .legende { max-width: 940px; margin: 44px auto 0; color: var(--texte-attenue); font-size: 13px; }
   .legende h2 { color: var(--texte-fort); font-size: 15px; margin-bottom: 6px; }
   .legende h3 { color: var(--accent-doux); font-size: 13px; margin: 16px 0 4px; }
@@ -984,6 +998,77 @@
       </div>
     </section>
 
+    <!-- ============ 12 · EFFACER UNE SAISIE (R13ter) ============ -->
+    <section class="colonne">
+      <p class="titre-option">12 · Effacer une saisie (R13ter)</p>
+      <p class="desc-option">Top touché par erreur sur T3 au lieu de T2. Chaque ligne saisie (voie ou bloc) a une croix <strong>×</strong> rouge, à la suite des issues : la ligne revient à « à saisir ».</p>
+      <div class="tel">
+        <div class="barre-haut">
+          <div class="lien-retour">← Grimpeurs</div>
+          <div class="titre-rencontre">Nina Lopez</div>
+          <div class="meta">enfant · Groupe T2 → T2 · T3 · T4</div>
+          <div class="badge-phase comp">● Compétition — saisie</div>
+        </div>
+        <div class="corps">
+          <div class="carte">
+            <div class="carte-entete">
+              <span class="epreuve-titre" style="margin:0">Voie de difficulté</span>
+              <span class="prog"><span class="part"><span class="n">1</span>/3</span></span>
+            </div>
+
+            <div class="ligne-saisie">
+              <div class="tete"><span class="voie-id">T2</span><span class="cotation">5a</span><span class="issue vide pousse">à saisir</span></div>
+              <div class="actions"><div class="seg"><button>Top</button><button>Prise&nbsp;valorisée</button><button>Échec</button></div></div>
+            </div>
+
+            <div class="ligne-saisie erreur-saisie">
+              <div class="tete"><span class="voie-id">T3</span><span class="cotation">5b</span><span class="issue top pousse">✓ Top</span></div>
+              <div class="actions">
+                <div class="seg"><button class="sel-top">Top</button><button>Prise&nbsp;valorisée</button><button>Échec</button></div>
+                <button class="btn-effacer" aria-label="Effacer le résultat de la voie T3">×</button>
+              </div>
+            </div>
+
+            <div class="ligne-saisie">
+              <div class="tete"><span class="voie-id">T4</span><span class="cotation">5c</span><span class="issue vide pousse">à saisir</span></div>
+              <div class="actions"><div class="seg"><button>Top</button><button>Prise&nbsp;valorisée</button><button>Échec</button></div></div>
+            </div>
+            <div class="carte-sous" style="margin-top:8px">Après la <strong>×</strong> : T3 « à saisir », compteur <strong>0/3</strong>, score diminué. Pas de confirmation : on ressaisit si besoin.</div>
+          </div>
+
+          <div class="carte">
+            <div class="carte-entete">
+              <span class="epreuve-titre" style="margin:0">Bloc</span>
+              <span class="prog"><span class="part"><span class="n">1</span>/2</span></span>
+            </div>
+            <div class="ligne-saisie">
+              <div class="tete"><span class="voie-id">B1</span><span class="issue top pousse">1er essai</span></div>
+              <div class="actions">
+                <div class="seg"><button class="sel-top">1er essai</button><button>2e essai</button><button>Échec</button></div>
+                <button class="btn-effacer" aria-label="Effacer le résultat du bloc B1">×</button>
+              </div>
+            </div>
+            <div class="ligne-saisie">
+              <div class="tete"><span class="voie-id">B2</span><span class="issue vide pousse">à saisir</span></div>
+              <div class="actions"><div class="seg"><button>1er essai</button><button>2e essai</button><button>3e essai</button><button>Échec</button></div></div>
+            </div>
+          </div>
+
+          <div class="carte">
+            <div class="carte-entete"><span class="carte-titre">Ado — même bouton</span></div>
+            <div class="ligne-saisie">
+              <div class="tete"><span class="voie-id">T5 Jaune</span><span class="cotation">6a</span><span class="issue partiel pousse">Zone 2</span></div>
+              <div class="actions">
+                <div class="seg"><button>Top</button><button class="sel-partiel">Zone&nbsp;2</button><button>Zone&nbsp;1</button><button>Échec</button></div>
+                <button class="btn-effacer">×</button>
+              </div>
+            </div>
+            <div class="carte-sous" style="margin-top:8px">En ado, c'est la même croix qu'avant : la voie effacée quitte la liste (n/6 diminue).</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
   </div>
 
   <div class="legende">
@@ -1044,6 +1129,13 @@
       <li><strong>R14</strong> — une voie hors des 3 niveaux du groupe est <strong>refusée par la base</strong> (appel direct, autre écran) ; l'écran ne la propose pas.</li>
       <li><strong>R18</strong> — à la clôture, un niveau doublé sans résultat reçoit la NP sur la voie de plus petit ordre ; un niveau qui a un résultat sur l'une de ses voies n'en reçoit pas.</li>
       <li>Même sélecteur et mêmes règles dans la <strong>saisie admin</strong> (spec #9 R7) — voir <code>admin-saisie-resultats.html</code>.</li>
+    </ul>
+    <h3>Écran 12 — Effacer une saisie (rév. 2026-11-17)</h3>
+    <ul>
+      <li><strong>R13ter a</strong> — chaque ligne <strong>saisie</strong>, voie ou bloc, a une croix <button class="btn-effacer" style="margin:0;min-height:0;padding:0 7px">×</button> à la suite des issues (≥ 44 px, libellé accessible « Effacer le résultat de … ») ; pas de bouton sur une ligne « à saisir » ; pas de confirmation.</li>
+      <li><strong>R13ter b</strong> — la ligne revient à « à saisir » ; compteur et score diminuent. Enfant : la ligne reste (3 attendues) ; ado : la voie quitte la liste.</li>
+      <li><strong>R13ter c</strong> — niveau doublé : efface la voie qui porte le résultat, la ligne revient à la voie de plus petit ordre.</li>
+      <li><strong>R13ter d/e</strong> — refusé si une saisie plus récente existe ; ③ uniquement pour le coach (l'admin aussi en ④, spec #9 R8).</li>
     </ul>
     <p style="margin-top:16px;color:var(--texte-doux)">Codes couleur des issues — vert citron <span class="issue top">Top</span> : voie entière / meilleur palier ·
       cyan <span class="issue partiel">Zone / Prise valorisée</span> : tentative partielle ·

@@ -182,6 +182,8 @@
   .choix-voie option { background: var(--fond); color: var(--texte); }
   .avert-remplace { flex-basis: 100%; font-size: 11.5px; color: #fbbf24; background: rgba(251,191,36,.08);
     border: 1px solid rgba(251,191,36,.32); border-radius: 9px; padding: 7px 10px; }
+  /* effacer une saisie (spec #6 R13ter, spec #9 R8 — rév. 2026-11-17) */
+  .seg button.btn-effacer { margin-left: 8px; color: var(--danger); border-color: rgba(251,113,133,.4); background: transparent; min-height: 44px; }
   .repli { display: inline-block; margin-top: 4px; color: var(--texte-doux); font-size: 12px; }
 </style>
 </head>
@@ -291,7 +293,7 @@
             </div>
             <div class="saisie">
               <span class="voie-id">T3</span><span class="cotation">5b</span>
-              <div class="seg"><button>Top</button><button class="sel-partiel">Prise&nbsp;valorisée</button><button>Échec</button></div>
+              <div class="seg"><button>Top</button><button class="sel-partiel">Prise&nbsp;valorisée</button><button>Échec</button><button class="btn-effacer">×</button></div>
             </div>
             <div class="saisie">
               <span class="voie-id">T4</span><span class="cotation">5c</span>
@@ -305,7 +307,8 @@
               <span class="epreuve-titre">Bloc</span>
               <span class="prog"><b>1</b>/2 saisis</span>
             </div>
-            <div class="saisie"><span class="voie-id">B1</span><span class="issue top pousse">1er essai</span></div>
+            <div class="saisie"><span class="voie-id">B1</span><span class="issue top">1er essai</span>
+              <div class="seg"><button class="sel-top">1er essai</button><button>2e essai</button><button>Échec</button><button class="btn-effacer">×</button></div></div>
             <div class="saisie">
               <span class="voie-id">B2</span>
               <div class="seg"><button>1er essai</button><button>2e essai</button><button>3e essai</button><button>Échec</button></div>
@@ -341,6 +344,10 @@
       <li>La ligne <strong>T2</strong> propose le choix <em>T2 Rouge / T2 Noire</em> ; présélection = voie qui porte le résultat, sinon plus petit ordre.</li>
       <li>Ici, le coach a saisi Top sur <strong>T2 Noire</strong> ; l'admin sélectionne T2 Rouge : l'avertissement annonce le <strong>remplacement</strong>. Une issue saisie sur T2 Rouge supprime le résultat de T2 Noire en une seule opération — jamais deux résultats sur un même niveau.</li>
       <li>Même règle et même garde en base que la saisie coach (une voie hors du groupe est refusée).</li>
+    </ul>
+    <h3>Effacer une saisie (rév. 2026-11-17 — spec #6 R13ter, spec #9 R8)</h3>
+    <ul>
+      <li>Chaque ligne saisie (voie ou bloc) a une croix <strong>×</strong> qui la remet à « à saisir » ; disponible en ③ et ④ pour l'admin (NP de clôture compris).</li>
     </ul>
     <h3>Réutilise l'existant</h3>
     <ul>

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 
+import { BoutonEffacer } from '@/composants/saisie-resultats/BoutonEffacer'
 import {
   AvisRemplacement,
   SelecteurVoieNiveau,
@@ -12,6 +13,7 @@ import { aVoiesLibres, type Categorie } from '@/domaine/rencontre'
 import { issuesVoieSaisissables, type IssueVoie } from '@/domaine/resultat'
 import {
   retirerResultatVoieAdmin,
+  retirerResultatBlocAdmin,
   saisirResultatBlocAdmin,
   saisirResultatVoieAdmin,
   type EtatSaisie,
@@ -348,7 +350,6 @@ function SectionVoies({
             saisie={saisie}
             grimpeur={grimpeur}
             voie={v}
-            retirable={estAdo}
           />
         ))}
       </ul>
@@ -368,12 +369,10 @@ function LigneVoie({
   saisie,
   grimpeur,
   voie,
-  retirable,
 }: {
   saisie: SaisieAdminRencontre
   grimpeur: GrimpeurSaisie
   voie: SaisieVoie
-  retirable: boolean
 }) {
   const [etat, action, enCours] = useActionState(saisirResultatVoieAdmin, etatInitial)
   const [etatRetrait, actionRetrait] = useActionState(retirerResultatVoieAdmin, etatInitial)
@@ -433,17 +432,12 @@ function LigneVoie({
               </button>
             ))}
           </form>
-          {retirable && voie.issue && (
+          {/* Effacer (spec #6 R13ter, spec #9 R8) : la voie qui porte le résultat. */}
+          {voie.issue && (
             <form action={actionRetrait}>
               <input type="hidden" name="voieDifficulteId" value={voie.voieDifficulteId} />
               <input type="hidden" name="grimpeurId" value={grimpeur.grimpeurId} />
-              <button
-                type="submit"
-                aria-label={`Retirer la voie ${voie.libelle}`}
-                className="min-h-11 rounded-lg border border-danger/40 px-2 py-1 lg:min-h-9 text-sm text-danger hover:bg-danger/10"
-              >
-                ×
-              </button>
+              <BoutonEffacer cible={`de la voie ${voie.libelle}`} />
             </form>
           )}
         </div>
@@ -562,6 +556,7 @@ function LigneBloc({
   paliers: BlocConfig['paliers']
 }) {
   const [etat, action, enCours] = useActionState(saisirResultatBlocAdmin, etatInitial)
+  const [etatRetrait, actionRetrait] = useActionState(retirerResultatBlocAdmin, etatInitial)
 
   const libelleCourant =
     bloc.issue === 'palier'
@@ -628,11 +623,19 @@ function LigneBloc({
               Échec
             </button>
           </form>
+          {/* Effacer (spec #6 R13ter, spec #9 R8). */}
+          {bloc.issue && (
+            <form action={actionRetrait}>
+              <input type="hidden" name="blocId" value={bloc.blocId} />
+              <input type="hidden" name="grimpeurId" value={grimpeur.grimpeurId} />
+              <BoutonEffacer cible={`du bloc ${bloc.code}`} />
+            </form>
+          )}
         </div>
       )}
-      {etat?.erreur && (
+      {(etat?.erreur || etatRetrait?.erreur) && (
         <p role="alert" className="text-xs text-danger">
-          {etat.erreur}
+          {etat?.erreur ?? etatRetrait?.erreur}
         </p>
       )}
     </li>

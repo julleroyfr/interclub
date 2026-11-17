@@ -12,6 +12,9 @@
   règle spec #6 **R9bis** (choix de la voie grimpée sur un niveau doublé, un
   seul résultat par niveau, remplacement) et la borne enfant **R14** garantie en
   base s'appliquent à l'admin à l'identique (même écran de voie, même trigger).
+  **Rév. 2026-11-17 — effacer une saisie (validée le 2026-11-17)** : **R8** — l'admin
+  **efface** un résultat de voie (enfant comme ado) ou de bloc avec le même
+  croix d'effacement **×** que le coach (spec #6 R13ter), en ③ et en ④.
 - **Sources** :
   - **Décision produit du 2026-09-22** : l'**administrateur** peut **saisir et
     modifier** les résultats de **n'importe quel grimpeur, tous clubs confondus**,
@@ -127,7 +130,9 @@ de plein droit, décision 2026-09-22) et en **④ clôture** (correction, spec #
   **NP** (posé automatiquement à la clôture, spec #6 R18) en résultat réel — quand
   le grimpeur avait bien concouru (spec #6 R19, ici **étendu à la ③** en plus de la
   ④). Une saisie admin n'est jamais bloquée par un résultat déjà présent : elle le
-  **corrige**.
+  **corrige**. *(Rév. 2026-11-17.)* L'admin peut aussi **effacer** un résultat
+  de voie ou de bloc (croix **×**, spec #6 R13ter), en ③ et en ④ — y
+  compris un NP posé à la clôture, la ligne revenant à « à saisir ».
 - **R9.** Le **NP automatique à la clôture** (spec #6 R18) reste inchangé : au
   passage ③→④, les attendus non saisis passent NP. L'admin les corrige ensuite en
   ④ si besoin (R8). Cette spec n'en modifie **pas** le déclenchement.

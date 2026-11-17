@@ -326,8 +326,14 @@ les paliers sont « 1er essai », « 2e essai » (et « 3e essai » pour B2) ; e
 pour B2.
 
 **Corriger** : toucher simplement la bonne issue ; elle remplace la précédente.
-En Ado, une voie saisie par erreur peut être retirée. Après la ④ clôture, seule
-l'organisation peut corriger.
+
+**Effacer** : une saisie faite par erreur (mauvaise voie, mauvais bloc, mauvais
+grimpeur) s'annule avec la croix rouge **×**, à la suite des boutons d'issue. La
+ligne revient « à saisir » et le score diminue. Il n'y a pas de confirmation : si
+vous effacez par erreur, ressaisissez. En Ado, la voie effacée disparaît de la
+liste. La croix n'apparaît que sur une ligne déjà saisie.
+
+Après la ④ clôture, seule l'organisation peut corriger.
 
 **Score** : le bandeau « Score (voie + bloc + vitesse) » se met à jour à chaque
 saisie.
@@ -461,6 +467,10 @@ pas : ses résultats et ses points restent au classement.
 Il est gardé sur le téléphone et sera envoyé dès que possible. Laissez l'écran
 ouvert jusqu'à ce que la mention disparaisse (voir
 [Réseau faible ou coupé](#réseau-faible-ou-coupé)).
+
+**J'ai saisi un résultat sur la mauvaise ligne.**
+Touchez la croix **×** de cette ligne : elle revient « à saisir ». Saisissez
+ensuite le résultat sur la bonne ligne.
 
 **J'ai saisi le résultat d'un enfant sur la mauvaise voie d'un niveau doublé.**
 Choisissez la bonne voie dans la liste de la ligne, puis touchez l'issue : le

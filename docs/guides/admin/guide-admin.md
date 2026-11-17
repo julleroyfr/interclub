@@ -513,7 +513,8 @@ désignées par leur libellé (« T5 Jaune », « T6 a »…, voir
 liste pour **choisir la voie grimpée** ; si l'autre voie du niveau a déjà un
 résultat, l'écran prévient « Remplacera le résultat de … » et l'issue saisie le
 remplace : un enfant n'a qu'un résultat par niveau, sur l'un des 3 niveaux de
-son groupe de départ. L'administrateur peut en
+son groupe de départ. La croix rouge **×** d'une ligne saisie (voie ou bloc)
+la remet « à saisir », en ③ comme en ④. L'administrateur peut en
 plus **remplacer un NP** posé à la clôture par le vrai résultat. Chaque
 écriture garde son auteur (administrateur ou coach).
 

@@ -29,7 +29,9 @@ développée sur une branche dédiée et testée sur l'unique base de recette
 Retour arrière en attente :
 
 - `202611171200_voies_doublees_enfant_retour_arriere.sql` (spec #6 R9bis/R14,
-  branche `feature/voies-doublees-enfant`).
+  branche `feature/voies-doublees-enfant`) ;
+- `202611171400_retirer_resultat_bloc_retour_arriere.sql` (spec #6 R13ter,
+  branche `feature/effacer-saisie`).
 
 Les scripts de l'évolution adulte et de l'ajout de grimpeur sans licence
 (`202610231000` → `202610251200`) ont été supprimés à leur archivage, après

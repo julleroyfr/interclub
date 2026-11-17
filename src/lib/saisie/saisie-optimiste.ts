@@ -12,6 +12,7 @@ import type { GrimpeurVitesse, IssueVitesse } from '@/lib/juge/vitesse'
 export type SaisieOptimiste =
   | { type: 'voie'; grimpeurId: string; voieDifficulteId: string; issue: IssueVoie }
   | { type: 'retrait_voie'; grimpeurId: string; voieDifficulteId: string }
+  | { type: 'retrait_bloc'; grimpeurId: string; blocId: string }
   | {
       type: 'bloc'
       grimpeurId: string
@@ -22,7 +23,7 @@ export type SaisieOptimiste =
 
 /** Clé de la cible d'une saisie (une voie ou un bloc d'un grimpeur). */
 export function cleSaisie(s: SaisieOptimiste): string {
-  return s.type === 'bloc'
+  return s.type === 'bloc' || s.type === 'retrait_bloc'
     ? `bloc:${s.grimpeurId}:${s.blocId}`
     : `voie:${s.grimpeurId}:${s.voieDifficulteId}`
 }
@@ -113,7 +114,33 @@ function appliquerAuGrimpeur(
       }
     }
   } else if (s.type === 'retrait_voie') {
-    voies = voies.filter((v) => v.voieDifficulteId !== s.voieDifficulteId)
+    if (saisie.categorie === 'enfant') {
+      // Enfant : la ligne reste (une des 3 attendues), « à saisir » ; sur un
+      // niveau doublé, elle revient à la voie de plus petit ordre (spec #6
+      // R13ter b/c).
+      voies = voies.map((l) => {
+        if (l.voieDifficulteId !== s.voieDifficulteId) return l
+        const v = l.variantes?.[0] ?? l
+        return {
+          ...l,
+          voieDifficulteId: v.voieDifficulteId,
+          libelle: v.libelle,
+          cotation: v.cotation,
+          typeVoie: v.typeVoie,
+          issue: null,
+          enAttente,
+        }
+      })
+    } else {
+      // Ado/adulte : la voie n'était listée que parce qu'elle était saisie.
+      voies = voies.filter((v) => v.voieDifficulteId !== s.voieDifficulteId)
+    }
+  } else if (s.type === 'retrait_bloc') {
+    blocs = blocs.map((b) =>
+      b.blocId === s.blocId
+        ? { ...b, issue: null, palierId: null, palierLibelle: null, enAttente }
+        : b,
+    )
   } else {
     const libelle =
       s.palierId != null

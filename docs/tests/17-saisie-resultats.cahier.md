@@ -389,6 +389,64 @@ Cas particuliers à préparer à la main :
   (`scripts/test-voies-doublees.sh`, 24 assertions, rejeu de la migration
   compris).
 
+### Effacer une saisie (rév. 2026-11-17)
+
+> **Pré-condition commune (CT-25 à CT-28)** : migration
+> `202611171400_retirer_resultat_bloc` appliquée ; rencontre **enfant** en ③ ;
+> un grimpeur du club du coach (groupe M2 en local : Ana Alpha) sans résultat.
+
+### CT-25 `[auto]` — Pas de croix d'effacement sur une ligne « à saisir »   (couvre : R13ter a)
+
+- **Rôle / compte** : `coach@test.local`.
+- **Étapes** : ouvrir la saisie du grimpeur.
+- **Résultat attendu** : aucune ligne de voie ni de bloc ne montre la croix **×**.
+- **Automatisé** : `e2e/effacer-saisie.spec.ts` (CT-25).
+
+### CT-26 `[mixte]` — Top sur la mauvaise voie, effacé   (couvre : R13ter a/b, R20, R23)
+
+- **Rôle / compte** : `coach@test.local`.
+- **Étapes** :
+  1. Saisir **Top** sur la 2ᵉ voie (au lieu de la 1ʳᵉ) ; noter le score.
+  2. Toucher la croix **×** de cette ligne ; SQL Editor : lire ses résultats.
+- **Résultat attendu** :
+  1. la ligne affiche Top, une croix rouge **×** apparaît à la suite des
+     issues ;
+  2. sans confirmation, la ligne revient « à saisir » (elle reste affichée),
+     le compteur et le score diminuent ; plus aucun résultat en base.
+  *(À l'œil, sur téléphone : le bouton se touche sans risque d'appuyer sur une
+  issue voisine.)*
+- **Automatisé** : `e2e/effacer-saisie.spec.ts` (CT-26), sauf score et rendu.
+
+### CT-27 `[auto]` — Bloc saisi puis effacé   (couvre : R13ter a/b, R17)
+
+- **Rôle / compte** : `coach@test.local`.
+- **Étapes** : saisir **1er essai** sur B1, puis toucher sa croix **×**.
+- **Résultat attendu** : B1 revient « à saisir », compteur des blocs diminué,
+  plus de résultat en base.
+- **Automatisé** : `e2e/effacer-saisie.spec.ts` (CT-27).
+
+### CT-28 `[mixte]` — Ado, niveau doublé et refus   (couvre : R13ter b/c/d/e)
+
+- **Rôle / compte** : `coach@test.local`.
+- **Étapes** :
+  1. Rencontre **ado** : effacer une voie saisie.
+  2. Rencontre enfant, niveau doublé : effacer le résultat porté par la
+     seconde voie du niveau.
+  3. Hors ligne : effacer un résultat, puis le faire corriger par l'admin
+     avant le retour du réseau.
+  4. Passer la rencontre en ④ : rouvrir la saisie.
+- **Résultat attendu** :
+  1. la voie quitte la liste, `n/6` diminue (même croix **×** qu'avant) ;
+  2. la ligne revient « à saisir » sur la voie de plus petit ordre ;
+  3. au retour du réseau, l'effacement est **rejeté** (« Une saisie plus
+     récente existe déjà. »), la correction de l'admin reste ;
+  4. plus aucune croix ; un effacement par appel direct est refusé.
+- **Automatisé** : `npm run test:effacer-saisie`
+  (`scripts/test-effacer-saisie.sh` : bloc, sans effet, plus ancien, autre
+  club, voie enfant, ④, admin, droits, rejeu) ; Vitest
+  `saisie-optimiste.test.ts` (étapes 1 et 2). Reste manuel : étape 3 de bout
+  en bout.
+
 ## Registre d'exécution
 
 > **Automatisé** (rév. 2026-10-03) : CT-16 par `e2e/integrite-engagement.spec.ts`
@@ -421,5 +479,6 @@ Cas particuliers à préparer à la main :
 | 2026-10-02 | agent/playwright | develop | CT-01 → CT-12, CT-14 | ✅ | `e2e/coach-saisie-resultats.spec.ts` (14 tests). Résidus manuels : couleurs des pastilles (CT-04), geste de balayage (CT-03), rendu des deux vues (CT-02) |
 | 2026-10-02 | agent/playwright | develop | CT-15 | ✅ | R21bis (rév. spec #6 2026-10-02) — message avant la ③, sans compteurs ni « groupe à définir » |
 | 2026-10-09 | Playwright e2e | develop | CT-18 | ✅ | 0 requête pendant 10 bascules de vue / grimpeur (garde-fou TODO D3) |
+| 2026-11-17 | agent (local) | feature/effacer-saisie | CT-25 → CT-28 | ✅ (local) | `e2e/effacer-saisie.spec.ts` 4/4 ; `test:effacer-saisie` 17/17 ; Vitest. Recette : à dérouler après application de la migration 202611171400 (rendu sur téléphone, étape 3 de CT-28) |
 | 2026-11-17 | agent (local) | feature/voies-doublees-enfant | CT-20 → CT-24 | ✅ (local) | `e2e/voies-doublees-enfant.spec.ts` 5/5 ; `test:voies-doublees` 24/24. Recette : à dérouler après application de la migration (lisibilité du menu sur téléphone, score CT-21) |
 | 2026-11-10 | agent (local) | feature/perf-cloture | CT-19 | ✅ (local) | Rouge sur l'ancien code : 80 NP de voie posés à tort (1120 résultats). Vert après la RPC : `cloture-volume` + `test:cloture` 40/40 ; CT-12 inchangé. Recette : à dérouler après application de la migration |
