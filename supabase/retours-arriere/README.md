@@ -26,14 +26,11 @@ développée sur une branche dédiée et testée sur l'unique base de recette
 - Une fois la migration appliquée en prod, son retour arrière n'a plus lieu
   d'être : il est supprimé lors de l'archivage de la migration.
 
-Retour arrière en attente :
-
-- `202611171200_voies_doublees_enfant_retour_arriere.sql` (spec #6 R9bis/R14,
-  branche `feature/voies-doublees-enfant`) ;
-- `202611171400_retirer_resultat_bloc_retour_arriere.sql` (spec #6 R13ter,
-  branche `feature/effacer-saisie`).
+Aucun retour arrière en attente.
 
 Les scripts de l'évolution adulte et de l'ajout de grimpeur sans licence
 (`202610231000` → `202610251200`) ont été supprimés à leur archivage, après
 application en prod le 2026-11-01 ; ceux de `202611071000` → `202611101600`
-l'ont été après application en prod le 2026-11-10 (v2.1.0).
+l'ont été après application en prod le 2026-11-10 (v2.1.0) ; ceux de
+`202611171200` et `202611171400` après application en prod le 2026-11-17
+(v2.2.0).
