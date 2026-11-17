@@ -6,6 +6,7 @@ import { Bouton, ChampSelect, ChampTexte } from '@/composants'
 import {
   EFFECTIF_EQUIPE_MAX,
   GROUPES_DEPART,
+  libelleGroupeDepart,
   filtrerGrimpeursRecherche,
   nomEquipeParDefaut,
   voiesDuGroupeDepart,
@@ -27,7 +28,7 @@ import type {
 const etatInitial: EtatEngagement = undefined
 
 /** Options de groupe de départ (R19) : M1–M4 puis T1–T8 (T9/T10 exclus). */
-const OPTIONS_GROUPE = GROUPES_DEPART.map((g) => ({ value: g, label: `Groupe ${g}` }))
+const OPTIONS_GROUPE = GROUPES_DEPART.map((g) => ({ value: g, label: libelleGroupeDepart(g) }))
 
 /**
  * Panneau d'engagement (spec #5) : équipes du club avec composition et effectif
@@ -269,7 +270,7 @@ function GroupeDepart({
   if (!editable) {
     return membre.groupeDepart ? (
       <span className="inline-flex items-center rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-[11px] font-bold text-accent-doux">
-        Groupe {membre.groupeDepart}
+        {libelleGroupeDepart(membre.groupeDepart)}
       </span>
     ) : (
       <span className="inline-flex items-center rounded-full border border-dashed border-bordure px-2 py-0.5 text-[11px] font-medium text-texte-doux">
@@ -297,7 +298,7 @@ function GroupeDepart({
         </option>
         {GROUPES_DEPART.map((g) => (
           <option key={g} value={g} className="bg-fond text-texte">
-            Groupe {g}
+            {libelleGroupeDepart(g)}
           </option>
         ))}
       </select>

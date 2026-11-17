@@ -5,6 +5,9 @@
   — engagement éditable par coach permanent en ① pré-compétition et par permanent
   **et** temporaire en ② préparation, gelé dès ③ compétition, R16 — validé le
   2026-09-01)
+- **Révision** : 2026-11-17 (**validée le 2026-11-17**) — **numéro de groupe du
+  règlement** (R21bis) : le groupe de départ s'affiche « Groupe M1/1 » …
+  « Groupe T8/12 » (niveau + numéro du règlement). Stockage inchangé.
 - **Révision** : 2026-11-05 — âge de bascule paramétrable (spec #1 R34bis) :
   R12 ne cite plus « 13 ans » ni « 19 ans » mais l'**âge de bascule**
   (`AGE_BASCULE`, ex. 12) et l'**âge maximum ado** (`AGE_ADO_MAX`, ex. 18) pour la
@@ -280,6 +283,13 @@ cette spec. (Spec #1 R6/R27, rév. 2026-09-01.)
   (badge du niveau, ou « à définir » s'il n'est pas fixé). Il **remplace l'année
   de naissance** dans cet écran (la date de naissance reste gérée au roster,
   spec #3, hors de l'engagement).
+- **R21bis.** Partout où un groupe de départ est **affiché** (badge, liste de
+  choix, ligne de saisie), il porte **à la fois** le niveau et le **numéro de
+  groupe du règlement** (tableau « Correspondance groupes et voies Matin ») :
+  libellé `Groupe <niveau>/<numéro>`, le numéro étant le **rang** du niveau dans
+  la liste de R19 (`M1`→1 … `M4`→4, `T1`→5 … `T8`→12). Ex. « Groupe M1/1 »,
+  « Groupe M3/3 », « Groupe T1/5 ». La valeur **stockée** reste le niveau
+  (`M1`…`T8`, inchangé). Ce libellé est une **fonction pure** du domaine.
 
 ## Scénarios
 
@@ -336,8 +346,8 @@ de l'admin (R13, spec #1 R36).
 
 Étant donné une rencontre **enfant** en phase ①, quand le coach ajoute un enfant
 et lui choisit le groupe **`M2`** (R19), alors la composition affiche « Groupe
-M2 » et le système en dérive les 3 voies **M2, M3, M4** (R20). Un autre enfant
-peut être ajouté **sans** groupe (« à définir ») et complété plus tard (R19).
+M2/2 » (R21bis) et le système en dérive les 3 voies **M2, M3, M4** (R20). Un
+autre enfant peut être ajouté **sans** groupe (« à définir ») et complété plus tard (R19).
 
 ### Cas limites / erreurs
 

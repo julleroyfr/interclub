@@ -9,6 +9,7 @@ import {
   useVoieChoisie,
 } from '@/composants/saisie-resultats/ChoixVoieNiveau'
 import { accorder } from '@/domaine/accord'
+import { libelleGroupeDepart } from '@/domaine/engagement'
 import { aVoiesLibres, type Categorie } from '@/domaine/rencontre'
 import { issuesVoieSaisissables, type IssueVoie } from '@/domaine/resultat'
 import {
@@ -287,7 +288,7 @@ function DetailGrimpeur({
             {saisie.categorie} · <strong>{grimpeur.clubNom}</strong> ·{' '}
             {grimpeur.equipeNom}
             {grimpeur.prete ? ' · prêté' : ''}
-            {grimpeur.groupeDepart ? ` · groupe ${grimpeur.groupeDepart}` : ''}
+            {grimpeur.groupeDepart ? ` · ${libelleGroupeDepart(grimpeur.groupeDepart).toLowerCase()}` : ''}
           </p>
         </div>
         <div className="flex items-center gap-3 rounded-xl border border-secondaire/25 bg-secondaire/5 px-4 py-2">
