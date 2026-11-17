@@ -7,6 +7,7 @@ import { compter } from '@/domaine/accord'
 import {
   EFFECTIF_EQUIPE_MAX,
   GROUPES_DEPART,
+  libelleGroupeDepart,
   equipesCiblesChangement,
   filtrerGrimpeursRecherche,
   nomEquipeParDefaut,
@@ -24,7 +25,7 @@ import type { EngagementClub } from '@/lib/admin/engagement'
 import type { EquipeEngagee, MembreEquipe, OptionGrimpeur } from '@/lib/coach/engagement'
 
 const etatInitial: EtatAdminEngagement = undefined
-const OPTIONS_GROUPE = GROUPES_DEPART.map((g) => ({ value: g, label: `Groupe ${g}` }))
+const OPTIONS_GROUPE = GROUPES_DEPART.map((g) => ({ value: g, label: libelleGroupeDepart(g) }))
 
 /**
  * CRUD admin des équipes/compositions de TOUS les clubs d'une rencontre (R10),
@@ -232,7 +233,7 @@ function LigneMembre({
             </option>
             {GROUPES_DEPART.map((g) => (
               <option key={g} value={g} className="bg-fond text-texte">
-                Groupe {g}
+                {libelleGroupeDepart(g)}
               </option>
             ))}
           </select>

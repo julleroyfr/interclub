@@ -165,7 +165,7 @@ close.
 
 | N° | Élément | Effet |
 | --- | --- | --- |
-| 1 | Groupe de départ (liste) | Choisit le groupe du grimpeur (M1–M4, T1–T8) |
+| 1 | Groupe de départ (liste) | Choisit le groupe du grimpeur, niveau et numéro du règlement (« Groupe M1/1 » … « Groupe T8/12 ») |
 | 2 | OK | Enregistre le groupe choisi |
 | 3 | × (Retirer) | Retire le grimpeur de l'équipe |
 | 4 | Rechercher un nom ou prénom | Filtre la liste des grimpeurs du club |
