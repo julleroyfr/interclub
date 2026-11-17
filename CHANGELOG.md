@@ -6,6 +6,33 @@ numérotation [SemVer](https://semver.org/lang/fr/) adaptée au projet.
 
 Règles et procédure : [docs/conventions/10-versionnement.md](docs/conventions/10-versionnement.md).
 
+## [2.2.0] — 2026-11-17
+
+Voies doublées en enfant, effacement d’une saisie et numéros de groupe du
+règlement.
+
+### Ajouté
+
+- **Voie doublée en enfant** : quand un niveau du groupe de départ compte
+  plusieurs voies, la ligne du niveau propose le choix de la voie grimpée
+  (désignée par son repère, ou sa lettre). Un seul résultat par niveau : saisir
+  sur l’autre voie remplace le résultat précédent (spec #6 R9bis, R14).
+- **Effacer une saisie** : une croix rouge **×** sur chaque ligne saisie (voie
+  ou bloc) efface le résultat — pour le coach et le capitaine en compétition,
+  pour l’admin en compétition et en clôture (spec #6 R13ter, spec #9 R8,
+  spec #17 R10).
+
+### Modifié
+
+- **Groupe de départ** affiché avec le numéro du règlement à côté du niveau :
+  « Groupe M1/1 » … « Groupe M4/4 », « Groupe T1/5 » … « Groupe T8/12 »
+  (spec #5 R21bis).
+
+### Migrations à appliquer
+
+- `202611171200_voies_doublees_enfant` (cf. supabase/migrations/JOURNAL.md)
+- `202611171400_retirer_resultat_bloc` (cf. supabase/migrations/JOURNAL.md)
+
 ## [2.1.0] — 2026-11-10
 
 Surclassement des enfants en ado, filtre par catégorie des grimpeurs, et une
