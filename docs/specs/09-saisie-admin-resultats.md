@@ -8,6 +8,10 @@
   l'emporte, et non plus la dernière arrivée au serveur ; l'écriture admin prend
   l'heure du serveur et n'est donc jamais refusée (R8 inchangée) — voir
   [spec #17](17-saisie-hors-ligne.md).
+  **Rév. 2026-11-17 — voies doublées en enfant (validée le 2026-11-17)** : **R7** — la
+  règle spec #6 **R9bis** (choix de la voie grimpée sur un niveau doublé, un
+  seul résultat par niveau, remplacement) et la borne enfant **R14** garantie en
+  base s'appliquent à l'admin à l'identique (même écran de voie, même trigger).
 - **Sources** :
   - **Décision produit du 2026-09-22** : l'**administrateur** peut **saisir et
     modifier** les résultats de **n'importe quel grimpeur, tous clubs confondus**,
@@ -114,6 +118,11 @@ de plein droit, décision 2026-09-22) et en **④ clôture** (correction, spec #
   **plafond 6 voies** ado (R14) ; **paliers** de blocs selon la config (R16). Ces
   invariants sont portés par le **domaine** (`src/domaine/resultat.ts`) et les
   **triggers/contraintes** BDD (spec #6), **partagés** avec la saisie coach.
+  *(Rév. 2026-11-17.)* En enfant, un niveau doublé propose le **choix de la
+  voie** grimpée et le grimpeur garde **un seul résultat par niveau** : saisir
+  sur une autre voie du niveau **remplace** le résultat (spec #6 R9bis). Une
+  voie hors des 3 niveaux du groupe de départ est **refusée par la base** (spec
+  #6 R14).
 - **R8.** L'admin peut **écraser un résultat existant**, y compris repasser un
   **NP** (posé automatiquement à la clôture, spec #6 R18) en résultat réel — quand
   le grimpeur avait bien concouru (spec #6 R19, ici **étendu à la ③** en plus de la

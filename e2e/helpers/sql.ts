@@ -27,6 +27,19 @@ export function execSql(sql: string): string {
   ).trim()
 }
 
+/**
+ * Encadre, dans UN même `execSql` (une transaction), l'insertion d'un jeu de
+ * VOLUME de résultats de voie enfant hors des règles du règlement (un résultat
+ * sur chaque voie, au-delà des 3 niveaux du groupe) : la garde en base de la
+ * spec #6 R9bis/R14 (trigger `resultat_voie_un_par_niveau_enfant`, migration
+ * 202611171200) est suspendue le temps de l'insertion. Réservé aux tests de
+ * pagination (> 1000 lignes), dont le sujet n'est pas la saisie.
+ */
+export const SANS_GARDE_VOIES_ENFANT = {
+  debut: 'alter table interclub.resultat_voie disable trigger resultat_voie_un_par_niveau_enfant;',
+  fin: 'alter table interclub.resultat_voie enable trigger resultat_voie_un_par_niveau_enfant;',
+} as const
+
 /** Bascule la phase de la rencontre pilote (pré-condition la plus fréquente). */
 export function poserPhase(phase: Phase, rencontreId = RENCONTRE_PILOTE): void {
   execSql(

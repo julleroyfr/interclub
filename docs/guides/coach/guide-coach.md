@@ -305,10 +305,17 @@ sont deux voies différentes.
 **Voies de difficulté** :
 
 - **Enfant** : les 3 voies découlent du groupe de départ et sont affichées
-  directement ; l'ordre de saisie est libre. Issues : **Top**, **Prise
-  valorisée** (voies en tête T1–T10 uniquement), **Échec**. Un enfant sans
-  groupe de départ affiche « Groupe de départ à définir » : prévenir
+  directement, une ligne par niveau ; l'ordre de saisie est libre. Issues :
+  **Top**, **Prise valorisée** (voies en tête T1–T10 uniquement), **Échec**. Un
+  enfant sans groupe de départ affiche « Groupe de départ à définir » : prévenir
   l'organisateur.
+- **Enfant, niveau doublé** : si un niveau compte plusieurs voies (par exemple
+  « T2 Rouge » et « T2 Noire »), sa ligne propose une liste pour **choisir la
+  voie que l'enfant a grimpée**, avant de toucher l'issue. Les points sont ceux
+  de cette voie. Changer de voie dans la liste n'enregistre rien. Si l'autre
+  voie a déjà un résultat, l'écran prévient « Remplacera le résultat de … » :
+  l'issue saisie remplace alors ce résultat (un enfant n'a qu'un résultat par
+  niveau).
 - **Ado** : le grimpeur choisit librement **jusqu'à 6 voies**. Choisir la voie
   dans la liste, puis l'issue : **Top**, **Zone 2**, **Zone 1** ou **Échec**.
   Une 7ᵉ voie est refusée.
@@ -454,6 +461,11 @@ pas : ses résultats et ses points restent au classement.
 Il est gardé sur le téléphone et sera envoyé dès que possible. Laissez l'écran
 ouvert jusqu'à ce que la mention disparaisse (voir
 [Réseau faible ou coupé](#réseau-faible-ou-coupé)).
+
+**J'ai saisi le résultat d'un enfant sur la mauvaise voie d'un niveau doublé.**
+Choisissez la bonne voie dans la liste de la ligne, puis touchez l'issue : le
+résultat passe sur cette voie et l'autre est effacé. Il n'y a rien à retirer
+avant.
 
 **Je ne peux pas saisir la vitesse.**
 C'est normal : la vitesse est saisie par le juge. Le coach la consulte en

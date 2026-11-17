@@ -359,8 +359,10 @@ L'écran central de la préparation d'une rencontre : phase, structure, prêts e
 
 ### Voies doublées et repères
 
-En Ado, un même niveau peut compter plusieurs voies (deux T5, par exemple). Le
-**repère** permet de les distinguer au mur et à la saisie.
+Un même niveau peut compter plusieurs voies (deux T5, par exemple), en Ado comme
+en Enfant. Le **repère** permet de les distinguer au mur et à la saisie. En
+Enfant, la saisie propose alors de choisir, sur la ligne du niveau, la voie que
+l'enfant a grimpée (voir [§ 9](#saisir-ou-corriger-des-résultats)).
 
 <img src="captures/18-structure-reperes.png" alt="Voies de difficulté avec repères" width="640">
 
@@ -507,7 +509,11 @@ En ③ compétition et en ④ clôture, l'administrateur saisit les résultats d
 Les règles sont celles des coachs : une issue par voie et par bloc, la nouvelle
 saisie remplace l'ancienne, 6 voies au plus en Ado. Les voies doublées sont
 désignées par leur libellé (« T5 Jaune », « T6 a »…, voir
-[§ 7](#voies-doublées-et-repères)). L'administrateur peut en
+[§ 7](#voies-doublées-et-repères)). En Enfant, un niveau doublé propose une
+liste pour **choisir la voie grimpée** ; si l'autre voie du niveau a déjà un
+résultat, l'écran prévient « Remplacera le résultat de … » et l'issue saisie le
+remplace : un enfant n'a qu'un résultat par niveau, sur l'un des 3 niveaux de
+son groupe de départ. L'administrateur peut en
 plus **remplacer un NP** posé à la clôture par le vrai résultat. Chaque
 écriture garde son auteur (administrateur ou coach).
 
@@ -651,6 +657,10 @@ Désactiver l'épreuve en ① ou ② depuis l'onglet de la structure (voir
 **Un résultat est faux après la clôture.**
 Le corriger via **Corriger les résultats** en ④ clôture. En ⑤, revenir d'abord
 en ④.
+
+**« Cette voie ne fait pas partie du groupe de départ du grimpeur. »**
+Un enfant ne reçoit de résultat que sur les 3 niveaux de son groupe de départ.
+Vérifier son groupe dans les équipes de la rencontre, ou la voie choisie.
 
 **Un enfant n'apparaît pas dans une rencontre Ado.**
 Il n'a pas l'âge de la catégorie. Pour l'y autoriser, le surclasser depuis

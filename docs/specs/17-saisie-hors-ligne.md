@@ -7,6 +7,9 @@
   par le bandeau que s'il dure **plus de 2 secondes** (un envoi normal le faisait
   clignoter à chaque saisie) ; **R23** — même règle pour l'état affiché sur chaque
   cible (« en attente », « enregistré »)
+  ; **rév. 2026-11-17 — voies doublées en enfant (validée le 2026-11-17)** : **R22**
+  complétée — une saisie enfant sur une autre voie d'un niveau doublé (spec #6
+  R9bis) **remplace** à l'écran la ligne du niveau, sans en ajouter une
 - **Sources** :
   - **Maquette validée** (le 2026-10-07) : [`docs/maquettes/saisie-hors-ligne.html`](../maquettes/saisie-hors-ligne.html)
     (bandeau réseau, états des saisies, saisies non envoyées, juge sur tablette).
@@ -195,6 +198,11 @@ l'heure d'arrivée au serveur, qui départage deux écritures sur un même résu
   pour sa cible (y compris lors d'un rafraîchissement temps réel, spec #11). Une
   fois **synchronisée**, la valeur du serveur fait foi. Si elle est **rejetée**,
   l'écran revient à la **valeur du serveur** pour cette cible.
+  *(Rév. 2026-11-17.)* En **enfant**, une saisie sur une **autre voie d'un
+  niveau doublé** (spec #6 R9bis) s'affiche **à la place** de la voie du niveau
+  (ligne du niveau, voie sélectionnée, issue, compteur `n/3` inchangé en
+  nombre de lignes) ; si elle est rejetée, la ligne revient à la voie et à
+  l'issue du serveur.
 - **R23.** Chaque cible saisie montre son état — **en attente**, **synchronisée**
   ou **rejetée** — de façon distincte et lisible (pas uniquement par la couleur).
   *(Rév. 2026-10-09.)* Les états **en attente** et **synchronisée** ne sont

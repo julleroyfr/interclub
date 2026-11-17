@@ -26,7 +26,10 @@ développée sur une branche dédiée et testée sur l'unique base de recette
 - Une fois la migration appliquée en prod, son retour arrière n'a plus lieu
   d'être : il est supprimé lors de l'archivage de la migration.
 
-Aucun retour arrière en attente.
+Retour arrière en attente :
+
+- `202611171200_voies_doublees_enfant_retour_arriere.sql` (spec #6 R9bis/R14,
+  branche `feature/voies-doublees-enfant`).
 
 Les scripts de l'évolution adulte et de l'ajout de grimpeur sans licence
 (`202610231000` → `202610251200`) ont été supprimés à leur archivage, après

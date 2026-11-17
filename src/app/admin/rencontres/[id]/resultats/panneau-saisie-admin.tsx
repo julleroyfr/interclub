@@ -2,6 +2,11 @@
 
 import { useMemo, useState } from 'react'
 
+import {
+  AvisRemplacement,
+  SelecteurVoieNiveau,
+  useVoieChoisie,
+} from '@/composants/saisie-resultats/ChoixVoieNiveau'
 import { accorder } from '@/domaine/accord'
 import { aVoiesLibres, type Categorie } from '@/domaine/rencontre'
 import { issuesVoieSaisissables, type IssueVoie } from '@/domaine/resultat'
@@ -372,26 +377,44 @@ function LigneVoie({
 }) {
   const [etat, action, enCours] = useActionState(saisirResultatVoieAdmin, etatInitial)
   const [etatRetrait, actionRetrait] = useActionState(retirerResultatVoieAdmin, etatInitial)
-  const issues = issuesVoieSaisissables(saisie.categorie, voie.typeVoie)
+  // Enfant, niveau doublé : voie grimpée au choix (spec #6 R9bis, spec #9 R7).
+  const { choisie, setChoisieId, issue: issueCourante, remplace } = useVoieChoisie(voie, voie.variantes)
+  const issues = issuesVoieSaisissables(saisie.categorie, choisie.typeVoie)
 
   return (
     <li className="flex flex-col gap-2 py-2">
       <div className="flex items-center gap-2">
-        <span className="min-w-9 font-bold text-texte-fort">{voie.libelle}</span>
-        <span className="text-[11px] text-texte-doux">{voie.cotation}</span>
-        {voie.issue && (
+        {voie.variantes ? (
+          <>
+            <span className="min-w-9 font-bold text-texte-fort">{voie.niveau}</span>
+            <SelecteurVoieNiveau
+              niveau={voie.niveau}
+              variantes={voie.variantes}
+              valeur={choisie.voieDifficulteId}
+              onChange={setChoisieId}
+            />
+          </>
+        ) : (
+          <span className="min-w-9 font-bold text-texte-fort">{voie.libelle}</span>
+        )}
+        <span className="text-[11px] text-texte-doux">{choisie.cotation}</span>
+        {issueCourante && (
           <span
-            className={`ml-auto rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${classeIssue(voie.issue)}`}
+            className={`ml-auto rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${classeIssue(issueCourante)}`}
           >
-            {LIBELLE_ISSUE[voie.issue]}
+            {LIBELLE_ISSUE[issueCourante]}
           </span>
         )}
       </div>
 
+      {saisie.ouverteSaisie && remplace && voie.issue && (
+        <AvisRemplacement libelle={voie.libelle} issue={LIBELLE_ISSUE[voie.issue]} />
+      )}
+
       {saisie.ouverteSaisie && (
         <div className="flex flex-wrap items-center gap-1.5">
           <form action={action} className="flex flex-wrap gap-1.5">
-            <input type="hidden" name="voieDifficulteId" value={voie.voieDifficulteId} />
+            <input type="hidden" name="voieDifficulteId" value={choisie.voieDifficulteId} />
             <input type="hidden" name="grimpeurId" value={grimpeur.grimpeurId} />
             {issues.map((iss) => (
               <button
@@ -401,7 +424,7 @@ function LigneVoie({
                 value={iss}
                 disabled={enCours}
                 className={`min-h-11 rounded-lg border px-2.5 py-1 lg:min-h-9 text-[11.5px] font-semibold disabled:opacity-50 ${
-                  voie.issue === iss
+                  issueCourante === iss
                     ? classeIssue(iss)
                     : 'border-bordure bg-black/20 text-texte-attenue hover:bg-surface-forte'
                 }`}

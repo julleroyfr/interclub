@@ -5,6 +5,8 @@ import {
   validerIssueVoie,
   validerResultatBloc,
   verifierAjoutVoieAdo,
+  voiesEnfantParNiveau,
+  libelleVariante,
   PLAFOND_VOIES_ADO,
   ResultatInvalideError,
 } from './resultat'
@@ -160,5 +162,70 @@ describe('spec #6 — Affichage des voies et blocs selon la phase (R21bis, R9)',
       expect(affichageVoiesBlocs(phase, 'enfant', 'M2')).toBe('voies')
       expect(affichageVoiesBlocs(phase, 'ado', null)).toBe('voies')
     }
+  })
+})
+
+// R9bis (rév. 2026-11-17) : une ligne par niveau du groupe ; un niveau doublé
+// propose ses variantes ; voie retenue = celle qui porte un résultat, sinon
+// celle de plus petit ordre.
+describe('spec #6 — voies enfant par niveau, niveaux doublés (R9bis)', () => {
+  const voie = (id: string, niveau: string, ordre: number) => ({ voieDifficulteId: id, niveau, ordre })
+  const epreuve = [
+    voie('t2_noire', 'T2', 2),
+    voie('t2_rouge', 'T2', 1),
+    voie('t3', 'T3', 3),
+    voie('t4', 'T4', 4),
+    voie('t5', 'T5', 5),
+  ]
+  const niveaux = ['T2', 'T3', 'T4']
+
+  it('une ligne par niveau du groupe, dans l’ordre des niveaux (R9bis a)', () => {
+    const lignes = voiesEnfantParNiveau(niveaux, epreuve, new Set())
+    expect(lignes.map((l) => l.niveau)).toEqual(['T2', 'T3', 'T4'])
+  })
+
+  it('niveau simple : la voie du niveau, sans variantes (R9bis a)', () => {
+    const [, t3] = voiesEnfantParNiveau(niveaux, epreuve, new Set())
+    expect(t3.voie.voieDifficulteId).toBe('t3')
+    expect(t3.variantes).toEqual([])
+  })
+
+  it('niveau doublé sans résultat : plus petit ordre retenu, variantes triées par ordre (R9bis a/b)', () => {
+    const [t2] = voiesEnfantParNiveau(niveaux, epreuve, new Set())
+    expect(t2.voie.voieDifficulteId).toBe('t2_rouge')
+    expect(t2.variantes.map((v) => v.voieDifficulteId)).toEqual(['t2_rouge', 't2_noire'])
+  })
+
+  it('niveau doublé avec un résultat sur la variante : cette voie est retenue (R9bis b)', () => {
+    const [t2] = voiesEnfantParNiveau(niveaux, epreuve, new Set(['t2_noire']))
+    expect(t2.voie.voieDifficulteId).toBe('t2_noire')
+    expect(t2.variantes).toHaveLength(2)
+  })
+
+  it('ordre égal : départage stable par identifiant (R9bis b)', () => {
+    const [l] = voiesEnfantParNiveau(['T2'], [voie('b', 'T2', 1), voie('a', 'T2', 1)], new Set())
+    expect(l.voie.voieDifficulteId).toBe('a')
+  })
+
+  it('niveau absent de l’épreuve : aucune ligne pour ce niveau (R9)', () => {
+    const lignes = voiesEnfantParNiveau(['T4', 'T5', 'T6'], epreuve, new Set())
+    expect(lignes.map((l) => l.niveau)).toEqual(['T4', 'T5'])
+  })
+})
+
+// R9bis a (précision 2026-11-17) : dans le choix de la voie, le niveau est déjà
+// affiché — chaque voie est désignée par son repère seul, ou sa lettre.
+describe('spec #6 — texte d’une voie dans le choix du niveau (R9bis a)', () => {
+  it('voie avec repère : le repère seul', () => {
+    expect(libelleVariante({ niveau: 'T2', libelle: 'T2 Rouge' })).toBe('Rouge')
+    expect(libelleVariante({ niveau: 'T5', libelle: 'T5 Relais 12' })).toBe('Relais 12')
+  })
+
+  it('voie sans repère : la lettre seule', () => {
+    expect(libelleVariante({ niveau: 'M3', libelle: 'M3 b' })).toBe('b')
+  })
+
+  it('libellé sans préfixe de niveau : inchangé', () => {
+    expect(libelleVariante({ niveau: 'T2', libelle: 'T2' })).toBe('T2')
   })
 })

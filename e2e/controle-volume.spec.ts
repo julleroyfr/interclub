@@ -1,7 +1,13 @@
 import { expect, test } from './helpers/fixtures'
 import { commeAdmin } from './helpers/auth'
 import { CLUB_B, RENCONTRE_PILOTE, RENCONTRE_PILOTE_DATE } from './helpers/donnees'
-import { execSql, poserDate, poserPhase, reinitialiserEngagement } from './helpers/sql'
+import {
+  SANS_GARDE_VOIES_ENFANT,
+  execSql,
+  poserDate,
+  poserPhase,
+  reinitialiserEngagement,
+} from './helpers/sql'
 
 /**
  * Contrôle au-delà du plafond de l'API (spec #16 R4/R5/R6 ; constat J2 de
@@ -48,12 +54,14 @@ test.describe('Contrôle au-delà de 1000 résultats (spec #16, J2)', () => {
            from generate_series(1, ${NB_GRIMPEUSES}) i;
        insert into interclub.composition (equipe_id, grimpeur_id)
          select '${EQUIPE_VOLUME}', ${ID_GRIMPEUSE} from generate_series(1, ${NB_GRIMPEUSES}) i;
+       ${SANS_GARDE_VOIES_ENFANT.debut}
        insert into interclub.resultat_voie (voie_difficulte_id, grimpeur_id, issue)
          select v.id, ${ID_GRIMPEUSE}, 'top'
            from generate_series(1, ${NB_GRIMPEUSES}) i
            cross join interclub.voie_difficulte v
            join interclub.epreuve e on e.id = v.epreuve_id
-          where e.rencontre_id = '${RENCONTRE_PILOTE}';`,
+          where e.rencontre_id = '${RENCONTRE_PILOTE}';
+       ${SANS_GARDE_VOIES_ENFANT.fin}`,
     )
     poserPhase('cloture')
   })

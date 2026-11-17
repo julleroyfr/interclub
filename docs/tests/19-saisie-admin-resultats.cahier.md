@@ -170,6 +170,25 @@ Réutilise le seed `01-jeu-de-test.sql` (catalogue
     horizontal ; boutons d'issue et champ de recherche confortables (≥ 44 px,
     16 px anti-zoom).
 
+### CT-11 — Niveau doublé en enfant : choix de la voie, remplacement (couvre R7 ; spec #6 R9bis, R14 — rév. 2026-11-17)
+
+- **Rôle** : admin. **Pré-condition** : migration
+  `202611171200_voies_doublees_enfant` appliquée ; rencontre **enfant** en ③
+  dont le niveau **T2** compte deux voies (« T2 Rouge », plus petit `ordre` ;
+  « T2 Noire ») ; un grimpeur de groupe **T1** a déjà un résultat sur **T2
+  Rouge**, saisi par son coach (cahier 17 CT-22).
+- **Étapes** :
+  1. Sélectionner le grimpeur ; ligne T2 : vérifier la voie présélectionnée.
+  2. Choisir **T2 Noire**, puis saisir **Top** ; SQL Editor : lire les
+     résultats T2 du grimpeur (`auteur_role` compris).
+- **Résultat attendu** :
+  1. menu *T2 Rouge / T2 Noire* sur **T2 Rouge** (voie qui porte le résultat) ;
+  2. avant la saisie, « ⚠ Remplacera le résultat de T2 Rouge (Échec). » ;
+     après, un seul résultat T2, sur **T2 Noire** (`top`, auteur `admin`) ;
+     plus rien sur T2 Rouge. Mêmes garde-fous que la saisie coach : une voie
+     hors du groupe est refusée par la base (cahier 17 CT-24).
+- **Automatisé** : `e2e/voies-doublees-enfant.spec.ts` (cahier 19 CT-11).
+
 ## Registre d'exécution
 
 | Date | Testeur | Version/commit | Cas | Résultat | Remarque |
@@ -185,3 +204,4 @@ Réutilise le seed `01-jeu-de-test.sql` (catalogue
 | | | | CT-09 | ✅ / ❌ | |
 | | | | CT-10 | ✅ / ❌ | |
 | 2026-10-02 | agent/playwright | develop | CT-01 → CT-10 | ✅ | `e2e/admin-saisie-resultats.spec.ts` (11 tests). Corrigé au passage : boutons d'issue < 44 px sur mobile (admin 36, coach 27) → ≥ 44 px |
+| 2026-11-17 | agent (local) | feature/voies-doublees-enfant | CT-11 | ✅ (local) | `e2e/voies-doublees-enfant.spec.ts` ; recette : à dérouler après application de la migration 202611171200 |
