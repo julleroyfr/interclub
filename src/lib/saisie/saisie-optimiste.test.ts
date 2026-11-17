@@ -100,6 +100,37 @@ describe('spec #17 — Affichage immédiat d’une saisie voie/bloc (R22, spec #
     expect(premier(s).progression.voiesFaites).toBe(2)
   })
 
+  it('enfant, niveau doublé : une saisie sur la variante remplace la ligne du niveau (spec #6 R9bis)', () => {
+    const variantes = [
+      { voieDifficulteId: 'v2', niveau: 'T2', libelle: 'T2 Rouge', cotation: '5b', typeVoie: 'tete' as const, ordre: 2 },
+      { voieDifficulteId: 'v2n', niveau: 'T2', libelle: 'T2 Noire', cotation: '5c', typeVoie: 'tete' as const, ordre: 4 },
+    ]
+    const g = grimpeur({
+      voies: [
+        { voieDifficulteId: 'v1', niveau: 'T1', libelle: 'T1', cotation: '5a', typeVoie: 'tete', issue: 'top' },
+        { ...variantes[0]!, issue: 'echec', variantes },
+      ],
+      progression: { voiesFaites: 2, voiesTotal: 3, blocsFaites: 1, blocsTotal: 2 },
+    })
+    const base = saisie(g)
+    const s = appliquerSaisieOptimiste({ ...base, voiesEpreuve: [...base.voiesEpreuve, variantes[1]!] }, {
+      type: 'voie',
+      grimpeurId: 'g1',
+      voieDifficulteId: 'v2n',
+      issue: 'top',
+    })
+    expect(premier(s).voies).toHaveLength(2)
+    expect(premier(s).voies[1]).toMatchObject({
+      voieDifficulteId: 'v2n',
+      libelle: 'T2 Noire',
+      cotation: '5c',
+      issue: 'top',
+      enAttente: true,
+      variantes,
+    })
+    expect(premier(s).progression.voiesFaites).toBe(2)
+  })
+
   it('retrait d’une voie ado : elle disparaît et la progression baisse', () => {
     const s = appliquerSaisieOptimiste(saisie(), {
       type: 'retrait_voie',

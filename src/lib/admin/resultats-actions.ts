@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { aVoiesLibres, type Phase } from '@/domaine/rencontre'
 import {
   MESSAGE_PLAFOND_VOIES_ADO,
+  MESSAGE_VOIE_HORS_GROUPE,
   type IssueBloc,
   type IssueVoie,
   ResultatInvalideError,
@@ -54,6 +55,8 @@ function messageEcriture(erreur: { code?: string; message?: string }): string {
   // Plafond de 6 voies ado garanti en base (spec #6 R14, rév. 2026-10-03) :
   // même message que le contrôle préalable du domaine.
   if (erreur.message === 'plafond_voies_ado') return MESSAGE_PLAFOND_VOIES_ADO
+  // Enfant : voie hors des 3 niveaux du groupe de départ (spec #6 R14, rév. 2026-11-17).
+  if (erreur.message === 'voie_hors_groupe') return MESSAGE_VOIE_HORS_GROUPE
   if (erreur.code === '42501') {
     return 'Écriture non autorisée : rôle ou phase invalide.'
   }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { MESSAGE_PLAFOND_VOIES_ADO } from '@/domaine/resultat'
+import { MESSAGE_PLAFOND_VOIES_ADO, MESSAGE_VOIE_HORS_GROUPE } from '@/domaine/resultat'
 
 import { classerRefus } from './refus-enregistrement'
 
@@ -50,6 +50,13 @@ describe('spec #17 — Classement des refus d’enregistrement (R17–R20)', () 
     expect(classerRefus({ message: 'grimpeur_non_engage', code: '23514' })).toEqual({
       nature: 'definitif',
       message: 'Ce grimpeur n’est pas engagé dans la rencontre.',
+    })
+  })
+
+  it('enfant : voie hors du groupe de départ refusée par la base, message lisible (spec #6 R14, R4)', () => {
+    expect(classerRefus({ message: 'voie_hors_groupe', code: '23514' })).toEqual({
+      nature: 'definitif',
+      message: MESSAGE_VOIE_HORS_GROUPE,
     })
   })
 

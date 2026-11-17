@@ -70,9 +70,29 @@ function appliquerAuGrimpeur(
 
   if (s.type === 'voie') {
     const existante = voies.some((v) => v.voieDifficulteId === s.voieDifficulteId)
+    const variante = existante
+      ? undefined
+      : voies.find((v) => v.variantes?.some((x) => x.voieDifficulteId === s.voieDifficulteId))
     if (existante) {
       voies = voies.map((v) =>
         v.voieDifficulteId === s.voieDifficulteId ? { ...v, issue: s.issue, enAttente } : v,
+      )
+    } else if (variante) {
+      // Enfant, niveau doublé : la saisie sur une autre voie du niveau remplace
+      // la ligne du niveau (spec #6 R9bis d, spec #17 R22).
+      const v = variante.variantes!.find((x) => x.voieDifficulteId === s.voieDifficulteId)!
+      voies = voies.map((l) =>
+        l === variante
+          ? {
+              ...l,
+              voieDifficulteId: v.voieDifficulteId,
+              libelle: v.libelle,
+              cotation: v.cotation,
+              typeVoie: v.typeVoie,
+              issue: s.issue,
+              enAttente,
+            }
+          : l,
       )
     } else {
       // Ado : nouvelle voie choisie librement (spec #6 R11), triée comme le serveur.

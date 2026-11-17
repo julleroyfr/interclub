@@ -239,6 +239,33 @@
   .nav-gr .pos { color: var(--texte-doux); font-size: 10.5px; margin-top: 2px; }
   .swipe-hint { text-align: center; color: var(--texte-doux); font-size: 10.5px; margin: 0 0 12px; }
 
+  /* --- voies doublées enfant (R9bis) : choix de la voie d'un niveau --- */
+  .ligne-niveau { padding: 9px 8px; border-radius: 8px; }
+  .ligne-niveau + .ligne-niveau, .ligne-niveau + .saisie, .saisie + .ligne-niveau { border-top: 1px solid rgba(255,255,255,.05); }
+  .ligne-niveau .tete { display: flex; align-items: center; gap: 8px; }
+  .ligne-niveau .seg { margin-left: 0; margin-top: 7px; }
+  .choix-voie { width: auto; min-width: 138px; min-height: 44px; padding: 6px 9px; font-size: 13px; font-weight: 700; }
+  .badge-double {
+    font-size: 10px; font-weight: 700; color: var(--accent-doux); background: rgba(34,211,238,.10);
+    border: 1px solid rgba(34,211,238,.28); border-radius: 999px; padding: 1px 7px; white-space: nowrap;
+  }
+  .options-ouvertes {
+    margin: 6px 0 0 42px; border: 1px solid var(--bordure); border-radius: 9px; overflow: hidden; font-size: 12.5px;
+    background: var(--fond);
+  }
+  .options-ouvertes div { padding: 8px 10px; color: var(--texte); }
+  .options-ouvertes div + div { border-top: 1px solid rgba(255,255,255,.06); }
+  .options-ouvertes .actuelle { background: rgba(34,211,238,.12); color: var(--texte-fort); font-weight: 700; }
+  .avert-remplace {
+    margin-top: 7px; font-size: 11.5px; color: #fbbf24; background: rgba(251,191,36,.08);
+    border: 1px solid rgba(251,191,36,.32); border-radius: 9px; padding: 7px 10px;
+  }
+  .recap {
+    font-size: 12px; color: var(--secondaire); background: rgba(190,242,100,.07);
+    border: 1px solid rgba(190,242,100,.28); border-radius: 10px; padding: 8px 11px; margin-bottom: 12px;
+  }
+  .barre-auto { color: var(--texte-doux); font-size: 11px; text-decoration: line-through; }
+
   .legende { max-width: 940px; margin: 44px auto 0; color: var(--texte-attenue); font-size: 13px; }
   .legende h2 { color: var(--texte-fort); font-size: 15px; margin-bottom: 6px; }
   .legende h3 { color: var(--accent-doux); font-size: 13px; margin: 16px 0 4px; }
@@ -723,6 +750,240 @@
       </div>
     </section>
 
+    <!-- ============ 8 · NIVEAU DOUBLÉ — RIEN DE SAISI (R9bis a/b) ============ -->
+    <section class="colonne">
+      <p class="titre-option">8 · Niveau doublé — choix de la voie (R9bis a/b)</p>
+      <p class="desc-option">Groupe T2 ; l'épreuve compte T2 Rouge et T2 Noire. Toujours 3 lignes ; la ligne T2 propose le choix, T2 Rouge présélectionnée (plus petit ordre).</p>
+      <div class="tel">
+        <div class="barre-haut">
+          <div class="lien-retour">← Grimpeurs</div>
+          <div class="titre-rencontre">Nina Lopez</div>
+          <div class="meta">enfant · Groupe T2 → T2 · T3 · T4</div>
+          <div class="badge-phase comp">● Compétition — saisie</div>
+        </div>
+        <div class="corps">
+          <div class="carte">
+            <div class="carte-entete">
+              <span class="epreuve-titre" style="margin:0">Voie de difficulté</span>
+              <span class="prog"><span class="part"><span class="n">0</span>/3</span></span>
+            </div>
+
+            <div class="ligne-niveau">
+              <div class="tete">
+                <span class="voie-id">T2</span>
+                <select class="choix-voie" aria-label="Voie grimpée au niveau T2">
+                  <option selected>Rouge</option>
+                  <option>Noire</option>
+                </select>
+                <span class="cotation">5a</span>
+                <span class="badge-double pousse">2 voies</span>
+              </div>
+              <div class="options-ouvertes" aria-hidden="true">
+                <div class="actuelle">Rouge · 5a</div>
+                <div>Noire · 5b</div>
+              </div>
+              <div class="seg">
+                <button>Top</button>
+                <button>Prise&nbsp;valorisée</button>
+                <button>Échec</button>
+                <span class="issue vide" style="align-self:center">à saisir</span>
+              </div>
+            </div>
+
+            <div class="ligne-niveau">
+              <div class="tete"><span class="voie-id">T3</span><span class="cotation">5b</span></div>
+              <div class="seg">
+                <button>Top</button><button>Prise&nbsp;valorisée</button><button>Échec</button>
+                <span class="issue vide" style="align-self:center">à saisir</span>
+              </div>
+            </div>
+
+            <div class="ligne-niveau">
+              <div class="tete"><span class="voie-id">T4</span><span class="cotation">5c</span></div>
+              <div class="seg">
+                <button>Top</button><button>Prise&nbsp;valorisée</button><button>Échec</button>
+                <span class="issue vide" style="align-self:center">à saisir</span>
+              </div>
+            </div>
+            <div class="carte-sous" style="margin-top:8px">Changer de voie dans la liste <strong>n'enregistre rien</strong> : seul le choix d'une issue enregistre (R21).</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 9 · T2 NOIRE CHOISIE + TOP (R9bis c, R21) ============ -->
+    <section class="colonne">
+      <p class="titre-option">9 · Voie choisie puis Top (R9bis c, R21)</p>
+      <p class="desc-option">Le coach choisit T2 Noire, puis Top : le résultat (et ses points) est enregistré sur T2 Noire. Le récapitulatif nomme la voie.</p>
+      <div class="tel">
+        <div class="barre-haut">
+          <div class="lien-retour">← Grimpeurs</div>
+          <div class="titre-rencontre">Nina Lopez</div>
+          <div class="meta">enfant · Groupe T2 → T2 · T3 · T4</div>
+          <div class="badge-phase comp">● Compétition — saisie</div>
+        </div>
+        <div class="corps">
+          <div class="recap">✓ Nina Lopez — <strong>Voie T2 Noire</strong> — Top · enregistré</div>
+
+          <div class="score-bloc">
+            <div>
+              <div class="lbl">Score du grimpeur <span class="verrou-lecture">· lecture</span></div>
+              <div class="sub">barème de T2 Noire (8 pts)</div>
+            </div>
+            <span class="score">8 <span class="u">pts</span></span>
+          </div>
+
+          <div class="carte">
+            <div class="carte-entete">
+              <span class="epreuve-titre" style="margin:0">Voie de difficulté</span>
+              <span class="prog"><span class="part"><span class="n">1</span>/3</span></span>
+            </div>
+
+            <div class="ligne-niveau">
+              <div class="tete">
+                <span class="voie-id">T2</span>
+                <select class="choix-voie" aria-label="Voie grimpée au niveau T2">
+                  <option>Rouge</option>
+                  <option selected>Noire</option>
+                </select>
+                <span class="cotation">5b</span>
+                <span class="issue top pousse">✓ Top</span>
+              </div>
+              <div class="seg">
+                <button class="sel-top">Top</button><button>Prise&nbsp;valorisée</button><button>Échec</button>
+              </div>
+            </div>
+
+            <div class="ligne-niveau">
+              <div class="tete"><span class="voie-id">T3</span><span class="cotation">5b</span></div>
+              <div class="seg">
+                <button>Top</button><button>Prise&nbsp;valorisée</button><button>Échec</button>
+                <span class="issue vide" style="align-self:center">à saisir</span>
+              </div>
+            </div>
+
+            <div class="ligne-niveau">
+              <div class="tete"><span class="voie-id">T4</span><span class="cotation">5c</span></div>
+              <div class="seg">
+                <button>Top</button><button>Prise&nbsp;valorisée</button><button>Échec</button>
+                <span class="issue vide" style="align-self:center">à saisir</span>
+              </div>
+            </div>
+          </div>
+          <div class="carte-sous" style="text-align:center">À la prochaine ouverture, la ligne T2 s'affiche sur <strong>T2 Noire</strong> : la voie qui porte le résultat (R9bis b).</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 10 · CHANGEMENT DE VOIE AVEC RÉSULTAT (R9bis d) ============ -->
+    <section class="colonne">
+      <p class="titre-option">10 · Changer de voie : remplacement annoncé (R9bis d)</p>
+      <p class="desc-option">T2 Noire a déjà un Top. Le coach se ravise et sélectionne T2 Rouge : l'écran prévient qu'une issue saisie ici remplacera le résultat de T2 Noire.</p>
+      <div class="tel">
+        <div class="barre-haut">
+          <div class="lien-retour">← Grimpeurs</div>
+          <div class="titre-rencontre">Nina Lopez</div>
+          <div class="meta">enfant · Groupe T2 → T2 · T3 · T4</div>
+          <div class="badge-phase comp">● Compétition — saisie</div>
+        </div>
+        <div class="corps">
+          <div class="carte">
+            <div class="carte-entete">
+              <span class="epreuve-titre" style="margin:0">Voie de difficulté</span>
+              <span class="prog"><span class="part"><span class="n">1</span>/3</span></span>
+            </div>
+
+            <div class="ligne-niveau">
+              <div class="tete">
+                <span class="voie-id">T2</span>
+                <select class="choix-voie" aria-label="Voie grimpée au niveau T2">
+                  <option selected>Rouge</option>
+                  <option>Noire</option>
+                </select>
+                <span class="cotation">5a</span>
+                <span class="issue vide pousse">à saisir</span>
+              </div>
+              <div class="avert-remplace">⚠ Remplacera le résultat de <strong>T2 Noire (Top)</strong>.</div>
+              <div class="seg">
+                <button>Top</button><button>Prise&nbsp;valorisée</button><button>Échec</button>
+              </div>
+            </div>
+
+            <div class="ligne-niveau">
+              <div class="tete"><span class="voie-id">T3</span><span class="cotation">5b</span></div>
+              <div class="seg">
+                <button>Top</button><button>Prise&nbsp;valorisée</button><button>Échec</button>
+                <span class="issue vide" style="align-self:center">à saisir</span>
+              </div>
+            </div>
+
+            <div class="ligne-niveau">
+              <div class="tete"><span class="voie-id">T4</span><span class="cotation">5c</span></div>
+              <div class="seg">
+                <button>Top</button><button>Prise&nbsp;valorisée</button><button>Échec</button>
+                <span class="issue vide" style="align-self:center">à saisir</span>
+              </div>
+            </div>
+          </div>
+          <div class="carte-sous" style="text-align:center">Si le coach revient sur T2 Noire sans rien saisir, rien n'a changé : l'avertissement disparaît.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 11 · APRÈS REMPLACEMENT + REFUS (R9bis d/e, R14) ============ -->
+    <section class="colonne">
+      <p class="titre-option">11 · Après remplacement &amp; refus (R9bis d/e, R14)</p>
+      <p class="desc-option">Top saisi sur T2 Rouge : le résultat de T2 Noire est supprimé dans la même opération. Toujours un seul résultat au niveau T2.</p>
+      <div class="tel">
+        <div class="barre-haut">
+          <div class="lien-retour">← Grimpeurs</div>
+          <div class="titre-rencontre">Nina Lopez</div>
+          <div class="meta">enfant · Groupe T2 → T2 · T3 · T4</div>
+          <div class="badge-phase comp">● Compétition — saisie</div>
+        </div>
+        <div class="corps">
+          <div class="recap">✓ Nina Lopez — <strong>Voie T2 Rouge</strong> — Top · enregistré
+            <br><span style="color:var(--texte-attenue)">Résultat de T2 Noire remplacé.</span></div>
+
+          <div class="score-bloc">
+            <div>
+              <div class="lbl">Score du grimpeur <span class="verrou-lecture">· lecture</span></div>
+              <div class="sub">barème de T2 Rouge (7 pts) — <span class="barre-auto">T2 Noire 8</span></div>
+            </div>
+            <span class="score">7 <span class="u">pts</span></span>
+          </div>
+
+          <div class="carte">
+            <div class="carte-entete">
+              <span class="epreuve-titre" style="margin:0">Voie de difficulté</span>
+              <span class="prog"><span class="part"><span class="n">1</span>/3</span></span>
+            </div>
+            <div class="ligne-niveau">
+              <div class="tete">
+                <span class="voie-id">T2</span>
+                <select class="choix-voie" aria-label="Voie grimpée au niveau T2">
+                  <option selected>Rouge</option>
+                  <option>Noire</option>
+                </select>
+                <span class="cotation">5a</span>
+                <span class="issue top pousse">✓ Top</span>
+              </div>
+            </div>
+            <div class="saisie"><span class="voie-id">T3</span><span class="cotation">5b</span><span class="issue vide pousse">à saisir</span></div>
+            <div class="saisie"><span class="voie-id">T4</span><span class="cotation">5c</span><span class="issue vide pousse">à saisir</span></div>
+          </div>
+
+          <div class="carte">
+            <div class="carte-entete"><span class="carte-titre">Refus possibles</span></div>
+            <div class="erreur" style="margin-top:0">Une saisie plus récente existe déjà pour ce niveau : cette saisie n'a pas été enregistrée.
+              <span style="color:var(--texte-doux)">(R9bis e — ex. l'admin a corrigé T2 Noire après une saisie hors ligne du coach)</span></div>
+            <div class="erreur">Cette voie ne fait pas partie du groupe de départ du grimpeur.
+              <span style="color:var(--texte-doux)">(R14 — garanti par la base ; l'écran ne la propose jamais)</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
   </div>
 
   <div class="legende">
@@ -772,6 +1033,17 @@
         <em>Ado : pas de ligne NP par voie — compteur n/6, les voies non faites comptent 0 (R18, décision 2026-09-08).</em></li>
       <li><strong>R19</strong> — après clôture, saisie coach fermée ; seul l'admin corrige.</li>
       <li><strong>R6</strong> — classement consultable <strong>au fil de l'eau</strong>, <span class="officiel non">Non officiel</span> avant la ⑤, <span class="officiel oui">Officiel</span> (figé) ensuite. Le <strong>calcul</strong> des points est hors périmètre spec #6 (spec dédiée).</li>
+    </ul>
+    <h3>Écrans 8 à 11 — Niveau doublé en enfant (rév. 2026-11-17)</h3>
+    <ul>
+      <li><strong>R9bis a</strong> — toujours <strong>une ligne par niveau</strong> (compteur n/3) ; un niveau doublé affiche un <strong>sélecteur de voie</strong> dont les options montrent le <strong>repère seul</strong> (« Rouge », « Noire » ; lettre « a », « b » sans repère), le niveau étant déjà affiché et le badge <span class="badge-double">2 voies</span>.</li>
+      <li><strong>R9bis b</strong> — voie présélectionnée : celle qui <strong>porte un résultat</strong>, sinon celle de <strong>plus petit ordre</strong> (écran 8 : T2 Rouge ; écran 9 : T2 Noire).</li>
+      <li><strong>R9bis c / R21</strong> — l'issue est enregistrée sur la <strong>voie sélectionnée</strong>, avec son barème ; le récapitulatif nomme la voie (« Voie T2 Noire — Top »). Changer de voie dans la liste n'écrit rien.</li>
+      <li><strong>R9bis d</strong> — sélectionner une autre voie du niveau alors qu'un résultat existe affiche <span class="avert-remplace" style="display:inline;padding:1px 6px">Remplacera le résultat de …</span> ; saisir une issue <strong>remplace</strong> ce résultat en une seule opération (écran 11).</li>
+      <li><strong>R9bis e</strong> — remplacement <strong>refusé</strong> si le résultat existant est plus récent (heure de saisie, R13bis).</li>
+      <li><strong>R14</strong> — une voie hors des 3 niveaux du groupe est <strong>refusée par la base</strong> (appel direct, autre écran) ; l'écran ne la propose pas.</li>
+      <li><strong>R18</strong> — à la clôture, un niveau doublé sans résultat reçoit la NP sur la voie de plus petit ordre ; un niveau qui a un résultat sur l'une de ses voies n'en reçoit pas.</li>
+      <li>Même sélecteur et mêmes règles dans la <strong>saisie admin</strong> (spec #9 R7) — voir <code>admin-saisie-resultats.html</code>.</li>
     </ul>
     <p style="margin-top:16px;color:var(--texte-doux)">Codes couleur des issues — vert citron <span class="issue top">Top</span> : voie entière / meilleur palier ·
       cyan <span class="issue partiel">Zone / Prise valorisée</span> : tentative partielle ·

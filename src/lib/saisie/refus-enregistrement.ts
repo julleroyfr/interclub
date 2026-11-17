@@ -1,4 +1,4 @@
-import { MESSAGE_PLAFOND_VOIES_ADO } from '@/domaine/resultat'
+import { MESSAGE_PLAFOND_VOIES_ADO, MESSAGE_VOIE_HORS_GROUPE } from '@/domaine/resultat'
 
 // Classement des refus des fonctions d'enregistrement (spec #17 R17–R20 ;
 // messages lisibles : spec #6 R4, spec #10 R4). Fonction pure, partagée par les
@@ -23,6 +23,7 @@ const MESSAGES: Record<string, string> = {
   issue_non_admise: 'Issue non admise pour cette voie ou ce bloc.',
   palier_invalide: 'Le palier choisi doit appartenir au bloc.',
   plafond_voies_ado: MESSAGE_PLAFOND_VOIES_ADO,
+  voie_hors_groupe: MESSAGE_VOIE_HORS_GROUPE,
   grimpeur_non_engage: 'Ce grimpeur n’est pas engagé dans la rencontre.',
 }
 

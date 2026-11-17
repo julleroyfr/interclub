@@ -112,14 +112,18 @@ insert into interclub.equipe (id, rencontre_id, club_id, nom) values
   ('b0b0b0b0-0000-0000-0003-000000000030', '${R}3', '$CLUB_A', 'Garde E3'),
   ('b0b0b0b0-0000-0000-0003-000000000040', '${R}4', '$CLUB_A', 'Garde E4'),
   ('b0b0b0b0-0000-0000-0003-000000000050', '${R}5', '$CLUB_A', 'Garde E5');
-insert into interclub.composition (equipe_id, grimpeur_id)
-select 'b0b0b0b0-0000-0000-0003-0000000001a0'::uuid, ('${G}' || lpad(n::text, 2, '0'))::uuid
+-- Groupe de départ M1 : les voies M1 des résultats ci-dessous sont dans le
+-- groupe (spec #6 R14, garanti en base depuis 202611171200).
+insert into interclub.composition (equipe_id, grimpeur_id, groupe_depart)
+select 'b0b0b0b0-0000-0000-0003-0000000001a0'::uuid, ('${G}' || lpad(n::text, 2, '0'))::uuid, 'M1'
   from generate_series(1, 8) n
 union all
-select 'b0b0b0b0-0000-0000-0003-0000000001b0'::uuid, '${G}09'::uuid
+select 'b0b0b0b0-0000-0000-0003-0000000001b0'::uuid, '${G}09'::uuid, 'M1'
 union all
-select ('b0b0b0b0-0000-0000-0003-0000000000' || n || '0')::uuid, '${G}01'
-  from generate_series(3, 5) n;
+select ('b0b0b0b0-0000-0000-0003-0000000000' || n || '0')::uuid, '${G}01', 'M1'
+  from generate_series(3, 5) n
+union all
+select 'b0b0b0b0-0000-0000-0003-000000000030'::uuid, '${G}02', 'M1';
 
 -- Un résultat de voie et de bloc de g01 dans R3, R4, R5.
 insert into interclub.resultat_voie (voie_difficulte_id, grimpeur_id, issue)

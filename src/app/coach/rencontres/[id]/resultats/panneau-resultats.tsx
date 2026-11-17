@@ -8,6 +8,11 @@ import { ListeSaisies, type ResumeSaisie } from '@/composants/saisie-hors-ligne/
 import { indicateurCible } from '@/composants/saisie-hors-ligne/etat-cible'
 import { useFileSaisies } from '@/composants/saisie-hors-ligne/useFileSaisies'
 import { useSuiviEnvoi } from '@/composants/saisie-hors-ligne/useSuiviEnvoi'
+import {
+  AvisRemplacement,
+  SelecteurVoieNiveau,
+  useVoieChoisie,
+} from '@/composants/saisie-resultats/ChoixVoieNiveau'
 import type { IssueEnvoi } from '@/domaine/hors-ligne'
 import { aVoiesLibres } from '@/domaine/rencontre'
 import { affichageVoiesBlocs, issuesVoieSaisissables, type IssueVoie } from '@/domaine/resultat'
@@ -666,8 +671,10 @@ function LigneVoie({
   retirable: boolean
 }) {
   const { surSoumission } = useEnvoi()
-  const issues = issuesVoieSaisissables(saisie.categorie, voie.typeVoie)
-  const cible = { grimpeurId: grimpeur.grimpeurId, voieDifficulteId: voie.voieDifficulteId }
+  // Enfant, niveau doublé : voie grimpée au choix (spec #6 R9bis, R21).
+  const { choisie, setChoisieId, issue: issueCourante, remplace } = useVoieChoisie(voie, voie.variantes)
+  const issues = issuesVoieSaisissables(saisie.categorie, choisie.typeVoie)
+  const cible = { grimpeurId: grimpeur.grimpeurId, voieDifficulteId: choisie.voieDifficulteId }
   const cle = cleSaisie({ type: 'voie', ...cible, issue: 'top' })
   const nomGrimpeur = `${grimpeur.prenom} ${grimpeur.nom}`
   const suivi = useSuiviEnvoi(!!voie.enAttente)
@@ -675,21 +682,37 @@ function LigneVoie({
   return (
     <li className="flex flex-col gap-2 py-2" data-en-attente={voie.enAttente ? '' : undefined}>
       <div className="flex items-center gap-2">
-        <span className="min-w-9 font-bold text-texte-fort">{voie.libelle}</span>
-        <span className="text-[11px] text-texte-doux">{voie.cotation}</span>
+        {voie.variantes ? (
+          <>
+            <span className="min-w-9 font-bold text-texte-fort">{voie.niveau}</span>
+            <SelecteurVoieNiveau
+              niveau={voie.niveau}
+              variantes={voie.variantes}
+              valeur={choisie.voieDifficulteId}
+              onChange={setChoisieId}
+            />
+          </>
+        ) : (
+          <span className="min-w-9 font-bold text-texte-fort">{voie.libelle}</span>
+        )}
+        <span className="text-[11px] text-texte-doux">{choisie.cotation}</span>
         <span className="ml-auto flex items-center gap-2">
           <EtatEnvoi cle={cle} enAttente={voie.enAttente} suivi={suivi} />
-          {voie.issue && (
+          {issueCourante && (
             <span
-              className={`rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${classeIssue(voie.issue)} ${
+              className={`rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${classeIssue(issueCourante)} ${
                 voie.enAttente && suivi.attenteLongue ? 'border-dashed' : ''
               }`}
             >
-              {LIBELLE_ISSUE[voie.issue]}
+              {LIBELLE_ISSUE[issueCourante]}
             </span>
           )}
         </span>
       </div>
+
+      {saisie.ouverteSaisie && remplace && voie.issue && (
+        <AvisRemplacement libelle={voie.libelle} issue={LIBELLE_ISSUE[voie.issue]} />
+      )}
 
       {saisie.ouverteSaisie && (
         <div className="flex flex-wrap items-center gap-1.5">
@@ -698,13 +721,13 @@ function LigneVoie({
               const issue = String(fd.get('issue')) as IssueVoie
               return {
                 s: { type: 'voie', ...cible, issue },
-                resume: { grimpeur: nomGrimpeur, cible: `Voie ${voie.libelle}`, valeur: LIBELLE_ISSUE[issue] },
+                resume: { grimpeur: nomGrimpeur, cible: `Voie ${choisie.libelle}`, valeur: LIBELLE_ISSUE[issue] },
               }
             })}
             className="flex flex-wrap gap-1.5"
           >
             <input type="hidden" name="rencontreId" value={saisie.id} />
-            <input type="hidden" name="voieDifficulteId" value={voie.voieDifficulteId} />
+            <input type="hidden" name="voieDifficulteId" value={choisie.voieDifficulteId} />
             <input type="hidden" name="grimpeurId" value={grimpeur.grimpeurId} />
             {issues.map((iss) => (
               <button
@@ -713,7 +736,7 @@ function LigneVoie({
                 name="issue"
                 value={iss}
                 className={`min-h-11 rounded-lg border px-2.5 py-1 text-[11.5px] font-semibold disabled:opacity-50 ${
-                  voie.issue === iss
+                  issueCourante === iss
                     ? classeIssue(iss)
                     : 'border-bordure bg-black/20 text-texte-attenue hover:bg-surface-forte'
                 }`}
