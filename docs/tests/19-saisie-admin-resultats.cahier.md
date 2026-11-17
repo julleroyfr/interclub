@@ -189,6 +189,21 @@ Réutilise le seed `01-jeu-de-test.sql` (catalogue
      hors du groupe est refusée par la base (cahier 17 CT-24).
 - **Automatisé** : `e2e/voies-doublees-enfant.spec.ts` (cahier 19 CT-11).
 
+### CT-12 — Effacer une saisie en ③ et en ④ (couvre R8 ; spec #6 R13ter — rév. 2026-11-17)
+
+- **Rôle** : admin. **Pré-condition** : migration
+  `202611171400_retirer_resultat_bloc` appliquée ; un grimpeur avec un résultat
+  de voie et un résultat de bloc.
+- **Étapes** :
+  1. En ③ : croix **×** de la voie, puis du bloc.
+  2. Passer en ④ clôture (des NP sont posés) : croix **×** d'un NP.
+- **Résultat attendu** :
+  1. les deux lignes reviennent « à saisir » ; plus de résultat en base ;
+  2. le NP est effacé, la ligne revient « à saisir » (elle compte 0 point au
+     classement, comme un NP) ; en ⑤, plus de croix.
+- **Automatisé** : `e2e/effacer-saisie.spec.ts` (cahier 19 CT-12, étape 1) ;
+  `npm run test:effacer-saisie` (EF-07, admin en ④).
+
 ## Registre d'exécution
 
 | Date | Testeur | Version/commit | Cas | Résultat | Remarque |
@@ -205,3 +220,4 @@ Réutilise le seed `01-jeu-de-test.sql` (catalogue
 | | | | CT-10 | ✅ / ❌ | |
 | 2026-10-02 | agent/playwright | develop | CT-01 → CT-10 | ✅ | `e2e/admin-saisie-resultats.spec.ts` (11 tests). Corrigé au passage : boutons d'issue < 44 px sur mobile (admin 36, coach 27) → ≥ 44 px |
 | 2026-11-17 | agent (local) | feature/voies-doublees-enfant | CT-11 | ✅ (local) | `e2e/voies-doublees-enfant.spec.ts` ; recette : à dérouler après application de la migration 202611171200 |
+| 2026-11-17 | agent (local) | feature/effacer-saisie | CT-12 | ✅ (local) | `e2e/effacer-saisie.spec.ts` + `test:effacer-saisie` EF-07 ; recette : à dérouler après application de la migration 202611171400 |

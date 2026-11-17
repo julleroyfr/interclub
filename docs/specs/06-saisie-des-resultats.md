@@ -37,6 +37,13 @@
   l'écran) ; « Cas limites » et « Modèle de données » alignés. Motif : l'écran
   n'affichait que la voie de plus petit `ordre` du niveau ; le résultat (et ses
   points) était enregistré sur cette voie même si l'enfant avait grimpé l'autre.
+  **Rév. 2026-11-17 — effacer une saisie (validée le 2026-11-17)** : ajout de **R13ter** —
+  en ③, le coach **efface** un résultat saisi par erreur (mauvaise ligne,
+  mauvais grimpeur) sur **toute** voie (enfant comme ado) et sur **tout** bloc ;
+  la ligne revient à « à saisir ». **R17** et **R21** complétées ; « Modèle de
+  données » : fonction d'enregistrement `retirer_resultat_bloc`. Motif : un
+  résultat enfant ou de bloc ne pouvait qu'être remplacé par une autre issue,
+  jamais annulé.
 - **Sources** :
   - **Spec #1 — Rôles & autorisations** (`01-roles-et-autorisations.md`), vérité
     pour « qui peut faire quoi » : un coach **saisit et modifie les résultats des
@@ -260,6 +267,32 @@ coach se ferme et l'**admin** vérifie/corrige ; la **⑤ résultats publics**
   l'emporte, quel que soit l'ordre d'arrivée au serveur (spec #17 R9–R11). Le
   mécanisme de saisie hors ligne (file d'attente sur l'appareil, synchronisation)
   est défini par la **spec #17**.
+- **R13ter.** *(Rév. 2026-11-17.)* En **③ compétition**, le coach peut
+  **effacer** un résultat de voie ou de bloc déjà saisi, pour **tout**
+  grimpeur de son périmètre (enfant comme ado) — par exemple après une saisie
+  sur la mauvaise ligne :
+  - a. Chaque ligne **saisie** (voie ou bloc) propose un bouton d'effacement
+    compact — une **croix « × »** rouge, à la suite des boutons d'issue, comme
+    l'ancien retrait des voies ado (cible tactile ≥ 44 px, libellé accessible
+    *« Effacer le résultat de … »*) ; une ligne « à saisir » n'en a pas. Aucun
+    message de confirmation (l'effacement se rattrape en ressaisissant).
+    *(Précision du 2026-11-17 : une croix plutôt qu'un bouton « Effacer »
+    écrit, jugé trop encombrant.)*
+  - b. Effacer **supprime** le résultat : la ligne revient à « à saisir », le
+    compteur de progression (R20) et le score (R23) diminuent en conséquence.
+    En enfant, la ligne reste affichée (elle fait partie des 3 attendues, R9) ;
+    en ado, la voie effacée **disparaît** de la liste (elle n'était présente que
+    parce qu'elle était saisie, R11).
+  - c. Sur un niveau doublé (R9bis), effacer porte sur la voie qui **porte** le
+    résultat ; la ligne revient ensuite à la voie de plus petit `ordre`
+    (R9bis b).
+  - d. L'effacement est soumis à la règle de l'heure de saisie (R13bis) : il
+    est **refusé** si le résultat existant est **plus récent** que lui (*« Une
+    saisie plus récente existe déjà. »*) ; effacer une ligne déjà sans
+    résultat est **sans effet**.
+  - e. Mêmes conditions que la saisie : coach permanent ou temporaire, club du
+    grimpeur (R2), **③ uniquement** (R5) — contrôles faits par la base dans le
+    même appel (R3). Après la ④ clôture, seul l'admin corrige (R19).
 - **R14.** *(Ado)* Le nombre de voies réalisées par un grimpeur est **plafonné à 6**
   (règlement). Toute saisie d'une **7ᵉ** voie pour un grimpeur est **refusée** avec
   un message explicite. Le plafond est **garanti par la base** : il tient quel que
@@ -289,7 +322,8 @@ coach se ferme et l'**admin** vérifie/corrige ; la **⑤ résultats publics**
   saisie ne stocke **pas** le nombre d'essais (décision produit 2026-09-08).
 - **R17.** Un **bloc** ne peut porter qu'**un seul résultat par grimpeur** (unicité
   `(bloc, grimpeur)`, garantie en base) ; une nouvelle saisie **remplace** la
-  précédente (correction).
+  précédente (correction). *(Rév. 2026-11-17 : un résultat de bloc peut aussi
+  être **effacé**, R13ter.)*
 
 ### NP automatique à la clôture
 
@@ -337,6 +371,9 @@ coach se ferme et l'**admin** vérifie/corrige ; la **⑤ résultats publics**
   celles de la voie sélectionnée, et le récapitulatif nomme cette voie (ex.
   *« Voie T2 Noire — Top »*). Changer de voie dans le sélecteur **n'écrit
   rien** : seule la saisie d'une issue enregistre (et remplace, R9bis d).
+  *(Rév. 2026-11-17.)* Chaque ligne saisie, voie ou bloc, affiche la croix
+  d'effacement **×** (R13ter a) en ③ ; elle généralise le « × » de retrait des
+  voies ado.
 - **R21bis.** *(Rév. 2026-10-02.)* Avant la **③ compétition** (① pré-compétition,
   ② préparation), la **structure** des épreuves (voies, blocs, paliers) n'est **pas
   encore lisible** par le coach (lecture authentifiée dès la ③, R6 — garanti par la
@@ -419,6 +456,15 @@ sa voie T3 ni sur B2, quand l'admin passe la rencontre en **④ clôture** (R18)
 T3 et B2 reçoivent l'issue **NP** (0 point) automatiquement, sans toucher aux
 résultats déjà saisis.
 
+### Nominal — effacer une saisie faite sur la mauvaise ligne (R13ter)
+
+Étant donné une rencontre **enfant** en **③** et un grimpeur sans résultat,
+quand le coach touche par erreur **Top** sur sa voie T3 au lieu de T2, alors T3
+affiche Top et le compteur passe à `1/3`. Quand il touche la croix **×** sur la
+ligne T3, alors T3 revient à « à saisir », le compteur à `0/3` et le score
+perd les points de T3 ; il saisit ensuite Top sur T2. Même chose sur un bloc :
+la **×** de B1 le remet à « à saisir » (`0/2`).
+
 ### Nominal — visibilité au fil de l'eau puis officialisation
 
 Étant donné des résultats saisis en ③ pour le club A, quand un coach du **club B**
@@ -460,6 +506,13 @@ figés** (spec #1 R8). Un **visiteur non authentifié** n'y accède à aucun mom
   7ᵉ voie ordinaire.
 - *(Ado)* Deux voies de **même niveau** mais **voies distinctes** → **autorisées**
   (R11) ; deux résultats sur la **même** voie → le second **remplace** (R13).
+- Top saisi sur la **mauvaise ligne** (voie enfant ou bloc) → le coach
+  **efface** la ligne (croix **×**), qui revient à « à saisir » ; compteur
+  et score diminuent (R13ter). Effacer après la ④ → impossible pour le coach
+  (bouton absent, refus en base) ; l'admin corrige (R19).
+- Effacement **hors ligne** puis saisie plus récente d'un autre acteur sur la
+  même cible → l'effacement, plus ancien, est **refusé** à la synchronisation
+  (R13ter d, spec #17 R10).
 - Saisie d'une issue **incohérente** avec la catégorie (ex. « Zone 1 » en enfant,
   « Prise valorisée » en ado) → **refusée** (R10/R12).
 - Saisie d'un **résultat de voie/bloc sur l'épreuve de vitesse** → **hors
@@ -537,7 +590,9 @@ erDiagram
     resultat_bloc.bloc_id`) — garanti par trigger/`check`.
 - **Fonctions d'enregistrement** (R3/R20, rév. 2026-10-09) : une
   fonction par écriture — `saisir_resultat_voie`, `saisir_resultat_bloc`,
-  `retirer_resultat_voie` — exécutée **avec les droits de l'appelant** (la RLS
+  `retirer_resultat_voie`, `retirer_resultat_bloc` (rév. 2026-11-17, R13ter :
+  mêmes contrôles et même règle d'heure que le retrait de voie) — exécutée
+  **avec les droits de l'appelant** (la RLS
   s'applique), qui contrôle puis écrit en **une transaction** et renvoie, pour le
   grimpeur, ses résultats de voie et de bloc **avec leurs barèmes** (points de la
   voie, du palier) et ses **points de vitesse**, matière du score calculé par le

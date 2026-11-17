@@ -97,7 +97,8 @@ async function enregistre(page: Page): Promise<void> {
 }
 
 /** Libellés des boutons d'issue d'une ligne. */
-const boutonsIssue = (l: Locator) => l.locator('form button').allInnerTexts()
+const boutonsIssue = (l: Locator) =>
+  l.locator('form button:not([aria-label^="Effacer"])').allInnerTexts()
 
 test.describe('Cahier 17 — saisie des résultats voie & bloc (spec #6)', () => {
   test.describe.configure({ mode: 'serial' })
@@ -320,7 +321,7 @@ test.describe('Cahier 17 — saisie des résultats voie & bloc (spec #6)', () =>
   test('CT-08 · retrait d’une voie ado libère un emplacement (R11, R14)', async ({ page }) => {
     await commeCoach(page)
     await ouvrirGrimpeur(page, URL_ADO, 'Nora Delta')
-    await page.getByRole('button', { name: 'Retirer la voie T4' }).click()
+    await page.getByRole('button', { name: 'Effacer le résultat de la voie T4' }).click()
     await expect(ligne(page, 'Voie de difficulté', 'T4')).toHaveCount(0)
     await expect(compteur(page, 'Voie de difficulté')).toHaveText('5/6')
     await expect(page.getByText('Ajouter une voie (5/6)')).toBeVisible()

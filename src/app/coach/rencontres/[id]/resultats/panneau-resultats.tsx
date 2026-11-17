@@ -8,6 +8,7 @@ import { ListeSaisies, type ResumeSaisie } from '@/composants/saisie-hors-ligne/
 import { indicateurCible } from '@/composants/saisie-hors-ligne/etat-cible'
 import { useFileSaisies } from '@/composants/saisie-hors-ligne/useFileSaisies'
 import { useSuiviEnvoi } from '@/composants/saisie-hors-ligne/useSuiviEnvoi'
+import { BoutonEffacer } from '@/composants/saisie-resultats/BoutonEffacer'
 import {
   AvisRemplacement,
   SelecteurVoieNiveau,
@@ -646,7 +647,6 @@ function SectionVoies({ saisie, grimpeur }: { saisie: SaisieRencontre; grimpeur:
             saisie={saisie}
             grimpeur={grimpeur}
             voie={v}
-            retirable={estAdo}
           />
         ))}
       </ul>
@@ -658,17 +658,15 @@ function SectionVoies({ saisie, grimpeur }: { saisie: SaisieRencontre; grimpeur:
   )
 }
 
-/** Une voie : issue courante + boutons d'issue (si saisie ouverte), retrait ado. */
+/** Une voie : issue courante + boutons d'issue et Effacer (si saisie ouverte, R13ter). */
 function LigneVoie({
   saisie,
   grimpeur,
   voie,
-  retirable,
 }: {
   saisie: SaisieRencontre
   grimpeur: GrimpeurSaisie
   voie: SaisieVoie
-  retirable: boolean
 }) {
   const { surSoumission } = useEnvoi()
   // Enfant, niveau doublé : voie grimpée au choix (spec #6 R9bis, R21).
@@ -745,23 +743,18 @@ function LigneVoie({
               </button>
             ))}
           </form>
-          {retirable && voie.issue && (
+          {/* Effacer (R13ter) : porte sur la voie qui porte le résultat (R13ter c). */}
+          {voie.issue && (
             <form
               onSubmit={surSoumission(() => ({
-                s: { type: 'retrait_voie', ...cible },
-                resume: { grimpeur: nomGrimpeur, cible: `Voie ${voie.libelle}`, valeur: 'Retrait' },
+                s: { type: 'retrait_voie', grimpeurId: grimpeur.grimpeurId, voieDifficulteId: voie.voieDifficulteId },
+                resume: { grimpeur: nomGrimpeur, cible: `Voie ${voie.libelle}`, valeur: 'Effacé' },
               }))}
             >
               <input type="hidden" name="rencontreId" value={saisie.id} />
               <input type="hidden" name="voieDifficulteId" value={voie.voieDifficulteId} />
               <input type="hidden" name="grimpeurId" value={grimpeur.grimpeurId} />
-              <button
-                type="submit"
-                aria-label={`Retirer la voie ${voie.libelle}`}
-                className="min-h-11 min-w-11 rounded-lg border border-danger/40 px-2 py-1 text-sm text-danger hover:bg-danger/10"
-              >
-                ×
-              </button>
+              <BoutonEffacer cible={`de la voie ${voie.libelle}`} />
             </form>
           )}
         </div>
@@ -982,6 +975,20 @@ function LigneBloc({
               Échec
             </button>
           </form>
+          {/* Effacer (R13ter). */}
+          {bloc.issue && (
+            <form
+              onSubmit={surSoumission(() => ({
+                s: { type: 'retrait_bloc', grimpeurId: grimpeur.grimpeurId, blocId: bloc.blocId },
+                resume: resume('Effacé'),
+              }))}
+            >
+              <input type="hidden" name="rencontreId" value={saisie.id} />
+              <input type="hidden" name="blocId" value={bloc.blocId} />
+              <input type="hidden" name="grimpeurId" value={grimpeur.grimpeurId} />
+              <BoutonEffacer cible={`du bloc ${bloc.code}`} />
+            </form>
+          )}
         </div>
       )}
       <MotifRejet cle={cle} />

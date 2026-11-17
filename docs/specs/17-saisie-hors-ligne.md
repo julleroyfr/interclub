@@ -10,6 +10,9 @@
   ; **rév. 2026-11-17 — voies doublées en enfant (validée le 2026-11-17)** : **R22**
   complétée — une saisie enfant sur une autre voie d'un niveau doublé (spec #6
   R9bis) **remplace** à l'écran la ligne du niveau, sans en ajouter une
+  ; **rév. 2026-11-17 — effacer une saisie (validée le 2026-11-17)** : **R10** étendue au
+  **retrait d'un résultat de bloc** (spec #6 R13ter) ; « Contraintes de
+  données » alignées
 - **Sources** :
   - **Maquette validée** (le 2026-10-07) : [`docs/maquettes/saisie-hors-ligne.html`](../maquettes/saisie-hors-ligne.html)
     (bandeau réseau, états des saisies, saisies non envoyées, juge sur tablette).
@@ -133,7 +136,8 @@ l'heure d'arrivée au serveur, qui départage deux écritures sur un même résu
   motif « une saisie plus récente existe déjà ». Cette règle s'applique à
   **tous** les auteurs (coach, juge, admin) et à **tous** les chemins d'écriture
   (écran, appel direct à l'API).
-- **R10.** Un **retrait** de résultat de voie (coach) suit la même règle : il est
+- **R10.** Un **retrait** de résultat de voie ou *(rév. 2026-11-17, spec #6
+  R13ter)* de **bloc** (coach) suit la même règle : il est
   **refusé** si le résultat existant a une heure de saisie **strictement
   postérieure** à celle du retrait. Un retrait sur une cible **sans** résultat est
   accepté sans effet.
@@ -361,7 +365,8 @@ sequenceDiagram
   via `upsert`), **refuse** l'écriture si le nouveau `saisi_le` est **strictement
   antérieur** à celui de la ligne existante, avec un code d'erreur dédié
   (`saisie_plus_ancienne`) traduit en message lisible.
-- **Retrait (R10)** : la suppression d'un `resultat_voie` par un coach est
+- **Retrait (R10)** : la suppression d'un `resultat_voie` ou d'un
+  `resultat_bloc` (rév. 2026-11-17) par un coach est
   **conditionnée** à `saisi_le <= heure du retrait`. Si une ligne existe et ne
   satisfait pas la condition, le retrait est refusé avec le même code
   `saisie_plus_ancienne`. Une cible sans ligne est un succès sans effet.

@@ -104,9 +104,12 @@ comptent pas en moulinette. Une 7ᵉ voie est refusée.
 **Blocs** : toucher le palier atteint (« Zone », « Bloc complet »…) ou
 **Échec**.
 
-**Corriger** : toucher la bonne issue, elle remplace la précédente ; une voie
-saisie par erreur peut être retirée. On saisit toujours la **meilleure
-tentative**.
+**Corriger** : toucher la bonne issue, elle remplace la précédente. On saisit
+toujours la **meilleure tentative**.
+
+**Effacer** : une voie ou un bloc saisi par erreur s'efface avec la croix rouge
+**×**, à la suite des boutons d'issue. La voie quitte la liste ; le bloc revient
+« à saisir ». Il n'y a pas de confirmation : ressaisissez si besoin.
 
 **Vitesse** : saisie par les juges, affichée en lecture seule.
 
