@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useId, useRef, useState } from 'react'
+import { useActionState, useEffect, useId, useRef, useState } from 'react'
 
 import { Bouton, Carte, ChampSelect, ChampTexte, TitreSection } from '@/composants'
 import { compter } from '@/domaine/accord'
@@ -24,6 +24,8 @@ import {
 import type { EngagementClub } from '@/lib/admin/engagement'
 import type { EquipeEngagee, MembreEquipe, OptionGrimpeur } from '@/lib/coach/engagement'
 
+import { ancreClub } from './ancre-club'
+
 const etatInitial: EtatAdminEngagement = undefined
 const OPTIONS_GROUPE = GROUPES_DEPART.map((g) => ({ value: g, label: libelleGroupeDepart(g) }))
 
@@ -42,6 +44,20 @@ export function PanneauEquipes({
 }) {
   // « Engagé » = club ayant au moins une équipe (R41c).
   const clubsEngages = clubs.filter((c) => c.engagement.equipes.length > 0)
+  // Lien « enfants sans groupe » des statistiques (R41h) : l'ancre d'un club
+  // ouvre son bloc replié avant d'y défiler.
+  useEffect(() => {
+    const ouvrirAncre = () => {
+      const bloc = document.getElementById(decodeURIComponent(location.hash.slice(1)))
+      const details = bloc?.querySelector('details')
+      if (!details) return
+      details.open = true
+      bloc?.scrollIntoView({ block: 'start' })
+    }
+    ouvrirAncre()
+    window.addEventListener('hashchange', ouvrirAncre)
+    return () => window.removeEventListener('hashchange', ouvrirAncre)
+  }, [])
   return (
     <section className="flex flex-col gap-4">
       <div>
@@ -59,7 +75,7 @@ export function PanneauEquipes({
         // engagé (une seule vue à lire, autant l'ouvrir).
         const ouvertParDefaut = clubsEngages.length === 1 && nbEquipes > 0
         return (
-          <Carte key={c.clubId} className="p-0">
+          <Carte key={c.clubId} id={ancreClub(c.clubId)} className="scroll-mt-4 p-0">
             {/* Repliable par club : une dizaine d'équipes reste scannable. */}
             <details open={ouvertParDefaut} className="group" data-club={c.clubNom}>
               <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-2xl p-4 hover:bg-surface-forte">

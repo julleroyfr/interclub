@@ -1,10 +1,12 @@
-# Cahier de test : Tableau de bord d'une rencontre (spec #3, R40–R45)
+# Cahier de test : Tableau de bord d'une rencontre (spec #3, R40–R45, R41e–R41k)
 
 > Couvre l'écran **`/admin/rencontres/[id]`**, le **tableau de bord** d'une
 > rencontre : en-tête à **titre dynamique**, **pilotage de phase** (R41a), accès
 > aux **jetons QR** (R41b), **structure** en onglets (R42–R45, ajout réservé à
 > la pré-compétition ; modification et suppression en ① et ②, R51–R55) et **équipes** regroupées par club en blocs repliables
-> (R41c). Complète le cahier
+> (R41c), et, pour une rencontre enfant, le panneau **Statistiques**
+> (R41e–R41j, ajout du 2026-11-18) ; le tout réparti en **onglets** (R41k,
+> ajout du 2026-11-18). Complète le cahier
 > [11-gabarit-rencontre.cahier.md](11-gabarit-rencontre.cahier.md)
 > (CT-09/CT-10) en détaillant l'IHM dédiée.
 > Règles : [docs/conventions/06-cahier-de-test.md](../conventions/06-cahier-de-test.md) ;
@@ -13,7 +15,9 @@
 - **Spec de référence** : `docs/specs/03-ecrans-de-parametrage-admin.md`
   (Configuration d'une rencontre R40–R45 ; niveaux R37 ; points R38 ; phase R36 ;
   repère et libellé des voies R49/R50, ajout du 2026-10-16 ; modification et
-  suppression des éléments R51–R55, ajout du 2026-10-25) ;
+  suppression des éléments R51–R55, ajout du 2026-10-25 ; statistiques d'une
+  rencontre enfant R41e–R41j, ajout du 2026-11-18 ; onglets du tableau de bord
+  R41k, ajout du 2026-11-18) ;
   `docs/specs/01-roles-et-autorisations.md` (R12 : écriture réservée à l'admin).
 - **Domaine** : `src/domaine/gabarit.ts` (`validerNiveauVoie` plages R37,
   `validerPoints` R38, `champsPointsVoie` champs conditionnels R38/R43 —
@@ -22,7 +26,9 @@
   couverts par `voie.test.ts`) ; `src/domaine/structure.ts`
   (`editionStructurePossible` / `ajoutStructurePossible` R51,
   `refusModificationVoie` R55b, `refusSuppression` R55a/c, `normaliserCodeBloc` /
-  `normaliserLibellePalier` R53 — couverts par `structure.test.ts`).
+  `normaliserLibellePalier` R53 — couverts par `structure.test.ts`) ;
+  `src/domaine/tableau-de-bord.ts` (`ongletsDisponibles`, `resoudreOnglet`
+  R41k — couverts par `tableau-de-bord.test.ts`).
 - **Data / actions** : `src/lib/rencontres/structure.ts` (`getStructureRencontre`) ;
   `src/lib/rencontres/structure-actions.ts` (`ajouterEpreuveRencontre`,
   `ajouterVoieDifficulteRencontre`, `ajouterBlocRencontre`,
@@ -34,10 +40,14 @@
   `supprimerPalierBlocRencontre`, `supprimerVoieVitesseRencontre`,
   `modifierLibelleVoieVitesseRencontre` — garde admin + phases ① et ②, R51).
 - **IHM** : `src/app/admin/rencontres/[id]/page.tsx` (garde admin, chargement,
-  en-tête à titre dynamique, mise en page tableau de bord — cf. maquette
-  `docs/maquettes/rencontre-dashboard.html`) ; `panneau-pilotage.tsx` (phase R41a
-  et lien QR R41b) ; `panneau-structure.tsx` (onglets, formulaires, lecture seule,
-  état vide) ; `panneau-equipes.tsx` (blocs par club repliables R41c) ; action
+  en-tête à titre dynamique, onglets et Vue d'ensemble avec le lien QR R41b —
+  cf. maquette `docs/maquettes/rencontre-dashboard-a-onglets.html`) ;
+  `onglets-tableau-de-bord.tsx` (onglets R41k, `?onglet=`, ancres) ;
+  `panneau-pilotage.tsx` (phase R41a) ; `panneau-structure.tsx` (onglets, formulaires, lecture seule,
+  état vide) ; `panneau-equipes.tsx` (blocs par club repliables R41c) ;
+  `panneau-statistiques.tsx` (statistiques R41e–R41j, chargées par
+  `src/lib/admin/statistiques.ts` — maquette
+  `docs/maquettes/statistiques-rencontre.html`) ; action
   d'ouverture du tableau de bord dans `liste-rencontres.tsx`.
 - **Phase (réutilisé)** : `changerPhaseRencontre` (`src/lib/rencontres/actions.ts`)
   et helpers domaine `phaseSuivante` / `phasePrecedenteEffective` /
@@ -77,16 +87,18 @@ d'ouverture du **tableau de bord** → `/admin/rencontres/<id>`.
 - **non connecté** : `/admin/rencontres/<id>` → **redirection vers `/connexion`** (spec #12 R2).
 - **id inexistant** : admin ouvre `/admin/rencontres/<uuid-bidon>` → **404**.
 
-### CT-02 — En-tête, onglets et compteurs (couvre R41, R42)
+### CT-02 — En-tête, onglets et compteurs (couvre R41, R41k, R42)
 
 - **Rôle** : admin. **Pré-condition** : rencontre **ado** au format seed.
-- **Étapes** : ouvrir le tableau de bord de la rencontre.
+- **Étapes** : ouvrir le tableau de bord de la rencontre, puis l'onglet
+  **Structure**.
 - **Résultat attendu** :
   - **Titre dynamique** : « **Rencontre &lt;club porteur&gt; du &lt;date&gt;** »
     (date en format long).
   - En-tête : **catégorie** (« Ado »), **club porteur**, **badge de phase**
-    « Pré-compétition » et **compteurs** (équipes, épreuves).
-  - Trois onglets : **Voies de difficulté · 10**, **Blocs · 2**,
+    « Pré-compétition » ; **compteurs** sur les onglets (Structure = épreuves,
+    Équipes = équipes, Prêts = prêts).
+  - Dans l'onglet Structure, trois sous-onglets : **Voies de difficulté · 10**, **Blocs · 2**,
     **Vitesse · 2** (compteurs conformes au contenu copié).
   - Un seul onglet visible à la fois ; cliquer un onglet change le contenu.
   - Onglet Voies : liste T1–T10 avec type, cotation et points (voie + Z1/Z2).
@@ -216,8 +228,8 @@ d'ouverture du **tableau de bord** → `/admin/rencontres/<id>`.
 
 ### CT-14 — Lien vers les QR codes de la rencontre (couvre R41b)
 
-- **Rôle** : admin. **Étapes** : depuis le tableau de bord, activer le lien
-  **« QR codes »**.
+- **Rôle** : admin. **Étapes** : depuis le tableau de bord (onglet **Vue
+  d'ensemble**, R41k), activer le lien **« QR codes »**.
 - **Résultat attendu** : redirection vers `/admin/jetons?rencontre=<id>`, la
   rencontre étant **déjà sélectionnée** (sections coach temporaire / juge
   affichées, spec #2). Retour au tableau de bord possible.
@@ -416,6 +428,103 @@ d'ouverture du **tableau de bord** → `/admin/rencontres/<id>`.
   et 2, CT-20, CT-21 étapes 1 à 5 sans résultat, CT-22 étapes 1 et 2 côté
   structure, CT-23 étape 1) ; le cahier reste la validation sur base réelle.
 
+### CT-24 — Panneau Statistiques réservé aux rencontres enfant (couvre R41e)
+
+- **Rôle** : admin. **Pré-condition** : une rencontre **enfant** et une
+  rencontre **ado** (et, si disponible, une **adulte**).
+- **Étapes / résultat attendu** :
+  1. Tableau de bord de la rencontre **enfant** : l'onglet **Statistiques**
+     est présent (dernier onglet, R41k). ✅
+  2. Tableaux de bord **ado** et **adulte** : aucun onglet Statistiques. ✅
+
+### CT-25 — Effectifs et répartition par groupe de départ (couvre R41f, R41g)
+
+- **Rôle** : admin. **Pré-condition** : rencontre enfant en ① avec au moins
+  deux clubs engagés, des filles et des garçons, un enfant **prêté** à un autre
+  club, et au moins un enfant sans groupe de départ.
+- **Étapes / résultat attendu** :
+  1. **Effectifs** : le total d'enfants est égal à la somme des membres des
+     équipes ; filles + garçons (+ « non renseigné » le cas échéant) = total. ✅
+  2. Le tableau par club est trié par nom ; l'enfant prêté est compté dans son
+     **club d'accueil**, pas dans son club d'origine. ✅
+  3. **Répartition** : 12 lignes « Groupe M1/1 » … « Groupe T8/12 » dans cet
+     ordre, les groupes vides à **0** (grisés), puis « À définir » avec le
+     nombre d'enfants sans groupe. La somme des lignes = total des effectifs. ✅
+  4. Fixer le groupe d'un enfant « à définir » (bloc équipes, ou espace coach) :
+     après rechargement, son groupe gagne 1 et « À définir » perd 1. ✅
+
+### CT-26 — Clubs avec des enfants sans groupe de départ (couvre R41h)
+
+- **Rôle** : admin. **Pré-condition** : celle de CT-25.
+- **Étapes / résultat attendu** :
+  1. En ① / ② : la carte « Enfants sans groupe de départ » liste les clubs
+     concernés, triés par nom, avec leur nombre ; **pas** de style d'alerte. ✅
+  2. Toucher un club : l'onglet **Équipes** s'affiche (l'URL passe à
+     `?onglet=equipes#club-…`) et la page défile jusqu'au bloc du club, qui
+     **s'ouvre** (il était replié). ✅
+  3. Passer la rencontre en **③** (jour J) en laissant un enfant sans groupe :
+     la carte passe en **alerte** (ambre, « ⚠ ») avec la mention « Ces enfants
+     ne peuvent recevoir aucun résultat de voie. ». ✅
+  4. Donner un groupe à tous les enfants : la carte affiche « ✓ Tous les enfants
+     ont un groupe de départ. ». ✅
+
+### CT-27 — Avancement de la saisie en ③ (couvre R41i)
+
+- **Rôle** : admin (+ coach ou juge pour saisir). **Pré-condition** : rencontre
+  enfant en **③ compétition**, avec blocs et voies de vitesse.
+- **Étapes / résultat attendu** :
+  1. La carte **Avancement de la saisie** s'affiche (absente en ①, ②, ④, ⑤). ✅
+  2. Avant toute saisie : voies `0/(3 × enfants avec groupe)`, blocs
+     `0/(enfants × nombre de blocs)`, vitesse `0/enfants`, par club et au
+     total. ✅
+  3. Saisir une voie (Top), un bloc (NP) et une vitesse (chute) pour un enfant
+     d'un club : après rechargement, chaque compteur de son club et du total
+     gagne 1 (un NP ou une chute comptent comme saisis). ✅
+  4. Un club dont tous les attendus sont saisis affiche une barre **verte**. ✅
+
+### CT-28 — Bilan après la compétition (couvre R41j)
+
+- **Rôle** : admin. **Pré-condition** : rencontre de CT-27 passée en
+  **④ clôture** (NP automatiques posés, spec #6 R18), au moins un enfant **sans
+  vitesse saisie** et une **non-présentation** en vitesse.
+- **Étapes / résultat attendu** :
+  1. La carte **Bilan** s'affiche en ④ et en ⑤ ; la carte Avancement a
+     disparu. ✅
+  2. « NP voies » et « NP blocs » comptent les NP saisis **et** ceux posés à la
+     clôture ; « NP vitesse » compte les non-présentations ; « Vitesse non
+     saisie » compte les enfants sans résultat de vitesse (pas de NP
+     automatique). Les zéros sont grisés, la ligne Total fait la somme. ✅
+  3. Corriger un NP en Top (admin, spec #9) : après rechargement, le NP du club
+     diminue de 1. ✅
+- **Rétablir** : remettre la rencontre dans sa phase initiale.
+
+### CT-29 `[mixte]` — Tableau de bord en onglets (couvre R41k)
+
+- **Rôle** : admin. **Pré-condition** : une rencontre **enfant**, une **ado** et
+  une **adulte** (seed).
+- **Étapes / résultat attendu** :
+  1. Ouvrir le tableau de bord **enfant** sans paramètre : sous l'en-tête
+     (titre, bloc Phase), cinq onglets dans l'ordre **Vue d'ensemble ·
+     Structure · Équipes · Prêts · Statistiques** ; **Vue d'ensemble** est
+     sélectionnée et montre le lien **QR codes** (+ saisie / contrôle /
+     classement / affichage selon la phase, mêmes règles qu'avant). ✅
+  2. Toucher **Structure** : seul le panneau Structure est visible ; l'URL
+     devient `?onglet=structure` **sans rechargement** de la page. ✅
+  3. Dans l'onglet Structure, saisir un repère et valider (action serveur) :
+     après l'action, l'onglet **Structure** reste affiché. Recharger la page
+     (F5) : toujours **Structure**. ✅
+  4. Ouvrir `?onglet=pirate` → **Vue d'ensemble**. ✅
+  5. Tableau de bord **ado** : pas d'onglet Statistiques ; `?onglet=statistiques`
+     → Vue d'ensemble. ✅
+  6. Tableau de bord **adulte** : onglets Vue d'ensemble · Structure · Équipes
+     seulement ; `?onglet=prets` → Vue d'ensemble. ✅
+  7. Clavier : focus sur un onglet, flèches **← / →** passent à l'onglet
+     voisin ; **Début / Fin** au premier / dernier. ✅
+  8. Mobile (~375 px) : la barre d'onglets défile horizontalement, sans
+     débordement de la page ; onglets ≥ 44 px de haut. ✅
+- **Automatisé** : `e2e/tableau-de-bord-onglets.spec.ts` (étapes 1, 2, 3, 4 à 6
+  et le renvoi CT-26 étape 2) ; le cahier reste la validation sur base réelle.
+
 ## Registre d'exécution
 
 | Cas | Environnement | Date | Testeur | Verdict | Notes |
@@ -443,6 +552,12 @@ d'ouverture du **tableau de bord** → `/admin/rencontres/<id>`.
 | CT-21 | local (Docker) | 2026-10-25 | Claude (E2E) | ⬜ | blocs et paliers (R53/R54) — vert en E2E sans résultat |
 | CT-22 | local (Docker) | 2026-10-25 | Claude (E2E) | ⬜ | suppression voie de vitesse (R54) — vert en E2E |
 | CT-23 | local (Docker) | 2026-10-25 | Claude (E2E) | ⬜ | verrouillage en ③ (R51) — étape 1 verte en E2E |
+| CT-24 | | | | ⬜ | statistiques enfant uniquement (R41e) |
+| CT-25 | | | | ⬜ | effectifs et répartition par groupe (R41f/R41g) |
+| CT-26 | | | | ⬜ | clubs avec enfants sans groupe (R41h) |
+| CT-27 | | | | ⬜ | avancement de la saisie en ③ (R41i) |
+| CT-28 | | | | ⬜ | bilan en ④/⑤ (R41j) |
+| CT-29 | | | | ⬜ | tableau de bord en onglets (R41k) |
 
 > Le domaine (`validerNiveauVoie` R37, `validerPoints` R38, `champsPointsVoie`
 > R38/R43) est couvert par Vitest (`npm run test`, `src/domaine/gabarit.test.ts`).

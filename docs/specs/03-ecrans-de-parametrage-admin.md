@@ -1,5 +1,14 @@
 # Spec : Écrans de paramétrage (admin)
 
+- **Révision** : 2026-11-18 (**validée le 2026-11-18**) — **tableau de bord
+  d'une rencontre en onglets** (R41k, règle de changement) : en-tête de pilotage
+  puis onglets Vue d'ensemble / Structure / Équipes / Prêts / Statistiques, onglet
+  actif dans l'URL. Révise l'introduction de l'écran, R41, R41e et R41h ;
+  contenu des panneaux inchangé. Aucune migration.
+- **Révision** : 2026-11-18 (**validée le 2026-11-18**) — **statistiques d'une
+  rencontre enfant** sur son tableau de bord (R41e–R41j) : effectifs,
+  répartition par groupe de départ, clubs avec des enfants sans groupe,
+  avancement de la saisie (③) et bilan (④/⑤). Aucune migration.
 - **Révision** : 2026-11-08 (**validée le 2026-11-08**) — **filtre par
   catégorie** de la liste des grimpeurs (R26b, règle de changement) : R26
   complétée ; éligibilité de la spec #1 R34 pour la saison en cours, surclassés
@@ -550,9 +559,11 @@ flowchart TD
 
 > Cet écran est le **tableau de bord** d'une rencontre : il agrège son pilotage
 > (phase, jetons QR), sa **structure** (mise en œuvre de R36) et ses **équipes**
-> et **prêts**. Maquette de référence validée : `docs/maquettes/rencontre-dashboard.html`
-> (piste « pile guidée », responsive pleine largeur : colonne unique en mobile,
-> **rail de pilotage collant** + contenu 2 colonnes en bureau). La maquette
+> et **prêts**. Maquette de référence validée :
+> `docs/maquettes/rencontre-dashboard-a-onglets.html` *(rév. 2026-11-18,
+> remplace `rencontre-dashboard.html` — rail de pilotage + contenu 2 colonnes,
+> jugé trop chargé ; variantes étudiées : `rencontre-dashboard-variantes.html`)* :
+> **en-tête de pilotage** puis **onglets**, un seul panneau visible (R41k). La maquette
 > `docs/maquettes/rencontre-structure.html` reste la référence détaillée du bloc
 > **structure** (onglets + variantes lecture seule et sans format).
 
@@ -567,7 +578,30 @@ flowchart TD
   (équipes, épreuves). Le tableau de bord regroupe : le **pilotage de phase**
   (R41a), l'accès aux **jetons QR** (R41b), la **structure** en onglets (R42–R45),
   les **équipes & engagements** de tous les clubs (R41c ; règles spec #1 R17 /
-  spec #5) et les **prêts** (spec #1 R35).
+  spec #5), les **prêts** (spec #1 R35) et, pour une rencontre enfant, les
+  **statistiques** (R41e–R41j), répartis en **onglets** (R41k).
+- **R41k.** *(Ajout demandé et validé le 2026-11-18.)* Sous l'**en-tête**
+  (titre, phase et son pilotage R41a), le tableau de bord est organisé en
+  **onglets**, **un seul panneau visible** à la fois ; les **compteurs** de R41
+  sont portés par les onglets. Ordre des onglets :
+  - **Vue d'ensemble** : le lien vers les **jetons QR** (R41b) et les **accès**
+    aux écrans de la rencontre selon leurs règles de phase inchangées — saisie
+    admin des résultats (spec #9), contrôle des résultats et sa progression
+    (spec #16), classement (spec #12 R15, spec #7 R11), écran d'affichage
+    (spec #14) ;
+  - **Structure** (R42–R45, R49–R55), avec son **nombre d'épreuves** ;
+  - **Équipes** (R41c, R41d ; équipes adultes spec #20), avec son **nombre
+    d'équipes** ;
+  - **Prêts** (spec #1 R35), avec son **nombre de prêts** — **absent** pour une
+    rencontre **adulte** (pas de prêt, spec #20 R11) ;
+  - **Statistiques** (R41e–R41j) — **présent seulement** pour une rencontre
+    **enfant**.
+
+  L'onglet actif est porté par l'**URL** (`?onglet=vue|structure|equipes|prets|statistiques`)
+  : il est **conservé** après une action de l'écran (rechargement) et peut être
+  partagé. Sans paramètre, ou avec un onglet **inconnu** ou **absent** pour cette
+  rencontre (ex. `prets` en adulte), la **Vue d'ensemble** s'affiche. Le contenu
+  des panneaux est inchangé.
 - **R41a.** Depuis le tableau de bord, l'admin peut **faire évoluer la phase** de
   la rencontre pas à pas (avancer/reculer entre phases adjacentes), selon les
   **mêmes règles et garde-fou jour J** que la liste (R17). C'est une **seconde
@@ -606,6 +640,45 @@ flowchart TD
 
   L'action n'est **pas proposée** quand le club d'affectation n'a **qu'une seule
   équipe** dans la rencontre.
+
+#### Statistiques d'une rencontre enfant (R41e–R41j)
+
+*(Ajout demandé et validé le 2026-11-18.)* Les statistiques sont **calculées**
+à partir des compositions, des résultats de voie et de bloc et des résultats de
+vitesse — aucune donnée nouvelle n'est stockée. Partout, un enfant **prêté**
+compte pour son **club d'accueil** (le club de son équipe, spec #1 R35/R36).
+
+- **R41e.** Le tableau de bord d'une rencontre de catégorie **enfant** affiche
+  un onglet **« Statistiques »** (R41k) dont le contenu dépend de la phase (R41f–R41j).
+  Les rencontres **ado** et **adulte** ne l'affichent pas.
+- **R41f.** *(Toutes phases.)* **Effectifs** : nombre total d'enfants engagés,
+  détaillé **par club** et **par sexe** (filles / garçons ; un grimpeur sans
+  sexe renseigné est compté à part, « non renseigné »).
+- **R41g.** *(Toutes phases.)* **Répartition par groupe de départ** : une ligne
+  par groupe de la liste de la spec #5 R19 (`M1` … `T8`), dans cet ordre, libellée
+  selon la spec #5 R21bis (« Groupe M1/1 » … « Groupe T8/12 »), avec le nombre
+  d'enfants ; puis une ligne **« À définir »** pour les enfants sans groupe. Un
+  groupe sans enfant est affiché avec **0** (repérer les groupes vides).
+- **R41h.** *(Toutes phases.)* **Clubs avec des enfants sans groupe de départ** :
+  liste des clubs ayant **au moins un** enfant sans groupe, avec leur nombre,
+  triée par nom de club. Chaque club renvoie à son **bloc d'engagement** (R41c),
+  dans l'onglet **Équipes** (R41k), bloc ouvert.
+  Sans aucun enfant sans groupe, le panneau affiche « Tous les enfants ont un
+  groupe de départ ». À partir de la **③ compétition**, la liste est **mise en
+  avant comme alerte** : un enfant sans groupe ne peut recevoir aucun résultat de
+  voie (spec #6 R14).
+- **R41i.** *(③ compétition.)* **Avancement de la saisie**, au global et par
+  club : voies saisies / attendues, blocs saisis / attendus, vitesses saisies /
+  attendues. Sont **attendus** : **3 voies** par enfant **ayant un groupe de
+  départ** (spec #6 R9) ; **un résultat par bloc** de la structure et par enfant
+  (spec #6 R15) ; **une vitesse** par enfant si la rencontre comporte des voies de
+  vitesse (spec #10). Est **saisi** tout résultat existant, quelle que soit son
+  issue (NP compris).
+- **R41j.** *(④ clôture et ⑤ résultats publics.)* **Bilan**, par club et au
+  total : nombre de **NP** en voies et en blocs (posés à la main ou
+  automatiquement à la clôture, spec #6 R18), nombre de **non-présentations en
+  vitesse**, et nombre de **vitesses non saisies** (la vitesse n'a pas de NP
+  automatique, spec #10).
 - **R42.** La **structure** est organisée en **trois onglets** — **Voies de
   difficulté**, **Blocs**, **Vitesse** — chacun indiquant son **nombre
   d'éléments** et n'affichant qu'un seul type à la fois. Chaque onglet **liste les

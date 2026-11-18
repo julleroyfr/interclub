@@ -1,6 +1,5 @@
 'use client'
 
-import Link from 'next/link'
 import { useActionState } from 'react'
 
 import { Bouton, Carte, Etiquette, TitreSection, variantePhase } from '@/composants'
@@ -9,7 +8,6 @@ import {
   peutEntrerEnPhase,
   phasePrecedenteEffective,
   phaseSuivante,
-  type Categorie,
   type Phase,
 } from '@/domaine/rencontre'
 import { changerPhaseRencontre } from '@/lib/rencontres/actions'
@@ -26,22 +24,20 @@ function aujourdhuiISO(): string {
 }
 
 /**
- * Pilotage d'une rencontre depuis le tableau de bord (spec #3 R41a/R41b) :
+ * Pilotage d'une rencontre en en-tête du tableau de bord (spec #3 R41a, R41k) :
  * changement de phase pas à pas — même action et même garde jour J (R5) que la
- * liste `/admin/rencontres` — et lien vers les jetons QR de la rencontre (en
- * adulte : capitaines au lieu du coach temporaire, spec #20 R16/R20).
+ * liste `/admin/rencontres`. Le lien vers les jetons QR (R41b) est dans
+ * l'onglet Vue d'ensemble.
  * La phase reçue en prop se met à jour après revalidation de l'écran.
  */
 export function PanneauPilotage({
   rencontreId,
   phase,
   dateRencontre,
-  categorie,
 }: {
   rencontreId: string
   phase: Phase
   dateRencontre: string
-  categorie: Categorie
 }) {
   const [etat, action, enCours] = useActionState(changerPhaseRencontre, etatInitial)
 
@@ -56,14 +52,13 @@ export function PanneauPilotage({
   const iCourant = PHASES.findIndex((p) => p.value === phase)
 
   return (
-    <div className="flex flex-col gap-4">
-      <Carte className="flex flex-col gap-4 p-4">
-        <div className="flex items-center justify-between gap-2">
+    <Carte className="flex flex-col gap-4 p-4 lg:flex-row lg:flex-wrap lg:items-center lg:gap-x-6">
+        <div className="flex items-center justify-between gap-2 lg:justify-start">
           <TitreSection>Phase</TitreSection>
           <Etiquette variante={variantePhase[phase]}>{labelPhase(phase)}</Etiquette>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 lg:order-1 lg:ml-auto">
           <form action={action}>
             <input type="hidden" name="id" value={rencontreId} />
             <input type="hidden" name="phase" value={precedente ?? ''} />
@@ -97,7 +92,7 @@ export function PanneauPilotage({
           </form>
         </div>
 
-        <ol className="flex flex-wrap items-center gap-1">
+        <ol className="flex flex-wrap items-center gap-1 lg:flex-1">
           {PHASES.map((p, i) => (
             <li key={p.value} className="flex items-center gap-1">
               <span
@@ -121,36 +116,15 @@ export function PanneauPilotage({
         </ol>
 
         {suivante && suivanteBloquee && (
-          <p className="text-xs text-texte-doux">
+          <p className="text-xs text-texte-doux lg:order-2 lg:basis-full">
             {labelPhase(suivante)} ne s’active que le jour de la rencontre.
           </p>
         )}
         {etat?.erreur && (
-          <p role="alert" className="text-xs text-danger">
+          <p role="alert" className="text-xs text-danger lg:order-2 lg:basis-full">
             {etat.erreur}
           </p>
         )}
       </Carte>
-
-      <Link
-        href={`/admin/jetons?rencontre=${rencontreId}`}
-        className="flex items-center justify-between gap-3 rounded-2xl border border-bordure bg-black/20 p-4 transition hover:bg-surface-forte focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
-      >
-        <span className="flex items-center gap-3">
-          <span aria-hidden className="text-xl">
-            ▦
-          </span>
-          <span>
-            <span className="block text-sm font-semibold text-texte-fort">QR codes</span>
-            <span className="block text-xs text-texte-doux">
-              {`${categorie === 'adulte' ? 'Capitaines' : 'Coach temporaire'} & juges`}
-            </span>
-          </span>
-        </span>
-        <span aria-hidden className="text-accent">
-          →
-        </span>
-      </Link>
-    </div>
   )
 }

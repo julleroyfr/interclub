@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs'
 import { expect, test, type Locator, type Page } from '@playwright/test'
 
 import { commeAdmin } from '../../e2e/helpers/auth'
-import { CLUB_A, RENCONTRE_PILOTE, RENCONTRE_PILOTE_DATE } from '../../e2e/helpers/donnees'
+import { CLUB_A, EQUIPES, RENCONTRE_PILOTE, RENCONTRE_PILOTE_DATE } from '../../e2e/helpers/donnees'
 import {
   execSql,
   nettoyerSessionsQr,
@@ -143,20 +143,41 @@ test('02 — liste des rencontres', async ({ page }) => {
 })
 
 test('03 — tableau de bord d’une rencontre', async ({ page }) => {
+  // Onglets du tableau de bord (spec #3 R41k) : Vue d'ensemble par défaut.
   await page.goto(`/admin/rencontres/${RENCONTRE_PILOTE}`)
   await numeroter(page, [
     bouton(page, 'Avancer à la phase suivante'),
+    page.getByRole('tablist', { name: 'Sections de la rencontre' }),
     lien(page, /QR codes.+juges/),
-    bouton(page, /Voies de difficulté/),
-    page.getByRole('button', { name: /^Modifier la voie / }).first(),
-    page.getByRole('button', { name: /^Supprimer la voie / }).first(),
-    bouton(page, '+ Voie'),
-    bouton(page, 'Créer le prêt'),
-    page.locator('summary').filter({ hasText: 'Club A' }),
   ])
   await capturer(page, '03-rencontre')
 
   await effacerReperes(page)
+  await page.goto(`/admin/rencontres/${RENCONTRE_PILOTE}?onglet=structure`)
+  await numeroter(page, [
+    bouton(page, /Voies de difficulté/),
+    page.getByRole('button', { name: /^Modifier la voie / }).first(),
+    page.getByRole('button', { name: /^Supprimer la voie / }).first(),
+    bouton(page, '+ Voie'),
+  ])
+  await capturer(page, '03b-rencontre-structure')
+
+  // Statistiques d'une rencontre enfant (spec #3 R41e–R41j). Un enfant de B1
+  // (Cléo) sans groupe, pour montrer la liste des clubs ; `etatSeed` le rétablit.
+  execSql(
+    `update interclub.composition set groupe_depart = null where equipe_id = '${EQUIPES.B1}';`,
+  )
+  await page.goto(`/admin/rencontres/${RENCONTRE_PILOTE}?onglet=statistiques`)
+  const statistiques = page.getByRole('region', { name: 'Statistiques' })
+  await numeroter(page, [
+    statistiques.getByRole('heading', { name: 'Effectifs' }),
+    statistiques.getByRole('heading', { name: /Enfants sans groupe de départ/ }),
+    statistiques.getByRole('heading', { name: 'Répartition par groupe de départ' }),
+  ])
+  await capturerBloc(page, statistiques, '21-rencontre-statistiques')
+
+  await effacerReperes(page)
+  await page.goto(`/admin/rencontres/${RENCONTRE_PILOTE}?onglet=equipes`)
   const clubA = page.locator('details').filter({ has: page.locator('summary', { hasText: 'Club A' }) })
   await clubA.locator('summary').click()
   await expect(clubA.getByRole('button', { name: 'Retirer Ana Alpha' })).toBeVisible()
@@ -268,7 +289,7 @@ test('08 — rôles', async ({ page }) => {
 
 test('08b — voies doublées et repères (rencontre Ado)', async ({ page }) => {
   chargerDemoReperes()
-  await page.goto(`/admin/rencontres/${ADO_REPERES}`)
+  await page.goto(`/admin/rencontres/${ADO_REPERES}?onglet=structure`)
   await bouton(page, /Voies de difficulté/).click()
   const repereJaune = page.getByRole('textbox', { name: 'Repère de la voie T5 Jaune' })
   await expect(repereJaune).toBeVisible()
@@ -343,19 +364,25 @@ test('10 — rencontre adulte : équipes, épreuves, capitaines', async ({ page 
     `delete from interclub.composition where rencontre_id = '${id}' and grimpeur_id = 'ad000000-0000-0000-0000-0000000000d6';`,
   )
 
-  await page.goto(`/admin/rencontres/${id}`)
+  await page.goto(`/admin/rencontres/${id}?onglet=structure`)
   await bouton(page, /^Blocs · 2/).click()
+  await numeroter(page, [
+    page.getByRole('tablist', { name: 'Sections de la rencontre' }),
+    bouton(page, /^Blocs · 2/),
+    bouton(page, 'Désactiver l’épreuve de bloc'),
+  ])
+  await capturer(page, '19-rencontre-adulte')
+
+  await effacerReperes(page)
+  await page.goto(`/admin/rencontres/${id}?onglet=equipes`)
   const equipe1 = page.locator('[data-equipe="Équipe 1"]')
   await expect(equipe1).toBeVisible()
   await numeroter(page, [
-    lien(page, /QR codes.+juges/),
-    bouton(page, /^Blocs · 2/),
-    bouton(page, 'Désactiver l’épreuve de bloc'),
     equipe1.getByRole('combobox').first(),
     page.getByLabel('Ajouter un grimpeur (tous clubs, 16 ans et plus)').first(),
     page.getByLabel('Nouvelle équipe'),
   ])
-  await capturer(page, '19-rencontre-adulte')
+  await capturer(page, '19b-rencontre-adulte-equipes')
 
   await page.goto(`/admin/jetons?rencontre=${id}`)
   await expect(page.getByRole('heading', { name: 'Capitaines d’équipe' })).toBeVisible()

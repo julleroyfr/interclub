@@ -15,7 +15,7 @@ import { execSql } from './helpers/sql'
  */
 
 const ADO = 'adadadad-adad-adad-adad-adadadadadad'
-const URL_ADMIN = `/admin/rencontres/${ADO}`
+const URL_ADMIN = `/admin/rencontres/${ADO}?onglet=structure`
 const URL_COACH = `/coach/rencontres/${ADO}/resultats`
 
 /** Libellé d'une voie dans la liste de la structure (onglet Voies). */

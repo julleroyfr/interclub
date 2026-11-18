@@ -83,7 +83,7 @@ test.describe('Intégrité engagement & résultats (revue 2026-10-03, lot 4)', (
          values ('${EPREUVE_VITESSE}', '${GRIMPEURS.ana}', 'temps', 9.5);`,
       )
       await commeAdmin(page)
-      await page.goto(`/admin/rencontres/${RENCONTRE_PILOTE}`)
+      await page.goto(`/admin/rencontres/${RENCONTRE_PILOTE}?onglet=equipes`)
       const clubA = carteClub(page, 'Club A')
       await clubA.locator('summary').first().click()
 
@@ -129,7 +129,7 @@ test.describe('Intégrité engagement & résultats (revue 2026-10-03, lot 4)', (
       request,
     }) => {
       await commeAdmin(page)
-      await page.goto(`/admin/rencontres/${RENCONTRE_PILOTE}`)
+      await page.goto(`/admin/rencontres/${RENCONTRE_PILOTE}?onglet=equipes`)
       const clubB = carteClub(page, 'Club B')
       await clubB.locator('summary').first().click()
       await expect(clubB.locator('li', { hasText: 'Cléo Bravo' }).first()).toBeVisible()
@@ -186,7 +186,7 @@ test.describe('Intégrité engagement & résultats (revue 2026-10-03, lot 4)', (
       expect(rangCleo()).toBe('2')
 
       await commeAdmin(page)
-      await page.goto(`/admin/rencontres/${RENCONTRE_PILOTE}`)
+      await page.goto(`/admin/rencontres/${RENCONTRE_PILOTE}?onglet=equipes`)
       const clubA = carteClub(page, 'Club A')
       await clubA.locator('summary').first().click()
       const equipeA1 = clubA.locator('[data-equipe="Équipe A1"]')

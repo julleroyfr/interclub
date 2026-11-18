@@ -317,23 +317,34 @@ et tous ses résultats ; la confirmation le signale.
 
 ## 7. Tableau de bord d'une rencontre
 
-L'écran central de la préparation d'une rencontre : phase, structure, prêts et
-équipes de tous les clubs.
+L'écran central de la préparation d'une rencontre. Sous le bloc **Phase**, il
+est rangé en **onglets** : un seul est affiché à la fois.
 
 <img src="captures/03-rencontre.png" alt="Tableau de bord d'une rencontre" width="640">
 
 | N° | Élément | Effet |
 | --- | --- | --- |
 | 1 | Bouton de phase | Fait avancer la rencontre ; « ← » la fait reculer |
-| 2 | QR codes | Ouvre les QR des coachs temporaires (capitaines en adulte) et des juges |
-| 3 | Onglets de structure | Voies de difficulté, Blocs, Vitesse |
-| 4 | Crayon (Modifier) | Ouvre le formulaire de la voie (niveau, type, cotation, points) |
-| 5 | Croix rouge (Supprimer) | Supprime la voie, après confirmation |
-| 6 | + Voie | Ajoute une voie (ou un bloc, une voie de vitesse selon l'onglet) |
-| 7 | Créer le prêt | Prête un grimpeur à un autre club pour cette rencontre |
-| 8 | Bloc d'un club | Déplie les équipes de ce club |
+| 2 | Onglets | **Vue d'ensemble**, **Structure**, **Équipes**, **Prêts** et, en Enfant, **Statistiques** ; le nombre indique les épreuves, équipes ou prêts |
+| 3 | QR codes | Ouvre les QR des coachs temporaires (capitaines en adulte) et des juges |
+
+- **Vue d'ensemble** (affichée à l'ouverture) : les QR codes et, selon la phase,
+  les accès à la saisie, au contrôle, au classement et à l'écran d'affichage.
+- L'onglet ouvert reste affiché après une action (enregistrer une voie, créer
+  une équipe…) et après un rechargement de la page. L'adresse de la page le
+  mémorise : vous pouvez la garder en favori ou l'envoyer.
+- **Prêts** n'existe pas en Adulte ; **Statistiques** seulement en Enfant.
 
 **Structure** :
+
+<img src="captures/03b-rencontre-structure.png" alt="Onglet Structure d'une rencontre" width="640">
+
+| N° | Élément | Effet |
+| --- | --- | --- |
+| 1 | Voies de difficulté, Blocs, Vitesse | Affiche un type d'épreuve à la fois |
+| 2 | Crayon (Modifier) | Ouvre le formulaire de la voie (niveau, type, cotation, points) |
+| 3 | Croix rouge (Supprimer) | Supprime la voie, après confirmation |
+| 4 | + Voie | Ajoute une voie (ou un bloc, une voie de vitesse selon l'onglet) |
 
 - La structure est **éditable en ① pré-compétition et en ② préparation** (le jour
   J) : **ajouter** une voie, un bloc ou une voie de vitesse (par exemple une 2ᵉ
@@ -356,6 +367,33 @@ L'écran central de la préparation d'une rencontre : phase, structure, prêts e
   modifie plus dès qu'un temps (ou une chute, une absence) est saisi.
 - À partir de la ③ compétition, la structure est **verrouillée**, sauf le
   **repère** des voies (voir ci-dessous). Une épreuve entière ne se supprime pas.
+
+### Statistiques d'une rencontre enfant
+
+En Enfant, l'onglet **Statistiques** du tableau de bord évolue avec la phase
+de la rencontre.
+
+<img src="captures/21-rencontre-statistiques.png" alt="Statistiques d'une rencontre enfant" width="480">
+
+| N° | Élément | Effet |
+| --- | --- | --- |
+| 1 | Effectifs | Nombre d'enfants engagés, filles et garçons, par club |
+| 2 | Enfants sans groupe de départ | Clubs qui ont encore des enfants sans groupe ; toucher un club ouvre l'onglet **Équipes** sur ce club |
+| 3 | Répartition par groupe de départ | Nombre d'enfants par groupe (M1/1 … T8/12), groupes vides à 0, puis « À définir » |
+
+- **Toujours affichés** : effectifs, enfants sans groupe de départ et
+  répartition par groupe. Un enfant prêté compte pour le club qui l'accueille.
+  La répartition aide à prévoir les voies à doubler.
+- **À partir de la ③ compétition**, les clubs ayant encore des enfants sans
+  groupe passent en **alerte** : ces enfants ne peuvent recevoir aucun résultat
+  de voie. Donnez-leur un groupe dans les équipes du club.
+- **En ③ compétition**, la carte **Avancement de la saisie** indique, par club,
+  les voies, blocs et vitesses saisis sur le nombre attendu (3 voies par enfant
+  ayant un groupe, un résultat par bloc, une vitesse par enfant). Un NP ou une
+  chute comptent comme saisis.
+- **En ④ clôture et ⑤ résultats publics**, la carte **Bilan** compte, par club,
+  les NP en voies et en blocs (y compris ceux posés automatiquement à la
+  clôture), les absences en vitesse et les vitesses jamais saisies.
 
 ### Voies doublées et repères
 
@@ -384,7 +422,7 @@ l'enfant a grimpée (voir [§ 9](#saisir-ou-corriger-des-résultats)).
   figé à la clôture.
 - Les voies sont listées par niveau (M1 → M4, puis T1 → T10), puis par libellé.
 
-**Prêts** : choisir le club du grimpeur, le grimpeur, puis le club d'accueil. Le
+**Prêts** (onglet **Prêts**, bouton **Créer le prêt**) : choisir le club du grimpeur, le grimpeur, puis le club d'accueil. Le
 grimpeur apparaît alors chez les coachs du club d'accueil, qui l'engagent comme
 les leurs. Seul l'administrateur crée ou met fin à un prêt. Un grimpeur prêté
 compte pour l'équipe qui l'accueille, mais garde son club d'origine au
@@ -396,8 +434,8 @@ aux prêts et aux équipes, avec la mention « surclassé » (voir
 
 ### Équipes de tous les clubs
 
-L'administrateur peut créer, composer ou corriger les équipes de n'importe quel
-club, **en toute phase** (les coachs, eux, sont bloqués dès la ③). Les équipes
+Dans l'onglet **Équipes**, l'administrateur peut créer, composer ou corriger
+les équipes de n'importe quel club, **en toute phase** (les coachs, eux, sont bloqués dès la ③). Les équipes
 d'une rencontre adulte font exception (voir ci-dessous).
 
 <img src="captures/04-rencontre-equipes.png" alt="Équipes d'un club" width="400">
@@ -418,19 +456,26 @@ résultats, y compris sa vitesse, et recalcule les classements.
 
 ### Rencontre adulte
 
-Le tableau de bord d'une rencontre adulte remplace les prêts et les équipes par
-club par le panneau **Équipes adultes**, et permet de désactiver une épreuve.
+Le tableau de bord d'une rencontre adulte n'a pas d'onglet **Prêts** ; son
+onglet **Équipes** affiche les **Équipes adultes**, et l'onglet **Structure**
+permet de désactiver une épreuve. Les QR des capitaines et des juges sont dans
+la **Vue d'ensemble** (**QR codes**, « Capitaines & juges »).
 
-<img src="captures/19-rencontre-adulte.png" alt="Tableau de bord d'une rencontre adulte en préparation" width="640">
+<img src="captures/19-rencontre-adulte.png" alt="Onglet Structure d'une rencontre adulte en préparation" width="640">
 
 | N° | Élément | Effet |
 | --- | --- | --- |
-| 1 | QR codes (Capitaines & juges) | Ouvre les QR des capitaines et des juges |
-| 2 | Onglet Blocs (ou Vitesse) | Affiche l'épreuve et son état « Active » ou « Désactivée » |
+| 1 | Onglets | Vue d'ensemble, Structure, Équipes |
+| 2 | Blocs (ou Vitesse) | Affiche l'épreuve et son état « Active » ou « Désactivée » |
 | 3 | Désactiver l'épreuve | Désactive (ou réactive) l'épreuve de bloc ou de vitesse |
-| 4 | Équipe de destination | Avec **Changer d'équipe** : déplace le grimpeur vers une autre équipe |
-| 5 | Ajouter un grimpeur | Recherche parmi les 16 ans et plus de tous les clubs |
-| 6 | Nouvelle équipe | Crée une équipe, pré-nommée « Équipe N » |
+
+<img src="captures/19b-rencontre-adulte-equipes.png" alt="Onglet Équipes d'une rencontre adulte en préparation" width="640">
+
+| N° | Élément | Effet |
+| --- | --- | --- |
+| 1 | Équipe de destination | Avec **Changer d'équipe** : déplace le grimpeur vers une autre équipe |
+| 2 | Ajouter un grimpeur | Recherche parmi les 16 ans et plus de tous les clubs |
+| 3 | Nouvelle équipe | Crée une équipe, pré-nommée « Équipe N » |
 
 **Équipes adultes** : sans club, 4 grimpeurs au plus, de n'importe quel club ;
 un grimpeur n'est que dans une équipe. Elles se créent, se renomment, se
@@ -521,7 +566,7 @@ plus **remplacer un NP** posé à la clôture par le vrai résultat. Chaque
 ### Écran d'affichage (second écran)
 
 Pour projeter le classement dans la salle, ouvrir **Écran d'affichage** depuis
-le tableau de bord de la rencontre, sur l'ordinateur relié au projecteur, puis
+la **Vue d'ensemble** du tableau de bord de la rencontre, sur l'ordinateur relié au projecteur, puis
 passer le navigateur en plein écran (touche F11).
 
 <img src="captures/14-affichage.png" alt="Écran d'affichage du classement" width="640">
@@ -538,7 +583,8 @@ passer le navigateur en plein écran (touche F11).
 ### Passer en clôture
 
 Passer la rencontre en **④ clôture** ferme la saisie des coachs et des juges et
-pose les NP automatiques. Le tableau de bord de la rencontre propose alors :
+pose les NP automatiques. La **Vue d'ensemble** du tableau de bord de la
+rencontre propose alors :
 
 <img src="captures/15-rencontre-cloture.png" alt="Tableau de bord d'une rencontre en clôture" width="640">
 
@@ -629,6 +675,11 @@ publication.
 **Le bouton « Préparation jour J » est inactif.**
 Une rencontre n'entre en ② ou ③ que le jour de sa date. Vérifier la date de la
 rencontre (bouton **Modifier** dans la liste des rencontres).
+
+**Je ne trouve plus la structure, les équipes ou le bouton « Saisir les résultats ».**
+Le tableau de bord d'une rencontre est rangé en onglets : la structure, les
+équipes et les prêts ont chacun le leur ; les QR codes, la saisie, le contrôle
+et le classement sont dans la **Vue d'ensemble**.
 
 **Un coach ne voit pas son club ou n'a accès à rien.**
 Vérifier dans **Rôles** que son compte a le rôle Coach et le bon club.

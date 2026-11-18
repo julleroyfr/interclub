@@ -34,7 +34,7 @@ test.describe('Écran admin — prêts de grimpeurs (R35)', () => {
   }) => {
     await commeAdmin(page)
     // Point d'entrée : la page de la rencontre (rencontre implicite).
-    await page.goto(`/admin/rencontres/${RENCONTRE_PILOTE}`)
+    await page.goto(`/admin/rencontres/${RENCONTRE_PILOTE}?onglet=prets`)
 
     // Créer le prêt : club d'origine → recherche → grimpeur → club d'accueil.
     // Scopé au formulaire de prêt (la page porte aussi le panneau « Équipes »).
@@ -72,7 +72,7 @@ test.describe('Écran admin — prêts de grimpeurs (R35)', () => {
     )
     try {
       await commeAdmin(page)
-      await page.goto(`/admin/rencontres/${RENCONTRE_PILOTE}`)
+      await page.goto(`/admin/rencontres/${RENCONTRE_PILOTE}?onglet=prets`)
 
       // Club d'origine = Club B : Club B est exclu des clubs d'accueil.
       const formPret = page.locator('form', { has: page.getByLabel('Club du grimpeur') })

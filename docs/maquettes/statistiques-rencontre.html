@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Maquette — Statistiques d'une rencontre enfant (admin, spec #3 R41e–R41j)</title>
+<style>
+  :root {
+    --fond:#020617; --surface:rgba(255,255,255,.04); --surface-forte:rgba(255,255,255,.08);
+    --bordure:rgba(255,255,255,.12); --accent:#22d3ee; --accent-doux:#67e8f9; --secondaire:#bef264;
+    --alerte:#fbbf24; --danger:#fb7185; --texte-fort:#fff; --texte:#e2e8f0; --texte-attenue:#94a3b8; --texte-doux:#64748b;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:linear-gradient(180deg,rgba(34,211,238,.05),rgba(2,6,23,0) 260px),var(--fond); color:var(--texte); font-family:system-ui,-apple-system,"Segoe UI",sans-serif; line-height:1.4; min-height:100vh; }
+  .corps { padding:16px; max-width:720px; margin:0 auto; display:flex; flex-direction:column; gap:14px; }
+  .titre { color:var(--texte-fort); font-size:17px; font-weight:700; margin:0; }
+  .meta { color:var(--texte-attenue); font-size:13px; }
+
+  /* Sélecteur d'illustration (pas dans l'appli) */
+  .demo { display:flex; gap:4px; padding:4px; background:rgba(0,0,0,.25); border-radius:12px; border:1px dashed var(--bordure); }
+  .demo button { flex:1; min-height:44px; border:0; border-radius:9px; background:transparent; color:var(--texte-attenue); font:600 13px system-ui; cursor:pointer; }
+  .demo button[aria-pressed="true"] { background:var(--surface-forte); color:var(--texte-fort); }
+  .demo-note { color:var(--texte-doux); font-size:11.5px; margin:-6px 2px 0; }
+
+  .sec-titre { color:var(--texte-attenue); font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; margin:6px 2px 0; }
+  .carte { background:var(--surface); border:1px solid var(--bordure); border-radius:14px; padding:14px 16px; }
+  .c-titre { color:var(--texte-fort); font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; margin:0 0 10px; }
+  .regle { color:var(--texte-doux); font-size:10.5px; font-weight:600; margin-left:6px; text-transform:none; letter-spacing:0; }
+
+  .chiffres { display:flex; gap:18px; flex-wrap:wrap; }
+  .chiffre .v { color:var(--texte-fort); font-size:22px; font-weight:700; }
+  .chiffre .k { color:var(--texte-doux); font-size:11px; text-transform:uppercase; letter-spacing:.05em; }
+
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th { text-align:left; color:var(--texte-doux); font-size:11px; text-transform:uppercase; letter-spacing:.04em; font-weight:700; padding:6px 4px; }
+  th.n, td.n { text-align:right; font-variant-numeric:tabular-nums; }
+  td { padding:7px 4px; border-top:1px solid rgba(255,255,255,.06); }
+  tr.total td { font-weight:700; color:var(--texte-fort); border-top:1px solid var(--bordure); }
+  td.zero { color:var(--texte-doux); }
+  tr.adef td { color:var(--alerte); font-weight:600; }
+
+  .groupes { display:grid; grid-template-columns:1fr 1fr; column-gap:18px; }
+  .groupe { display:flex; justify-content:space-between; padding:6px 2px; border-top:1px solid rgba(255,255,255,.06); font-size:13px; }
+  .groupe .n { font-weight:700; color:var(--texte-fort); font-variant-numeric:tabular-nums; }
+  .groupe.vide .n, .groupe.vide span:first-child { color:var(--texte-doux); }
+  .groupe.adef { grid-column:1 / -1; color:var(--alerte); font-weight:600; }
+  .groupe.adef .n { color:var(--alerte); }
+
+  .liste-clubs { list-style:none; margin:0; padding:0; }
+  .liste-clubs a { display:flex; justify-content:space-between; align-items:center; min-height:44px; padding:0 4px; color:var(--texte); text-decoration:none; border-top:1px solid rgba(255,255,255,.06); }
+  .liste-clubs li:first-child a { border-top:0; }
+  .liste-clubs a:hover { color:var(--texte-fort); }
+  .liste-clubs .n { color:var(--alerte); font-weight:700; }
+  .ok { color:var(--secondaire); font-size:13px; }
+  .carte.alerte { border-color:rgba(251,191,36,.45); background:rgba(251,191,36,.07); }
+  .alerte-txt { color:var(--alerte); font-size:12.5px; margin:0 0 8px; }
+
+  .barre { height:6px; border-radius:999px; background:rgba(255,255,255,.08); overflow:hidden; margin-top:3px; }
+  .barre i { display:block; height:100%; background:var(--accent); }
+  .barre.pleine i { background:var(--secondaire); }
+
+  [data-phase] { display:none; }
+  body.avant [data-phase~="avant"], body.pendant [data-phase~="pendant"], body.apres [data-phase~="apres"] { display:block; }
+
+  @media (min-width:720px) { .corps { padding:22px 28px; } .groupes { grid-template-columns:1fr 1fr 1fr; } }
+</style>
+</head>
+<body class="avant">
+  <div class="corps">
+    <div>
+      <p class="titre">Rencontre Bordeaux EC du 12 octobre 2025</p>
+      <p class="meta">Enfant · club porteur Bordeaux EC · saison 2025</p>
+    </div>
+
+    <div class="demo" role="group" aria-label="Phase illustrée">
+      <button type="button" aria-pressed="true" data-demo="avant">① / ② Avant</button>
+      <button type="button" aria-pressed="false" data-demo="pendant">③ Pendant</button>
+      <button type="button" aria-pressed="false" data-demo="apres">④ / ⑤ Après</button>
+    </div>
+    <p class="demo-note">Sélecteur de la maquette uniquement : le panneau suit la phase de la rencontre (R41e).</p>
+
+    <div class="sec-titre">Statistiques</div>
+
+    <!-- R41f — effectifs, toutes phases -->
+    <section class="carte">
+      <h2 class="c-titre">Effectifs <span class="regle">R41f</span></h2>
+      <div class="chiffres">
+        <div class="chiffre"><div class="v">42</div><div class="k">Enfants</div></div>
+        <div class="chiffre"><div class="v">20</div><div class="k">Filles</div></div>
+        <div class="chiffre"><div class="v">22</div><div class="k">Garçons</div></div>
+      </div>
+      <table style="margin-top:10px">
+        <thead><tr><th>Club</th><th class="n">Filles</th><th class="n">Garçons</th><th class="n">Total</th></tr></thead>
+        <tbody>
+          <tr><td>Bordeaux EC</td><td class="n">10</td><td class="n">11</td><td class="n">21</td></tr>
+          <tr><td>Mérignac Grimpe</td><td class="n">3</td><td class="n">4</td><td class="n">7</td></tr>
+          <tr><td>Talence Escalade</td><td class="n">7</td><td class="n">7</td><td class="n">14</td></tr>
+          <tr class="total"><td>Total</td><td class="n">20</td><td class="n">22</td><td class="n">42</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- R41h — clubs avec des enfants sans groupe : avant = carte neutre -->
+    <section class="carte" data-phase="avant">
+      <h2 class="c-titre">Enfants sans groupe de départ <span class="regle">R41h</span></h2>
+      <ul class="liste-clubs">
+        <li><a href="#club-merignac">Mérignac Grimpe <span class="n">3 →</span></a></li>
+        <li><a href="#club-talence">Talence Escalade <span class="n">1 →</span></a></li>
+      </ul>
+    </section>
+    <!-- R41h — dès la ③ : mise en avant comme alerte -->
+    <section class="carte alerte" data-phase="pendant" role="alert">
+      <h2 class="c-titre">⚠ Enfants sans groupe de départ <span class="regle">R41h</span></h2>
+      <p class="alerte-txt">Ces enfants ne peuvent recevoir aucun résultat de voie.</p>
+      <ul class="liste-clubs">
+        <li><a href="#club-merignac">Mérignac Grimpe <span class="n">1 →</span></a></li>
+      </ul>
+    </section>
+    <section class="carte" data-phase="apres">
+      <h2 class="c-titre">Enfants sans groupe de départ <span class="regle">R41h</span></h2>
+      <p class="ok">✓ Tous les enfants ont un groupe de départ.</p>
+    </section>
+
+    <!-- R41g — répartition par groupe, toutes phases -->
+    <section class="carte">
+      <h2 class="c-titre">Répartition par groupe de départ <span class="regle">R41g</span></h2>
+      <div class="groupes">
+        <div class="groupe"><span>Groupe M1/1</span><span class="n">4</span></div>
+        <div class="groupe"><span>Groupe M2/2</span><span class="n">7</span></div>
+        <div class="groupe"><span>Groupe M3/3</span><span class="n">8</span></div>
+        <div class="groupe"><span>Groupe M4/4</span><span class="n">6</span></div>
+        <div class="groupe"><span>Groupe T1/5</span><span class="n">5</span></div>
+        <div class="groupe"><span>Groupe T2/6</span><span class="n">4</span></div>
+        <div class="groupe"><span>Groupe T3/7</span><span class="n">3</span></div>
+        <div class="groupe"><span>Groupe T4/8</span><span class="n">1</span></div>
+        <div class="groupe vide"><span>Groupe T5/9</span><span class="n">0</span></div>
+        <div class="groupe vide"><span>Groupe T6/10</span><span class="n">0</span></div>
+        <div class="groupe vide"><span>Groupe T7/11</span><span class="n">0</span></div>
+        <div class="groupe vide"><span>Groupe T8/12</span><span class="n">0</span></div>
+        <div class="groupe adef"><span>À définir</span><span class="n">4</span></div>
+      </div>
+    </section>
+
+    <!-- R41i — avancement de la saisie, ③ -->
+    <section class="carte" data-phase="pendant">
+      <h2 class="c-titre">Avancement de la saisie <span class="regle">R41i</span></h2>
+      <table>
+        <thead><tr><th>Club</th><th class="n">Voies</th><th class="n">Blocs</th><th class="n">Vitesse</th></tr></thead>
+        <tbody>
+          <tr><td>Bordeaux EC</td><td class="n">48/63<div class="barre"><i style="width:76%"></i></div></td><td class="n">30/42<div class="barre"><i style="width:71%"></i></div></td><td class="n">21/21<div class="barre pleine"><i style="width:100%"></i></div></td></tr>
+          <tr><td>Mérignac Grimpe</td><td class="n">10/18<div class="barre"><i style="width:56%"></i></div></td><td class="n">8/14<div class="barre"><i style="width:57%"></i></div></td><td class="n">4/7<div class="barre"><i style="width:57%"></i></div></td></tr>
+          <tr><td>Talence Escalade</td><td class="n">42/42<div class="barre pleine"><i style="width:100%"></i></div></td><td class="n">25/28<div class="barre"><i style="width:89%"></i></div></td><td class="n">12/14<div class="barre"><i style="width:86%"></i></div></td></tr>
+          <tr class="total"><td>Total</td><td class="n">100/123</td><td class="n">63/84</td><td class="n">37/42</td></tr>
+        </tbody>
+      </table>
+      <p class="demo-note" style="margin:8px 0 0">Attendus : 3 voies par enfant ayant un groupe · 1 résultat par bloc · 1 vitesse par enfant.</p>
+    </section>
+
+    <!-- R41j — bilan, ④/⑤ -->
+    <section class="carte" data-phase="apres">
+      <h2 class="c-titre">Bilan <span class="regle">R41j</span></h2>
+      <table>
+        <thead><tr><th>Club</th><th class="n">NP voies</th><th class="n">NP blocs</th><th class="n">NP vitesse</th><th class="n">Vitesse non saisie</th></tr></thead>
+        <tbody>
+          <tr><td>Bordeaux EC</td><td class="n">3</td><td class="n">2</td><td class="n">1</td><td class="n zero">0</td></tr>
+          <tr><td>Mérignac Grimpe</td><td class="n">6</td><td class="n">4</td><td class="n zero">0</td><td class="n">2</td></tr>
+          <tr><td>Talence Escalade</td><td class="n zero">0</td><td class="n">1</td><td class="n zero">0</td><td class="n zero">0</td></tr>
+          <tr class="total"><td>Total</td><td class="n">9</td><td class="n">7</td><td class="n">1</td><td class="n">2</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </div>
+<script>
+  document.querySelectorAll('[data-demo]').forEach((b) => b.addEventListener('click', () => {
+    document.body.className = b.dataset.demo
+    document.querySelectorAll('[data-demo]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)))
+  }))
+</script>
+</body>
+</html>
