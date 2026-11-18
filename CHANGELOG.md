@@ -6,6 +6,28 @@ numérotation [SemVer](https://semver.org/lang/fr/) adaptée au projet.
 
 Règles et procédure : [docs/conventions/10-versionnement.md](docs/conventions/10-versionnement.md).
 
+## [2.3.0] — 2026-11-18
+
+Tableau de bord de la rencontre en onglets, statistiques des rencontres
+enfant et liens cliquables sous les QR codes.
+
+### Ajouté
+
+- **Statistiques d’une rencontre enfant** (onglet du tableau de bord admin) :
+  effectifs par club et par sexe, répartition par groupe de départ, clubs
+  ayant des enfants sans groupe (avec lien vers le club concerné), avancement
+  de la saisie en compétition et bilan des NP en clôture (spec #3 R41e–R41j).
+
+### Modifié
+
+- **Tableau de bord d’une rencontre** allégé : la phase reste en tête, le
+  reste est réparti en onglets Vue d’ensemble, Structure, Équipes, Prêts
+  (sauf en adulte) et Statistiques (en enfant), avec un compteur sur chaque
+  onglet ; l’onglet ouvert est conservé dans l’adresse (spec #3 R41k).
+- **QR codes** (invitations admin et coach, coach temporaire, juge,
+  capitaine) : l’adresse encodée s’affiche sous le QR et s’ouvre d’un clic
+  dans un nouvel onglet, à la place de la valeur brute du jeton.
+
 ## [2.2.0] — 2026-11-17
 
 Voies doublées en enfant, effacement d’une saisie et numéros de groupe du
