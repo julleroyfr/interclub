@@ -2,7 +2,7 @@
 
 import { useActionState, useId, useState } from 'react'
 
-import { Bouton, ChampTexte } from '@/composants'
+import { Bouton, ChampTexte, LienQR } from '@/composants'
 import { compter } from '@/domaine/accord'
 import { renommerClub, supprimerClub } from '@/lib/clubs/actions'
 import type { ClubAvecDependances, EtatClub } from '@/lib/clubs/clubs'
@@ -218,9 +218,7 @@ function ZoneInvitation({ invitation }: { invitation: InvitationVue }) {
         height={200}
         className="rounded-xl bg-white p-2"
       />
-      <code className="break-all text-center text-xs text-texte-doux">
-        {invitation.url}
-      </code>
+      <LienQR url={invitation.url} />
       <div className="flex flex-wrap justify-center gap-2">
         <form action={regenererInvitation}>
           <input type="hidden" name="chemin" value={CHEMIN} />
