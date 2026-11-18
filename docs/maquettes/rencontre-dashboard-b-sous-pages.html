@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Maquette B — Tableau de bord rencontre en hub + sous-pages</title>
+<style>
+  :root {
+    --fond:#020617; --surface:rgba(255,255,255,.04); --surface-forte:rgba(255,255,255,.08);
+    --bordure:rgba(255,255,255,.12); --accent:#22d3ee; --accent-doux:#67e8f9; --secondaire:#bef264;
+    --alerte:#fbbf24; --admin:#c084fc; --texte-fort:#fff; --texte:#e2e8f0; --texte-attenue:#94a3b8; --texte-doux:#64748b;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:linear-gradient(180deg,rgba(34,211,238,.05),rgba(2,6,23,0) 260px),var(--fond); color:var(--texte); font-family:system-ui,-apple-system,"Segoe UI",sans-serif; line-height:1.4; min-height:100vh; }
+  a { color:inherit; text-decoration:none; }
+  .bandeau-maquette { background:rgba(251,191,36,.12); color:var(--alerte); font-size:12px; padding:6px 16px; text-align:center; }
+  .bandeau-maquette button { margin-left:8px; background:none; border:1px solid currentColor; color:inherit; border-radius:8px; padding:2px 8px; cursor:pointer; font-size:12px; }
+
+  .page { max-width:1180px; margin:0 auto; padding:16px 16px 40px; }
+  .vue { display:none; } .vue.active { display:block; }
+  .ariane { color:var(--texte-attenue); font-size:13px; }
+  .ariane a { color:var(--accent-doux); }
+  .titre { color:var(--texte-fort); font-size:19px; font-weight:700; margin:8px 0 2px; }
+  .meta { color:var(--texte-attenue); font-size:13px; margin-bottom:16px; }
+
+  .carte { background:var(--surface); border:1px solid var(--bordure); border-radius:14px; padding:14px 16px; }
+  .note { color:var(--texte-doux); font-size:12px; }
+  .badge { display:inline-flex; border-radius:999px; padding:4px 11px; font-size:12px; font-weight:700; border:1px solid rgba(190,242,100,.35); color:var(--secondaire); background:rgba(190,242,100,.1); }
+  .btn { border:1px solid rgba(34,211,238,.5); background:rgba(34,211,238,.15); color:var(--accent-doux); border-radius:10px; padding:9px 14px; font-size:13px; font-weight:700; cursor:pointer; min-height:44px; }
+
+  /* Phase en tête du hub */
+  .phase { display:flex; flex-direction:column; gap:12px; margin-bottom:18px; }
+  .phase .ligne { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .phase .c-titre { color:var(--texte-fort); font-weight:700; }
+  .frise { display:grid; grid-template-columns:repeat(5,1fr); gap:4px; }
+  .frise span { height:6px; border-radius:3px; background:var(--surface-forte); }
+  .frise span.faite { background:var(--secondaire); }
+  .frise span.ici { background:var(--accent); }
+  .frise-l { display:grid; grid-template-columns:repeat(5,1fr); gap:4px; font-size:10.5px; color:var(--texte-doux); text-align:center; }
+
+  /* Tuiles */
+  .groupe-t { color:var(--texte-attenue); font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; margin:20px 2px 10px; }
+  .tuiles { display:grid; grid-template-columns:1fr; gap:12px; }
+  .tuile { display:flex; flex-direction:column; gap:8px; background:var(--surface); border:1px solid var(--bordure); border-radius:16px; padding:16px; transition:background .15s, border-color .15s; cursor:pointer; min-height:120px; }
+  .tuile:hover { background:var(--surface-forte); border-color:rgba(34,211,238,.4); }
+  .tuile .haut { display:flex; justify-content:space-between; align-items:center; }
+  .tuile .nom { font-weight:700; color:var(--texte-fort); font-size:16px; }
+  .tuile .ic { font-size:20px; }
+  .tuile .chiffres { display:flex; gap:16px; font-size:12px; color:var(--texte-attenue); }
+  .tuile .chiffres b { display:block; color:var(--texte-fort); font-size:20px; }
+  .etat { font-size:12px; margin-top:auto; }
+  .etat.ok { color:var(--secondaire); } .etat.warn { color:var(--alerte); } .etat.off { color:var(--texte-doux); }
+  .tuile.off { opacity:.5; cursor:default; }
+  .tuile.admin { border-color:rgba(192,132,252,.35); }
+
+  /* Sous-page */
+  .sous-nav { display:flex; gap:6px; overflow-x:auto; margin:4px 0 16px; padding-bottom:4px; scrollbar-width:none; }
+  .sous-nav a { flex:none; padding:8px 13px; border-radius:999px; border:1px solid var(--bordure); font-size:13px; color:var(--texte-attenue); white-space:nowrap; }
+  .sous-nav a.ici { color:var(--texte-fort); background:var(--surface-forte); border-color:rgba(34,211,238,.45); }
+  .rappel-phase { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--texte-attenue); margin-bottom:14px; }
+  .sous-onglets { display:flex; gap:4px; padding:4px; background:rgba(0,0,0,.25); border-radius:12px; margin-bottom:12px; max-width:480px; }
+  .sous-onglets span { flex:1; text-align:center; padding:9px 6px; border-radius:9px; font-size:13px; color:var(--texte-attenue); font-weight:600; }
+  .sous-onglets .actif { background:var(--surface-forte); color:var(--texte-fort); }
+  .voies { display:grid; grid-template-columns:1fr; gap:10px; }
+  .voie { background:rgba(0,0,0,.2); border:1px solid var(--bordure); border-radius:12px; padding:10px 12px; font-size:13px; }
+  .voie .tete { display:flex; gap:10px; }
+  .voie .niv { color:var(--accent-doux); font-weight:700; width:30px; }
+  .voie .ligne { display:flex; gap:6px; margin-top:8px; }
+  .voie input { flex:1; min-width:0; background:rgba(0,0,0,.3); border:1px solid var(--bordure); color:var(--texte-fort); border-radius:9px; padding:9px; min-height:40px; }
+  .mini { width:40px; border-radius:9px; border:1px solid var(--bordure); background:var(--surface); color:var(--texte-attenue); }
+
+  @media (min-width:720px) {
+    .page { padding:22px 28px 48px; }
+    .tuiles { grid-template-columns:1fr 1fr; }
+    .phase { flex-direction:row; align-items:center; }
+    .phase > div { flex:1; }
+    .voies { grid-template-columns:1fr 1fr; }
+  }
+  @media (min-width:1080px) {
+    .titre { font-size:22px; }
+    .tuiles { grid-template-columns:repeat(3,1fr); }
+  }
+</style>
+</head>
+<body>
+  <div class="bandeau-maquette">Maquette B — hub de synthèse + sous-pages (une route par domaine)
+    <button onclick="voir('hub')">Hub</button><button onclick="voir('sous')">Sous-page Structure</button></div>
+
+  <div class="page">
+    <!-- ================= HUB ================= -->
+    <section class="vue active" id="hub">
+      <a class="ariane" href="#">← Rencontres</a>
+      <div class="titre">Rencontre Club A du 19 septembre 2026</div>
+      <div class="meta">Enfant · club porteur Club A · saison 2026–2027</div>
+
+      <div class="carte phase">
+        <div>
+          <div class="ligne"><span class="c-titre">Phase</span><span class="badge">① Pré-compétition</span></div>
+          <p class="note" style="margin:6px 0 0">Préparation jour J ne s'active que le jour de la rencontre.</p>
+        </div>
+        <div>
+          <div class="frise"><span class="ici"></span><span></span><span></span><span></span><span></span></div>
+          <div class="frise-l" style="margin-top:5px"><span>Pré-comp.</span><span>Prépa J</span><span>Compét.</span><span>Clôture</span><span>Résultats</span></div>
+        </div>
+        <button class="btn">Préparation jour J →</button>
+      </div>
+
+      <div class="groupe-t">Préparer</div>
+      <div class="tuiles">
+        <a class="tuile" onclick="voir('sous')">
+          <div class="haut"><span class="nom">Structure</span><span class="ic">🧗</span></div>
+          <div class="chiffres"><span><b>14</b>voies</span><span><b>2</b>blocs</span><span><b>2</b>vitesse</span></div>
+          <div class="etat warn">⚠ 14 repères à saisir</div>
+        </a>
+        <a class="tuile">
+          <div class="haut"><span class="nom">Équipes &amp; engagement</span><span class="ic">👥</span></div>
+          <div class="chiffres"><span><b>3</b>équipes</span><span><b>2</b>clubs</span><span><b>3</b>grimpeurs</span></div>
+          <div class="etat warn">⚠ Club B : équipe incomplète</div>
+        </a>
+        <a class="tuile">
+          <div class="haut"><span class="nom">Prêts de grimpeurs</span><span class="ic">🔁</span></div>
+          <div class="chiffres"><span><b>0</b>prêt</span></div>
+          <div class="etat off">Aucun prêt</div>
+        </a>
+        <a class="tuile">
+          <div class="haut"><span class="nom">Statistiques</span><span class="ic">📈</span></div>
+          <div class="chiffres"><span><b>3</b>enfants</span><span><b>2</b>filles</span><span><b>1</b>garçon</span></div>
+          <div class="etat ok">✓ Tous ont un groupe de départ</div>
+        </a>
+      </div>
+
+      <div class="groupe-t">Jour J &amp; résultats</div>
+      <div class="tuiles">
+        <a class="tuile">
+          <div class="haut"><span class="nom">QR codes</span><span class="ic">▦</span></div>
+          <div class="note">Coach temporaire &amp; juges</div>
+          <div class="etat ok">Disponible</div>
+        </a>
+        <a class="tuile admin off">
+          <div class="haut"><span class="nom">Saisie &amp; contrôle</span><span class="ic">🛡️</span></div>
+          <div class="note">Saisir les résultats (tous clubs) · contrôler les fiches juges</div>
+          <div class="etat off">Dès la phase Compétition</div>
+        </a>
+        <a class="tuile off">
+          <div class="haut"><span class="nom">Classement &amp; affichage</span><span class="ic">📊</span></div>
+          <div class="note">Classement tous clubs · second écran · PDF</div>
+          <div class="etat off">Dès la phase Compétition</div>
+        </a>
+      </div>
+      <p class="note" style="margin-top:16px">Chaque tuile est un lien vers <code>/admin/rencontres/[id]/structure</code>, <code>/equipes</code>, <code>/prets</code>, <code>/statistiques</code> — à côté des sous-routes déjà existantes <code>/resultats</code>, <code>/controle</code>, <code>/classement</code>, <code>/affichage</code>. Le hub ne charge que des comptages.</p>
+    </section>
+
+    <!-- ================= SOUS-PAGE STRUCTURE ================= -->
+    <section class="vue" id="sous">
+      <div class="ariane"><a href="#" onclick="voir('hub')">Rencontre Club A · 19 sept.</a> › Structure</div>
+      <div class="titre">Structure de la rencontre</div>
+      <div class="rappel-phase"><span class="badge">① Pré-compétition</span> structure modifiable</div>
+
+      <nav class="sous-nav">
+        <a href="#" onclick="voir('hub')">← Synthèse</a>
+        <a class="ici" href="#">Structure</a>
+        <a href="#">Équipes</a>
+        <a href="#">Prêts</a>
+        <a href="#">Statistiques</a>
+        <a href="#">QR codes</a>
+      </nav>
+
+      <div class="sous-onglets"><span class="actif">Voies · 14</span><span>Blocs · 2</span><span>Vitesse · 2</span></div>
+      <div class="voies">
+        <div class="voie"><div class="tete"><span class="niv">M1</span><span>4c · Moulinette · voie 1 pts</span></div><div class="ligne"><input placeholder="Repère (relais, couleur)"><button class="mini">✓</button><button class="mini">✕</button></div></div>
+        <div class="voie"><div class="tete"><span class="niv">M2</span><span>5a · Moulinette · voie 2 pts</span></div><div class="ligne"><input placeholder="Repère (relais, couleur)"><button class="mini">✓</button><button class="mini">✕</button></div></div>
+        <div class="voie"><div class="tete"><span class="niv">M3</span><span>5b · Moulinette · voie 3 pts</span></div><div class="ligne"><input placeholder="Repère (relais, couleur)"><button class="mini">✓</button><button class="mini">✕</button></div></div>
+        <div class="voie"><div class="tete"><span class="niv">M4</span><span>5c · Moulinette · voie 4 pts</span></div><div class="ligne"><input placeholder="Repère (relais, couleur)"><button class="mini">✓</button><button class="mini">✕</button></div></div>
+        <div class="voie"><div class="tete"><span class="niv">T1</span><span>4c · Tête · voie 5 pts · prise 3</span></div><div class="ligne"><input placeholder="Repère (relais, couleur)"><button class="mini">✓</button><button class="mini">✕</button></div></div>
+        <div class="voie"><div class="tete"><span class="niv">T2</span><span>5a · Tête · voie 6 pts · prise 3</span></div><div class="ligne"><input placeholder="Repère (relais, couleur)"><button class="mini">✓</button><button class="mini">✕</button></div></div>
+      </div>
+      <p class="note">La sous-page garde l'édition actuelle en pleine largeur (2 colonnes de voies sur tablette/bureau) : sur cet écran dédié la densité n'est plus un problème.</p>
+    </section>
+  </div>
+
+<script>
+  function voir(id) {
+    document.querySelectorAll('.vue').forEach(v => v.classList.toggle('active', v.id === id));
+    window.scrollTo(0, 0);
+  }
+</script>
+</body>
+</html>

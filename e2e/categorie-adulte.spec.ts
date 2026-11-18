@@ -83,7 +83,7 @@ test.describe('Catégorie adulte — lot 1 (spec #20)', () => {
       `select id from interclub.rencontre where categorie = 'adulte' and date_rencontre = '${DATE}';`,
     )
     await commeAdmin(page)
-    await page.goto(`/admin/rencontres/${id}`)
+    await page.goto(`/admin/rencontres/${id}?onglet=structure`)
     await page.getByRole('button', { name: /^Vitesse/ }).click()
     const champ = page.getByLabel('Libellé (voie 1)')
     await expect(champ).toHaveValue('Voie 1')
@@ -100,7 +100,7 @@ test.describe('Catégorie adulte — lot 1 (spec #20)', () => {
       `select id from interclub.rencontre where categorie = 'adulte' and date_rencontre = '${DATE}';`,
     )
     await commeAdmin(page)
-    await page.goto(`/admin/rencontres/${id}`)
+    await page.goto(`/admin/rencontres/${id}?onglet=structure`)
     await page.getByRole('button', { name: /^Vitesse/ }).click()
     const form = page.getByLabel('Libellé (voie 2)').locator('xpath=ancestor::form')
     await page.getByLabel('Libellé (voie 2)').fill('   ')
@@ -113,7 +113,7 @@ test.describe('Catégorie adulte — lot 1 (spec #20)', () => {
 
   test('l’admin compose une équipe adulte inter-clubs, 4 au plus (R10–R14)', async ({ page }) => {
     await commeAdmin(page)
-    await page.goto(`/admin/rencontres/${idRencontre()}`)
+    await page.goto(`/admin/rencontres/${idRencontre()}?onglet=equipes`)
     await expect(page.getByRole('heading', { name: 'Équipes adultes' })).toBeVisible()
     // Pas de prêt en adulte (R11).
     await expect(page.getByRole('heading', { name: /Prêts/ })).toHaveCount(0)
@@ -142,7 +142,7 @@ test.describe('Catégorie adulte — lot 1 (spec #20)', () => {
 
   test('l’admin change un grimpeur d’équipe adulte (R11, R12)', async ({ page }) => {
     await commeAdmin(page)
-    await page.goto(`/admin/rencontres/${idRencontre()}`)
+    await page.goto(`/admin/rencontres/${idRencontre()}?onglet=equipes`)
     await expect(page.getByLabel('Nouvelle équipe')).toHaveValue('Équipe 2')
     await page.getByRole('button', { name: 'Créer' }).click()
     await expect(page.locator('[data-equipe="Équipe 2"]')).toBeVisible()
@@ -284,7 +284,7 @@ test.describe('Catégorie adulte — lot 1 (spec #20)', () => {
     execSql(`update interclub.rencontre set phase = 'competition' where id = '${id}';`)
     try {
       await commeAdmin(page)
-      await page.goto(`/admin/rencontres/${id}`)
+      await page.goto(`/admin/rencontres/${id}?onglet=equipes`)
       await expect(page.getByText(/Équipes figées/)).toBeVisible()
       const carte = page.locator('[data-equipe="Équipe 1"]')
       await expect(carte.getByText(/Lucie Echo/)).toBeVisible()
@@ -337,7 +337,7 @@ test.describe('Catégorie adulte — lot 1 (spec #20)', () => {
     execSql(`update interclub.rencontre set phase = 'preparation' where id = '${id}';`)
     try {
       await commeAdmin(page)
-      await page.goto(`/admin/rencontres/${id}`)
+      await page.goto(`/admin/rencontres/${id}?onglet=structure`)
       await page.getByRole('button', { name: /^Blocs · 2/ }).click()
       await expect(page.getByText('Épreuve de bloc active.')).toBeVisible()
       await page.getByRole('button', { name: 'Désactiver l’épreuve de bloc' }).click()
@@ -357,7 +357,7 @@ test.describe('Catégorie adulte — lot 1 (spec #20)', () => {
 
       // ③ : état figé, plus de section Bloc à la saisie.
       execSql(`update interclub.rencontre set phase = 'competition' where id = '${id}';`)
-      await page.goto(`/admin/rencontres/${id}`)
+      await page.goto(`/admin/rencontres/${id}?onglet=structure`)
       await page.getByRole('button', { name: /^Blocs · 2 · désactivée/ }).click()
       await expect(page.getByRole('button', { name: /Réactiver l’épreuve/ })).toHaveCount(0)
       await page.goto(`/admin/rencontres/${id}/resultats`)

@@ -77,7 +77,7 @@ test.describe('Lectures vérifiées dans les actions (B3)', () => {
 
   test('prêt : compositions illisibles → erreur, aucun prêt créé', async ({ page }) => {
     await commeAdmin(page)
-    await page.goto(`/admin/rencontres/${RENCONTRE_PILOTE}`)
+    await page.goto(`/admin/rencontres/${RENCONTRE_PILOTE}?onglet=prets`)
     const formPret = page.locator('form', { has: page.getByLabel('Club du grimpeur') })
     await formPret.getByLabel('Club du grimpeur').selectOption({ label: 'Club B' })
     await formPret.getByLabel(/Rechercher un grimpeur/).fill('Devi')
@@ -93,7 +93,7 @@ test.describe('Lectures vérifiées dans les actions (B3)', () => {
 
   test('équipe (admin) : compositions illisibles → erreur, aucun ajout', async ({ page }) => {
     await commeAdmin(page)
-    await page.goto(`/admin/rencontres/${RENCONTRE_PILOTE}`)
+    await page.goto(`/admin/rencontres/${RENCONTRE_PILOTE}?onglet=equipes`)
     const clubB = page.locator('details[data-club="Club B"]')
     await clubB.locator('summary').first().click()
     const equipe = clubB.locator('[data-equipe="Équipe B1"]')
@@ -113,7 +113,7 @@ test.describe('Lectures vérifiées dans les actions (B3)', () => {
 
   test('équipe adulte : compositions illisibles → erreur, aucun ajout', async ({ page }) => {
     await commeAdmin(page)
-    await page.goto(`/admin/rencontres/${ADULTE}`)
+    await page.goto(`/admin/rencontres/${ADULTE}?onglet=equipes`)
     const equipe = page.locator('[data-equipe="Adultes lecture"]')
     await equipe.getByLabel('Ajouter un grimpeur (tous clubs, 16 ans et plus)').fill('Lucie')
 

@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Maquette A — Tableau de bord rencontre en onglets</title>
+<style>
+  :root {
+    --fond:#020617; --surface:rgba(255,255,255,.04); --surface-forte:rgba(255,255,255,.08);
+    --bordure:rgba(255,255,255,.12); --accent:#22d3ee; --accent-doux:#67e8f9; --secondaire:#bef264;
+    --alerte:#fbbf24; --danger:#fb7185; --texte-fort:#fff; --texte:#e2e8f0; --texte-attenue:#94a3b8; --texte-doux:#64748b;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:linear-gradient(180deg,rgba(34,211,238,.05),rgba(2,6,23,0) 260px),var(--fond); color:var(--texte); font-family:system-ui,-apple-system,"Segoe UI",sans-serif; line-height:1.4; min-height:100vh; }
+  a { color:inherit; }
+  .bandeau-maquette { background:rgba(251,191,36,.12); color:var(--alerte); font-size:12px; padding:6px 16px; text-align:center; }
+
+  .entete { padding:16px; max-width:1280px; margin:0 auto; }
+  .retour { color:var(--texte-attenue); font-size:13px; text-decoration:none; }
+  .titre { color:var(--texte-fort); font-size:19px; font-weight:700; margin:8px 0 2px; }
+  .meta { color:var(--texte-attenue); font-size:13px; }
+
+  /* Bandeau de phase horizontal compact */
+  .phase { margin-top:14px; display:flex; flex-direction:column; gap:10px; background:var(--surface); border:1px solid var(--bordure); border-radius:14px; padding:12px 14px; }
+  .phase-ligne { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .badge { display:inline-flex; align-items:center; border-radius:999px; padding:4px 11px; font-size:12px; font-weight:700; border:1px solid rgba(190,242,100,.35); color:var(--secondaire); background:rgba(190,242,100,.1); }
+  .fil { display:flex; flex-wrap:wrap; align-items:center; gap:5px; flex:1; }
+  .puce { font-size:11px; padding:3px 9px; border-radius:999px; border:1px solid var(--bordure); color:var(--texte-doux); white-space:nowrap; }
+  .puce.faite { color:var(--secondaire); border-color:rgba(190,242,100,.3); }
+  .puce.ici { color:var(--accent-doux); border-color:rgba(34,211,238,.4); background:rgba(34,211,238,.1); font-weight:700; }
+  .sep { color:var(--texte-doux); font-size:10px; }
+  .btn { border:1px solid var(--bordure); background:var(--surface); color:var(--texte); border-radius:10px; padding:8px 12px; font-size:13px; font-weight:600; cursor:pointer; min-height:40px; }
+  .btn.primaire { background:rgba(34,211,238,.15); border-color:rgba(34,211,238,.5); color:var(--accent-doux); }
+  .compteurs { display:flex; gap:18px; color:var(--texte-attenue); font-size:12px; }
+  .compteurs b { color:var(--texte-fort); font-size:15px; margin-right:3px; }
+
+  /* Onglets collants */
+  .barre-onglets { position:sticky; top:0; z-index:5; background:rgba(2,6,23,.92); backdrop-filter:blur(6px); border-bottom:1px solid var(--bordure); }
+  .onglets { max-width:1280px; margin:0 auto; display:flex; gap:2px; overflow-x:auto; padding:0 16px; scrollbar-width:none; }
+  .onglet { flex:none; padding:13px 14px; font-size:14px; font-weight:600; color:var(--texte-attenue); border:none; background:none; border-bottom:2px solid transparent; cursor:pointer; white-space:nowrap; min-height:44px; }
+  .onglet .n { font-size:11px; margin-left:5px; padding:1px 7px; border-radius:999px; background:var(--surface-forte); color:var(--texte-attenue); }
+  .onglet .n.alerte { background:rgba(251,191,36,.18); color:var(--alerte); }
+  .onglet[aria-selected="true"] { color:var(--texte-fort); border-bottom-color:var(--accent); }
+
+  .corps { max-width:1280px; margin:0 auto; padding:18px 16px 40px; }
+  .panneau { display:none; }
+  .panneau.actif { display:block; }
+  .grille { display:grid; grid-template-columns:1fr; gap:14px; }
+  .carte { background:var(--surface); border:1px solid var(--bordure); border-radius:14px; padding:14px 16px; }
+  .c-titre { color:var(--texte-fort); font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; margin:0 0 10px; }
+  .note { color:var(--texte-doux); font-size:12px; }
+
+  .action { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 14px; border-radius:12px; border:1px solid var(--bordure); text-decoration:none; background:rgba(0,0,0,.15); }
+  .action + .action { margin-top:8px; }
+  .action .t { font-weight:600; color:var(--texte-fort); font-size:14px; }
+  .action .s { font-size:12px; color:var(--texte-doux); }
+  .action .fl { color:var(--accent); font-weight:700; }
+  .action.inactive { opacity:.45; }
+
+  .alerte-l { display:flex; gap:10px; align-items:flex-start; font-size:13px; padding:8px 0; border-top:1px solid rgba(255,255,255,.05); }
+  .alerte-l:first-of-type { border-top:none; }
+  .ok { color:var(--secondaire); }
+  .warn { color:var(--alerte); }
+  .alerte-l a { color:var(--accent-doux); font-size:12px; margin-left:auto; white-space:nowrap; }
+
+  /* Structure */
+  .sous-onglets { display:flex; gap:4px; padding:4px; background:rgba(0,0,0,.25); border-radius:12px; margin-bottom:12px; max-width:480px; }
+  .sous-onglets span { flex:1; text-align:center; padding:9px 6px; border-radius:9px; font-size:13px; color:var(--texte-attenue); font-weight:600; }
+  .sous-onglets .actif { background:var(--surface-forte); color:var(--texte-fort); }
+  .voie { display:grid; grid-template-columns:44px 1fr auto; gap:10px; align-items:center; padding:9px 0; border-top:1px solid rgba(255,255,255,.05); font-size:13px; }
+  .voie:first-child { border-top:none; }
+  .voie .niv { color:var(--accent-doux); font-weight:700; }
+  .voie .rep { color:var(--texte-attenue); }
+  .voie .rep.vide { color:var(--alerte); }
+  .mini { width:34px; height:34px; border-radius:8px; border:1px solid var(--bordure); background:var(--surface); color:var(--texte-attenue); }
+
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th { text-align:left; color:var(--texte-doux); font-size:11px; text-transform:uppercase; letter-spacing:.05em; padding:6px 4px; }
+  td { padding:7px 4px; border-top:1px solid rgba(255,255,255,.05); }
+  td.n, th.n { text-align:right; }
+
+  .club { border:1px solid var(--bordure); border-radius:14px; background:var(--surface); }
+  .club + .club { margin-top:10px; }
+  .club summary { list-style:none; display:flex; justify-content:space-between; padding:13px 15px; cursor:pointer; font-weight:700; color:var(--texte-fort); }
+  .club summary span { font-weight:400; font-size:12px; color:var(--texte-attenue); }
+  .club .contenu { padding:0 15px 14px; font-size:13px; }
+
+  .champ { display:flex; flex-direction:column; gap:5px; margin-bottom:12px; }
+  .champ label { font-size:11px; color:var(--texte-doux); text-transform:uppercase; letter-spacing:.05em; }
+  select { background:rgba(0,0,0,.3); color:var(--texte-fort); border:1px solid var(--bordure); border-radius:10px; padding:10px; color-scheme:dark; min-height:44px; }
+
+  @media (min-width:720px) {
+    .entete, .corps { padding-left:28px; padding-right:28px; }
+    .onglets { padding:0 28px; }
+    .phase { flex-direction:row; align-items:center; }
+    .grille.deux { grid-template-columns:1fr 1fr; }
+  }
+  @media (min-width:1080px) {
+    .titre { font-size:22px; }
+    .grille.vue { grid-template-columns:1.2fr 1fr; }
+  }
+</style>
+</head>
+<body>
+  <div class="bandeau-maquette">Maquette A (retenue, spec #3 R41k) — onglets dans la page · une seule route, onglet actif dans <code>?onglet=</code></div>
+
+  <header class="entete">
+    <a class="retour" href="#">← Rencontres</a>
+    <div class="titre">Rencontre Club A du 19 septembre 2026</div>
+    <div class="meta">Enfant · club porteur Club A · saison 2026–2027</div>
+
+    <div class="phase">
+      <div class="phase-ligne">
+        <span class="badge">① Pré-compétition</span>
+        <button class="btn primaire">Préparation jour J →</button>
+      </div>
+      <div class="fil">
+        <span class="puce ici">Pré-comp.</span><span class="sep">›</span>
+        <span class="puce">Prépa jour J</span><span class="sep">›</span>
+        <span class="puce">Compétition</span><span class="sep">›</span>
+        <span class="puce">Clôture</span><span class="sep">›</span>
+        <span class="puce">Résultats</span>
+      </div>
+      <div class="compteurs"><span><b>3</b>équipes</span><span><b>18</b>épreuves</span><span><b>0</b>prêt</span></div>
+    </div>
+  </header>
+
+  <nav class="barre-onglets">
+    <div class="onglets" role="tablist">
+      <button class="onglet" role="tab" data-cible="vue" aria-selected="true">Vue d'ensemble</button>
+      <button class="onglet" role="tab" data-cible="structure">Structure <span class="n">18</span></button>
+      <button class="onglet" role="tab" data-cible="equipes">Équipes <span class="n">3</span></button>
+      <button class="onglet" role="tab" data-cible="prets">Prêts <span class="n">0</span></button>
+      <button class="onglet" role="tab" data-cible="stats">Statistiques</button>
+    </div>
+  </nav>
+
+  <main class="corps">
+    <!-- VUE D'ENSEMBLE -->
+    <section class="panneau actif" id="vue">
+      <div class="grille vue">
+        <div class="carte">
+          <h3 class="c-titre">Actions</h3>
+          <a class="action" href="#"><span><span class="t">▦ QR codes</span><br><span class="s">Coach temporaire &amp; juges</span></span><span class="fl">→</span></a>
+          <a class="action inactive" href="#"><span><span class="t">🛡️ Saisir les résultats</span><br><span class="s">Disponible en phase Compétition</span></span><span class="fl">→</span></a>
+          <a class="action inactive" href="#"><span><span class="t">✅ Contrôler les résultats</span><br><span class="s">0/0 lignes contrôlées</span></span><span class="fl">→</span></a>
+          <a class="action inactive" href="#"><span><span class="t">📊 Classement · 📺 Affichage</span><br><span class="s">Dès la phase Compétition</span></span><span class="fl">→</span></a>
+        </div>
+      </div>
+      <p class="note" style="margin-top:14px">La vue d'ensemble remplace le rail gauche actuel : QR codes et accès aux écrans de la rencontre selon la phase (spec #3 R41k) ; le détail est dans les onglets. En phase non éligible, les accès n'apparaissent pas (grisés ici pour illustration).</p>
+    </section>
+
+    <!-- STRUCTURE -->
+    <section class="panneau" id="structure">
+      <div class="sous-onglets"><span class="actif">Voies · 14</span><span>Blocs · 2</span><span>Vitesse · 2</span></div>
+      <div class="carte">
+        <div class="voie"><span class="niv">M1</span><span>4c · Moulinette · voie 1 pts<br><span class="rep vide">Repère à saisir</span></span><button class="mini">✎</button></div>
+        <div class="voie"><span class="niv">M2</span><span>5a · Moulinette · voie 2 pts<br><span class="rep vide">Repère à saisir</span></span><button class="mini">✎</button></div>
+        <div class="voie"><span class="niv">M3</span><span>5b · Moulinette · voie 3 pts<br><span class="rep">Relais 4, vert</span></span><button class="mini">✎</button></div>
+        <div class="voie"><span class="niv">T1</span><span>4c · Tête · voie 5 pts · prise 3 pts<br><span class="rep vide">Repère à saisir</span></span><button class="mini">✎</button></div>
+        <div class="voie"><span class="niv">T2</span><span>5a · Tête · voie 6 pts · prise 3 pts<br><span class="rep vide">Repère à saisir</span></span><button class="mini">✎</button></div>
+        <div class="voie note"><span></span><span>… 9 autres voies</span><span></span></div>
+      </div>
+      <p class="note">Panneau Structure inchangé (R42–R45, R49–R55) : champ repère, ✓, ✎, ✕ sur chaque voie, formulaire « + Voie » en bas — simplifié ici.</p>
+    </section>
+
+    <!-- ÉQUIPES -->
+    <section class="panneau" id="equipes">
+      <details class="club" open>
+        <summary>Club A <span>2 équipes · 2 grimpeurs ▾</span></summary>
+        <div class="contenu">Club A 1 — Léa Martin, Tom Bernard · Club A 2 — vide<br><span class="note">Composition éditable comme aujourd'hui.</span></div>
+      </details>
+      <details class="club">
+        <summary>Club B <span>1 équipe · 1 grimpeur ▾</span></summary>
+        <div class="contenu">Club B 1 — Inès Petit</div>
+      </details>
+    </section>
+
+    <!-- PRÊTS -->
+    <section class="panneau" id="prets">
+      <div class="grille deux">
+        <div class="carte">
+          <h3 class="c-titre">Nouveau prêt</h3>
+          <div class="champ"><label>Club du grimpeur</label><select><option>Sélectionnez le club d'origine…</option></select></div>
+          <div class="champ"><label>Club d'accueil</label><select><option>Sélectionnez le club d'accueil…</option></select></div>
+          <button class="btn primaire" style="width:100%">Créer le prêt</button>
+        </div>
+        <div class="carte"><h3 class="c-titre">Prêts de la rencontre</h3><p class="note">Aucun prêt pour cette rencontre.</p></div>
+      </div>
+    </section>
+
+    <!-- STATISTIQUES -->
+    <section class="panneau" id="stats">
+      <div class="grille deux">
+        <div class="carte">
+          <h3 class="c-titre">Effectifs</h3>
+          <table>
+            <tr><th>Club</th><th class="n">Filles</th><th class="n">Garçons</th><th class="n">Total</th></tr>
+            <tr><td>Club A</td><td class="n">1</td><td class="n">1</td><td class="n">2</td></tr>
+            <tr><td>Club B</td><td class="n">1</td><td class="n">0</td><td class="n">1</td></tr>
+          </table>
+        </div>
+        <div class="carte">
+          <h3 class="c-titre">Répartition par groupe de départ</h3>
+          <table>
+            <tr><td>Groupe M2/2</td><td class="n">1</td><td>Groupe T1/5</td><td class="n">1</td></tr>
+            <tr><td>Groupe T2/6</td><td class="n">1</td><td class="warn">À définir</td><td class="n">0</td></tr>
+          </table>
+          <p class="note">Panneau Statistiques inchangé (R41f–R41j) — extrait. « Enfants sans groupe » → onglet Équipes, bloc du club ouvert (R41h).</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+<script>
+  const onglets = document.querySelectorAll('.onglet');
+  function ouvrir(id) {
+    onglets.forEach(o => o.setAttribute('aria-selected', o.dataset.cible === id));
+    document.querySelectorAll('.panneau').forEach(p => p.classList.toggle('actif', p.id === id));
+  }
+  onglets.forEach(o => o.addEventListener('click', () => ouvrir(o.dataset.cible)));
+  document.querySelectorAll('[data-aller]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); ouvrir(a.dataset.aller); }));
+</script>
+</body>
+</html>

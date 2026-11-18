@@ -36,6 +36,8 @@ export type JetonVue = {
   voieVitesseId: string | null
   equipeId: string | null
   valeur: string
+  /** URL de scan encodée par le QR, affichée cliquable sous lui. */
+  url: string
   qrDataUrl: string
 }
 
@@ -64,6 +66,7 @@ async function versJetonVue(row: {
     voieVitesseId: row.voie_vitesse_id,
     equipeId: row.equipe_id,
     valeur: row.valeur,
+    url: contenu,
     qrDataUrl,
   }
 }

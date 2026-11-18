@@ -87,7 +87,7 @@ test.describe('Cahier 21 — vitesse au classement (spec #7, spec #3 R46)', () =
   })
 
   async function ongletVitesse(page: Page, rencontreId = RENCONTRE_PILOTE) {
-    await page.goto(`/admin/rencontres/${rencontreId}`)
+    await page.goto(`/admin/rencontres/${rencontreId}?onglet=structure`)
     await page.getByRole('button', { name: /^Vitesse · \d+$/ }).click()
     await expect(page.getByText('Barème par rang')).toBeVisible()
   }
@@ -249,7 +249,7 @@ test.describe('Cahier 21 — vitesse au classement (spec #7, spec #3 R46)', () =
 
   test('CT-08 · barème ado : 1er = 60, chute = 5 (R46)', async ({ page, browser }) => {
     await commeAdmin(page)
-    await page.goto(`/admin/rencontres/${ADO}`)
+    await page.goto(`/admin/rencontres/${ADO}?onglet=structure`)
     await page.getByRole('button', { name: /^Vitesse · \d+$/ }).click()
     // Rencontre ado en ③ : barème en lecture seule.
     const bareme = page.locator('form', { has: page.getByText('Barème par rang') })

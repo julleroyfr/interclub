@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 
-import { Bouton, Etiquette, TitreSection } from '@/composants'
+import { Bouton, Etiquette, LienQR, TitreSection } from '@/composants'
 import type { VarianteEtiquette } from '@/composants'
 import {
   formaterTempsRestant,
@@ -69,7 +69,7 @@ export function CarteInvitationAdmin({ invitation }: { invitation: InvitationAdm
             height={200}
             className="rounded-xl bg-white p-2"
           />
-          <code className="break-all text-center text-xs text-texte-doux">{invitation.url}</code>
+          <LienQR url={invitation.url} />
         </div>
       )}
 

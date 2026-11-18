@@ -1,4 +1,4 @@
-import { Bouton, Carte } from '@/composants'
+import { Bouton, Carte, LienQR } from '@/composants'
 import {
   genererJeton,
   regenererJeton,
@@ -45,9 +45,7 @@ export function AfficheurJeton({ titre, chemin, perimetre, jeton }: Props) {
             height={180}
             className="mx-auto rounded-xl bg-white p-2"
           />
-          <code className="break-all text-center text-xs text-texte-doux">
-            {jeton.valeur}
-          </code>
+          <LienQR url={jeton.url} />
           <div className="flex gap-2">
             <form action={regenererJeton} className="flex-1">
               <input type="hidden" name="chemin" value={chemin} />

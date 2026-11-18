@@ -258,7 +258,7 @@ test.describe('Surclassement — compléments du cahier 34 (spec #21)', () => {
     await commeAdmin(page)
 
     // 1. Panneau Prêts de la rencontre ado A : Léo est proposé, prêté au Club A.
-    await page.goto(`/admin/rencontres/${R.adoA}`)
+    await page.goto(`/admin/rencontres/${R.adoA}?onglet=prets`)
     const formPret = page.locator('form', { has: page.getByLabel('Club du grimpeur') })
     await formPret.getByLabel('Club du grimpeur').selectOption({ label: 'Club B' })
     await formPret.getByLabel(/Rechercher un grimpeur/).fill('Pretee')
@@ -276,7 +276,7 @@ test.describe('Surclassement — compléments du cahier 34 (spec #21)', () => {
     await coach.context().close()
 
     // 3. Panneau Équipes de la rencontre ado B : l'admin l'ajoute à « Surcl B ».
-    await page.goto(`/admin/rencontres/${R.adoB}`)
+    await page.goto(`/admin/rencontres/${R.adoB}?onglet=equipes`)
     const carteB = page.locator('details[data-club="Club B"]')
     // Seul club engagé : déjà déplié (spec #3 R41c), on s'en assure sans basculer.
     await carteB.evaluate((d) => ((d as HTMLDetailsElement).open = true))
@@ -310,7 +310,7 @@ test.describe('Surclassement — compléments du cahier 34 (spec #21)', () => {
     // Un surclassé n'est pas proposé dans une équipe adulte.
     surclasser(G.cadet)
     try {
-      await page.goto(`/admin/rencontres/${R.adulte}`)
+      await page.goto(`/admin/rencontres/${R.adulte}?onglet=equipes`)
       const carte = page.locator('[data-equipe="Adultes surcl"]')
       await carte.getByLabel('Ajouter un grimpeur (tous clubs, 16 ans et plus)').fill('Cadet')
       await expect(carte.getByText('Grimpeur (0)')).toBeVisible()

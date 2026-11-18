@@ -27,7 +27,7 @@ test.describe('Écran admin — équipes tous clubs (R10)', () => {
     // En compétition les coachs sont gelés ; l'admin, non.
     poserPhase('competition')
     await commeAdmin(page)
-    await page.goto(`/admin/rencontres/${RENCONTRE_PILOTE}`)
+    await page.goto(`/admin/rencontres/${RENCONTRE_PILOTE}?onglet=equipes`)
 
     // Le panneau liste les équipes de tous les clubs.
     await expect(
@@ -65,7 +65,7 @@ test.describe('Écran admin — équipes tous clubs (R10)', () => {
     // le formulaire ne doit pas déborder de la carte (régression 2026-10-10).
     await page.setViewportSize({ width: 1280, height: 800 })
     await commeAdmin(page)
-    await page.goto(`/admin/rencontres/${RENCONTRE_PILOTE}`)
+    await page.goto(`/admin/rencontres/${RENCONTRE_PILOTE}?onglet=equipes`)
     const clubA = carteClub(page, 'Club A')
     await clubA.locator('summary').first().click()
 

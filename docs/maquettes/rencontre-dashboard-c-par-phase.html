@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Maquette C — Tableau de bord rencontre guidé par phase</title>
+<style>
+  :root {
+    --fond:#020617; --surface:rgba(255,255,255,.04); --surface-forte:rgba(255,255,255,.08);
+    --bordure:rgba(255,255,255,.12); --accent:#22d3ee; --accent-doux:#67e8f9; --secondaire:#bef264;
+    --alerte:#fbbf24; --texte-fort:#fff; --texte:#e2e8f0; --texte-attenue:#94a3b8; --texte-doux:#64748b;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:linear-gradient(180deg,rgba(34,211,238,.05),rgba(2,6,23,0) 260px),var(--fond); color:var(--texte); font-family:system-ui,-apple-system,"Segoe UI",sans-serif; line-height:1.4; min-height:100vh; }
+  a { color:inherit; text-decoration:none; }
+  .bandeau-maquette { background:rgba(251,191,36,.12); color:var(--alerte); font-size:12px; padding:6px 16px; text-align:center; }
+
+  .page { max-width:1280px; margin:0 auto; padding:16px 16px 40px; }
+  .retour { color:var(--texte-attenue); font-size:13px; }
+  .titre { color:var(--texte-fort); font-size:19px; font-weight:700; margin:8px 0 2px; }
+  .meta { color:var(--texte-attenue); font-size:13px; margin-bottom:16px; }
+  .note { color:var(--texte-doux); font-size:12px; }
+  .badge { display:inline-flex; border-radius:999px; padding:4px 11px; font-size:12px; font-weight:700; border:1px solid rgba(190,242,100,.35); color:var(--secondaire); background:rgba(190,242,100,.1); }
+  .btn { border:1px solid rgba(34,211,238,.5); background:rgba(34,211,238,.15); color:var(--accent-doux); border-radius:10px; padding:9px 14px; font-size:13px; font-weight:700; cursor:pointer; min-height:44px; }
+
+  .grille { display:flex; flex-direction:column; gap:16px; }
+
+  /* Menu : sélecteur sur mobile, rail sur bureau */
+  .menu-mobile { width:100%; background:rgba(0,0,0,.3); color:var(--texte-fort); border:1px solid var(--bordure); border-radius:10px; padding:11px; color-scheme:dark; min-height:44px; font-size:14px; }
+  .menu-mobile option { background:var(--fond); color:var(--texte); }
+  .rail { display:none; }
+  .rail .grp { color:var(--texte-doux); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; margin:16px 10px 6px; }
+  .rail .grp:first-child { margin-top:0; }
+  .rail a { display:flex; justify-content:space-between; align-items:center; padding:9px 10px; border-radius:9px; font-size:14px; color:var(--texte-attenue); }
+  .rail a:hover { background:var(--surface); }
+  .rail a.ici { background:var(--surface-forte); color:var(--texte-fort); font-weight:600; }
+  .rail a.off { opacity:.4; }
+  .pastille { font-size:11px; }
+  .pastille.ok { color:var(--secondaire); } .pastille.warn { color:var(--alerte); }
+
+  /* Phase + checklist */
+  .phase-carte { background:var(--surface); border:1px solid rgba(34,211,238,.3); border-radius:16px; padding:16px; }
+  .phase-carte .haut { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; }
+  .phase-carte h2 { margin:0; color:var(--texte-fort); font-size:16px; }
+  .check { list-style:none; margin:14px 0 0; padding:0; display:grid; grid-template-columns:1fr; gap:6px; }
+  .check li { display:flex; gap:10px; align-items:center; font-size:13px; padding:9px 12px; border-radius:10px; background:rgba(0,0,0,.2); }
+  .check li .i { width:20px; text-align:center; }
+  .check li.ok .i { color:var(--secondaire); }
+  .check li.warn .i { color:var(--alerte); }
+  .check li a { margin-left:auto; color:var(--accent-doux); font-size:12px; white-space:nowrap; }
+
+  /* Sections accordéon */
+  .moment { color:var(--texte-attenue); font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; margin:22px 2px 10px; }
+  details.sec { background:var(--surface); border:1px solid var(--bordure); border-radius:14px; }
+  details.sec + details.sec { margin-top:10px; }
+  details.sec[open] { border-color:rgba(34,211,238,.35); }
+  details.sec summary { list-style:none; display:flex; align-items:center; gap:12px; padding:14px 16px; cursor:pointer; min-height:56px; }
+  details.sec summary::-webkit-details-marker { display:none; }
+  summary .nom { font-weight:700; color:var(--texte-fort); font-size:15px; }
+  summary .resume { font-size:12px; color:var(--texte-attenue); }
+  summary .droite { margin-left:auto; display:flex; align-items:center; gap:10px; }
+  summary .chev { color:var(--texte-doux); transition:transform .15s; }
+  details[open] summary .chev { transform:rotate(180deg); }
+  details.sec.off { opacity:.5; }
+  .sec-corps { padding:0 16px 16px; border-top:1px solid rgba(255,255,255,.06); }
+  .voie { display:grid; grid-template-columns:40px 1fr auto; gap:8px; align-items:center; padding:9px 0; border-top:1px solid rgba(255,255,255,.05); font-size:13px; }
+  .voie:first-child { border-top:none; }
+  .voie .niv { color:var(--accent-doux); font-weight:700; }
+  .voie input { width:100%; background:rgba(0,0,0,.3); border:1px solid var(--bordure); color:var(--texte-fort); border-radius:9px; padding:8px; min-height:40px; }
+  .mini { width:40px; height:40px; border-radius:9px; border:1px solid var(--bordure); background:var(--surface); color:var(--secondaire); }
+  .filtre { display:flex; gap:6px; margin:12px 0 4px; flex-wrap:wrap; }
+  .filtre span { font-size:12px; padding:5px 10px; border-radius:999px; border:1px solid var(--bordure); color:var(--texte-attenue); }
+  .filtre span.ici { color:var(--alerte); border-color:rgba(251,191,36,.45); background:rgba(251,191,36,.08); }
+
+  @media (min-width:720px) {
+    .page { padding:22px 28px 48px; }
+    .check { grid-template-columns:1fr 1fr; }
+  }
+  @media (min-width:1080px) {
+    .titre { font-size:22px; }
+    .grille { display:grid; grid-template-columns:240px minmax(0,1fr); gap:28px; align-items:start; }
+    .menu-mobile { display:none; }
+    .rail { display:block; position:sticky; top:22px; background:var(--surface); border:1px solid var(--bordure); border-radius:14px; padding:12px 6px; }
+  }
+</style>
+</head>
+<body>
+  <div class="bandeau-maquette">Maquette C — une seule page, sections repliées et guidées par la phase courante</div>
+
+  <div class="page">
+    <a class="retour" href="#">← Rencontres</a>
+    <div class="titre">Rencontre Club A du 19 septembre 2026</div>
+    <div class="meta">Enfant · club porteur Club A · saison 2026–2027</div>
+
+    <div class="grille">
+      <select class="menu-mobile" aria-label="Aller à la section" onchange="ouvrir(this.value)">
+        <option value="phase">Phase &amp; checklist</option>
+        <optgroup label="Préparer">
+          <option value="structure">Structure ⚠</option>
+          <option value="equipes">Équipes ⚠</option>
+          <option value="prets">Prêts</option>
+          <option value="stats">Statistiques ✓</option>
+        </optgroup>
+        <optgroup label="Jour J">
+          <option value="qr">QR codes</option>
+        </optgroup>
+      </select>
+
+      <nav class="rail">
+        <div class="grp">Pilotage</div>
+        <a class="ici" href="#phase">Phase &amp; checklist</a>
+        <div class="grp">Préparer</div>
+        <a href="#structure" onclick="ouvrir('structure')">Structure <span class="pastille warn">⚠ 14</span></a>
+        <a href="#equipes" onclick="ouvrir('equipes')">Équipes <span class="pastille warn">⚠ 1</span></a>
+        <a href="#prets" onclick="ouvrir('prets')">Prêts <span class="pastille">0</span></a>
+        <a href="#stats" onclick="ouvrir('stats')">Statistiques <span class="pastille ok">✓</span></a>
+        <div class="grp">Jour J</div>
+        <a href="#qr" onclick="ouvrir('qr')">QR codes</a>
+        <a class="off" href="#">Saisie résultats</a>
+        <a class="off" href="#">Contrôle</a>
+        <div class="grp">Après</div>
+        <a class="off" href="#">Classement</a>
+        <a class="off" href="#">Affichage</a>
+      </nav>
+
+      <main>
+        <section class="phase-carte" id="phase">
+          <div class="haut">
+            <div><span class="badge">① Pré-compétition</span>
+              <h2 style="margin-top:8px">Prêt pour le jour J ?</h2></div>
+            <button class="btn">Préparation jour J →</button>
+          </div>
+          <ul class="check">
+            <li class="warn"><span class="i">⚠</span>Repères des voies : 0/14 saisis<a href="#structure" onclick="ouvrir('structure')">Compléter →</a></li>
+            <li class="warn"><span class="i">⚠</span>Équipes : Club B incomplète<a href="#equipes" onclick="ouvrir('equipes')">Voir →</a></li>
+            <li class="ok"><span class="i">✓</span>Tous les enfants ont un groupe de départ</li>
+            <li class="ok"><span class="i">✓</span>Blocs (2) et vitesse (2) définis</li>
+          </ul>
+        </section>
+
+        <div class="moment">Préparer</div>
+
+        <details class="sec" id="structure" open>
+          <summary>
+            <span><span class="nom">Structure</span><br><span class="resume">14 voies · 2 blocs · 2 vitesse</span></span>
+            <span class="droite"><span class="pastille warn">⚠ 14 repères</span><span class="chev">▾</span></span>
+          </summary>
+          <div class="sec-corps">
+            <div class="filtre"><span class="ici">À compléter · 14</span><span>Toutes les voies</span><span>Blocs · 2</span><span>Vitesse · 2</span></div>
+            <div class="voie"><span class="niv">M1</span><input placeholder="Repère — 4c · moulinette"><button class="mini">✓</button></div>
+            <div class="voie"><span class="niv">M2</span><input placeholder="Repère — 5a · moulinette"><button class="mini">✓</button></div>
+            <div class="voie"><span class="niv">M3</span><input placeholder="Repère — 5b · moulinette"><button class="mini">✓</button></div>
+            <div class="voie"><span class="niv">T1</span><input placeholder="Repère — 4c · tête"><button class="mini">✓</button></div>
+            <div class="voie note"><span></span><span>… 10 autres · édition complète / suppression / + Voie dans « Toutes les voies »</span><span></span></div>
+          </div>
+        </details>
+
+        <details class="sec" id="equipes">
+          <summary>
+            <span><span class="nom">Équipes &amp; engagement</span><br><span class="resume">3 équipes · Club A (2) · Club B (1)</span></span>
+            <span class="droite"><span class="pastille warn">⚠ 1</span><span class="chev">▾</span></span>
+          </summary>
+          <div class="sec-corps"><p class="note">Accordéons par club, comme aujourd'hui.</p></div>
+        </details>
+
+        <details class="sec" id="prets">
+          <summary>
+            <span><span class="nom">Prêts de grimpeurs</span><br><span class="resume">Aucun prêt</span></span>
+            <span class="droite"><span class="chev">▾</span></span>
+          </summary>
+          <div class="sec-corps"><p class="note">Formulaire de création + liste.</p></div>
+        </details>
+
+        <details class="sec" id="stats">
+          <summary>
+            <span><span class="nom">Statistiques</span><br><span class="resume">3 enfants · 2 filles · 1 garçon · tous groupés</span></span>
+            <span class="droite"><span class="pastille ok">✓</span><span class="chev">▾</span></span>
+          </summary>
+          <div class="sec-corps"><p class="note">Effectifs par club + répartition par groupe de départ.</p></div>
+        </details>
+
+        <div class="moment">Jour J</div>
+        <details class="sec" id="qr">
+          <summary>
+            <span><span class="nom">QR codes</span><br><span class="resume">Coach temporaire &amp; juges</span></span>
+            <span class="droite"><span class="chev">→</span></span>
+          </summary>
+        </details>
+        <details class="sec off">
+          <summary>
+            <span><span class="nom">Saisie &amp; contrôle des résultats</span><br><span class="resume">Dès la phase Compétition</span></span>
+          </summary>
+        </details>
+
+        <div class="moment">Après</div>
+        <details class="sec off">
+          <summary>
+            <span><span class="nom">Classement &amp; affichage</span><br><span class="resume">Dès la phase Compétition</span></span>
+          </summary>
+        </details>
+
+        <p class="note" style="margin-top:16px">En phase Compétition, la section « Saisie &amp; contrôle » s'ouvrirait par défaut et la checklist deviendrait « Avancement : X/Y lignes contrôlées » ; « Préparer » se replierait.</p>
+      </main>
+    </div>
+  </div>
+
+<script>
+  function ouvrir(id) {
+    const d = document.getElementById(id);
+    if (d && d.tagName === 'DETAILS') d.open = true;
+    if (d) d.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.querySelectorAll('.rail a').forEach(a => a.classList.toggle('ici', a.getAttribute('href') === '#' + id));
+  }
+</script>
+</body>
+</html>

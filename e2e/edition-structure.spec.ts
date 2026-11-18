@@ -15,7 +15,7 @@ import { execSql } from './helpers/sql'
  */
 
 const ADO = 'adadadad-adad-adad-adad-adadadadadad'
-const URL_ADMIN = `/admin/rencontres/${ADO}`
+const URL_ADMIN = `/admin/rencontres/${ADO}?onglet=structure`
 const EPREUVE_VOIE = 'adadadad-0000-0000-0000-0000000000a1'
 const EPREUVE_BLOC = 'adadadad-0000-0000-0000-0000000000a2'
 const EPREUVE_VITESSE = 'adadadad-0000-0000-0000-0000000000a3'
