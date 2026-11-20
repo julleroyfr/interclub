@@ -9,7 +9,7 @@
 > Règles dans [docs/conventions/06-cahier-de-test.md](../conventions/06-cahier-de-test.md).
 
 - **Spec de référence** :
-  `docs/specs/05-espace-coach.md` (R1–R21, dont R10bis, R12bis) ;
+  `docs/specs/05-espace-coach.md` (R1–R21, dont R10bis, R12bis, R21ter) ;
   `docs/specs/01-roles-et-autorisations.md` (R6, R16, R17, R27, R34, R34bis,
   R35, R36) ; `docs/specs/20-categorie-adulte.md` (R3) ;
   `docs/specs/02-authentification-et-sessions-qr.md` (R12, validité QR
@@ -370,6 +370,33 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
 - **Nettoyage** : remettre `AGE_BASCULE=12` et `AGE_ADO_MAX=18`, redémarrer ;
   rejouer `06-ages-limites.sql` (remet les deux rencontres à vide).
 
+### CT-19 `[manuel]` — Aide au choix du groupe   (couvre : R21ter ; spec #12 R19 ; nominal + négatif)
+
+- **Rôle / compte** : `coach@test.local` (permanent Club A) ; une session coach
+  temporaire Club A (QR de la rencontre enfant).
+- **Pré-condition** : seed 01/02/03 ; une rencontre **enfant** et une **ado** du
+  Club A en ① pré-compétition, chacune avec une équipe non complète.
+- **Étapes** :
+  1. Coach permanent, rencontre **enfant** : repérer le **« ? »** à droite de
+     « Groupe de départ (optionnel) » dans le formulaire d'ajout, le toucher.
+  2. Lire le tableau, sur téléphone (ou largeur 375 px).
+  3. Toucher « ← Retour à la rencontre ».
+  4. Rencontre **ado** : chercher un « ? ».
+  5. Coach **temporaire** : ouvrir l'écran de sa rencontre enfant (en ②), puis
+     saisir l'URL `/coach/aide-groupes`.
+- **Résultat attendu** :
+  1. Le « ? » est discret (petit cercle gris) et ouvre « Aide au choix du
+     groupe » dans un **nouvel onglet** ; l'onglet de la rencontre reste ouvert.
+  2. 12 lignes, groupes 1 à 12 (M1 … T8) ; ex. ligne 1 : M1, 5b, –, M1, M2, M3 ;
+     ligne 4 : M4, 5c, 5a, M4, T1, T2 ; ligne 12 : T8, –, 7c, T8, T9, T10. Trait
+     de séparation après le groupe 4. Sur mobile (320–375 px), en-têtes courts
+     (« N° », « Départ », « Max moul. », « Max tête », « Voies ») : les 5
+     colonnes tiennent sans défilement horizontal.
+  3. Retour à l'écran d'engagement de la même rencontre.
+  4. Aucun « ? » (pas de groupe de départ en ado).
+  5. Aucun « ? » ; l'URL donne une **page 404**.
+- **Nettoyage** : aucun.
+
 ## Registre d'exécution
 
 > **Testeur** : `agent/playwright` pour un passage machine, un nom pour un passage
@@ -396,3 +423,4 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
 | 2026-10-02 | agent/playwright | develop | CT-01 | auto | ✅ | négatif réaligné : anonyme → `/connexion` (spec #12 R2), sans rôle → 404 |
 | 2026-10-02 | agent/playwright | develop | CT-01→CT-15 | auto | ✅ | suite complète verte après correctifs E1 (insert grimpeur `sexe`/`licence`) |
 | 2026-11-05 | utilisateur | d87593d | CT-18 | manuel | ✅ | âges limites (seed 06) avec `AGE_BASCULE=12`, `AGE_ADO_MAX=18` ; cahier 32 optionnel, non déroulé |
+| 2026-11-20 | agent/playwright | develop (non commité) | CT-19 | manuel | ✅ | étapes 1–4 + admin → 404 ; 320/375/1280 px vérifiés ; étape 5 (coach temporaire) non jouée |

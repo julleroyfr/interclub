@@ -194,6 +194,14 @@ M4 ; M4 donne M4, T1, T2. Le groupe peut être laissé « À définir » à l'aj
 mais il doit être fixé avant la compétition. Pour la catégorie Ado, il n'y a pas
 de groupe de départ.
 
+**Aide au choix du groupe** : le petit **« ? »** à droite de « Groupe de départ
+(optionnel) » ouvre, dans un nouvel onglet, le tableau d'aide du CT33 : pour chaque groupe (1 à 12), le
+niveau de départ, la cotation maximale réussie en **moulinette** ou en **tête**
+et les 3 voies à réaliser. Par exemple, un enfant qui passe le 5c en moulinette
+et le 5a en tête part en **Groupe 4/M4** (voies M4, T1, T2). Fermez l'onglet pour
+revenir à l'équipe. Cette aide est réservée au coach du club (pas
+au coach temporaire).
+
 **Grimpeurs prêtés** : un grimpeur d'un autre club peut être prêté à votre club
 pour compléter une équipe. C'est l'**organisateur** qui met en place le prêt ;
 le grimpeur apparaît alors dans votre liste avec un badge « Prêté » et son club

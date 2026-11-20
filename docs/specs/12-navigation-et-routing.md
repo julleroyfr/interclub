@@ -25,6 +25,10 @@
   parle plus de « jeton » mais de **QR code** (spec #2 R47). Côté admin, le lien
   « Jetons » du bandeau devient **« QR codes »**. Routes `/coach/jetons` et
   `/admin/jetons` inchangées. Aucune autre règle modifiée.
+- **Révision du 2026-11-20 — aide au choix du groupe** (spec #5 R21ter,
+  validée le 2026-11-20) : ajout, sur la carte des routes, de la page d'aide
+  coach permanent `/coach/aide-groupes`, ouverte par un « ? » de l'écran
+  d'engagement (pas un lien du menu). Aucune règle `Rn` modifiée.
 - **Sources** :
   - **Décision produit du 2026-09-25** (arbitrages navigation) : entrée coach
     unique, vue classement admin dédiée, sortie de session juge, classement en
@@ -281,6 +285,7 @@ flowchart TD
     subgraph ESPACE_COACH["Espace Coach"]
         COACH["/coach"]
         COACH_JETONS["/coach/jetons"]
+        COACH_AIDE["/coach/aide-groupes"]
         COACH_RDV["/coach/rencontres/{id}"]
         COACH_RES["/coach/rencontres/{id}/resultats"]
         COACH_CLST["/coach/rencontres/{id}/classement"]
@@ -294,6 +299,7 @@ flowchart TD
     COACH_RDV <--> COACH_RES
     COACH_RES <--> COACH_CLST
     COACH_RDV -->|retour| COACH
+    COACH_RDV <-->|« ? » enfant, permanent| COACH_AIDE
     COACH_RDV -.temporaire : lecture.-> COACH_CLST
     COACH_CLST -.⑤ + club engagé : export.-> COACH_PDF
 

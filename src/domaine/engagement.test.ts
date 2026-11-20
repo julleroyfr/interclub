@@ -20,6 +20,7 @@ import {
   verifierChangementEquipe,
   verifierAjoutComposition,
   voiesDuGroupeDepart,
+  tableauAideGroupes,
 } from './engagement'
 
 // Spec #5 « Espace Coach » — domaine pur de l'engagement en rencontre (équipes,
@@ -389,5 +390,34 @@ describe('spec #20 — Équipes adultes figées hors ① et ② (R10)', () => {
 
   it('le message de refus nomme les phases permises', () => {
     expect(MESSAGE_EQUIPES_ADULTES_FIGEES).toMatch(/pré-compétition.*préparation/)
+  })
+})
+
+describe('spec #5 — Aide au choix du groupe (R21ter)', () => {
+  const tableau = tableauAideGroupes()
+
+  it('une ligne par groupe sélectionnable, dans l’ordre de R19', () => {
+    expect(tableau.map((l) => l.niveau)).toEqual([...GROUPES_DEPART])
+    expect(tableau.map((l) => l.numero)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+  })
+
+  it('cotations max du document CT33 (null = aucune)', () => {
+    expect(tableau.map((l) => l.cotationMaxMoulinette)).toEqual([
+      '5b', '5c', '5c', '5c', null, null, null, null, null, null, null, null,
+    ])
+    expect(tableau.map((l) => l.cotationMaxTete)).toEqual([
+      null, null, '4c', '5a', '5b', '5c', '6a', '6b', '6c', '7a', '7b', '7c',
+    ])
+  })
+
+  it('voies à réaliser = les 3 voies de R20', () => {
+    expect(tableau[3]).toEqual({
+      numero: 4,
+      niveau: 'M4',
+      cotationMaxMoulinette: '5c',
+      cotationMaxTete: '5a',
+      voies: ['M4', 'T1', 'T2'],
+    })
+    for (const l of tableau) expect(l.voies).toEqual(voiesDuGroupeDepart(l.niveau))
   })
 })
