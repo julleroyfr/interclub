@@ -114,9 +114,9 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
   2. Observer l'indice de voies avant validation.
 - **Résultat attendu** :
   - L'indice affiche **« M2 · M3 · M4 »** (3 voies croissantes, R20).
-  - La liste des groupes va de **« Groupe M1/1 »** à **« Groupe T8/12 »** (numéro
+  - La liste des groupes va de **« Groupe 1/M1 »** à **« Groupe 12/T8 »** (numéro
     du règlement, R21bis) et s'arrête à **T8** (pas de T9/T10, R19).
-  - Après ajout, le grimpeur porte le badge **« Groupe M2/2 »** ; un grimpeur sans
+  - Après ajout, le grimpeur porte le badge **« Groupe 2/M2 »** ; un grimpeur sans
     groupe porte **« à définir »** (R21). L'éditeur inline permet de changer le groupe.
 - **RLS / sécurité** : sur une rencontre **ado**, aucun champ ni badge de groupe
   n'apparaît (R19).
