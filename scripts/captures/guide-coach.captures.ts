@@ -144,6 +144,7 @@ test('03 — engagement des équipes', async ({ page }) => {
     equipe.getByPlaceholder(/Rechercher/),
     equipe.getByRole('combobox').nth(2),
     equipe.getByRole('combobox').nth(3),
+    equipe.getByRole('link', { name: /Aide au choix du groupe/ }),
     equipe.getByRole('button', { name: 'Ajouter à l’équipe' }),
     equipe.getByRole('button', { name: 'Supprimer l’équipe' }),
   ])

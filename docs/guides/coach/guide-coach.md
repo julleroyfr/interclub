@@ -171,8 +171,9 @@ close.
 | 4 | Rechercher un nom ou prénom | Filtre la liste des grimpeurs du club |
 | 5 | Grimpeur | Choisit un grimpeur du club non encore engagé |
 | 6 | Groupe de départ (optionnel) | Groupe attribué dès l'ajout ; peut rester « À définir » |
-| 7 | Ajouter à l'équipe | Ajoute le grimpeur choisi |
-| 8 | Supprimer l'équipe | Supprime l'équipe et sa composition |
+| 7 | ? (Aide au choix du groupe) | Ouvre le tableau d'aide dans un nouvel onglet |
+| 8 | Ajouter à l'équipe | Ajoute le grimpeur choisi |
+| 9 | Supprimer l'équipe | Supprime l'équipe et sa composition |
 
 **Ajouter un grimpeur** : la liste ne propose que les grimpeurs du club
 **éligibles à la catégorie** de la rencontre, selon leur âge dans la saison
