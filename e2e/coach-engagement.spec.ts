@@ -159,6 +159,10 @@ test.describe('Cahier 13 — Espace coach : engagement', () => {
     await commeCoachTemporaire(page)
     await page.goto('/coach')
 
+    // Sur mobile, les liens sont repliés derrière « Menu » : l'ouvrir d'abord.
+    const menu = page.getByRole('button', { name: 'Menu' })
+    if (await menu.isVisible()) await menu.click()
+
     // Pas de lien liste « Mes rencontres » ; un lien direct « Ma rencontre ».
     await expect(page.getByRole('link', { name: 'Mes rencontres' })).toHaveCount(0)
     const maRencontre = page.getByRole('link', { name: 'Ma rencontre' })
