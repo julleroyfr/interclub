@@ -6,6 +6,29 @@ numérotation [SemVer](https://semver.org/lang/fr/) adaptée au projet.
 
 Règles et procédure : [docs/conventions/10-versionnement.md](docs/conventions/10-versionnement.md).
 
+## [2.4.0] — 2026-11-20
+
+Grimpeurs par niveau de voie, vue graphique des statistiques enfant et
+numéro de groupe placé avant le niveau.
+
+### Ajouté
+
+- **Grimpeurs par niveau de voie** (statistiques d’une rencontre enfant) :
+  nombre d’enfants qui grimperont une voie de chaque niveau, de M1 à T10 ;
+  chaque enfant compte pour les 3 niveaux de son groupe de départ (spec #3
+  R41gbis).
+- **Vue graphique** des cartes « Répartition par groupe de départ » et
+  « Grimpeurs par niveau de voie » : un bouton camembert affiche un graphique
+  en anneau avec légende, nombres et pourcentages ; un second clic revient à
+  la liste (spec #3 R41gter).
+
+### Modifié
+
+- **Libellé du groupe de départ** : le numéro du règlement passe avant le
+  niveau, « Groupe 2/M2 » au lieu de « Groupe M2/2 », partout où le groupe
+  s’affiche (engagement coach, équipes et saisie admin, statistiques)
+  (spec #5 R21bis).
+
 ## [2.3.0] — 2026-11-18
 
 Tableau de bord de la rencontre en onglets, statistiques des rencontres
