@@ -45,6 +45,19 @@
   .groupe.vide .n, .groupe.vide span:first-child { color:var(--texte-doux); }
   .groupe.adef { grid-column:1 / -1; color:var(--alerte); font-weight:600; }
   .groupe.adef .n { color:var(--alerte); }
+  .note { margin:10px 0 0; color:var(--texte-doux); font-size:12px; }
+  [hidden] { display:none !important; }
+  .entete-graphe { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .entete-graphe .c-titre { margin:0; }
+  .btn-graphe { display:inline-flex; width:44px; height:44px; align-items:center; justify-content:center; border-radius:12px; border:1px solid var(--bordure); background:var(--surface); color:var(--accent-doux); cursor:pointer; }
+  .btn-graphe:hover { background:var(--surface-forte); }
+  .graphe { display:flex; flex-wrap:wrap; gap:16px; align-items:center; margin-top:8px; }
+  .graphe svg { width:180px; height:180px; flex-shrink:0; }
+  .legende { list-style:none; margin:0; padding:0; font-size:13px; flex:1; min-width:160px; }
+  .legende li { display:flex; align-items:center; gap:8px; padding:3px 0; }
+  .legende .pastille { width:12px; height:12px; border-radius:3px; flex-shrink:0; }
+  .legende .v { margin-left:auto; color:var(--texte-fort); font-weight:700; font-variant-numeric:tabular-nums; }
+  .legende .pct { color:var(--texte-doux); width:3.5em; text-align:right; font-variant-numeric:tabular-nums; }
 
   .liste-clubs { list-style:none; margin:0; padding:0; }
   .liste-clubs a { display:flex; justify-content:space-between; align-items:center; min-height:44px; padding:0 4px; color:var(--texte); text-decoration:none; border-top:1px solid rgba(255,255,255,.06); }
@@ -123,22 +136,46 @@
 
     <!-- R41g — répartition par groupe, toutes phases -->
     <section class="carte">
-      <h2 class="c-titre">Répartition par groupe de départ <span class="regle">R41g</span></h2>
+      <div class="entete-graphe" data-graphe="groupes"><h2 class="c-titre">Répartition par groupe de départ <span class="regle">R41g</span> <span class="regle">R41gter</span></h2><button class="btn-graphe" type="button" title="Afficher en graphique" aria-label="Afficher en graphique"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12A9 9 0 1 1 12 3v9z"/><path d="M15 3.5A9 9 0 0 1 20.5 9H15z"/></svg></button></div>
+      <div class="graphe" hidden></div>
       <div class="groupes">
-        <div class="groupe"><span>Groupe M1/1</span><span class="n">4</span></div>
-        <div class="groupe"><span>Groupe M2/2</span><span class="n">7</span></div>
-        <div class="groupe"><span>Groupe M3/3</span><span class="n">8</span></div>
-        <div class="groupe"><span>Groupe M4/4</span><span class="n">6</span></div>
-        <div class="groupe"><span>Groupe T1/5</span><span class="n">5</span></div>
-        <div class="groupe"><span>Groupe T2/6</span><span class="n">4</span></div>
-        <div class="groupe"><span>Groupe T3/7</span><span class="n">3</span></div>
-        <div class="groupe"><span>Groupe T4/8</span><span class="n">1</span></div>
-        <div class="groupe vide"><span>Groupe T5/9</span><span class="n">0</span></div>
-        <div class="groupe vide"><span>Groupe T6/10</span><span class="n">0</span></div>
-        <div class="groupe vide"><span>Groupe T7/11</span><span class="n">0</span></div>
-        <div class="groupe vide"><span>Groupe T8/12</span><span class="n">0</span></div>
+        <div class="groupe"><span>Groupe 1/M1</span><span class="n">4</span></div>
+        <div class="groupe"><span>Groupe 2/M2</span><span class="n">7</span></div>
+        <div class="groupe"><span>Groupe 3/M3</span><span class="n">8</span></div>
+        <div class="groupe"><span>Groupe 4/M4</span><span class="n">6</span></div>
+        <div class="groupe"><span>Groupe 5/T1</span><span class="n">5</span></div>
+        <div class="groupe"><span>Groupe 6/T2</span><span class="n">4</span></div>
+        <div class="groupe"><span>Groupe 7/T3</span><span class="n">3</span></div>
+        <div class="groupe"><span>Groupe 8/T4</span><span class="n">1</span></div>
+        <div class="groupe vide"><span>Groupe 9/T5</span><span class="n">0</span></div>
+        <div class="groupe vide"><span>Groupe 10/T6</span><span class="n">0</span></div>
+        <div class="groupe vide"><span>Groupe 11/T7</span><span class="n">0</span></div>
+        <div class="groupe vide"><span>Groupe 12/T8</span><span class="n">0</span></div>
         <div class="groupe adef"><span>À définir</span><span class="n">4</span></div>
       </div>
+    </section>
+
+    <!-- R41gbis — grimpeurs par niveau de voie, toutes phases -->
+    <section class="carte">
+      <div class="entete-graphe" data-graphe="niveaux"><h2 class="c-titre">Grimpeurs par niveau de voie <span class="regle">R41gbis</span> <span class="regle">R41gter</span></h2><button class="btn-graphe" type="button" title="Afficher en graphique" aria-label="Afficher en graphique"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12A9 9 0 1 1 12 3v9z"/><path d="M15 3.5A9 9 0 0 1 20.5 9H15z"/></svg></button></div>
+      <div class="graphe" hidden></div>
+      <div class="groupes">
+        <div class="groupe"><span>M1</span><span class="n">4</span></div>
+        <div class="groupe"><span>M2</span><span class="n">11</span></div>
+        <div class="groupe"><span>M3</span><span class="n">19</span></div>
+        <div class="groupe"><span>M4</span><span class="n">21</span></div>
+        <div class="groupe"><span>T1</span><span class="n">19</span></div>
+        <div class="groupe"><span>T2</span><span class="n">15</span></div>
+        <div class="groupe"><span>T3</span><span class="n">12</span></div>
+        <div class="groupe"><span>T4</span><span class="n">8</span></div>
+        <div class="groupe"><span>T5</span><span class="n">4</span></div>
+        <div class="groupe"><span>T6</span><span class="n">1</span></div>
+        <div class="groupe vide"><span>T7</span><span class="n">0</span></div>
+        <div class="groupe vide"><span>T8</span><span class="n">0</span></div>
+        <div class="groupe vide"><span>T9</span><span class="n">0</span></div>
+        <div class="groupe vide"><span>T10</span><span class="n">0</span></div>
+      </div>
+      <p class="note">Chaque enfant compte pour les 3 niveaux de son groupe. 4 enfants sans groupe (à définir) ne sont comptés à aucun niveau.</p>
     </section>
 
     <!-- R41i — avancement de la saisie, ③ -->
@@ -175,6 +212,49 @@
     document.body.className = b.dataset.demo
     document.querySelectorAll('[data-demo]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)))
   }))
+  // R41gter — bascule liste ↔ graphique en anneau, construit depuis la liste.
+  const CAMEMBERT = '<path d="M21 12A9 9 0 1 1 12 3v9z"/><path d="M15 3.5A9 9 0 0 1 20.5 9H15z"/>'
+  const LISTE = '<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>'
+  function arc(cx, cy, r, ri, a0, a1) {
+    if (a1 - a0 >= Math.PI * 2 - 1e-6) a1 = a0 + Math.PI * 2 - 1e-4
+    const p = (rr, a) => [cx + rr * Math.sin(a), cy - rr * Math.cos(a)]
+    const g = a1 - a0 > Math.PI ? 1 : 0
+    const [x0, y0] = p(r, a0), [x1, y1] = p(r, a1), [x2, y2] = p(ri, a1), [x3, y3] = p(ri, a0)
+    return `M${x0} ${y0}A${r} ${r} 0 ${g} 1 ${x1} ${y1}L${x2} ${y2}A${ri} ${ri} 0 ${g} 0 ${x3} ${y3}Z`
+  }
+  document.querySelectorAll('[data-graphe]').forEach((entete) => {
+    const carte = entete.closest('.carte')
+    const liste = carte.querySelector('.groupes')
+    const graphe = carte.querySelector('.graphe')
+    const btn = entete.querySelector('.btn-graphe')
+    const parts = [...liste.querySelectorAll('.groupe')]
+      .map((el) => ({ libelle: el.children[0].textContent, n: +el.children[1].textContent, alerte: el.classList.contains('adef') }))
+      .filter((x) => x.n > 0)
+    const total = parts.reduce((t, x) => t + x.n, 0)
+    const ordonnees = parts.filter((x) => !x.alerte)
+    const couleur = (x) => x.alerte ? 'var(--alerte)'
+      : `oklch(${0.92 - (0.4 * ordonnees.indexOf(x)) / Math.max(1, ordonnees.length - 1)} 0.13 210)`
+    let a = 0
+    const chemins = parts.map((x) => {
+      const a1 = a + (x.n / total) * Math.PI * 2
+      const d = arc(90, 90, 86, 54, a, a1); a = a1
+      return `<path d="${d}" fill="${couleur(x)}" stroke="#0b1222" stroke-width="2"><title>${x.libelle} : ${x.n}</title></path>`
+    }).join('')
+    const niveaux = entete.dataset.graphe === 'niveaux'
+    const centre = `<text x="90" y="88" text-anchor="middle" fill="#fff" font-size="26" font-weight="700">${total}</text>`
+      + `<text x="90" y="108" text-anchor="middle" fill="#94a3b8" font-size="11">${niveaux ? 'voies · 3 par enfant' : 'enfants'}</text>`
+    graphe.innerHTML = `<svg viewBox="0 0 180 180" role="img" aria-label="Graphique">${chemins}${centre}</svg>`
+      + '<ul class="legende">' + parts.map((x) => `<li><span class="pastille" style="background:${couleur(x)}"></span>${x.libelle}`
+      + `<span class="v">${x.n}</span><span class="pct">${Math.round((x.n / total) * 100)} %</span></li>`).join('') + '</ul>'
+    btn.addEventListener('click', () => {
+      const versGraphe = graphe.hidden
+      graphe.hidden = !versGraphe
+      liste.hidden = versGraphe
+      const lib = versGraphe ? 'Afficher en liste' : 'Afficher en graphique'
+      btn.title = lib; btn.setAttribute('aria-label', lib)
+      btn.querySelector('svg').innerHTML = versGraphe ? LISTE : CAMEMBERT
+    })
+  })
 </script>
 </body>
 </html>

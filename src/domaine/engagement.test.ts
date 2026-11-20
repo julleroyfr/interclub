@@ -114,18 +114,18 @@ describe('spec #5 — Groupe de départ — liste sélectionnable (R19)', () => 
 
 describe('spec #5 — Groupe de départ — libellé avec numéro du règlement (R21bis)', () => {
   it.each([
-    ['M1', 'Groupe M1/1'],
-    ['M3', 'Groupe M3/3'],
-    ['M4', 'Groupe M4/4'],
-    ['T1', 'Groupe T1/5'],
-    ['T8', 'Groupe T8/12'],
+    ['M1', 'Groupe 1/M1'],
+    ['M3', 'Groupe 3/M3'],
+    ['M4', 'Groupe 4/M4'],
+    ['T1', 'Groupe 5/T1'],
+    ['T8', 'Groupe 12/T8'],
   ])('%s ⇒ « %s »', (groupe, libelle) => {
     expect(libelleGroupeDepart(groupe)).toBe(libelle)
   })
 
   it('numérote 1 à 12 dans l’ordre de la liste R19', () => {
     expect(GROUPES_DEPART.map(libelleGroupeDepart)).toEqual(
-      GROUPES_DEPART.map((g, i) => `Groupe ${g}/${i + 1}`),
+      GROUPES_DEPART.map((g, i) => `Groupe ${i + 1}/${g}`),
     )
   })
 

@@ -69,12 +69,12 @@ export const GROUPES_DEPART = ECHELLE_NIVEAUX.slice(
 
 /**
  * Libellé affiché d'un groupe de départ (R21bis) : niveau + numéro de groupe du
- * règlement (rang dans `GROUPES_DEPART`), ex. `M1` ⇒ « Groupe M1/1 », `T1` ⇒
- * « Groupe T1/5 ». Une valeur hors liste garde le seul niveau.
+ * règlement (rang dans `GROUPES_DEPART`), ex. `M1` ⇒ « Groupe 1/M1 », `T1` ⇒
+ * « Groupe 5/T1 ». Une valeur hors liste garde le seul niveau.
  */
 export function libelleGroupeDepart(groupe: string): string {
   const rang = (GROUPES_DEPART as readonly string[]).indexOf(groupe)
-  return rang < 0 ? `Groupe ${groupe}` : `Groupe ${groupe}/${rang + 1}`
+  return rang < 0 ? `Groupe ${groupe}` : `Groupe ${rang + 1}/${groupe}`
 }
 
 /** Saisie invalide d'un engagement (nom d'équipe, ajout de grimpeur). */

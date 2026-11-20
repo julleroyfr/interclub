@@ -4,16 +4,20 @@ import {
   bilanRencontre,
   clubsSansGroupe,
   effectifs,
+  grimpeursParNiveau,
+  partsGraphique,
   repartitionParGroupe,
   sectionsStatistiques,
 } from '@/domaine/statistiques-rencontre'
 import type { DonneesStatistiques } from '@/lib/admin/statistiques'
 
 import { ancreClub } from './ancre-club'
+import { CarteGraphique } from './carte-graphique'
 
-// Statistiques d'une rencontre enfant (spec #3 R41e–R41j) : effectifs,
-// répartition par groupe de départ et clubs avec des enfants sans groupe en
-// toutes phases ; avancement de la saisie en ③ ; bilan en ④/⑤.
+// Statistiques d'une rencontre enfant (spec #3 R41e–R41j, R41gbis, R41gter) :
+// effectifs,
+// répartition par groupe de départ, grimpeurs par niveau de voie et clubs avec
+// des enfants sans groupe en toutes phases ; avancement de la saisie en ③ ; bilan en ④/⑤.
 
 const titre = 'mb-3 text-xs font-bold uppercase tracking-wide text-texte-fort'
 const th = 'px-1 py-1.5 text-[11px] font-bold uppercase tracking-wide text-texte-doux'
@@ -34,6 +38,7 @@ export function PanneauStatistiques({
   const sections = sectionsStatistiques(donnees.phase)
   const eff = effectifs(enfants, clubs)
   const repartition = repartitionParGroupe(enfants)
+  const parNiveau = grimpeursParNiveau(enfants)
   const sansGroupe = clubsSansGroupe(enfants, clubs)
   const avecNonRenseigne = eff.total.nonRenseigne > 0
 
@@ -116,8 +121,14 @@ export function PanneauStatistiques({
       )}
 
       {/* R41g — répartition par groupe de départ */}
-      <Carte className="p-4">
-        <h3 className={titre}>Répartition par groupe de départ</h3>
+      <CarteGraphique
+        titre="Répartition par groupe de départ"
+        legendeCentre="enfants"
+        donnees={partsGraphique([
+          ...repartition.groupes.map((g) => ({ cle: g.groupe, libelle: g.libelle, nombre: g.nombre })),
+          { cle: 'a-definir', libelle: 'À définir', nombre: repartition.aDefinir, alerte: true },
+        ])}
+      >
         <ul className="grid grid-cols-2 gap-x-5 sm:grid-cols-3">
           {repartition.groupes.map((g) => (
             <li
@@ -135,7 +146,37 @@ export function PanneauStatistiques({
             <span className="tabular-nums">{repartition.aDefinir}</span>
           </li>
         </ul>
-      </Carte>
+      </CarteGraphique>
+
+      {/* R41gbis — grimpeurs par niveau de voie */}
+      <CarteGraphique
+        titre="Grimpeurs par niveau de voie"
+        legendeCentre="voies · 3 par enfant"
+        donnees={partsGraphique(
+          parNiveau.niveaux.map((l) => ({ cle: l.niveau, libelle: l.niveau, nombre: l.nombre })),
+        )}
+        pied={
+          <p className="mt-2 text-xs text-texte-doux">
+            Chaque enfant compte pour les 3 niveaux de son groupe.
+            {parNiveau.aDefinir > 0 &&
+              ` ${parNiveau.aDefinir} enfant${parNiveau.aDefinir > 1 ? 's' : ''} sans groupe (à définir) ${parNiveau.aDefinir > 1 ? 'ne sont comptés' : 'n’est compté'} à aucun niveau.`}
+          </p>
+        }
+      >
+        <ul className="grid grid-cols-2 gap-x-5 sm:grid-cols-3">
+          {parNiveau.niveaux.map((l) => (
+            <li
+              key={l.niveau}
+              className={`flex justify-between border-t border-white/5 py-1.5 text-sm ${l.nombre === 0 ? 'text-texte-doux' : ''}`}
+            >
+              <span>{l.niveau}</span>
+              <span className={`tabular-nums ${l.nombre === 0 ? '' : 'font-bold text-texte-fort'}`}>
+                {l.nombre}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </CarteGraphique>
 
       {sections.avancement && (
         <Avancement donnees={donnees} nbBlocs={nbBlocs} avecVitesse={avecVitesse} />

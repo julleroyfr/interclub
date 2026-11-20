@@ -5,6 +5,9 @@
   — engagement éditable par coach permanent en ① pré-compétition et par permanent
   **et** temporaire en ② préparation, gelé dès ③ compétition, R16 — validé le
   2026-09-01)
+- **Révision** : 2026-11-20 (**validée le 2026-11-20**) — R21bis : ordre du
+  libellé inversé, le **numéro** précède le niveau (« Groupe 1/M1 » …
+  « Groupe 12/T8 », au lieu de « Groupe M1/1 »). Stockage inchangé.
 - **Révision** : 2026-11-17 (**validée le 2026-11-17**) — **numéro de groupe du
   règlement** (R21bis) : le groupe de départ s'affiche « Groupe M1/1 » …
   « Groupe T8/12 » (niveau + numéro du règlement). Stockage inchangé.
@@ -286,9 +289,9 @@ cette spec. (Spec #1 R6/R27, rév. 2026-09-01.)
 - **R21bis.** Partout où un groupe de départ est **affiché** (badge, liste de
   choix, ligne de saisie), il porte **à la fois** le niveau et le **numéro de
   groupe du règlement** (tableau « Correspondance groupes et voies Matin ») :
-  libellé `Groupe <niveau>/<numéro>`, le numéro étant le **rang** du niveau dans
-  la liste de R19 (`M1`→1 … `M4`→4, `T1`→5 … `T8`→12). Ex. « Groupe M1/1 »,
-  « Groupe M3/3 », « Groupe T1/5 ». La valeur **stockée** reste le niveau
+  libellé `Groupe <numéro>/<niveau>`, le numéro étant le **rang** du niveau dans
+  la liste de R19 (`M1`→1 … `M4`→4, `T1`→5 … `T8`→12). Ex. « Groupe 1/M1 »,
+  « Groupe 3/M3 », « Groupe 5/T1 ». La valeur **stockée** reste le niveau
   (`M1`…`T8`, inchangé). Ce libellé est une **fonction pure** du domaine.
 
 ## Scénarios
@@ -346,7 +349,7 @@ de l'admin (R13, spec #1 R36).
 
 Étant donné une rencontre **enfant** en phase ①, quand le coach ajoute un enfant
 et lui choisit le groupe **`M2`** (R19), alors la composition affiche « Groupe
-M2/2 » (R21bis) et le système en dérive les 3 voies **M2, M3, M4** (R20). Un
+2/M2 » (R21bis) et le système en dérive les 3 voies **M2, M3, M4** (R20). Un
 autre enfant peut être ajouté **sans** groupe (« à définir ») et complété plus tard (R19).
 
 ### Cas limites / erreurs

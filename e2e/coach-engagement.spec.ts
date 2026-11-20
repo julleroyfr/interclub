@@ -53,7 +53,7 @@ async function ajouterGrimpeur(
   if (groupe) {
     await carte
       .getByLabel('Groupe de départ (optionnel)')
-      .selectOption(groupe) // valeur = niveau (libellé « Groupe M2/2 », R21bis)
+      .selectOption(groupe) // valeur = niveau (libellé « Groupe 2/M2 », R21bis)
   }
   await carte.getByRole('button', { name: /Ajouter à l.équipe/ }).click()
   // Confirmer via la LIGNE de composition (li). La composition affiche le NOM
@@ -159,6 +159,10 @@ test.describe('Cahier 13 — Espace coach : engagement', () => {
     await commeCoachTemporaire(page)
     await page.goto('/coach')
 
+    // Sur mobile, les liens sont repliés derrière « Menu » : l'ouvrir d'abord.
+    const menu = page.getByRole('button', { name: 'Menu' })
+    if (await menu.isVisible()) await menu.click()
+
     // Pas de lien liste « Mes rencontres » ; un lien direct « Ma rencontre ».
     await expect(page.getByRole('link', { name: 'Mes rencontres' })).toHaveCount(0)
     const maRencontre = page.getByRole('link', { name: 'Ma rencontre' })
@@ -209,12 +213,12 @@ test.describe('Cahier 13 — Espace coach : engagement', () => {
 
     // R19 : la liste des groupes s'arrête à T8 (ni T9 ni T10).
     const groupes = await selectGroupe.locator('option').allInnerTexts()
-    expect(groupes).toContain('Groupe T8/12')
+    expect(groupes).toContain('Groupe 12/T8')
     expect(groupes.join()).not.toContain('T9')
     expect(groupes.join()).not.toContain('T10')
 
     // R20 : choisir M2 affiche l'indice « M2 · M3 · M4 » (3 voies croissantes).
-    await selectGroupe.selectOption({ label: 'Groupe M2/2' })
+    await selectGroupe.selectOption({ label: 'Groupe 2/M2' })
     await expect(carteA2.getByText('M2 · M3 · M4')).toBeVisible()
 
     // R21 : après ajout avec le groupe M2, la ligne du membre reflète M2.
@@ -280,7 +284,7 @@ test.describe('Cahier 13 — Espace coach : engagement', () => {
     await expect(ligneDevi.getByText(/Prêté · Club B/)).toBeVisible()
 
     // R21 : le groupe de départ du prêté persiste.
-    await ligneDevi.locator('select[name="groupeDepart"]').selectOption({ label: 'Groupe M2/2' })
+    await ligneDevi.locator('select[name="groupeDepart"]').selectOption({ label: 'Groupe 2/M2' })
     await ligneDevi.getByRole('button', { name: 'OK' }).click()
     await expect(ligneDevi.locator('select[name="groupeDepart"]')).toHaveValue('M2')
     // La valeur du select est vraie côté client avant la réponse serveur : on

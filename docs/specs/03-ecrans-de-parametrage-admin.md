@@ -1,5 +1,13 @@
 # Spec : Écrans de paramétrage (admin)
 
+- **Révision** : 2026-11-20 (**validée le 2026-11-20**) — **vue graphique**
+  (camembert) des cartes « Répartition par groupe de départ » et « Grimpeurs
+  par niveau de voie » (R41gter, règle de changement) : révise R41g et R41gbis.
+  Graphique SVG sans librairie. Aucune migration.
+- **Révision** : 2026-11-20 (**validée le 2026-11-20**) — **grimpeurs par
+  niveau de voie** dans les statistiques d'une rencontre enfant (R41gbis) :
+  nombre d'enfants par niveau `M1` … `T10`, déduit des groupes de départ.
+  Aucune migration.
 - **Révision** : 2026-11-18 (**validée le 2026-11-18**) — **tableau de bord
   d'une rencontre en onglets** (R41k, règle de changement) : en-tête de pilotage
   puis onglets Vue d'ensemble / Structure / Équipes / Prêts / Statistiques, onglet
@@ -641,7 +649,7 @@ flowchart TD
   L'action n'est **pas proposée** quand le club d'affectation n'a **qu'une seule
   équipe** dans la rencontre.
 
-#### Statistiques d'une rencontre enfant (R41e–R41j)
+#### Statistiques d'une rencontre enfant (R41e–R41j, R41gbis, R41gter)
 
 *(Ajout demandé et validé le 2026-11-18.)* Les statistiques sont **calculées**
 à partir des compositions, des résultats de voie et de bloc et des résultats de
@@ -656,9 +664,41 @@ compte pour son **club d'accueil** (le club de son équipe, spec #1 R35/R36).
   sexe renseigné est compté à part, « non renseigné »).
 - **R41g.** *(Toutes phases.)* **Répartition par groupe de départ** : une ligne
   par groupe de la liste de la spec #5 R19 (`M1` … `T8`), dans cet ordre, libellée
-  selon la spec #5 R21bis (« Groupe M1/1 » … « Groupe T8/12 »), avec le nombre
+  selon la spec #5 R21bis (« Groupe 1/M1 » … « Groupe 12/T8 »), avec le nombre
   d'enfants ; puis une ligne **« À définir »** pour les enfants sans groupe. Un
   groupe sans enfant est affiché avec **0** (repérer les groupes vides).
+- **R41gbis.** *(Toutes phases — ajout validé le 2026-11-20.)* **Grimpeurs par
+  niveau de voie** : une ligne par niveau de l'échelle (`M1` … `M4`, `T1` …
+  `T10`, dans cet ordre), avec le **nombre d'enfants qui grimperont une voie de
+  ce niveau**. Chaque enfant ayant un groupe de départ compte pour les **3
+  niveaux** de son groupe (spec #5 R20) : un enfant du groupe 2/M2 compte en
+  M2, M3 et M4 ; `T9` et `T10` sont donc atteints par les groupes `T7` et `T8`.
+  Un niveau sans enfant est affiché avec **0**. Les enfants **sans groupe** ne
+  comptent à aucun niveau ; leur nombre (« À définir », R41g) est rappelé sous
+  la liste. Un niveau **doublé** (spec #6 R9bis) ne change pas le décompte :
+  l'enfant n'y grimpe qu'une voie. Le panneau suit la répartition par groupe
+  (R41g).
+- **R41gter.** *(Toutes phases — ajout validé le 2026-11-20.)* **Vue
+  graphique** des cartes R41g et R41gbis :
+  - a. L'en-tête de chaque carte porte un **bouton à icône camembert**
+    (« Afficher en graphique », cible tactile ≥ 44 px). Un clic remplace la
+    liste par un **graphique en anneau** (donut) ; le bouton devient une
+    **icône liste** (« Afficher en liste ») pour revenir aux chiffres. Le
+    changement se fait sur place, sans rechargement ; la carte s'ouvre toujours
+    en **liste**.
+  - b. Une **part** par groupe (R41g) ou par niveau (R41gbis) ayant **au moins
+    1 enfant**, dans l'ordre de la liste ; les zéros sont omis. Chaque part a
+    une **légende** : libellé, nombre et **pourcentage** du total des parts
+    (arrondi à l'unité). Le **total** des parts s'affiche au centre.
+  - c. Couleurs : **dégradé d'une seule teinte**, du plus clair (premier
+    niveau ou groupe) au plus foncé (dernier), les parts séparées par un
+    liseré. Pour R41g, la part **« À définir »** est en couleur d'**alerte**
+    (ambre).
+  - d. Pour R41gbis, le centre affiche le nombre de **voies à grimper** (total
+    des parts) avec la mention « 3 voies par enfant » ; les enfants sans groupe
+    restent hors du graphique (note de R41gbis conservée).
+  - e. Sans aucune part (aucun enfant, ou aucun enfant avec groupe pour
+    R41gbis), le bouton n'est **pas proposé**.
 - **R41h.** *(Toutes phases.)* **Clubs avec des enfants sans groupe de départ** :
   liste des clubs ayant **au moins un** enfant sans groupe, avec leur nombre,
   triée par nom de club. Chaque club renvoie à son **bloc d'engagement** (R41c),

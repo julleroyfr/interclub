@@ -447,11 +447,51 @@ d'ouverture du **tableau de bord** → `/admin/rencontres/<id>`.
      équipes ; filles + garçons (+ « non renseigné » le cas échéant) = total. ✅
   2. Le tableau par club est trié par nom ; l'enfant prêté est compté dans son
      **club d'accueil**, pas dans son club d'origine. ✅
-  3. **Répartition** : 12 lignes « Groupe M1/1 » … « Groupe T8/12 » dans cet
+  3. **Répartition** : 12 lignes « Groupe 1/M1 » … « Groupe 12/T8 » dans cet
      ordre, les groupes vides à **0** (grisés), puis « À définir » avec le
      nombre d'enfants sans groupe. La somme des lignes = total des effectifs. ✅
   4. Fixer le groupe d'un enfant « à définir » (bloc équipes, ou espace coach) :
      après rechargement, son groupe gagne 1 et « À définir » perd 1. ✅
+
+### CT-30 — Grimpeurs par niveau de voie (couvre R41gbis)
+
+- **Rôle** : admin. **Pré-condition** : celle de CT-25, avec au moins un enfant
+  en groupe **T7** ou **T8** (sinon, en fixer un pour le test).
+- **Étapes / résultat attendu** :
+  1. Onglet **Statistiques** : la carte « Grimpeurs par niveau de voie » suit
+     la répartition par groupe ; 14 lignes **M1 … M4, T1 … T10** dans cet
+     ordre, les niveaux vides à **0** (grisés). ✅
+  2. Chaque niveau vaut la somme des groupes qui le grimpent (relevés dans la
+     répartition) : ex. M3 = groupes 1/M1 + 2/M2 + 3/M3 ; T9 = 11/T7 + 12/T8 ;
+     T10 = 12/T8. La somme des lignes = 3 × (total − « À définir »). ✅
+  3. La note sous la carte rappelle le nombre d'enfants sans groupe, non
+     comptés ; sans enfant sans groupe, seule la phrase « Chaque enfant compte
+     pour les 3 niveaux de son groupe. » reste. ✅
+  4. Fixer le groupe d'un enfant « à définir » en **2/M2** : après
+     rechargement, M2, M3 et M4 gagnent chacun 1. ✅
+
+### CT-31 — Vue graphique des répartitions (couvre R41gter)
+
+- **Rôle** : admin. **Pré-condition** : celle de CT-30 (au moins un enfant sans
+  groupe).
+- **Étapes / résultat attendu** :
+  1. Les cartes « Répartition par groupe de départ » et « Grimpeurs par niveau
+     de voie » s'ouvrent en **liste**, avec un bouton **camembert** dans leur
+     en-tête (infobulle « Afficher en graphique »). ✅
+  2. Toucher le camembert de la répartition par groupe : un **anneau** remplace
+     la liste, avec le nombre d'enfants au centre ; une part par groupe non vide
+     plus « À définir » en **ambre** ; la légende donne libellé, nombre et
+     pourcentage (somme ≈ 100 %). Les groupes à 0 sont absents. ✅
+  3. Le bouton devient une **icône liste** (« Afficher en liste ») ; le toucher
+     revient à la liste. ✅
+  4. Carte niveaux en graphique : le centre affiche le total des voies
+     (= 3 × enfants avec groupe) et « voies · 3 par enfant » ; le dégradé va du
+     plus clair (premier niveau) au plus foncé ; la note sur les enfants sans
+     groupe reste affichée. ✅
+  5. Survol d'une part (ordinateur) : infobulle « libellé : nombre (x %) ». ✅
+  6. Recharger la page : les cartes reviennent en **liste**. ✅
+  7. Rencontre enfant **sans enfant engagé** : aucun bouton camembert. ✅
+  8. Mobile (~375 px) : l'anneau et la légende s'empilent, sans débordement. ✅
 
 ### CT-26 — Clubs avec des enfants sans groupe de départ (couvre R41h)
 
@@ -558,6 +598,8 @@ d'ouverture du **tableau de bord** → `/admin/rencontres/<id>`.
 | CT-27 | | | | ⬜ | avancement de la saisie en ③ (R41i) |
 | CT-28 | | | | ⬜ | bilan en ④/⑤ (R41j) |
 | CT-29 | | | | ⬜ | tableau de bord en onglets (R41k) |
+| CT-30 | | | | ⬜ | grimpeurs par niveau de voie (R41gbis) |
+| CT-31 | | | | ⬜ | vue graphique des répartitions (R41gter) |
 
 > Le domaine (`validerNiveauVoie` R37, `validerPoints` R38, `champsPointsVoie`
 > R38/R43) est couvert par Vitest (`npm run test`, `src/domaine/gabarit.test.ts`).

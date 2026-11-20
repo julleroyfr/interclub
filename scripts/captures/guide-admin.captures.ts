@@ -162,7 +162,7 @@ test('03 — tableau de bord d’une rencontre', async ({ page }) => {
   ])
   await capturer(page, '03b-rencontre-structure')
 
-  // Statistiques d'une rencontre enfant (spec #3 R41e–R41j). Un enfant de B1
+  // Statistiques d'une rencontre enfant (spec #3 R41e–R41j, R41gbis). Un enfant de B1
   // (Cléo) sans groupe, pour montrer la liste des clubs ; `etatSeed` le rétablit.
   execSql(
     `update interclub.composition set groupe_depart = null where equipe_id = '${EQUIPES.B1}';`,
@@ -173,8 +173,19 @@ test('03 — tableau de bord d’une rencontre', async ({ page }) => {
     statistiques.getByRole('heading', { name: 'Effectifs' }),
     statistiques.getByRole('heading', { name: /Enfants sans groupe de départ/ }),
     statistiques.getByRole('heading', { name: 'Répartition par groupe de départ' }),
+    statistiques.getByRole('heading', { name: 'Grimpeurs par niveau de voie' }),
   ])
   await capturerBloc(page, statistiques, '21-rencontre-statistiques')
+
+  // Vue graphique (R41gter) de la carte « Grimpeurs par niveau de voie ».
+  await effacerReperes(page)
+  const parNiveau = statistiques
+    .getByRole('heading', { name: 'Grimpeurs par niveau de voie' })
+    .locator('xpath=ancestor::div[contains(@class,"rounded-2xl")][1]')
+  await parNiveau.getByRole('button', { name: 'Afficher en graphique' }).click()
+  const boutonListe = parNiveau.getByRole('button', { name: 'Afficher en liste' })
+  await numeroter(page, [boutonListe, parNiveau.getByRole('img')])
+  await capturerBloc(page, parNiveau, '21b-statistiques-graphique')
 
   await effacerReperes(page)
   await page.goto(`/admin/rencontres/${RENCONTRE_PILOTE}?onglet=equipes`)
