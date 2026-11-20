@@ -379,11 +379,14 @@ de la rencontre.
 | --- | --- | --- |
 | 1 | Effectifs | Nombre d'enfants engagés, filles et garçons, par club |
 | 2 | Enfants sans groupe de départ | Clubs qui ont encore des enfants sans groupe ; toucher un club ouvre l'onglet **Équipes** sur ce club |
-| 3 | Répartition par groupe de départ | Nombre d'enfants par groupe (M1/1 … T8/12), groupes vides à 0, puis « À définir » |
+| 3 | Répartition par groupe de départ | Nombre d'enfants par groupe (1/M1 … 12/T8), groupes vides à 0, puis « À définir » |
+| 4 | Grimpeurs par niveau de voie | Nombre d'enfants qui grimperont une voie de chaque niveau (M1 … T10) ; chaque enfant compte pour les 3 niveaux de son groupe |
 
-- **Toujours affichés** : effectifs, enfants sans groupe de départ et
-  répartition par groupe. Un enfant prêté compte pour le club qui l'accueille.
-  La répartition aide à prévoir les voies à doubler.
+- **Toujours affichés** : effectifs, enfants sans groupe de départ,
+  répartition par groupe et grimpeurs par niveau de voie. Un enfant prêté
+  compte pour le club qui l'accueille. Le nombre de grimpeurs par niveau aide à
+  prévoir les voies à doubler : un enfant du groupe 2/M2 compte en M2, M3 et
+  M4. Les enfants sans groupe ne sont comptés à aucun niveau.
 - **À partir de la ③ compétition**, les clubs ayant encore des enfants sans
   groupe passent en **alerte** : ces enfants ne peuvent recevoir aucun résultat
   de voie. Donnez-leur un groupe dans les équipes du club.
@@ -394,6 +397,19 @@ de la rencontre.
 - **En ④ clôture et ⑤ résultats publics**, la carte **Bilan** compte, par club,
   les NP en voies et en blocs (y compris ceux posés automatiquement à la
   clôture), les absences en vitesse et les vitesses jamais saisies.
+
+**Vue graphique.** Les cartes « Répartition par groupe de départ » et
+« Grimpeurs par niveau de voie » ont un bouton **camembert** en haut à
+droite. Il affiche la répartition en anneau, avec le nombre et le
+pourcentage de chaque groupe ou niveau ; les groupes « À définir » sont en
+ambre. Le bouton **liste** revient aux chiffres.
+
+<img src="captures/21b-statistiques-graphique.png" alt="Vue graphique des grimpeurs par niveau" width="480">
+
+| N° | Élément | Effet |
+| --- | --- | --- |
+| 1 | Bouton liste | Revient à la liste des chiffres (en liste, ce bouton est un camembert) |
+| 2 | Anneau | Une part par niveau ayant des grimpeurs ; au centre, le nombre de voies à grimper (3 par enfant) |
 
 ### Voies doublées et repères
 

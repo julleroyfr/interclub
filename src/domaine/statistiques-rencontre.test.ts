@@ -5,13 +5,15 @@ import {
   bilanRencontre,
   clubsSansGroupe,
   effectifs,
+  grimpeursParNiveau,
+  partsGraphique,
   repartitionParGroupe,
   sectionsStatistiques,
   type ClubStat,
   type EnfantStat,
 } from './statistiques-rencontre'
 
-// Spec #3 R41e–R41j — statistiques du tableau de bord d'une rencontre enfant.
+// Spec #3 R41e–R41j, R41gbis, R41gter — statistiques du tableau de bord d'une rencontre enfant.
 // Fonctions pures : les lectures (compositions, résultats, vitesse) sont faites
 // par le chargeur ; un enfant prêté arrive déjà rattaché à son club d'accueil.
 
@@ -74,15 +76,101 @@ describe('spec #3 — répartition par groupe de départ (R41g)', () => {
   it('une ligne par groupe M1…T8 dans l’ordre, libellée « Groupe X/n », groupes vides à 0', () => {
     const r = repartitionParGroupe(enfants)
     expect(r.groupes).toHaveLength(12)
-    expect(r.groupes[0]).toEqual({ groupe: 'M1', libelle: 'Groupe M1/1', nombre: 2 })
-    expect(r.groupes[1]).toEqual({ groupe: 'M2', libelle: 'Groupe M2/2', nombre: 0 })
-    expect(r.groupes[2]).toEqual({ groupe: 'M3', libelle: 'Groupe M3/3', nombre: 1 })
-    expect(r.groupes[5]).toEqual({ groupe: 'T2', libelle: 'Groupe T2/6', nombre: 1 })
-    expect(r.groupes[11]).toEqual({ groupe: 'T8', libelle: 'Groupe T8/12', nombre: 0 })
+    expect(r.groupes[0]).toEqual({ groupe: 'M1', libelle: 'Groupe 1/M1', nombre: 2 })
+    expect(r.groupes[1]).toEqual({ groupe: 'M2', libelle: 'Groupe 2/M2', nombre: 0 })
+    expect(r.groupes[2]).toEqual({ groupe: 'M3', libelle: 'Groupe 3/M3', nombre: 1 })
+    expect(r.groupes[5]).toEqual({ groupe: 'T2', libelle: 'Groupe 6/T2', nombre: 1 })
+    expect(r.groupes[11]).toEqual({ groupe: 'T8', libelle: 'Groupe 12/T8', nombre: 0 })
   })
 
   it('compte à part les enfants sans groupe (« À définir »)', () => {
     expect(repartitionParGroupe(enfants).aDefinir).toBe(3)
+  })
+})
+
+describe('spec #3 — grimpeurs par niveau de voie (R41gbis)', () => {
+  it('une ligne par niveau M1…M4 puis T1…T10, dans l’ordre', () => {
+    expect(grimpeursParNiveau(enfants).niveaux.map((l) => l.niveau)).toEqual([
+      'M1', 'M2', 'M3', 'M4', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10',
+    ])
+  })
+
+  it('chaque enfant compte pour les 3 niveaux de son groupe, niveaux vides à 0', () => {
+    // 2 × M1 (M1, M2, M3), 1 × M3 (M3, M4, T1), 1 × T2 (T2, T3, T4)
+    const nombres = Object.fromEntries(
+      grimpeursParNiveau(enfants).niveaux.map((l) => [l.niveau, l.nombre]),
+    )
+    expect(nombres).toEqual({
+      M1: 2, M2: 2, M3: 3, M4: 1, T1: 1, T2: 1, T3: 1, T4: 1,
+      T5: 0, T6: 0, T7: 0, T8: 0, T9: 0, T10: 0,
+    })
+  })
+
+  it('T9 et T10 sont atteints par les groupes T7 et T8', () => {
+    const hauts: EnfantStat[] = [
+      { grimpeurId: 'x', clubId: 'bdx', sexe: 'F', groupeDepart: 'T7' },
+      { grimpeurId: 'y', clubId: 'bdx', sexe: 'H', groupeDepart: 'T8' },
+    ]
+    const n = grimpeursParNiveau(hauts).niveaux
+    expect(n.find((l) => l.niveau === 'T9')?.nombre).toBe(2)
+    expect(n.find((l) => l.niveau === 'T10')?.nombre).toBe(1)
+    expect(n.find((l) => l.niveau === 'T7')?.nombre).toBe(1)
+  })
+
+  it('les enfants sans groupe ne comptent à aucun niveau et sont rappelés à part', () => {
+    const r = grimpeursParNiveau(enfants)
+    expect(r.niveaux.reduce((s, l) => s + l.nombre, 0)).toBe(4 * 3)
+    expect(r.aDefinir).toBe(3)
+  })
+
+  it('aucun enfant ⇒ tous les niveaux à 0', () => {
+    const r = grimpeursParNiveau([])
+    expect(r.niveaux.every((l) => l.nombre === 0)).toBe(true)
+    expect(r.aDefinir).toBe(0)
+  })
+})
+
+describe('spec #3 — parts de la vue graphique (R41gter)', () => {
+  it('une part par ligne non nulle, dans l’ordre, avec total et pourcentage arrondi', () => {
+    const r = partsGraphique([
+      { cle: 'M1', libelle: 'M1', nombre: 1 },
+      { cle: 'M2', libelle: 'M2', nombre: 0 },
+      { cle: 'M3', libelle: 'M3', nombre: 2 },
+    ])
+    expect(r.total).toBe(3)
+    expect(r.parts.map((p) => [p.cle, p.nombre, p.pourcentage])).toEqual([
+      ['M1', 1, 33],
+      ['M3', 2, 67],
+    ])
+  })
+
+  it('angles cumulés de 0 à 1 tour, dans l’ordre des parts', () => {
+    const r = partsGraphique([
+      { cle: 'a', libelle: 'a', nombre: 1 },
+      { cle: 'b', libelle: 'b', nombre: 3 },
+    ])
+    expect(r.parts.map((p) => [p.debut, p.fin])).toEqual([
+      [0, 0.25],
+      [0.25, 1],
+    ])
+  })
+
+  it('rang dans le dégradé : 0 (clair) au premier, 1 (foncé) au dernier, hors alerte', () => {
+    const r = partsGraphique([
+      { cle: 'M1', libelle: 'Groupe 1/M1', nombre: 2 },
+      { cle: 'M3', libelle: 'Groupe 3/M3', nombre: 1 },
+      { cle: 'T1', libelle: 'Groupe 5/T1', nombre: 1 },
+      { cle: 'adef', libelle: 'À définir', nombre: 4, alerte: true },
+    ])
+    expect(r.parts.map((p) => p.teinte)).toEqual([0, 0.5, 1, null])
+  })
+
+  it('une seule part ordonnée ⇒ teinte claire (0)', () => {
+    expect(partsGraphique([{ cle: 'M1', libelle: 'M1', nombre: 5 }]).parts[0].teinte).toBe(0)
+  })
+
+  it('aucune ligne non nulle ⇒ aucune part (bouton non proposé)', () => {
+    expect(partsGraphique([{ cle: 'M1', libelle: 'M1', nombre: 0 }])).toEqual({ total: 0, parts: [] })
   })
 })
 

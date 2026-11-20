@@ -1,10 +1,16 @@
-// Statistiques du tableau de bord d'une rencontre enfant (spec #3 R41e–R41j) :
-// effectifs, répartition par groupe de départ, clubs avec des enfants sans
+// Statistiques du tableau de bord d'une rencontre enfant (spec #3 R41e–R41j,
+// R41gbis, R41gter) : effectifs, répartition par groupe de départ, grimpeurs
+// par niveau de voie (et leurs parts en vue graphique), clubs avec des enfants sans
 // groupe, avancement de la saisie (③) et bilan (④/⑤). Fonctions pures : le
 // chargeur lit les compositions et les résultats ; un enfant prêté arrive déjà
 // rattaché à son club d'accueil (club de son équipe).
 
-import { GROUPES_DEPART, libelleGroupeDepart } from './engagement'
+import {
+  ECHELLE_NIVEAUX,
+  GROUPES_DEPART,
+  libelleGroupeDepart,
+  voiesDuGroupeDepart,
+} from './engagement'
 import { type Sexe } from './grimpeur'
 import { type Phase } from './rencontre'
 
@@ -81,6 +87,54 @@ export function repartitionParGroupe(enfants: readonly EnfantStat[]) {
     })),
     aDefinir: enfants.filter((e) => !e.groupeDepart).length,
   }
+}
+
+/**
+ * Nombre d'enfants par niveau de voie M1…T10 : chaque enfant compte pour les 3
+ * niveaux de son groupe (spec #5 R20) ; sans groupe, il n'est compté qu'à part
+ * (R41gbis).
+ */
+export function grimpeursParNiveau(enfants: readonly EnfantStat[]) {
+  const nombre = new Map<string, number>()
+  for (const e of enfants) {
+    const groupe = e.groupeDepart
+    if (!groupe || !(GROUPES_DEPART as readonly string[]).includes(groupe)) continue
+    for (const niveau of voiesDuGroupeDepart(groupe)) {
+      nombre.set(niveau, (nombre.get(niveau) ?? 0) + 1)
+    }
+  }
+  return {
+    niveaux: ECHELLE_NIVEAUX.map((niveau) => ({ niveau, nombre: nombre.get(niveau) ?? 0 })),
+    aDefinir: enfants.filter((e) => !e.groupeDepart).length,
+  }
+}
+
+/** Ligne d'une carte à afficher en graphique (R41gter). */
+export type LigneGraphique = { cle: string; libelle: string; nombre: number; alerte?: boolean }
+
+/**
+ * Parts du graphique en anneau (R41gter) : lignes non nulles dans l'ordre, avec
+ * pourcentage arrondi, angles `debut`/`fin` en fraction de tour et `teinte`,
+ * rang 0 (clair) → 1 (foncé) dans le dégradé, `null` pour une part d'alerte.
+ */
+export function partsGraphique(lignes: readonly LigneGraphique[]) {
+  const nonNulles = lignes.filter((l) => l.nombre > 0)
+  const total = nonNulles.reduce((n, l) => n + l.nombre, 0)
+  const ordonnees = nonNulles.filter((l) => !l.alerte)
+  let cumul = 0
+  const parts = nonNulles.map((l) => {
+    const debut = cumul / total
+    cumul += l.nombre
+    const rang = ordonnees.indexOf(l)
+    return {
+      ...l,
+      pourcentage: Math.round((l.nombre / total) * 100),
+      debut,
+      fin: cumul / total,
+      teinte: l.alerte ? null : ordonnees.length > 1 ? rang / (ordonnees.length - 1) : 0,
+    }
+  })
+  return { total, parts }
 }
 
 /** Clubs ayant au moins un enfant sans groupe de départ, triés par nom (R41h). */

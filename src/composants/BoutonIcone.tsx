@@ -1,6 +1,6 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
 
-export type IconeBouton = 'valider' | 'supprimer' | 'modifier'
+export type IconeBouton = 'valider' | 'supprimer' | 'modifier' | 'camembert' | 'liste'
 
 type Props = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children' | 'title'> & {
   icone: IconeBouton
@@ -13,11 +13,14 @@ const base =
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-2 focus-visible:ring-offset-fond ' +
   'disabled:pointer-events-none disabled:opacity-40'
 
-// Coche verte (valider), croix rouge (supprimer), crayon (modifier).
+// Coche verte (valider), croix rouge (supprimer), crayon (modifier), camembert
+// et liste (bascule d'affichage d'une carte de statistiques).
 const couleurs: Record<IconeBouton, string> = {
   valider: 'border-secondaire/40 bg-secondaire/10 text-secondaire hover:bg-secondaire/20',
   supprimer: 'border-danger/40 bg-danger/10 text-danger hover:bg-danger/20',
   modifier: 'border-bordure bg-surface text-accent-doux hover:bg-surface-forte',
+  camembert: 'border-bordure bg-surface text-accent-doux hover:bg-surface-forte',
+  liste: 'border-bordure bg-surface text-accent-doux hover:bg-surface-forte',
 }
 
 const traces: Record<IconeBouton, ReactNode> = {
@@ -29,6 +32,13 @@ const traces: Record<IconeBouton, ReactNode> = {
       <path d="M13.5 6.5l4 4" />
     </>
   ),
+  camembert: (
+    <>
+      <path d="M21 12A9 9 0 1 1 12 3v9z" />
+      <path d="M15 3.5A9 9 0 0 1 20.5 9H15z" />
+    </>
+  ),
+  liste: <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />,
 }
 
 /**
