@@ -29,10 +29,19 @@ export function liensCoach(contexte: ContexteCoach): LienNav[] {
 const avantCompetition = (phase: Phase) => phase === 'pre_competition' || phase === 'preparation'
 
 /**
+ * Le classement est le seul écran utile : toujours en adulte dès la ③ (spec #20
+ * R19bis), et en ⑤ pour toutes les catégories, classement officiel (spec #5 R7,
+ * rév. 2026-11-22).
+ */
+const classementDirect = (categorie: Categorie, phase: Phase) =>
+  !avantCompetition(phase) && (categorie === 'adulte' || phase === 'resultats_publics')
+
+/**
  * Lien de suite de l'écran d'une rencontre côté coach, ou `null` avant la ③.
  * Enfant/ado : « Saisir / voir les résultats » en ③ (spec #6), « Voir les
- * résultats » en ④/⑤ où la saisie est close. Adulte : directement le classement,
- * le coach n'ayant pas d'écran de résultats (spec #20 R19bis).
+ * résultats » en ④ où la saisie est close, le classement en ⑤ (spec #5 R7).
+ * Adulte : directement le classement, le coach n'ayant pas d'écran de résultats
+ * (spec #20 R19bis).
  */
 export function lienSuiteRencontreCoach(
   rencontreId: string,
@@ -40,7 +49,7 @@ export function lienSuiteRencontreCoach(
   phase: Phase,
 ): { href: string; label: string } | null {
   if (avantCompetition(phase)) return null
-  if (categorie === 'adulte') {
+  if (classementDirect(categorie, phase)) {
     return { href: `/coach/rencontres/${rencontreId}/classement`, label: 'Voir le classement →' }
   }
   return {
@@ -51,11 +60,11 @@ export function lienSuiteRencontreCoach(
 
 /**
  * Cible de la carte d'une rencontre sur l'accueil coach (spec #5 R7) : saisie
- * des résultats en ③, écran d'engagement ailleurs ; en adulte, classement dès la
- * ③ (spec #20 R19bis).
+ * des résultats en ③, classement en ⑤, écran d'engagement ailleurs ; en adulte,
+ * classement dès la ③ (spec #20 R19bis).
  */
 export function cibleCarteRencontreCoach(rencontreId: string, categorie: Categorie, phase: Phase): string {
-  if (categorie === 'adulte' && !avantCompetition(phase)) return `/coach/rencontres/${rencontreId}/classement`
+  if (classementDirect(categorie, phase)) return `/coach/rencontres/${rencontreId}/classement`
   if (phase === 'competition') return `/coach/rencontres/${rencontreId}/resultats`
   return `/coach/rencontres/${rencontreId}`
 }

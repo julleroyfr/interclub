@@ -270,22 +270,28 @@ Seed `01-jeu-de-test.sql` appliqué via `supabase db reset` :
     pas côté coach A.
   - L'écriture sur une équipe d'un autre club est **refusée par la RLS** (R2).
 
-### CT-14 `[auto]` — En ③, la carte d'accueil mène à la saisie   (couvre : R7 ; nominal)
+### CT-14 `[auto]` — En ③, la carte d'accueil mène à la saisie, en ⑤ au classement   (couvre : R7 ; nominal)
 
 - **Rôle / compte** : `coach@test.local`.
 - **Pré-condition** : phase **`competition`** (jour J).
 - **Étapes** :
   1. Aller sur `/coach` ; inspecter la carte de la rencontre pilote.
   2. La suivre.
+  3. Passer la rencontre en **`resultats_publics`** ; revenir sur `/coach`,
+     inspecter la carte, puis ouvrir l'écran d'engagement par URL directe.
 - **Résultat attendu** :
   - La carte pointe vers `…/rencontres/33333333-…/**resultats**` (et non l'écran
     d'engagement) : le coach arrive **directement sur la saisie** (R7, exception ③).
   - L'écran d'engagement reste **accessible par URL directe** (consultation figée,
     cf. CT-10).
-  - Aux autres phases, la carte mène toujours à l'écran d'engagement (CT-01/CT-12).
+  - En **⑤**, la carte pointe vers `…/rencontres/33333333-…/**classement**` :
+    le coach arrive **directement sur le classement officiel** (R7, rév.
+    2026-11-22).
+  - Aux autres phases (①/②/④), la carte mène à l'écran d'engagement
+    (CT-01/CT-12).
   - Sur l'écran d'engagement, le lien vaut « Saisir / voir les résultats → » en
-    ③ et « Voir les résultats → » en ④/⑤ (saisie close). En rencontre adulte :
-    cahier 33 CT-30.
+    ③, « Voir les résultats → » en ④ (saisie close) et « Voir le classement → »
+    en ⑤. En rencontre adulte : cahier 33 CT-30.
 
 ### CT-15 `[auto]` — Coach temporaire : navigation bornée à sa rencontre   (couvre : R8bis ; spec #1 R27/R28)
 

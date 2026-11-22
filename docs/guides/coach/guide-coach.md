@@ -125,7 +125,7 @@ les plus actionnables en premier.
 
 | N° | Élément | Effet |
 | --- | --- | --- |
-| 1 | Carte d'une rencontre | Ouvre l'engagement des équipes — ou directement la saisie des résultats si la rencontre est en ③ compétition (le classement pour une rencontre adulte, [§ 9](#9-rencontres-adultes)) |
+| 1 | Carte d'une rencontre | Ouvre l'engagement des équipes — ou directement la saisie des résultats si la rencontre est en ③ compétition, le classement officiel en ⑤ résultats publics (le classement dès la ③ pour une rencontre adulte, [§ 9](#9-rencontres-adultes)) |
 | 2 | Menu | Ouvre la navigation (voir ci-dessous) |
 | 3 | Se déconnecter | Ferme la session |
 
@@ -169,8 +169,8 @@ apparaissent sans recharger la page.
 Hors des phases ① et ②, l'écran reste consultable mais les formulaires
 disparaissent : la composition ne peut plus être modifiée que par
 l'organisateur. L'en-tête propose alors **« Saisir / voir les résultats »** en
-③ compétition, puis **« Voir les résultats »** en ④ et ⑤, quand la saisie est
-close.
+③ compétition, **« Voir les résultats »** en ④, quand la saisie est close, puis
+**« Voir le classement »** en ⑤, une fois le classement officiel.
 
 ### Composer une équipe
 

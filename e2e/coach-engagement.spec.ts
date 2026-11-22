@@ -146,6 +146,20 @@ test.describe('Cahier 13 — Espace coach : engagement', () => {
       'href',
       `/coach/rencontres/${RENCONTRE_PILOTE}/resultats`,
     )
+
+    // En ⑤, classement officiel directement ; sur l'écran d'engagement, le lien
+    // de suite mène aussi au classement (R7, rév. 2026-11-22).
+    poserPhase('resultats_publics')
+    await page.goto('/coach')
+    await expect(carte).toHaveAttribute(
+      'href',
+      `/coach/rencontres/${RENCONTRE_PILOTE}/classement`,
+    )
+    await page.goto(URL_RENCONTRE)
+    await expect(page.getByRole('link', { name: 'Voir le classement →' })).toHaveAttribute(
+      'href',
+      `/coach/rencontres/${RENCONTRE_PILOTE}/classement`,
+    )
   })
 
   test('CT-15 — Coach temporaire : nav bornée à sa rencontre, pas de « Mes rencontres » (R8bis)', async ({
@@ -351,8 +365,13 @@ test.describe('Cahier 13 — Espace coach : engagement', () => {
       has: page.locator(`a[href="/admin/rencontres/${RENCONTRE_PILOTE}"]`),
     })
 
+    // Bouton « phase suivante » : son nom accessible est fixe (aria-label), la
+    // phase visée n'est que dans son texte — on filtre donc sur le texte.
+    const boutonSuivant = (texte: RegExp) =>
+      cartePilote.getByRole('button', { name: 'Avancer à la phase suivante' }).filter({ hasText: texte })
+
     // Hors jour J, le bouton d'entrée en préparation est désactivé (R5).
-    const boutonPrepa = cartePilote.getByRole('button', { name: /Préparation jour J/ })
+    const boutonPrepa = boutonSuivant(/Préparation jour J/)
     await expect(boutonPrepa).toBeDisabled()
 
     // Le jour J, il s'active et l'entrée en préparation est acceptée.
@@ -364,7 +383,7 @@ test.describe('Cahier 13 — Espace coach : engagement', () => {
     // Une fois en préparation, la « suivante » devient Compétition : le bouton
     // d'entrée en préparation disparaît. On attend cette transition avant de lire.
     await expect(boutonPrepa).toHaveCount(0)
-    await expect(cartePilote.getByRole('button', { name: /Compétition →/ })).toBeVisible()
+    await expect(boutonSuivant(/Compétition →/)).toBeVisible()
     expect(phaseEnBase()).toBe('preparation')
 
     // Compétition = jour J aussi (R5, rév. 2026-09-02) : en préparation HORS jour
@@ -372,7 +391,7 @@ test.describe('Cahier 13 — Espace coach : engagement', () => {
     poserPhase('preparation')
     poserDate('2026-09-19')
     await page.reload()
-    await expect(cartePilote.getByRole('button', { name: /Compétition →/ })).toBeDisabled()
+    await expect(boutonSuivant(/Compétition →/)).toBeDisabled()
 
     // Retour arrière depuis la compétition HORS jour J → pré-compétition (saute la
     // préparation jour-J) : le bouton de retour cible « Pré-compétition ».
