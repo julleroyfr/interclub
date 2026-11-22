@@ -1,6 +1,7 @@
 import type { Locator, Page } from '@playwright/test'
 
 import { expect, test } from './helpers/fixtures'
+import { cloturerViaPilotage } from './helpers/pilotage'
 import { commeAdmin, commeCoach, commeCoachTemporaire, commeSansMapping } from './helpers/auth'
 import {
   EQUIPES,
@@ -472,10 +473,7 @@ test.describe('Cahier 17 — saisie des résultats voie & bloc (spec #6)', () =>
     await commeAdmin(admin)
     for (const id of [ENFANT, ADO]) {
       await admin.goto(`/admin/rencontres/${id}`)
-      await admin.getByRole('button', { name: 'Avancer à la phase suivante' }).click()
-      await expect(admin.getByRole('button', { name: 'Avancer à la phase suivante' })).toContainText(
-        /Résultats publics/,
-      )
+      await cloturerViaPilotage(admin)
     }
     await ctxAdmin.close()
 

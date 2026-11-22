@@ -1,4 +1,4 @@
-# Cahier de test : Tableau de bord d'une rencontre (spec #3, R40–R45, R41e–R41k)
+# Cahier de test : Tableau de bord d'une rencontre (spec #3, R40–R45, R41e–R41s, R17bis)
 
 > Couvre l'écran **`/admin/rencontres/[id]`**, le **tableau de bord** d'une
 > rencontre : en-tête à **titre dynamique**, **pilotage de phase** (R41a), accès
@@ -17,7 +17,9 @@
   repère et libellé des voies R49/R50, ajout du 2026-10-16 ; modification et
   suppression des éléments R51–R55, ajout du 2026-10-25 ; statistiques d'une
   rencontre enfant R41e–R41j, ajout du 2026-11-18 ; onglets du tableau de bord
-  R41k, ajout du 2026-11-18) ;
+  R41k, ajout du 2026-11-18 ; confirmation de clôture R17bis et contrôle des NP
+  R41l–R41s, ajout du 2026-11-22) ; `docs/specs/09-saisie-admin-resultats.md`
+  (R12 : présélection `?grimpeur=`) ;
   `docs/specs/01-roles-et-autorisations.md` (R12 : écriture réservée à l'admin).
 - **Domaine** : `src/domaine/gabarit.ts` (`validerNiveauVoie` plages R37,
   `validerPoints` R38, `champsPointsVoie` champs conditionnels R38/R43 —
@@ -225,6 +227,8 @@ d'ouverture du **tableau de bord** → `/admin/rencontres/<id>`.
      *(Garde effective depuis le 2026-10-03 : l'action relit la phase en base et
      applique `peutTransiter`, couvert par Vitest — `rencontre.test.ts`,
      « peutTransiter (spec #3 R17) » ; scénario d'écran : CT-17.)*
+  5. *(Rév. 2026-11-22.)* Le passage **③ → ④** n'est plus immédiat : il ouvre
+     la fenêtre de confirmation (R17bis), détaillée en CT-32/CT-33.
 
 ### CT-14 — Lien vers les QR codes de la rencontre (couvre R41b)
 
@@ -565,6 +569,104 @@ d'ouverture du **tableau de bord** → `/admin/rencontres/<id>`.
 - **Automatisé** : `e2e/tableau-de-bord-onglets.spec.ts` (étapes 1, 2, 3, 4 à 6
   et le renvoi CT-26 étape 2) ; le cahier reste la validation sur base réelle.
 
+### CT-32 `[mixte]` — Confirmation de la clôture : aperçu, Annuler, Échap (couvre R17bis a–e)
+
+- **Rôle** : admin. **Pré-condition** : rencontre pilote **enfant** en
+  **③ compétition**, datée du jour, engagement seed (Ana M2 et Bob T1 au Club A,
+  Cléo T2 au Club B), 2 blocs et des voies de vitesse ; un seul résultat saisi :
+  Ana **Top** en M2.
+- **Étapes / résultat attendu** :
+  1. Tableau de bord : toucher **« Clôture → »** : une fenêtre
+     **« Clôturer la rencontre ? »** s'ouvre ; la phase en base reste ③. ✅
+  2. La fenêtre rappelle que la saisie des coachs, capitaines et juges
+     s'arrête et que les manques passent en NP. ✅
+  3. Aperçu : Club A **5** NP de voie · **4** NP de bloc · **2** vitesses non
+     saisies ; Club B **3 · 2 · 1** ; Total **8 · 6 · 3**. Les valeurs non
+     nulles sont en ambre. ✅
+  4. Le focus est sur **Annuler** ; Annuler ferme la fenêtre, rien ne change. ✅
+  5. Rouvrir, appuyer sur **Échap** (ordinateur) puis rouvrir et toucher le voile
+     hors de la fenêtre : la fenêtre se ferme, la phase reste ③. ✅
+  6. Même geste depuis la **liste** `/admin/rencontres` et depuis la carte des
+     rencontres de l'**accueil admin** : même fenêtre. ✅
+  7. Les autres transitions (← Préparation, Résultats publics →) partent sans
+     fenêtre. ✅
+  8. Toutes les saisies complètes : la fenêtre affiche « ✓ Toutes les saisies
+     sont complètes. ». Rencontre **ado** : colonne « Voies manquantes »
+     (`6 − n`). ✅
+  9. Mobile (~375 px) : la fenêtre tient dans l'écran, boutons empilés
+     (Clôturer au-dessus), sans débordement. ✅
+- **Automatisé** : `e2e/controle-np.spec.ts` (étapes 1 à 5) ; étapes 6 à 9 à
+  l'œil.
+
+### CT-33 `[auto]` — Clôturer puis onglet Contrôle des NP (couvre R17bis d, R41k–R41p)
+
+- **Rôle** : admin. **Pré-condition** : celle de CT-32.
+- **Étapes / résultat attendu** :
+  1. Dans la fenêtre, toucher **Clôturer** : la rencontre passe en **④** (NP
+     posés, spec #6 R18) ; la fenêtre disparaît. ✅
+  2. Un onglet **« Contrôle des NP »** apparaît en dernier, avec son compteur
+     de lignes ; il est absent en ①, ② et ③ (`?onglet=np` → Vue d'ensemble). ✅
+  3. Sections dans l'ordre : Vitesse, Bloc B1, Bloc B2, puis les niveaux
+     concernés (M3, M4, T1…T4) ; **pas** de « Niveau M2 » (Ana y a un Top). ✅
+  4. En-têtes : nombre de NP, engagés (vitesse, blocs) ou enfants du niveau et
+     voies du niveau. ✅
+  5. Chaque ligne : nom prénom, club · équipe · groupe, fiche complète (NP et
+     « Vit non saisie » en rouge), signal : Bob et Cléo « Tout NP : absent ? »,
+     Ana « Peu de saisies ». ✅
+- **Automatisé** : `e2e/controle-np.spec.ts`.
+
+### CT-34 `[auto]` — Correction depuis le contrôle des NP (couvre R41q ; spec #9 R12)
+
+- **Rôle** : admin. **Pré-condition** : rencontre de CT-33 en **④**.
+- **Étapes / résultat attendu** :
+  1. Toucher le nom **Alpha Ana** : l'écran de correction s'ouvre sur
+     `…/resultats?grimpeur=<id>`, fiche d'Ana **déjà sélectionnée**. ✅
+  2. Ouvrir `…/resultats?grimpeur=inconnu` : aucun grimpeur sélectionné, pas
+     d'erreur. ✅
+- **Automatisé** : `e2e/controle-np.spec.ts` (étape 1).
+
+### CT-35 `[mixte]` — Exports PDF par niveau et par club (couvre R41r, R41s)
+
+- **Rôle** : admin, puis coach. **Pré-condition** : rencontre de CT-33 en ④.
+- **Étapes / résultat attendu** :
+  1. **PDF par niveau (admin)** : télécharge `np-<date>-par-niveau.pdf`, A4
+     paysage ; page 1 : en-tête, explication, récapitulatif (élément, lignes,
+     attendus) ; puis les sections, NP en rouge, signal, colonne Correction
+     vide ; pied « Généré le … – page x/y ». ✅
+  2. Bouton **Club A** (avec son nombre de grimpeurs) : télécharge
+     `np-<date>-club-a.pdf` ; une ligne par grimpeur du club, colonnes Bloc,
+     Voie niveau 1…3 (ou Voies `n/6` en ado/adulte), Vitesse, Correction ; cases
+     NP surlignées ; aucun grimpeur d'un autre club. ✅
+  3. Le texte du PDF est sélectionnable (copier un nom). ✅
+  4. Coach connecté : l'URL `…/np/pdf` répond **404**. ✅
+- **Automatisé** : `e2e/controle-np.spec.ts` (contenu textuel, noms de
+  fichiers, 404 coach) ; mise en page à l'œil.
+
+### CT-36 `[auto]` — Bilan, phase ⑤ et hors clôture (couvre R41j, R41q, R41k)
+
+- **Rôle** : admin. **Pré-condition** : rencontre de CT-33 en ④.
+- **Étapes / résultat attendu** :
+  1. Onglet Statistiques, carte Bilan : **« Voir le détail des NP → »** ouvre
+     l'onglet Contrôle des NP. ✅
+  2. En **⑤** : l'onglet reste présent, les noms ne sont **pas** des liens. ✅
+  3. Revenue en **③** : l'onglet disparaît et `…/np/pdf` répond **404**. ✅
+- **Automatisé** : `e2e/controle-np.spec.ts`.
+
+### CT-37 `[manuel]` — Contrôle des NP en ado et en adulte (couvre R41l c, R41n d, R41p)
+
+- **Rôle** : admin. **Pré-condition** : rencontre **ado** (puis **adulte**)
+  passée en ④ avec un grimpeur à moins de 6 voies et un grimpeur sans aucune
+  voie ; en adulte, une épreuve désactivée (spec #20 R36).
+- **Étapes / résultat attendu** :
+  1. L'onglet Contrôle des NP existe ; pas de sections par niveau, mais une
+     section **« Moins de 6 voies »** avec le compteur `n/6`. ✅
+  2. Le grimpeur sans voie porte « Aucune voie saisie » (ou un signal
+     prioritaire) ; « Peu de saisies » n'apparaît jamais. ✅
+  3. L'épreuve désactivée n'apparaît ni en section, ni dans la fiche, ni dans
+     l'aperçu de clôture. ✅
+  4. Mobile (~375 px) : lignes empilées (nom, fiche, signal), sans
+     débordement. ✅
+
 ## Registre d'exécution
 
 | Cas | Environnement | Date | Testeur | Verdict | Notes |
@@ -600,6 +702,12 @@ d'ouverture du **tableau de bord** → `/admin/rencontres/<id>`.
 | CT-29 | | | | ⬜ | tableau de bord en onglets (R41k) |
 | CT-30 | | | | ⬜ | grimpeurs par niveau de voie (R41gbis) |
 | CT-31 | | | | ⬜ | vue graphique des répartitions (R41gter) |
+| CT-32 | local (Docker) | 2026-11-22 | Claude (E2E) | ⬜ | confirmation de clôture (R17bis) — étapes 1–5 vertes en E2E |
+| CT-33 | local (Docker) | 2026-11-22 | Claude (E2E) | ⬜ | clôture + onglet Contrôle des NP (R41k–R41p) — vert en E2E |
+| CT-34 | local (Docker) | 2026-11-22 | Claude (E2E) | ⬜ | lien vers la saisie admin (R41q, spec #9 R12) — étape 1 verte en E2E |
+| CT-35 | local (Docker) | 2026-11-22 | Claude (E2E) | ⬜ | exports PDF (R41r/R41s) — contenu vert en E2E, mise en page à l'œil |
+| CT-36 | local (Docker) | 2026-11-22 | Claude (E2E) | ⬜ | bilan → NP, ⑤ sans lien, hors ④/⑤ (R41j/R41q) — vert en E2E |
+| CT-37 | | | | ⬜ | ado / adulte : « Moins de 6 voies » (R41l c) |
 
 > Le domaine (`validerNiveauVoie` R37, `validerPoints` R38, `champsPointsVoie`
 > R38/R43) est couvert par Vitest (`npm run test`, `src/domaine/gabarit.test.ts`).

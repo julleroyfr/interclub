@@ -13,6 +13,8 @@ import {
 import { changerPhaseRencontre } from '@/lib/rencontres/actions'
 import type { EtatRencontre } from '@/lib/rencontres/rencontres'
 
+import { BoutonPhaseSuivante } from '../../bouton-phase-suivante'
+
 const etatInitial: EtatRencontre = undefined
 const labelPhase = (v: Phase) => PHASES.find((p) => p.value === v)?.label ?? v
 
@@ -26,7 +28,7 @@ function aujourdhuiISO(): string {
 /**
  * Pilotage d'une rencontre en en-tête du tableau de bord (spec #3 R41a, R41k) :
  * changement de phase pas à pas — même action et même garde jour J (R5) que la
- * liste `/admin/rencontres`. Le lien vers les jetons QR (R41b) est dans
+ * liste `/admin/rencontres` ; le passage en clôture est confirmé (R17bis). Le lien vers les jetons QR (R41b) est dans
  * l'onglet Vue d'ensemble.
  * La phase reçue en prop se met à jour après revalidation de l'écran.
  */
@@ -73,23 +75,22 @@ export function PanneauPilotage({
             </Bouton>
           </form>
           <span className="flex-1" />
-          <form action={action}>
-            <input type="hidden" name="id" value={rencontreId} />
-            <input type="hidden" name="phase" value={suivante ?? ''} />
-            <Bouton
-              type="submit"
+          {suivante ? (
+            <BoutonPhaseSuivante
+              rencontreId={rencontreId}
+              phase={phase}
+              suivante={suivante}
+              action={action}
+              enCours={enCours}
+              bloquee={suivanteBloquee}
+              erreur={etat?.erreur}
               taille="sm"
-              disabled={!suivante || enCours || suivanteBloquee}
-              title={
-                suivanteBloquee
-                  ? 'Activable seulement le jour de la rencontre.'
-                  : undefined
-              }
-              aria-label="Avancer à la phase suivante"
-            >
-              {suivante ? labelPhase(suivante) : 'Fin'} →
+            />
+          ) : (
+            <Bouton taille="sm" disabled aria-label="Avancer à la phase suivante">
+              Fin →
             </Bouton>
-          </form>
+          )}
         </div>
 
         <ol className="flex flex-wrap items-center gap-1 lg:flex-1">

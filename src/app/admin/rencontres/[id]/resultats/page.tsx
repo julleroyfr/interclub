@@ -35,8 +35,10 @@ function formaterDate(iso: string): string {
  */
 export default async function PageSaisieAdmin({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ grimpeur?: string | string[] }>
 }) {
   await exigerAdmin()
 
@@ -45,6 +47,13 @@ export default async function PageSaisieAdmin({
   if (!saisie) notFound()
 
   const enCorrection = saisie.phase === 'cloture'
+  // Présélection depuis le contrôle des NP (spec #9 R12 rév. 2026-11-22,
+  // spec #3 R41q) : un identifiant inconnu ou non engagé est ignoré.
+  const parametre = (await searchParams).grimpeur
+  const demande = Array.isArray(parametre) ? parametre[0] : parametre
+  const grimpeurInitial = saisie.clubs.some((c) => c.grimpeurs.some((g) => g.grimpeurId === demande))
+    ? (demande ?? null)
+    : null
 
   return (
     <Coquille liens={liensAdmin()} largeur="large" deconnexion>
@@ -80,7 +89,7 @@ export default async function PageSaisieAdmin({
           </div>
         </div>
 
-        <PanneauSaisieAdmin saisie={saisie} />
+        <PanneauSaisieAdmin saisie={saisie} grimpeurInitial={grimpeurInitial} />
       </div>
     </Coquille>
   )

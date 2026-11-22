@@ -4,8 +4,10 @@ import { notFound } from 'next/navigation'
 
 import { Coquille, EnTetePage } from '@/composants'
 import { anneeSaison, CATEGORIES, labelSaison, type Categorie } from '@/domaine/rencontre'
+import { controleNp } from '@/domaine/controle-np'
 import { ongletsDisponibles, resoudreOnglet, type Onglet } from '@/domaine/tableau-de-bord'
 import { getProgressionControle } from '@/lib/admin/controle'
+import { chargerControleNpApresCloture } from '@/lib/admin/controle-np'
 import { chargerEngagementTousClubs } from '@/lib/admin/engagement'
 import { chargerEquipesAdultes } from '@/lib/admin/equipes-adultes'
 import { liensAdmin } from '@/lib/admin/navigation'
@@ -15,6 +17,7 @@ import { chargerPretsRencontre } from '@/lib/prets/prets'
 import { getStructureRencontre } from '@/lib/rencontres/structure'
 
 import { OngletsTableauDeBord, type DefinitionOnglet } from './onglets-tableau-de-bord'
+import { PanneauControleNp } from './panneau-controle-np'
 import { PanneauEquipes } from './panneau-equipes'
 import { PanneauEquipesAdultes } from './panneau-equipes-adultes'
 import { PanneauPilotage } from './panneau-pilotage'
@@ -55,7 +58,7 @@ export default async function PageTableauDeBordRencontre({
   const { id } = await params
   // Lectures indépendantes : en parallèle (chaque aller-retour vers la base
   // compte, l'écran se recharge après chaque action du tableau de bord).
-  const [structure, { grimpeurs, clubs, prets }, engagementClubs, equipesAdultes, controle, statistiques] = await Promise.all([
+  const [structure, { grimpeurs, clubs, prets }, engagementClubs, equipesAdultes, controle, statistiques, donneesNp] = await Promise.all([
     getStructureRencontre(id),
     chargerPretsRencontre(id),
     chargerEngagementTousClubs(id),
@@ -66,6 +69,8 @@ export default async function PageTableauDeBordRencontre({
     getProgressionControle(id),
     // Statistiques d'une rencontre enfant (R41e–R41j) ; `null` sinon.
     chargerStatistiquesRencontre(id),
+    // Contrôle des NP (R41l–R41s), seulement en ④/⑤ ; `null` sinon.
+    chargerControleNpApresCloture(id),
   ])
   if (!structure) notFound()
 
@@ -81,10 +86,12 @@ export default async function PageTableauDeBordRencontre({
   const nbPrets = prets.length
 
   const progressionControle = controle?.progression ?? null
+  const nbLignesNp = donneesNp ? controleNp(donneesNp.entree).nbLignes : 0
 
-  // Onglets (R41k) : Prêts absent en adulte, Statistiques seulement en enfant.
-  const disponibles = ongletsDisponibles(structure.categorie)
-  const initial = resoudreOnglet((await searchParams).onglet, structure.categorie)
+  // Onglets (R41k) : Prêts absent en adulte, Statistiques seulement en enfant,
+  // Contrôle des NP seulement en ④/⑤ (R41l).
+  const disponibles = ongletsDisponibles(structure.categorie, structure.phase)
+  const initial = resoudreOnglet((await searchParams).onglet, structure.categorie, structure.phase)
   const enCompetitionOuApres = ['competition', 'cloture', 'resultats_publics'].includes(
     structure.phase,
   )
@@ -175,6 +182,11 @@ export default async function PageTableauDeBordRencontre({
           avecVitesse={structure.voiesVitesse.length > 0}
         />
       ),
+    },
+    np: {
+      libelle: 'Contrôle des NP',
+      compteur: nbLignesNp,
+      panneau: donneesNp && <PanneauControleNp donnees={donneesNp} />,
     },
   }
 

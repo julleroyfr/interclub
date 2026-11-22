@@ -6,7 +6,7 @@ import { ONGLET_PAR_DEFAUT, ongletsDisponibles, resoudreOnglet } from './tableau
 
 describe('ongletsDisponibles (R41k)', () => {
   it('enfant : les cinq onglets, dans l’ordre (R41k, R41e)', () => {
-    expect(ongletsDisponibles('enfant')).toEqual([
+    expect(ongletsDisponibles('enfant', 'competition')).toEqual([
       'vue',
       'structure',
       'equipes',
@@ -16,12 +16,28 @@ describe('ongletsDisponibles (R41k)', () => {
   })
 
   it('ado : pas d’onglet Statistiques (R41e)', () => {
-    expect(ongletsDisponibles('ado')).toEqual(['vue', 'structure', 'equipes', 'prets'])
+    expect(ongletsDisponibles('ado', 'competition')).toEqual(['vue', 'structure', 'equipes', 'prets'])
   })
 
   it('adulte : ni Prêts (spec #20 R11) ni Statistiques (R41e)', () => {
-    expect(ongletsDisponibles('adulte')).toEqual(['vue', 'structure', 'equipes'])
+    expect(ongletsDisponibles('adulte', 'competition')).toEqual(['vue', 'structure', 'equipes'])
   })
+
+  it.each(['cloture', 'resultats_publics'] as const)(
+    '%s : onglet Contrôle des NP en dernier, toutes catégories (R41k, R41l)',
+    (phase) => {
+      expect(ongletsDisponibles('enfant', phase).at(-1)).toBe('np')
+      expect(ongletsDisponibles('ado', phase)).toEqual(['vue', 'structure', 'equipes', 'prets', 'np'])
+      expect(ongletsDisponibles('adulte', phase)).toEqual(['vue', 'structure', 'equipes', 'np'])
+    },
+  )
+
+  it.each(['pre_competition', 'preparation', 'competition'] as const)(
+    '%s : pas d’onglet Contrôle des NP (R41k)',
+    (phase) => {
+      expect(ongletsDisponibles('enfant', phase)).not.toContain('np')
+    },
+  )
 })
 
 describe('resoudreOnglet (R41k)', () => {
@@ -30,29 +46,34 @@ describe('resoudreOnglet (R41k)', () => {
   })
 
   it('sans paramètre → Vue d’ensemble', () => {
-    expect(resoudreOnglet(undefined, 'enfant')).toBe('vue')
-    expect(resoudreOnglet(null, 'enfant')).toBe('vue')
-    expect(resoudreOnglet('', 'enfant')).toBe('vue')
+    expect(resoudreOnglet(undefined, 'enfant', 'competition')).toBe('vue')
+    expect(resoudreOnglet(null, 'enfant', 'competition')).toBe('vue')
+    expect(resoudreOnglet('', 'enfant', 'competition')).toBe('vue')
   })
 
   it('onglet disponible → cet onglet', () => {
-    expect(resoudreOnglet('structure', 'enfant')).toBe('structure')
-    expect(resoudreOnglet('equipes', 'adulte')).toBe('equipes')
-    expect(resoudreOnglet('statistiques', 'enfant')).toBe('statistiques')
+    expect(resoudreOnglet('structure', 'enfant', 'competition')).toBe('structure')
+    expect(resoudreOnglet('equipes', 'adulte', 'competition')).toBe('equipes')
+    expect(resoudreOnglet('statistiques', 'enfant', 'competition')).toBe('statistiques')
   })
 
   it('onglet inconnu → Vue d’ensemble', () => {
-    expect(resoudreOnglet('pirate', 'enfant')).toBe('vue')
-    expect(resoudreOnglet('STRUCTURE', 'enfant')).toBe('vue')
+    expect(resoudreOnglet('pirate', 'enfant', 'competition')).toBe('vue')
+    expect(resoudreOnglet('STRUCTURE', 'enfant', 'competition')).toBe('vue')
   })
 
   it('onglet absent pour cette rencontre → Vue d’ensemble', () => {
-    expect(resoudreOnglet('prets', 'adulte')).toBe('vue')
-    expect(resoudreOnglet('statistiques', 'ado')).toBe('vue')
-    expect(resoudreOnglet('statistiques', 'adulte')).toBe('vue')
+    expect(resoudreOnglet('prets', 'adulte', 'competition')).toBe('vue')
+    expect(resoudreOnglet('statistiques', 'ado', 'competition')).toBe('vue')
+    expect(resoudreOnglet('statistiques', 'adulte', 'competition')).toBe('vue')
+  })
+
+  it('np : seulement en ④/⑤ (R41k)', () => {
+    expect(resoudreOnglet('np', 'ado', 'cloture')).toBe('np')
+    expect(resoudreOnglet('np', 'enfant', 'competition')).toBe('vue')
   })
 
   it('paramètre répété (?onglet=a&onglet=b) → le premier', () => {
-    expect(resoudreOnglet(['equipes', 'prets'], 'enfant')).toBe('equipes')
+    expect(resoudreOnglet(['equipes', 'prets'], 'enfant', 'competition')).toBe('equipes')
   })
 })

@@ -339,6 +339,9 @@ coach se ferme et l'**admin** vérifie/corrige ; la **⑤ résultats publics**
     classement (équivalent NP), sans `resultat_voie`.
   Cette opération est **idempotente** (ne touche pas les résultats déjà saisis) et
   déclenchée par la transition de phase (spec #1 R5).
+  *(Rév. 2026-11-22, validée : la transition est précédée d'une
+  confirmation avec aperçu chiffré des NP à poser, spec #3 R17bis ; les NP
+  posés se contrôlent dans l'onglet « Contrôle des NP », spec #3 R41l–R41s.)*
 - **R19.** Après la clôture, un **NP** (comme tout résultat) n'est plus modifiable
   par le coach ; seul l'**admin** peut le **corriger** — y compris repasser un NP en
   Top/Zone/palier si le grimpeur avait bien concouru (spec #1 R6).

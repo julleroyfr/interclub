@@ -153,6 +153,10 @@ de plein droit, décision 2026-09-22) et en **④ clôture** (correction, spec #
 - **R12.** L'accès se fait depuis le **tableau de bord d'une rencontre**
   (`/admin/rencontres/[id]`) via une action **« Saisir les résultats »** (③) /
   **« Corriger les résultats »** (④), **visible dès la ③**. Rien avant la ③.
+  *(Rév. 2026-11-22, validée : l'écran accepte un paramètre
+  `?grimpeur=[id]` qui **présélectionne** ce grimpeur — club ouvert, fiche
+  affichée ; un identifiant inconnu ou non engagé est ignoré. Utilisé par le
+  contrôle des NP, spec #3 R41q.)*
 - **R13.** Après une saisie réussie, l'écran **reflète l'état à jour**
   (revalidation) : issue enregistrée visible, progression et score actualisés
   (aligné spec #6 R20).

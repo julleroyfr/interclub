@@ -31,7 +31,7 @@ const PROPORTIONS: Record<number, number[]> = {
 
 type Polices = { normale: PDFFont; grasse: PDFFont }
 
-function nettoyeur(police: PDFFont): (texte: string) => string {
+export function nettoyeur(police: PDFFont): (texte: string) => string {
   const permis = new Set(police.getCharacterSet())
   return (texte) =>
     [...texte]

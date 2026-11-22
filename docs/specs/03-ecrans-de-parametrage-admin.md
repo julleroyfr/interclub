@@ -1,5 +1,12 @@
 # Spec : Écrans de paramétrage (admin)
 
+- **Révision** : 2026-11-22 (**validée le 2026-11-22**) — **contrôle des NP**
+  après la clôture (R41l–R41s, toutes catégories) : onglet dédié du tableau de
+  bord en ④/⑤, sections par élément avec fiche complète et signal, lien vers la
+  saisie admin, exports PDF par niveau (admin) et par club (coachs) ; et
+  **confirmation du passage en clôture** avec aperçu chiffré (R17bis). Règle de
+  changement : révise R17, R41a, R41j, R41k ; renvois spec #6 R18, spec #9 R12,
+  spec #15. Aucune migration.
 - **Révision** : 2026-11-20 (**validée le 2026-11-20**) — **vue graphique**
   (camembert) des cartes « Répartition par groupe de départ » et « Grimpeurs
   par niveau de voie » (R41gter, règle de changement) : révise R41g et R41gbis.
@@ -183,6 +190,30 @@ saisie, les flux CRUD, et les règles de suppression (dépendances / cascade).
   **Garde-fou jour J** : le passage en **préparation** n'est autorisé que si la
   **date de la rencontre est le jour même** (spec #1 R5, rév. 2026-09-01) ; sinon
   la transition est refusée. (Source : spec #1 R5, cycle à 5 phases.)
+- **R17bis.** *(Ajout demandé et validé le 2026-11-22.)* Le passage
+  **③ compétition → ④ clôture** demande une **confirmation** dans une **fenêtre
+  modale**, depuis la liste (R19) comme depuis le tableau de bord (R41a), pour
+  **toutes les catégories** :
+  - a. Le bouton « Clôture → » **ouvre la fenêtre** ; **aucune transition** n'a
+    lieu tant que l'admin n'a pas confirmé.
+  - b. La fenêtre a pour titre « **Clôturer la rencontre ?** » et rappelle que
+    la saisie des coachs, capitaines et juges **s'arrête** (spec #1 R5) et que
+    les attendus non saisis **passent en NP** (spec #6 R18).
+  - c. Elle affiche un **aperçu chiffré**, calculé à son ouverture, **par club**
+    et **au total** : nombre de **NP de voie** qui seront posés (enfant : niveaux
+    du groupe de départ sans aucun résultat, spec #6 R18) ou, en ado/adulte,
+    nombre de **voies manquantes** (`6 − n` par grimpeur, sans NP posé) ; nombre
+    de **NP de bloc** qui seront posés (blocs sans résultat de chaque engagé) ;
+    nombre de **vitesses non saisies** (pas de NP automatique, spec #10). Un
+    élément d'une épreuve **absente ou désactivée** (spec #20 R36) n'est pas
+    compté. Un club sans aucun manque n'est pas listé ; sans aucun manque, la
+    fenêtre affiche « **Toutes les saisies sont complètes.** ».
+  - d. Deux actions : « **Annuler** » (focus initial) et « **Clôturer** ».
+    Échap ou un clic hors de la fenêtre **annulent**. « Clôturer » déclenche la
+    transition (mêmes gardes serveur que R17) ; une erreur s'affiche dans la
+    fenêtre.
+  - e. Les **autres transitions** (avancer ou revenir) restent **sans
+    confirmation**.
 - **R18.** Supprimer une rencontre **supprime en cascade** ses **équipes** et
   **épreuves** (et, par transitivité, leurs compositions/résultats/temps). La
   demande de confirmation **signale** cette cascade lorsque la rencontre a des
@@ -603,9 +634,12 @@ flowchart TD
   - **Prêts** (spec #1 R35), avec son **nombre de prêts** — **absent** pour une
     rencontre **adulte** (pas de prêt, spec #20 R11) ;
   - **Statistiques** (R41e–R41j) — **présent seulement** pour une rencontre
-    **enfant**.
+    **enfant** ;
+  - **Contrôle des NP** (R41l–R41s) — *(rév. 2026-11-22, validée)* **présent
+    seulement** en **④ clôture** et **⑤ résultats publics**, pour **toutes les
+    catégories**, avec son **nombre de lignes** (R41n).
 
-  L'onglet actif est porté par l'**URL** (`?onglet=vue|structure|equipes|prets|statistiques`)
+  L'onglet actif est porté par l'**URL** (`?onglet=vue|structure|equipes|prets|statistiques|np`)
   : il est **conservé** après une action de l'écran (rechargement) et peut être
   partagé. Sans paramètre, ou avec un onglet **inconnu** ou **absent** pour cette
   rencontre (ex. `prets` en adulte), la **Vue d'ensemble** s'affiche. Le contenu
@@ -615,6 +649,8 @@ flowchart TD
   **mêmes règles et garde-fou jour J** que la liste (R17). C'est une **seconde
   surface** de la même action ; la liste (R19) la conserve. L'état affiché
   **reflète la phase à jour** après transition.
+  *(Rév. 2026-11-22, validée : le passage en ④ clôture passe par la
+  confirmation de R17bis.)*
 - **R41b.** Le tableau de bord offre un **lien vers les jetons QR** de la
   rencontre (`/admin/jetons?rencontre=[id]`) pour générer, afficher, révoquer ou
   régénérer les jetons **coach temporaire** et **juge** (spec #2).
@@ -719,6 +755,107 @@ compte pour son **club d'accueil** (le club de son équipe, spec #1 R35/R36).
   automatiquement à la clôture, spec #6 R18), nombre de **non-présentations en
   vitesse**, et nombre de **vitesses non saisies** (la vitesse n'a pas de NP
   automatique, spec #10).
+  *(Rév. 2026-11-22, validée : le bilan offre un lien « Voir le détail des
+  NP » vers l'onglet **Contrôle des NP**, R41l.)*
+
+#### Contrôle des NP après la clôture (R41l–R41s)
+
+*(Ajout demandé et validé le 2026-11-22.)* Maquette :
+`docs/maquettes/controle-np.html` (onglet et fenêtre de confirmation R17bis).
+Après la clôture, l'admin vérifie
+chaque NP pour distinguer une vraie non-présentation d'un **oubli de saisie**, et
+transmet aux coachs la liste de leurs grimpeurs concernés. Tout est **calculé** à
+partir des compositions et des résultats existants ; aucune donnée n'est stockée.
+Un grimpeur **prêté** compte pour son **club d'accueil** (spec #1 R35/R36). Un
+élément d'une épreuve **absente ou désactivée** (spec #20 R36) est ignoré
+partout.
+
+- **R41l.** L'onglet **Contrôle des NP** (R41k) présente des **sections**, une
+  par élément, dans cet ordre :
+  - a. **Vitesse** (si la rencontre comporte des voies de vitesse) ;
+  - b. une section par **bloc**, dans l'ordre de la structure (« Bloc B1 … ») ;
+  - c. **enfant** : une section par **niveau de voie** `M1` … `T10`, dans
+    l'ordre de l'échelle (« Niveau M3 ») ; **ado et adulte** : une section
+    unique « **Moins de 6 voies** ».
+
+  Seules les sections ayant **au moins une ligne** (R41n) sont affichées. Sans
+  aucune ligne, l'onglet affiche « **Aucun NP : toutes les saisies sont
+  complètes.** ».
+- **R41m.** L'en-tête de chaque section indique son **nombre de lignes** et ses
+  **attendus** : le nombre d'**engagés** pour la vitesse, un bloc et « Moins de
+  6 voies » ; pour un niveau enfant, le nombre d'enfants dont le **groupe de
+  départ couvre ce niveau** (même décompte que R41gbis) et la **liste des voies**
+  du niveau (libellé R50 et cotation).
+- **R41n.** Lignes de chaque section (un grimpeur engagé par ligne) :
+  - a. **Vitesse** : grimpeur dont la vitesse est une **non-présentation**
+    (saisie juge) ou **non saisie** ; la ligne précise lequel des deux ;
+  - b. **Bloc** : grimpeur dont le résultat sur ce bloc est **NP** (posé à la
+    main ou à la clôture) ;
+  - c. **Niveau enfant** : enfant ayant un **NP** sur une voie de ce niveau ;
+  - d. **Moins de 6 voies** : grimpeur ayant **moins de 6** résultats de voie,
+    avec son compteur `n/6`.
+
+  Dans une section, les lignes sont triées par **club**, puis **nom**, puis
+  **prénom**. Le **nombre de lignes** de l'onglet (R41k) est la somme des lignes
+  de ses sections.
+- **R41o.** Chaque ligne affiche : **nom prénom**, **club**, **équipe**, **groupe
+  de départ** (enfant ; « À définir » s'il n'en a pas) et sa **fiche complète** :
+  - a. chaque **bloc** : palier atteint, Échec ou **NP** ;
+  - b. **enfant** : les voies saisies et les NP, **triées par niveau**, sous la
+    forme « niveau + issue » ; **ado/adulte** : le compteur `n/6` ;
+  - c. la **vitesse** : temps (en secondes, deux décimales), **NP** ou « non
+    saisie ».
+
+  Les **NP** (et une vitesse non saisie) sont **mis en évidence** (couleur
+  d'alerte et gras).
+- **R41p.** Chaque ligne porte au plus **un signal**, le **premier** qui
+  s'applique dans cet ordre (« tous les blocs » est vrai sans bloc) :
+  - a. « **Tout NP : absent ?** » (neutre) — tous les blocs NP, aucune voie
+    saisie (enfant : ses voies toutes NP ; ado/adulte : `0/6`) et vitesse NP ou
+    non saisie ;
+  - b. « **Vitesse NP, fiche complète** » (alerte) — vitesse NP ou non saisie,
+    aucun bloc NP et toutes les voies saisies (enfant : aucune voie NP ;
+    ado/adulte : `6/6`) ;
+  - c. « **Rien saisi sauf vitesse** » (alerte) — un temps de vitesse, tous les
+    blocs NP et aucune voie saisie ;
+  - d. « **Aucune voie saisie** » (alerte) — aucune voie saisie (comme en a.),
+    hors cas a. et c. ;
+  - e. « **Peu de saisies** » (attention) — *enfant seulement* : tous les blocs
+    NP et au moins **2** voies NP.
+- **R41q.** En **④ clôture**, le **nom** du grimpeur est un **lien** vers la
+  saisie admin des résultats (spec #9) avec ce grimpeur **présélectionné**
+  (`/admin/rencontres/[id]/resultats?grimpeur=[id]`), pour corriger un NP
+  (spec #6 R19). En **⑤**, la saisie admin n'étant pas ouverte (spec #9 R5), le
+  nom n'est **pas** un lien.
+- **R41r.** **Export PDF par niveau (admin)** : un bouton « **PDF par niveau** »
+  télécharge directement `np-<AAAA-MM-JJ>-par-niveau.pdf` (date de la
+  rencontre). Le document, **A4 paysage**, comporte :
+  - a. un **en-tête** (catégorie, club porteur et date de la rencontre) et un
+    texte d'explication : les NP de voie et de bloc sont posés **sans saisie**
+    à la clôture, ceux de vitesse par le juge ;
+  - b. un **récapitulatif** : une ligne par section (élément, nombre de lignes,
+    attendus, R41m) ;
+  - c. les **sections** de R41l–R41p, avec les mêmes lignes, fiche et signal,
+    plus une colonne « **Correction** » vide à remplir à la main ;
+  - d. un **pied de page** : date de génération et « page x/y ».
+- **R41s.** **Export PDF par club (coachs)** : un bouton par **club** ayant au
+  moins une ligne (R41n), libellé du nom du club, télécharge directement
+  `np-<AAAA-MM-JJ>-<club>.pdf` (nom du club sans accent ni espace). Le document,
+  **A4 paysage**, comporte :
+  - a. un **en-tête** (rencontre, club) et un texte destiné au coach : un NP
+    signifie qu'**aucun résultat n'a été saisi** ; vérifier chaque case mise en
+    évidence et noter le résultat réel dans la colonne « Correction », puis
+    renvoyer le document à l'organisateur ;
+  - b. **une ligne par grimpeur** du club présent dans au moins une section,
+    triée par équipe puis nom, prénom, avec sa **fiche complète** en colonnes :
+    chaque bloc, chaque voie (enfant : une colonne par niveau du groupe, « niveau
+    · libellé + issue » pour une voie saisie, « niveau (cotation) — NP » sinon ;
+    ado/adulte : `n/6`), la vitesse et une colonne « **Correction** » vide ;
+  - c. les cases **NP** (et vitesse non saisie) **surlignées** ;
+  - d. le même **pied de page** que R41r.
+
+  Les deux exports sont réservés à l'**admin**, en **④** et **⑤** ; le texte du
+  document est **sélectionnable** (spec #15 R20).
 - **R42.** La **structure** est organisée en **trois onglets** — **Voies de
   difficulté**, **Blocs**, **Vitesse** — chacun indiquant son **nombre
   d'éléments** et n'affichant qu'un seul type à la fois. Chaque onglet **liste les
@@ -825,6 +962,26 @@ ensuite l'ajout de voies (R43, R45).
 Étant donné une rencontre en phase compétition, quand l'admin ouvre son écran de
 configuration, alors la structure s'affiche en lecture seule avec un message de
 verrouillage et aucun formulaire d'ajout (R44).
+
+### Nominal — clôturer une rencontre après confirmation (R17bis)
+
+Étant donné une rencontre enfant en ③ compétition où, au club A, un enfant du
+groupe M2 n'a rien de saisi en voie et en bloc (2 blocs dans la structure), quand
+l'admin clique « Clôture → », alors une fenêtre « Clôturer la rencontre ? »
+s'ouvre et l'aperçu indique pour le club A **3 NP de voie** et **2 NP de bloc** ;
+la phase est toujours ③. Quand il clique « Annuler », la fenêtre se ferme et rien
+ne change. Quand il rouvre la fenêtre et clique « Clôturer », la rencontre passe
+en ④ et les 5 NP sont posés (spec #6 R18).
+
+### Nominal — contrôler les NP et prévenir les coachs (R41l–R41s)
+
+Étant donné la rencontre précédente en ④, quand l'admin ouvre l'onglet
+« Contrôle des NP », alors l'enfant figure dans les sections Bloc B1, Bloc B2,
+Niveau M2, M3 et M4 avec le signal « Rien saisi sauf vitesse » s'il a un temps de
+vitesse ; son nom mène à la saisie admin, grimpeur présélectionné (R41q). Le
+bouton « PDF par niveau » télécharge le document récapitulatif (R41r) ; le bouton
+« Club A » télécharge le PDF du club A avec une seule ligne pour cet enfant, ses
+5 cases NP surlignées (R41s).
 
 ### Nominal — gérer le roster
 

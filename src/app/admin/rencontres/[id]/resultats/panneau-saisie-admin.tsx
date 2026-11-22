@@ -70,8 +70,15 @@ type GrimpeurAvecClub = GrimpeurSaisie & { clubNom: string }
  * (voies + blocs). Sur mobile, la liste et le détail se remplacent. Les écritures
  * passent par les Server Actions admin (garde rôle + phase ③/④).
  */
-export function PanneauSaisieAdmin({ saisie }: { saisie: SaisieAdminRencontre }) {
-  const [selId, setSelId] = useState<string | null>(null)
+export function PanneauSaisieAdmin({
+  saisie,
+  grimpeurInitial = null,
+}: {
+  saisie: SaisieAdminRencontre
+  /** Grimpeur engagé à présélectionner (spec #9 R12, `?grimpeur=`). */
+  grimpeurInitial?: string | null
+}) {
+  const [selId, setSelId] = useState<string | null>(grimpeurInitial)
   const [recherche, setRecherche] = useState('')
   const [clubFiltre, setClubFiltre] = useState<string>('tous')
 
