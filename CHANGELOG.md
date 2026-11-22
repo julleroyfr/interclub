@@ -6,6 +6,20 @@ numérotation [SemVer](https://semver.org/lang/fr/) adaptée au projet.
 
 Règles et procédure : [docs/conventions/10-versionnement.md](docs/conventions/10-versionnement.md).
 
+## [2.6.0] — 2026-11-22
+
+Accès direct au classement officiel pour les coachs une fois les résultats
+publiés.
+
+### Modifié
+
+- **Résultats publics : classement direct** (coach, enfant et ado) : en ⑤
+  résultats publics, la carte d’une rencontre sur « Mes rencontres » ouvre
+  directement le classement officiel, et l’écran de la rencontre propose
+  « Voir le classement » au lieu de « Voir les résultats ». L’engagement et
+  les résultats restent accessibles ; la clôture (④) ne change pas
+  (spec #5 R7).
+
 ## [2.5.0] — 2026-11-22
 
 Contrôle des NP après la clôture, aide au choix du groupe de départ,
