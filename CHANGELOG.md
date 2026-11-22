@@ -6,6 +6,32 @@ numérotation [SemVer](https://semver.org/lang/fr/) adaptée au projet.
 
 Règles et procédure : [docs/conventions/10-versionnement.md](docs/conventions/10-versionnement.md).
 
+## [2.5.0] — 2026-11-22
+
+Contrôle des NP après la clôture, aide au choix du groupe de départ,
+recherche sans accents et mot de passe oublié.
+
+### Ajouté
+
+- **Contrôle des NP** (admin, toutes catégories) : en clôture et en résultats
+  publics, un onglet « NP » du tableau de bord liste, par bloc, voie ou
+  niveau, les grimpeurs non présentés avec leur fiche complète et un signal
+  (« Tout NP : absent ? »…) ; en clôture, le nom mène à la saisie admin pour
+  corriger. Exports PDF par niveau (admin) et par club (spec #3 R41l–R41s).
+- **Aide au choix du groupe de départ** (coach, enfant) : un « ? » discret
+  près du groupe ouvre le tableau CT33 des groupes (niveau, cotations
+  moulinette et tête, voies grimpées) (spec #5 R21ter).
+- **Mot de passe oublié** : depuis l’écran de connexion, un lien envoie un
+  e-mail pour choisir un nouveau mot de passe (spec #2 R48–R53).
+
+### Modifié
+
+- **Passage en clôture** : une confirmation avec un aperçu chiffré des
+  résultats est demandée avant de clôturer (spec #3 R17bis).
+- **Recherche par nom ou prénom** insensible aux accents et aux ligatures
+  (« Zoé » = « zoe », « Lætitia » = « laetitia ») sur tous les écrans de
+  recherche (spec #7 R12b, spec #9 R10, spec #10 R14b).
+
 ## [2.4.0] — 2026-11-20
 
 Grimpeurs par niveau de voie, vue graphique des statistiques enfant et
