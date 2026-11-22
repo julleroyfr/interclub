@@ -9,9 +9,9 @@ import {
   GROUPES_DEPART,
   libelleGroupeDepart,
   equipesCiblesChangement,
-  filtrerGrimpeursRecherche,
   nomEquipeParDefaut,
 } from '@/domaine/engagement'
+import { filtrerGrimpeursRecherche } from '@/domaine/recherche'
 import {
   ajouterGrimpeurAdmin,
   changerEquipeAdmin,

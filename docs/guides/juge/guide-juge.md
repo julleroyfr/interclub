@@ -95,7 +95,9 @@ Les saisies des autres juges et les corrections de l'organisateur apparaissent
 sans recharger la page (indicateur **« En direct »**).
 
 **Pour un grand nombre de grimpeurs** : utiliser la **recherche** pour retrouver
-celui qui se présente, et le filtre **À saisir** pour voir d'un coup d'œil qui
+celui qui se présente (plusieurs mots dans n'importe quel ordre, sans tenir
+compte des majuscules ni des accents : « cleo bravo » trouve « Cléo Bravo »),
+et le filtre **À saisir** pour voir d'un coup d'œil qui
 n'est pas encore passé.
 
 ### Sur téléphone

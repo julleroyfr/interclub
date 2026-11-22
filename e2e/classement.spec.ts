@@ -281,6 +281,9 @@ test.describe('Cahier 18 — classement (spec #7)', () => {
     await page.getByPlaceholder('🔍 Rechercher un nom…').fill('cléo')
     await expect(page.getByText(/^1\s*grimpeuse\b/)).toBeVisible()
     await expect(page.locator('tbody tr')).toHaveCount(1)
+    // Accents ignorés, multi-termes dans n'importe quel ordre (R12b, rév. 2026-11-22).
+    await page.getByPlaceholder('🔍 Rechercher un nom…').fill('bravo cleo')
+    await expect(page.locator('tbody tr')).toHaveCount(1)
     await page.getByPlaceholder('🔍 Rechercher un nom…').fill('')
 
     // Mon club → Club A seul ; puis filtre équipe combiné.

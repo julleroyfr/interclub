@@ -6,9 +6,9 @@ import { Bouton, Carte, ChampSelect, ChampTexte, TitreSection } from '@/composan
 import {
   EFFECTIF_EQUIPE_ADULTE_MAX,
   equipesAdultesModifiables,
-  filtrerGrimpeursRecherche,
   nomEquipeAdulteParDefaut,
 } from '@/domaine/engagement'
+import { filtrerGrimpeursRecherche } from '@/domaine/recherche'
 import {
   retirerGrimpeurAdmin,
   supprimerEquipeAdmin,

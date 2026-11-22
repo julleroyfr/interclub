@@ -8,6 +8,7 @@ import { indicateurCible } from '@/composants/saisie-hors-ligne/etat-cible'
 import { useFileSaisies } from '@/composants/saisie-hors-ligne/useFileSaisies'
 import { useSuiviEnvoi } from '@/composants/saisie-hors-ligne/useSuiviEnvoi'
 import type { IssueEnvoi } from '@/domaine/hors-ligne'
+import { filtrerGrimpeursRecherche } from '@/domaine/recherche'
 import { formaterTempsVitesse, lireSaisieVitesse, ResultatVitesseInvalideError } from '@/domaine/vitesse'
 import type { GrimpeurVitesse, IssueVitesse } from '@/lib/juge/vitesse'
 import { enregistrerTempsVitesse } from '@/lib/juge/vitesse-actions'
@@ -205,14 +206,15 @@ export function PanneauVitesse({
   const statG = statSexe('H')
   const aSaisir = grimpeurs.filter((g) => g.issue == null).length
 
-  const filtres = useMemo(() => {
-    const q = recherche.trim().toLowerCase()
-    return grimpeurs.filter((g) => {
-      if (filtreASaisir && g.issue != null) return false
-      if (!q) return true
-      return `${g.nom} ${g.prenom}`.toLowerCase().includes(q)
-    })
-  }, [grimpeurs, recherche, filtreASaisir])
+  // Recherche casse/accents ignorés, multi-termes (R14b).
+  const filtres = useMemo(
+    () =>
+      filtrerGrimpeursRecherche(
+        filtreASaisir ? grimpeurs.filter((g) => g.issue == null) : grimpeurs,
+        recherche,
+      ),
+    [grimpeurs, recherche, filtreASaisir],
+  )
 
   const filles = filtres.filter((g) => g.sexe === 'F').sort(trierAlpha)
   const garcons = filtres.filter((g) => g.sexe === 'H').sort(trierAlpha)

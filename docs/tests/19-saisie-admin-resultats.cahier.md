@@ -74,9 +74,12 @@ Réutilise le seed `01-jeu-de-test.sql` (catalogue
 - **Rôle** : admin. **Pré-condition** : rencontre en ③.
 - **Étapes** :
   1. Observer la liste : grimpeurs **regroupés par club**.
-  2. Utiliser la **recherche** (« Cléo »), puis le **filtre club** (Club B).
+  2. Utiliser la **recherche** (« Cléo », puis « bravo cleo »), puis le **filtre
+     club** (Club B).
 - **Résultat attendu** : la liste montre **Club A** (Ana, Bob) **et Club B**
-  (Cléo) — les **deux** clubs. La recherche restreint par nom ; le filtre club
+  (Cléo) — les **deux** clubs. La recherche restreint par nom ; elle ignore la
+  casse et les **accents** et accepte plusieurs mots dans n'importe quel ordre
+  (« bravo cleo » trouve **Cléo Bravo**, rév. 2026-11-22) ; le filtre club
   n'affiche que le club choisi ; le compteur « n grimpeurs · 2 clubs » est correct.
 
 ### CT-03 — Saisie admin pour un autre club en ③ (couvre R2, R5, R7)

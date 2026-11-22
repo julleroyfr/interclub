@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react'
 import { Carte } from '@/composants'
 import { accorder, compter } from '@/domaine/accord'
 import { aClassementClub } from '@/domaine/rencontre'
+import { filtrerGrimpeursRecherche } from '@/domaine/recherche'
 import type { IssueVoie } from '@/domaine/resultat'
 import type {
   ClassementRencontre,
@@ -86,14 +87,14 @@ export function PanneauClassement({
     return [...vues.entries()].sort((a, b) => a[1].localeCompare(b[1], 'fr'))
   }, [listeSexe])
 
+  // Recherche casse/accents ignorés, multi-termes (R12b).
   const filtree = useMemo(() => {
-    const q = recherche.trim().toLowerCase()
-    return listeSexe.filter((l) => {
+    const parFiltres = listeSexe.filter((l) => {
       if (filtreClub === 'mien' && l.clubOrigineId !== monClubId) return false
       if (equipeFiltre && l.equipeId !== equipeFiltre) return false
-      if (q && !`${l.prenom} ${l.nom}`.toLowerCase().includes(q)) return false
       return true
     })
+    return filtrerGrimpeursRecherche(parFiltres, recherche)
   }, [listeSexe, recherche, filtreClub, equipeFiltre, monClubId])
 
   const nbMonClub = useMemo(

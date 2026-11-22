@@ -10,6 +10,7 @@ import {
 } from '@/composants/saisie-resultats/ChoixVoieNiveau'
 import { accorder } from '@/domaine/accord'
 import { libelleGroupeDepart } from '@/domaine/engagement'
+import { filtrerGrimpeursRecherche } from '@/domaine/recherche'
 import { aVoiesLibres, type Categorie } from '@/domaine/rencontre'
 import { issuesVoieSaisissables, type IssueVoie } from '@/domaine/resultat'
 import {
@@ -92,15 +93,13 @@ export function PanneauSaisieAdmin({
 
   const selected = selId ? tousGrimpeurs.find((g) => g.grimpeurId === selId) ?? null : null
 
+  // Recherche casse/accents ignorés, multi-termes (spec #9 R10).
   const clubsFiltres = useMemo<SaisieClub[]>(() => {
-    const q = recherche.trim().toLowerCase()
     return saisie.clubs
       .filter((c) => clubFiltre === 'tous' || c.clubId === clubFiltre)
       .map((c) => ({
         ...c,
-        grimpeurs: c.grimpeurs.filter(
-          (g) => !q || `${g.prenom} ${g.nom}`.toLowerCase().includes(q),
-        ),
+        grimpeurs: filtrerGrimpeursRecherche(c.grimpeurs, recherche),
       }))
       .filter((c) => c.grimpeurs.length > 0)
   }, [saisie.clubs, recherche, clubFiltre])

@@ -25,6 +25,9 @@
   l'enregistrement, **sans relire tout l'écran** ; les écritures des autres
   acteurs arrivent par le temps réel (spec #11). Motif : mesure en recette — 5 à
   6 allers-retours vers la base par clic (~2 s), pour 1 indispensable.
+  **Rév. 2026-11-22 (validée le 2026-11-22)** : **R14b** — la recherche par
+  nom/prénom est insensible à la **casse** et aux **accents**, **multi-termes**
+  dans n'importe quel ordre (comme spec #5 R12bis).
 - **Sources** :
   - **Spec #1 — Rôles & autorisations** (`01-roles-et-autorisations.md`), vérité
     pour « qui peut faire quoi » : le **juge** est affecté par l'admin à
@@ -223,7 +226,9 @@ voie/bloc (authentifiés dès la ③, public à la ⑤ ; spec #1 R8).
 - **R14b.** L'écran est dimensionné pour un **grand volume** : une épreuve peut
   compter **plusieurs dizaines de compétiteurs par sexe** (ordre de grandeur : au
   moins 50). Il doit donc rester **exploitable rapidement** — au minimum une
-  **recherche par nom/prénom**, un **filtre « à saisir »** (ne montrer que les
+  **recherche par nom/prénom** (insensible à la casse et aux accents,
+  multi-termes dans n'importe quel ordre, comme spec #5 R12bis), un **filtre « à
+  saisir »** (ne montrer que les
   grimpeurs sans résultat) et un **filtre par sexe** (Tous / Filles / Garçons,
   pour n'afficher qu'un groupe à la fois) — et présenter les grimpeurs sous une
   forme **dense** (une ligne compacte par grimpeur, pas une grande carte). Ces

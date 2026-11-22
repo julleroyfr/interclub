@@ -8,10 +8,10 @@ import {
   EFFECTIF_EQUIPE_MAX,
   GROUPES_DEPART,
   libelleGroupeDepart,
-  filtrerGrimpeursRecherche,
   nomEquipeParDefaut,
   voiesDuGroupeDepart,
 } from '@/domaine/engagement'
+import { filtrerGrimpeursRecherche } from '@/domaine/recherche'
 import {
   ajouterGrimpeurEquipe,
   creerEquipe,

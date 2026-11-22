@@ -139,6 +139,9 @@ test.describe('Cahier 20 — saisie de la vitesse par le juge (spec #10)', () =>
     const recherche = page.getByPlaceholder('Rechercher un grimpeur (nom, prénom)…')
     await recherche.fill('bo')
     await expect(page.locator('li div.truncate')).toHaveText(['Alpha Bob'])
+    // Accents ignorés, multi-termes dans n'importe quel ordre (R14b, rév. 2026-11-22).
+    await recherche.fill('cleo bravo')
+    await expect(page.locator('li div.truncate')).toHaveText(['Bravo Cléo'])
     await recherche.fill('')
 
     await page.getByRole('button', { name: 'À saisir (1)' }).click()

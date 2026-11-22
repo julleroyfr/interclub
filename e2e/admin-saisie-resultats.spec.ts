@@ -129,6 +129,10 @@ test.describe('Cahier 19 — saisie & correction admin des résultats (spec #9)'
     await page.getByPlaceholder(/Rechercher un grimpeur/).fill('Cléo')
     await expect(page.locator('li > button')).toHaveCount(1)
     await expect(boutonGrimpeur(page, 'Cléo Bravo')).toBeVisible()
+    // Accents ignorés, multi-termes dans n'importe quel ordre (R10, rév. 2026-11-22).
+    await page.getByPlaceholder(/Rechercher un grimpeur/).fill('bravo cleo')
+    await expect(page.locator('li > button')).toHaveCount(1)
+    await expect(boutonGrimpeur(page, 'Cléo Bravo')).toBeVisible()
     await page.getByPlaceholder(/Rechercher un grimpeur/).fill('')
 
     await page.getByRole('button', { name: 'Club B', exact: true }).click()
