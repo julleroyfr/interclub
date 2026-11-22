@@ -57,6 +57,14 @@ enable_anonymous_sign_ins = true
 [auth.email]
 enable_signup = true
 enable_confirmations = false
+# Validité du lien de réinitialisation du mot de passe : 1 heure (spec #2 R50).
+otp_expiry = 3600
+
+# E-mail « mot de passe oublié » (spec #2 R48–R53). Même modèle à recopier à la
+# main en recette / prod (Dashboard → Authentication → Emails → Reset password).
+[auth.email.template.recovery]
+subject = "Réinitialisation de votre mot de passe — Interclub"
+content_path = "./supabase/templates/reinitialisation-mot-de-passe.html"
 
 [local_smtp]
 # Capture les e-mails locaux (magic links, confirmations) — aucun envoi réel.

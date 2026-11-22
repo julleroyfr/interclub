@@ -38,6 +38,11 @@
   définitivement **tout** compte permanent (coach, admin ou sans rôle) **sauf le
   sien** ; les données saisies sont conservées, sans auteur. Retire la
   suppression de compte du « Hors périmètre ».
+- **Révision** : 2026-11-22 — **réinitialisation du mot de passe** (R48–R53,
+  validée le 2026-11-22) : depuis la connexion, un titulaire de compte permanent
+  qui a oublié son mot de passe reçoit par e-mail un lien à usage unique valable
+  1 heure, qui lui permet d'en choisir un nouveau ; il arrive ensuite connecté
+  dans son espace. Retire la réinitialisation du « Hors périmètre ».
 - **Révision** : 2026-11-04 — **vocabulaire d'affichage** (R47, demande
   utilisateur du 2026-11-04 : « jeton » est un terme technique, trop abstrait
   pour les utilisateurs) : les écrans parlent de **QR code**, jamais de
@@ -303,6 +308,41 @@ alimente le modèle de données (mapping, jetons) et les policies **RLS**.
   s'intitule **« QR codes »** côté admin et **« Coachs temporaires »** côté coach
   (spec #12 R10). « Jeton » reste le terme du modèle de données et du code.
 
+### Réinitialisation du mot de passe (rév. 2026-11-22)
+
+- **R48.** L'écran de **connexion** propose un lien **« Mot de passe oublié ? »**
+  menant à un formulaire de **demande de réinitialisation** qui ne demande que
+  l'**adresse e-mail**. Seuls les **comptes permanents** (R1) sont concernés :
+  les sessions QR éphémères (R6) n'ont pas de mot de passe.
+- **R49.** Après l'envoi du formulaire, le **même message** s'affiche que
+  l'adresse corresponde ou non à un compte (« Si un compte existe pour cette
+  adresse, un e-mail vient de lui être envoyé ») : le formulaire ne permet pas de
+  savoir si une adresse est inscrite. Une adresse vide ou mal formée est refusée
+  avec un message, sans envoi.
+- **R50.** Pour un compte existant, un **e-mail** est envoyé à son adresse. Il
+  contient un **lien à usage unique**, valable **1 heure**, qui fonctionne
+  quel que soit l'appareil ou le navigateur sur lequel l'e-mail est ouvert.
+- **R51.** Le lien ouvre l'écran **« Nouveau mot de passe »** : le mot de passe
+  est saisi **deux fois**, avec les mêmes exigences qu'à l'inscription (R30 :
+  au moins 6 caractères, deux saisies identiques, sinon message et aucune
+  modification). Une fois enregistré, l'ancien mot de passe ne fonctionne
+  plus et l'utilisateur arrive **connecté dans son espace**, comme après une
+  connexion (admin → espace admin, coach → espace coach, sans rôle → accueil,
+  R5).
+- **R52.** Le lien n'est **consommé qu'à l'enregistrement** du nouveau mot de
+  passe, pas à son ouverture : les messageries qui ouvrent automatiquement les
+  liens d'un e-mail pour les analyser ne doivent pas le rendre inutilisable.
+  Un lien **expiré**, **déjà utilisé** ou **invalide** est donc signalé **au
+  moment de l'enregistrement** : un message l'explique et propose de **demander
+  un nouveau lien** (R48). Rien n'est modifié. Un nouveau mot de passe refusé
+  par R51 ne consomme pas le lien (on peut corriger et réessayer).
+- **R53.** L'écran « Nouveau mot de passe » n'est accessible **que** par le lien
+  reçu par e-mail (R50) : sans lui (accès direct, y compris avec une session
+  ordinaire ou une session QR éphémère), l'utilisateur est renvoyé vers la
+  demande de réinitialisation (R48), et l'enregistrement d'un mot de passe est
+  **refusé** (y compris par appel direct, hors écran). La modification du mot de
+  passe d'un utilisateur déjà connecté reste hors périmètre.
+
 ## Scénarios
 
 ### Nominal — attribution d'un compte coach
@@ -335,6 +375,14 @@ R40).
 le compte disparaît de la liste, son titulaire ne peut plus se connecter (R41,
 R43), et les résultats qu'il avait saisis restent dans le classement, sans auteur
 (R44).
+
+### Nominal — mot de passe oublié
+
+Étant donné un coach permanent qui a oublié son mot de passe, quand il clique
+« Mot de passe oublié ? » sur la connexion et saisit son adresse, alors il
+reçoit un e-mail (R48–R50) ; il l'ouvre sur son téléphone, suit le lien, saisit
+deux fois un nouveau mot de passe et arrive connecté dans l'espace coach
+(R51). L'ancien mot de passe ne fonctionne plus.
 
 ### Nominal — session coach temporaire
 
@@ -396,6 +444,19 @@ alors une session juge s'ouvre et permet de saisir les **résultats de vitesse**
 - Un **admin connecté** scanne un QR juge avec son téléphone → sa session admin
   est conservée ; il choisit « Aller à mon espace » ou « Me déconnecter et ouvrir
   la session QR » (R34).
+- Demande de réinitialisation pour une adresse **inconnue** → même message que
+  pour une adresse connue, aucun e-mail envoyé (R49).
+- Lien de réinitialisation utilisé **deux fois** → la seconde fois, à
+  l'enregistrement, « lien expiré ou déjà utilisé », proposition d'en demander
+  un nouveau (R52).
+- Lien utilisé **après 1 heure** → même message, rien modifié (R50, R52).
+- La messagerie **ouvre le lien** avant l'utilisateur (analyse anti-hameçonnage)
+  → le lien reste utilisable par l'utilisateur (R52).
+- Deux saisies du nouveau mot de passe **différentes**, ou moins de 6
+  caractères → message, mot de passe inchangé, lien toujours utilisable (R51,
+  R52).
+- Un utilisateur **déjà connecté** ouvre directement l'écran « Nouveau mot de
+  passe » → renvoyé vers la demande de réinitialisation, rien modifié (R53).
 
 ## Diagrammes
 
@@ -456,6 +517,29 @@ sequenceDiagram
     DB-->>App: Compte coach permanent du club X
   else Invitation révoquée / inexistante
     App-->>C: Erreur, aucune inscription (R29, R30)
+  end
+```
+
+### Réinitialisation du mot de passe
+
+```mermaid
+sequenceDiagram
+  actor U as Titulaire du compte
+  participant App
+  participant Auth as Supabase Auth
+  U->>App: « Mot de passe oublié ? » + e-mail (R48)
+  App->>Auth: Demande de réinitialisation
+  App-->>U: Message neutre, compte ou non (R49)
+  Auth-->>U: E-mail : lien à usage unique, 1 h (R50)
+  U->>App: Suit le lien
+  App-->>U: Écran « Nouveau mot de passe » (lien non consommé, R52)
+  U->>App: Nouveau mot de passe ×2 (R51)
+  App->>Auth: Vérifier le lien (consommé ici)
+  alt Lien valide
+    App->>Auth: Enregistrer le mot de passe
+    App-->>U: Connecté, espace du rôle (R51)
+  else Expiré / utilisé / invalide
+    App-->>U: Message + demander un nouveau lien (R52)
   end
 ```
 
@@ -525,9 +609,11 @@ Cette spec ne couvre pas (à traiter ailleurs) :
 - Les **transitions de phase** d'une rencontre — qui les déclenche et à quelles
   conditions (hors périmètre déjà posé par la spec #1).
 - La **gestion des comptes permanents** au-delà du mapping de rôle et de
-  l'**onboarding par invitation** (R26–R33, R35–R40) : réinitialisation de mot de passe,
-  e-mails transactionnels, modification d'un compte existant (e-mail, mot de
-  passe). La **suppression** est couverte par R41–R46 (rév. 2026-10-16).
+  l'**onboarding par invitation** (R26–R33, R35–R40) : e-mails transactionnels
+  autres que la réinitialisation, modification d'un compte existant (e-mail, mot
+  de passe d'un utilisateur connecté). La **suppression** est couverte par
+  R41–R46 (rév. 2026-10-16), la **réinitialisation du mot de passe** oublié par
+  R48–R53 (rév. 2026-11-22).
 - L'accès **visiteur non authentifié** aux infos publiques : sans objet (pas
   d'espace public, spec #1 R8 rév. 2026-10-02).
 - Le **cumul de rôles** par une même personne (spec #1 R4 : une session = un

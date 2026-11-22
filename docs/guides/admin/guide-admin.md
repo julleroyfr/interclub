@@ -740,6 +740,10 @@ publication.
   peut plus se connecter et son e-mail redevient libre pour une nouvelle
   inscription. Les résultats qu'elle a saisis sont conservés, sans auteur. Votre
   propre compte ne peut pas être supprimé.
+- **Mot de passe oublié** : chacun le réinitialise lui-même depuis l'écran de
+  connexion (« Mot de passe oublié ? ») : il reçoit par e-mail un lien valable
+  **1 heure**, à usage unique, pour choisir un nouveau mot de passe. Aucune
+  action de l'administrateur n'est nécessaire.
 
 ## 12. Questions fréquentes
 
@@ -754,6 +758,11 @@ et le classement sont dans la **Vue d'ensemble**.
 
 **Un coach ne voit pas son club ou n'a accès à rien.**
 Vérifier dans **Rôles** que son compte a le rôle Coach et le bon club.
+
+**Un coach ne reçoit pas l'e-mail « mot de passe oublié ».**
+Lui faire vérifier l'adresse saisie (le même message s'affiche qu'elle ait un
+compte ou non) et ses indésirables ; dans **Rôles**, vérifier que son compte
+existe avec cette adresse.
 
 **Un QR de juge ou de coach temporaire est refusé.**
 Vérifier la phase : ③ pour un juge, ② ou ③ pour un coach temporaire. Si le QR a

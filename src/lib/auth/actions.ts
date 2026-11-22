@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
+import { destinationSelonRole } from '@/domaine/reinitialisation-mot-de-passe'
 import { verifierLecture } from '@/lib/supabase/lecture'
 import { createClient } from '@/lib/supabase/server'
 
@@ -46,12 +47,9 @@ export async function seConnecter(
     'du compte',
   )
 
-  const destination =
-    mapping?.role === 'admin' ? '/admin' : mapping?.role === 'coach' ? '/coach' : '/'
-
   // La session (cookies) a changé : rafraîchir tout l'arbre puis rediriger.
   revalidatePath('/', 'layout')
-  redirect(destination)
+  redirect(destinationSelonRole(mapping?.role))
 }
 
 /** Déconnexion : ferme la session Supabase et renvoie vers la connexion. */

@@ -99,9 +99,22 @@ l'écran l'indique ; demander alors la nouvelle invitation.
 | 1 | E-mail | Identifiant du compte |
 | 2 | Mot de passe | — |
 | 3 | Se connecter | Ouvre « Mes rencontres » |
+| 4 | Mot de passe oublié ? | Demande un lien pour choisir un nouveau mot de passe |
 
-**Mot de passe oublié** : l'application ne propose pas de réinitialisation en
-libre-service. Contacter l'organisateur.
+### Mot de passe oublié
+
+1. Sur l'écran de connexion, cliquer **« Mot de passe oublié ? »** (repère 4)
+   et saisir l'adresse e-mail du compte, puis **« Recevoir le lien »**.
+2. Ouvrir l'e-mail « Réinitialisation de votre mot de passe — Interclub »
+   (penser aux indésirables) et cliquer **« Choisir un nouveau mot de passe »**.
+   L'e-mail peut être ouvert sur un autre appareil, par exemple le téléphone.
+3. Saisir deux fois le nouveau mot de passe (au moins 6 caractères), puis
+   **« Enregistrer »** : on arrive connecté sur « Mes rencontres ».
+
+Le lien est valable **1 heure** et ne sert **qu'une fois**. S'il a expiré ou a
+déjà servi, l'écran le signale au moment d'enregistrer : cliquer « Demander un
+nouveau lien ». Par discrétion, l'écran affiche le même message que l'adresse
+ait un compte ou non : si aucun e-mail n'arrive, vérifier l'adresse saisie.
 
 ## 3. Mes rencontres
 

@@ -100,6 +100,7 @@ test('01 — inscription et connexion', async ({ page }) => {
     page.getByLabel('E-mail'),
     page.getByLabel('Mot de passe'),
     page.getByRole('button', { name: /se connecter/i }),
+    page.getByRole('link', { name: 'Mot de passe oublié ?' }),
   ])
   await capturer(page, '02-connexion')
 })

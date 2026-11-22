@@ -10,7 +10,7 @@
 // (R28) et le refus des doublons (R32) passent par la base réelle.
 
 /** Longueur minimale d'un mot de passe (minimum accepté par Supabase Auth). */
-const LONGUEUR_MIN_MOT_DE_PASSE = 6
+export const LONGUEUR_MIN_MOT_DE_PASSE = 6
 
 /** Acteur permanent qui tente de gérer une invitation (spec #2 R4, R29). */
 export type ActeurInvitation = { role: 'admin' | 'coach' | null }

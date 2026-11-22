@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 
 import { Carte, EnTetePage } from '@/composants'
 import { redirigerSiConnecte } from '@/lib/auth/session'
@@ -32,6 +33,11 @@ export default async function PageConnexion({
           </p>
         )}
         <FormulaireConnexion />
+        <p className="mt-6 text-sm">
+          <Link href="/mot-de-passe-oublie" className="text-accent hover:underline">
+            Mot de passe oublié ?
+          </Link>
+        </p>
       </Carte>
     </div>
   )
