@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useActionState, useEffect, useId, useRef, useState } from 'react'
 
 import { Bouton, ChampSelect, ChampTexte } from '@/composants'
@@ -7,10 +8,10 @@ import {
   EFFECTIF_EQUIPE_MAX,
   GROUPES_DEPART,
   libelleGroupeDepart,
-  filtrerGrimpeursRecherche,
   nomEquipeParDefaut,
   voiesDuGroupeDepart,
 } from '@/domaine/engagement'
+import { filtrerGrimpeursRecherche } from '@/domaine/recherche'
 import {
   ajouterGrimpeurEquipe,
   creerEquipe,
@@ -40,10 +41,13 @@ export function PanneauEngagement({
   engagement,
   peutEditer,
   estEnfant,
+  aideGroupes = false,
 }: {
   engagement: EngagementRencontre
   peutEditer: boolean
   estEnfant: boolean
+  /** « ? » d'aide au choix du groupe (R21ter) : coach permanent seul. */
+  aideGroupes?: boolean
 }) {
   const rencontreId = engagement.id
 
@@ -70,6 +74,7 @@ export function PanneauEngagement({
                 roster={engagement.roster}
                 peutEditer={peutEditer}
                 estEnfant={estEnfant}
+                aideGroupes={aideGroupes}
               />
             </li>
           ))}
@@ -124,12 +129,14 @@ function CarteEquipe({
   roster,
   peutEditer,
   estEnfant,
+  aideGroupes,
 }: {
   equipe: EquipeEngagee
   rencontreId: string
   roster: EngagementRencontre['roster']
   peutEditer: boolean
   estEnfant: boolean
+  aideGroupes: boolean
 }) {
   const nbPrete = equipe.membres.filter((m) => m.prete).length
   const complete = equipe.membres.length >= EFFECTIF_EQUIPE_MAX
@@ -174,6 +181,7 @@ function CarteEquipe({
               rencontreId={rencontreId}
               disponibles={disponibles}
               estEnfant={estEnfant}
+              aideGroupes={aideGroupes}
             />
           )}
           <FormSupprimerEquipe equipe={equipe} rencontreId={rencontreId} />
@@ -320,11 +328,13 @@ function FormAjoutGrimpeur({
   rencontreId,
   disponibles,
   estEnfant,
+  aideGroupes,
 }: {
   equipe: EquipeEngagee
   rencontreId: string
   disponibles: EngagementRencontre['roster']
   estEnfant: boolean
+  aideGroupes: boolean
 }) {
   const [etat, action, enCours] = useActionState(ajouterGrimpeurEquipe, etatInitial)
   const idRecherche = useId()
@@ -386,7 +396,26 @@ function FormAjoutGrimpeur({
       />
 
       {estEnfant && (
-        <div>
+        <div className="relative">
+          {aideGroupes && (
+            // « ? » discret à droite du libellé (R21ter), cible tactile 44 px.
+            <Link
+              href={`/coach/aide-groupes?rencontre=${rencontreId}`}
+              // Nouvel onglet : le formulaire en cours de saisie reste en place.
+              target="_blank"
+              rel="noopener"
+              aria-label="Aide au choix du groupe (nouvel onglet)"
+              title="Aide au choix du groupe"
+              className="absolute -top-3 right-0 inline-flex size-11 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+            >
+              <span
+                aria-hidden
+                className="inline-flex size-5 items-center justify-center rounded-full border border-bordure text-[11px] font-bold text-texte-attenue"
+              >
+                ?
+              </span>
+            </Link>
+          )}
           <ChampSelect
             id={idGroupe}
             name="groupeDepart"

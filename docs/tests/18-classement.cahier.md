@@ -200,11 +200,14 @@ T1 = 5 / pv 3, T2 = 6 / pv 3, T3 = 7 / pv 4 ; B1 : 1er = 4, 2e = 3 ; B2 : 1er = 
   petite échelle).
 - **Étapes** :
   1. Onglet **Individuel → Femmes**.
-  2. Taper un **nom** dans la recherche.
+  2. Taper un **nom** dans la recherche, puis `bravo cleo` (sans accent, nom
+     avant prénom).
   3. Activer **Mon club**, puis choisir une **équipe** dans le sélecteur.
   4. Naviguer avec **‹ Préc · numéros · Suiv ›**.
 - **Résultat attendu** :
-  - La **recherche** filtre par nom ; le **compteur** se met à jour.
+  - La **recherche** filtre par nom ; le **compteur** se met à jour. Elle ignore
+    la casse et les **accents** et accepte plusieurs mots dans n'importe quel
+    ordre : `bravo cleo` trouve **Cléo Bravo** (rév. 2026-11-22).
   - **Mon club** ne montre que les grimpeurs du **Club A** ; le filtre **équipe**
     restreint à l'équipe choisie ; les filtres se **combinent**.
   - La liste est **paginée** (20/page) ; la navigation se fait **en bas**, la page
@@ -309,3 +312,4 @@ T1 = 5 / pv 3, T2 = 6 / pv 3, T3 = 7 / pv 4 ; B1 : 1er = 4, 2e = 3 ; B2 : 1er = 
 | | | | CT-12 | ✅ / ❌ | |
 | | | | CT-13 | ✅ / ❌ | |
 | 2026-10-02 | agent/playwright | develop | CT-01 → CT-13 | ✅ | `e2e/classement.spec.ts` (13 tests). Corrigé au passage : le bandeau disait « la vitesse n'entre pas encore dans le score » (contraire à spec #7 R20) |
+| 2026-11-22 | agent/playwright (local) | `3af7401` | CT-10 | ✅ (local) | Rév. 2026-11-22 : recherche sans accents, multi-termes (`bravo cleo`) ; `e2e/classement.spec.ts` (13 tests, base au seed) ; recette : à dérouler |

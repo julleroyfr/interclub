@@ -1,4 +1,5 @@
 import { expect, test } from './helpers/fixtures'
+import { cloturerViaPilotage } from './helpers/pilotage'
 import { commeAdmin } from './helpers/auth'
 import { CLUB_B, RENCONTRE_PILOTE, RENCONTRE_PILOTE_DATE } from './helpers/donnees'
 import {
@@ -106,10 +107,7 @@ test.describe('Clôture au-delà de 1000 résultats de voie (spec #6 R18, B2)', 
   test('la clôture ne pose aucun NP sur un niveau déjà saisi (R18)', async ({ page }) => {
     await commeAdmin(page)
     await page.goto(URL_ADMIN)
-    await page.getByRole('button', { name: 'Avancer à la phase suivante' }).click()
-    await expect(page.getByRole('button', { name: 'Avancer à la phase suivante' })).toContainText(
-      /Résultats publics/,
-    )
+    await cloturerViaPilotage(page)
     await expect(page.getByText(/non-présentations automatiques/)).toHaveCount(0)
     expect(
       execSql(`select phase from interclub.rencontre where id = '${RENCONTRE_PILOTE}';`),

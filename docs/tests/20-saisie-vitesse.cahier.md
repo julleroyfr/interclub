@@ -105,10 +105,12 @@ tous (cf. `00-catalogue-jeux-de-donnees.md` § Notes).
 
 - **Rôle / session** : juge (repartir d'un état mixte : au moins un « à saisir »).
 - **Étapes** :
-  1. Taper `bo` dans la recherche.
+  1. Taper `bo` dans la recherche, puis `cleo bravo` (sans accent).
   2. Effacer, puis activer le filtre **À saisir**.
   3. Basculer le filtre sexe sur **Femmes**, puis **Hommes**, puis **Tous**.
-- **Résultat attendu** : (1) seule la ligne **Bob** reste visible ; (2) seuls les
+- **Résultat attendu** : (1) `bo` ne laisse que la ligne **Bob** ; `cleo bravo`
+  ne laisse que **Cléo** (casse et accents ignorés, plusieurs mots dans
+  n'importe quel ordre, rév. 2026-11-22) ; (2) seuls les
   grimpeurs **sans résultat** restent affichés, le badge du filtre indique leur
   nombre ; (3) **Femmes** n'affiche que la colonne Femmes (pleine largeur),
   **Hommes** que la colonne Hommes, **Tous** rétablit les deux côte à côte. Ces
@@ -234,3 +236,4 @@ tous (cf. `00-catalogue-jeux-de-donnees.md` § Notes).
 | 2026-09-22 | julleroyfr | local (stack Docker) | CT-10 | ✅ | |
 | 2026-09-22 | julleroyfr | local (stack Docker) | CT-11 | ✅ | |
 | 2026-10-02 | agent/playwright | develop | CT-01 → CT-11 | ✅ | `e2e/juge-vitesse.spec.ts` (11 tests) ; CT-08 non connecté → `/connexion` (spec #12 R2) |
+| 2026-11-22 | agent/playwright (local) | `3af7401` | CT-05 | ✅ (local) | Rév. 2026-11-22 : recherche sans accents, multi-termes (`cleo bravo`) ; `e2e/juge-vitesse.spec.ts` (11 tests, base au seed) ; recette : à dérouler |

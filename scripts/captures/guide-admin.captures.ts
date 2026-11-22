@@ -404,3 +404,48 @@ test('10 — rencontre adulte : équipes, épreuves, capitaines', async ({ page 
   ])
   await capturer(page, '20-jetons-capitaines')
 })
+
+test('11 — confirmation de clôture et contrôle des NP (rencontre enfant)', async ({ page }) => {
+  // Rencontre pilote enfant du jour en ③ ; seul résultat : Ana Top en M2. Les NP
+  // posés à la clôture sont purgés à la fin (`etatSeed` remet phase et date).
+  const purgerPilote = () =>
+    execSql(
+      `delete from interclub.resultat_voie where voie_difficulte_id in (
+         select v.id from interclub.voie_difficulte v join interclub.epreuve e on e.id = v.epreuve_id
+          where e.rencontre_id = '${RENCONTRE_PILOTE}');
+       delete from interclub.resultat_bloc where bloc_id in (
+         select b.id from interclub.bloc b join interclub.epreuve e on e.id = b.epreuve_id
+          where e.rencontre_id = '${RENCONTRE_PILOTE}');`,
+    )
+  reinitialiserEngagement()
+  purgerPilote()
+  execSql(
+    `insert into interclub.resultat_voie (voie_difficulte_id, grimpeur_id, issue)
+       values ('99999999-9999-9999-9999-999999999912', 'a0000000-0000-0000-0000-0000000000a1', 'top');`,
+  )
+  poserDate('today')
+  poserPhase('competition')
+  try {
+    await page.goto(`/admin/rencontres/${RENCONTRE_PILOTE}`)
+    await bouton(page, 'Avancer à la phase suivante').click()
+    const fenetre = page.getByRole('dialog', { name: 'Clôturer la rencontre ?' })
+    await expect(fenetre.getByRole('row', { name: /Total/ })).toBeVisible()
+    // Pas de repères : la fenêtre modale s'affiche au-dessus de toute la page.
+    await capturer(page, '22-confirmation-cloture', { pleinePage: false })
+
+    await fenetre.getByRole('button', { name: 'Clôturer' }).click()
+    await expect(page.getByRole('tab', { name: /Contrôle des NP/ })).toBeVisible()
+    await page.goto(`/admin/rencontres/${RENCONTRE_PILOTE}?onglet=np`)
+    const panneau = page.getByRole('tabpanel')
+    await numeroter(page, [
+      lien(page, /PDF par niveau/),
+      panneau.getByRole('link', { name: /Club A/ }),
+      panneau.getByRole('heading', { name: 'Bloc B1', exact: true }),
+      panneau.getByRole('link', { name: 'Alpha Ana' }).first(),
+      panneau.getByText('Peu de saisies').first(),
+    ])
+    await capturer(page, '23-controle-np')
+  } finally {
+    purgerPilote()
+  }
+})

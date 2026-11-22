@@ -1,23 +1,25 @@
-import type { Categorie } from './rencontre'
+import type { Categorie, Phase } from './rencontre'
 
 /**
  * Onglets du tableau de bord d'une rencontre (spec #3 R41k), dans l'ordre
  * d'affichage. La valeur est celle du paramètre d'URL `?onglet=`.
  */
-export const ONGLETS = ['vue', 'structure', 'equipes', 'prets', 'statistiques'] as const
+export const ONGLETS = ['vue', 'structure', 'equipes', 'prets', 'statistiques', 'np'] as const
 
 export type Onglet = (typeof ONGLETS)[number]
 
 export const ONGLET_PAR_DEFAUT: Onglet = 'vue'
 
 /**
- * Onglets présents pour une rencontre de cette catégorie (R41k) : pas de Prêts
- * en adulte (spec #20 R11), Statistiques seulement en enfant (R41e).
+ * Onglets présents pour une rencontre de cette catégorie et de cette phase
+ * (R41k) : pas de Prêts en adulte (spec #20 R11), Statistiques seulement en
+ * enfant (R41e), Contrôle des NP seulement en ④/⑤ (R41l).
  */
-export function ongletsDisponibles(categorie: Categorie): Onglet[] {
+export function ongletsDisponibles(categorie: Categorie, phase: Phase): Onglet[] {
   return ONGLETS.filter((o) => {
     if (o === 'prets') return categorie !== 'adulte'
     if (o === 'statistiques') return categorie === 'enfant'
+    if (o === 'np') return phase === 'cloture' || phase === 'resultats_publics'
     return true
   })
 }
@@ -29,7 +31,8 @@ export function ongletsDisponibles(categorie: Categorie): Onglet[] {
 export function resoudreOnglet(
   parametre: string | string[] | null | undefined,
   categorie: Categorie,
+  phase: Phase,
 ): Onglet {
   const valeur = Array.isArray(parametre) ? parametre[0] : parametre
-  return ongletsDisponibles(categorie).find((o) => o === valeur) ?? ONGLET_PAR_DEFAUT
+  return ongletsDisponibles(categorie, phase).find((o) => o === valeur) ?? ONGLET_PAR_DEFAUT
 }

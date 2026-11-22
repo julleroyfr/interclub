@@ -1,6 +1,7 @@
 import type { Locator, Page } from '@playwright/test'
 
 import { expect, test } from './helpers/fixtures'
+import { cloturerViaPilotage } from './helpers/pilotage'
 import { commeAdmin, commeCoach, commeCoachTemporaire } from './helpers/auth'
 import { GRIMPEURS, RENCONTRE_PILOTE, RENCONTRE_PILOTE_DATE } from './helpers/donnees'
 import { execSql, nettoyerSessionsQr, poserDate, poserPhase, reinitialiserEngagement } from './helpers/sql'
@@ -126,6 +127,10 @@ test.describe('Cahier 19 — saisie & correction admin des résultats (spec #9)'
     }
 
     await page.getByPlaceholder(/Rechercher un grimpeur/).fill('Cléo')
+    await expect(page.locator('li > button')).toHaveCount(1)
+    await expect(boutonGrimpeur(page, 'Cléo Bravo')).toBeVisible()
+    // Accents ignorés, multi-termes dans n'importe quel ordre (R10, rév. 2026-11-22).
+    await page.getByPlaceholder(/Rechercher un grimpeur/).fill('bravo cleo')
     await expect(page.locator('li > button')).toHaveCount(1)
     await expect(boutonGrimpeur(page, 'Cléo Bravo')).toBeVisible()
     await page.getByPlaceholder(/Rechercher un grimpeur/).fill('')
@@ -264,7 +269,7 @@ test.describe('Cahier 19 — saisie & correction admin des résultats (spec #9)'
     )
     await commeAdmin(page)
     await page.goto(URL_TDB)
-    await page.getByRole('button', { name: 'Avancer à la phase suivante' }).click()
+    await cloturerViaPilotage(page)
     // En ④, l'action devient « Corriger » et mène à l'écran de correction.
     await page.getByRole('link', { name: /Corriger les résultats \(tous clubs\)/ }).click()
     await expect(page.getByRole('heading', { name: /Correction des résultats/ })).toBeVisible()

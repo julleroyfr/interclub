@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Maquette — Contrôle des NP et confirmation de clôture (admin, spec #3 R17bis, R41l–R41s)</title>
+<style>
+  :root {
+    --fond:#020617; --surface:rgba(255,255,255,.04); --surface-forte:rgba(255,255,255,.08);
+    --bordure:rgba(255,255,255,.12); --accent:#22d3ee; --accent-doux:#67e8f9; --secondaire:#bef264;
+    --alerte:#fbbf24; --danger:#fb7185; --texte-fort:#fff; --texte:#e2e8f0; --texte-attenue:#94a3b8; --texte-doux:#64748b;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:linear-gradient(180deg,rgba(34,211,238,.05),rgba(2,6,23,0) 260px),var(--fond); color:var(--texte); font-family:system-ui,-apple-system,"Segoe UI",sans-serif; line-height:1.4; min-height:100vh; }
+  .corps { padding:16px; max-width:1100px; margin:0 auto; display:flex; flex-direction:column; gap:14px; }
+  .titre { color:var(--texte-fort); font-size:17px; font-weight:700; margin:0; }
+  .meta { color:var(--texte-attenue); font-size:13px; margin:2px 0 0; }
+  .regle { color:var(--texte-doux); font-size:10.5px; font-weight:600; margin-left:6px; text-transform:none; letter-spacing:0; }
+  [hidden] { display:none !important; }
+
+  /* Sélecteurs d'illustration (pas dans l'appli) */
+  .demo { display:flex; flex-wrap:wrap; gap:4px; padding:4px; background:rgba(0,0,0,.25); border-radius:12px; border:1px dashed var(--bordure); }
+  .demo button { flex:1 1 120px; min-height:44px; border:0; border-radius:9px; background:transparent; color:var(--texte-attenue); font:600 13px system-ui; cursor:pointer; }
+  .demo button[aria-pressed="true"] { background:var(--surface-forte); color:var(--texte-fort); }
+  .demo-note { color:var(--texte-doux); font-size:11.5px; margin:-6px 2px 0; }
+
+  .carte { background:var(--surface); border:1px solid var(--bordure); border-radius:14px; padding:14px 16px; }
+  .c-titre { color:var(--texte-fort); font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; margin:0; }
+
+  /* En-tête de pilotage (R41a) */
+  .pilotage { display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
+  .badge { display:inline-flex; align-items:center; padding:2px 10px; border-radius:999px; font-size:12px; font-weight:700; border:1px solid; }
+  .badge.comp { color:var(--accent-doux); border-color:rgba(34,211,238,.4); background:rgba(34,211,238,.1); }
+  .badge.clot { color:var(--alerte); border-color:rgba(251,191,36,.45); background:rgba(251,191,36,.1); }
+  .pilotage .actions { margin-left:auto; display:flex; gap:8px; }
+  .btn { min-height:44px; padding:0 16px; border-radius:12px; border:1px solid var(--bordure); background:var(--surface); color:var(--texte); font:600 14px system-ui; cursor:pointer; display:inline-flex; align-items:center; gap:6px; text-decoration:none; }
+  .btn:hover { background:var(--surface-forte); }
+  .btn.primaire { background:var(--accent); border-color:var(--accent); color:#04232b; }
+  .btn.primaire:hover { background:var(--accent-doux); }
+  .btn.danger { background:var(--alerte); border-color:var(--alerte); color:#2b1d02; }
+  .btn:focus-visible { outline:2px solid var(--accent-doux); outline-offset:2px; }
+
+  /* Onglets (R41k) */
+  .onglets { display:flex; gap:2px; overflow-x:auto; border-bottom:1px solid var(--bordure); scrollbar-width:thin; }
+  .onglets a { flex-shrink:0; min-height:44px; display:inline-flex; align-items:center; gap:6px; padding:0 12px; color:var(--texte-attenue); text-decoration:none; font-size:14px; font-weight:600; border-bottom:2px solid transparent; }
+  .onglets a[aria-current="page"] { color:var(--texte-fort); border-color:var(--accent); }
+  .onglets .cpt { font-size:11px; padding:1px 7px; border-radius:999px; background:var(--surface-forte); color:var(--texte-attenue); }
+  .onglets a.np .cpt { background:rgba(251,113,133,.15); color:var(--danger); }
+
+  /* Exports (R41r, R41s) */
+  .exports { display:flex; flex-direction:column; gap:10px; }
+  .exports p { margin:0; color:var(--texte-attenue); font-size:12.5px; }
+  .boutons-clubs { display:flex; flex-wrap:wrap; gap:8px; }
+  .boutons-clubs .btn { font-size:13px; }
+  .boutons-clubs .n { color:var(--danger); font-weight:700; }
+
+  /* Sections (R41l, R41m) */
+  .entete-section { display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 10px; margin-bottom:6px; }
+  .entete-section .nb { color:var(--danger); font-weight:700; font-size:14px; }
+  .entete-section .att { color:var(--texte-doux); font-size:12px; flex-basis:100%; }
+
+  /* Lignes (R41n–R41p) : cartes empilées sur mobile, grille dès 768 px */
+  .lignes { list-style:none; margin:0; padding:0; }
+  .ligne { display:grid; grid-template-columns:1fr; gap:4px; padding:10px 2px; border-top:1px solid rgba(255,255,255,.06); }
+  .ligne .qui a, .ligne .qui strong { color:var(--texte-fort); font-weight:700; font-size:14px; }
+  .ligne .qui a { text-decoration:underline; text-decoration-color:rgba(103,232,249,.5); text-underline-offset:3px; }
+  .ligne .qui a:hover { color:var(--accent-doux); }
+  .ligne .ou { color:var(--texte-doux); font-size:12px; }
+  .fiche { display:flex; flex-wrap:wrap; gap:4px; }
+  .puce { font-size:12px; padding:2px 7px; border-radius:7px; background:rgba(255,255,255,.05); color:var(--texte-attenue); font-variant-numeric:tabular-nums; }
+  .puce.np { background:rgba(251,113,133,.16); color:var(--danger); font-weight:700; }
+  .signal { font-size:12px; font-weight:700; }
+  .signal.alerte { color:var(--danger); }
+  .signal.attention { color:var(--alerte); }
+  .signal.neutre { color:var(--texte-attenue); }
+  @media (min-width:768px) {
+    .corps { padding:22px 28px; }
+    .exports { flex-direction:row; align-items:center; flex-wrap:wrap; }
+    .ligne { grid-template-columns:minmax(180px,1.1fr) 2.4fr minmax(150px,.9fr); align-items:center; gap:12px; }
+  }
+
+  .vide { color:var(--secondaire); font-size:14px; }
+
+  /* Fenêtre de confirmation (R17bis) */
+  dialog { width:min(560px,calc(100vw - 24px)); max-height:calc(100vh - 24px); padding:0; border-radius:16px; border:1px solid var(--bordure); background:#0b1222; color:var(--texte); }
+  dialog::backdrop { background:rgba(2,6,23,.75); }
+  .dlg { padding:18px; display:flex; flex-direction:column; gap:12px; }
+  .dlg h2 { margin:0; color:var(--texte-fort); font-size:18px; }
+  .dlg ul.rappel { margin:0; padding-left:18px; font-size:13.5px; color:var(--texte); }
+  .dlg .sous { color:var(--texte-attenue); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; margin:4px 0 0; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th { text-align:left; color:var(--texte-doux); font-size:11px; text-transform:uppercase; letter-spacing:.04em; font-weight:700; padding:6px 4px; }
+  th.n, td.n { text-align:right; font-variant-numeric:tabular-nums; }
+  td { padding:7px 4px; border-top:1px solid rgba(255,255,255,.06); }
+  td.n.pos { color:var(--alerte); font-weight:700; }
+  tr.total td { font-weight:700; color:var(--texte-fort); border-top:1px solid var(--bordure); }
+  .dlg .pied { display:flex; flex-direction:column-reverse; gap:8px; }
+  .dlg .pied .btn { justify-content:center; }
+  @media (min-width:520px) { .dlg .pied { flex-direction:row; justify-content:flex-end; } }
+</style>
+</head>
+<body>
+  <div class="corps">
+    <div>
+      <p class="titre">Rencontre Bordeaux EC du 12 octobre 2025</p>
+      <p class="meta" id="meta-cat">Enfant · club porteur Bordeaux EC · saison 2025</p>
+    </div>
+
+    <div class="demo" role="group" aria-label="Catégorie illustrée">
+      <button type="button" aria-pressed="true" data-cat="enfant">Enfant</button>
+      <button type="button" aria-pressed="false" data-cat="ado">Ado / adulte</button>
+    </div>
+    <div class="demo" role="group" aria-label="Phase illustrée">
+      <button type="button" aria-pressed="true" data-ph="comp">③ Compétition (popin)</button>
+      <button type="button" aria-pressed="false" data-ph="clot">④ Clôture (onglet NP)</button>
+      <button type="button" aria-pressed="false" data-ph="vide">④ sans aucun NP</button>
+    </div>
+    <p class="demo-note">Sélecteurs de la maquette uniquement. En ③, cliquer « Clôture → » ouvre la confirmation (R17bis).</p>
+
+    <!-- En-tête de pilotage (R41a) -->
+    <section class="carte pilotage" aria-label="Phase">
+      <span class="c-titre">Phase</span>
+      <span class="badge comp" id="badge-phase">Compétition</span>
+      <div class="actions">
+        <button class="btn" type="button" id="btn-prec">← Préparation</button>
+        <button class="btn primaire" type="button" id="btn-suiv">Clôture →</button>
+      </div>
+    </section>
+
+    <!-- Onglets (R41k) -->
+    <nav class="onglets" aria-label="Sections du tableau de bord">
+      <a href="#">Vue d'ensemble</a>
+      <a href="#">Structure <span class="cpt">3</span></a>
+      <a href="#">Équipes <span class="cpt">9</span></a>
+      <a href="#" id="og-prets">Prêts <span class="cpt">1</span></a>
+      <a href="#" id="og-stats">Statistiques</a>
+      <a href="#" class="np" id="og-np" aria-current="page" hidden>Contrôle des NP <span class="cpt" id="cpt-np">0</span></a>
+    </nav>
+
+    <p class="demo-note" id="note-comp">En ③, l'onglet « Contrôle des NP » n'existe pas encore (R41k) : il apparaît en ④ et ⑤.</p>
+
+    <div id="panneau-np" hidden>
+      <!-- Exports (R41r, R41s) -->
+      <section class="carte exports" id="carte-exports">
+        <span class="c-titre">Exports PDF <span class="regle">R41r R41s</span></span>
+        <a class="btn" href="#" download>⤓ PDF par niveau (admin)</a>
+        <p>PDF à envoyer aux coachs :</p>
+        <div class="boutons-clubs" id="boutons-clubs"></div>
+      </section>
+      <div id="sections" style="display:flex;flex-direction:column;gap:14px;margin-top:14px"></div>
+    </div>
+  </div>
+
+  <!-- Fenêtre de confirmation (R17bis) -->
+  <dialog id="dlg" aria-labelledby="dlg-titre">
+    <form method="dialog" class="dlg">
+      <h2 id="dlg-titre">Clôturer la rencontre ?</h2>
+      <ul class="rappel">
+        <li>La saisie des coachs, capitaines et juges s'arrête.</li>
+        <li>Tout ce qui n'a pas été saisi passe en <strong>NP</strong> (0 point). Seul l'admin pourra corriger.</li>
+      </ul>
+      <p class="sous">Manques à la clôture <span class="regle">R17bis c</span></p>
+      <div id="apercu"></div>
+      <div class="pied">
+        <button class="btn" value="annuler" autofocus>Annuler</button>
+        <button class="btn danger" value="cloturer">Clôturer</button>
+      </div>
+    </form>
+  </dialog>
+
+<script>
+  // Données fictives de démonstration.
+  const ENFANT = {
+    clubs: ['Bordeaux EC', 'Mérignac Grimpe', 'Talence Escalade'],
+    apercu: [['Bordeaux EC', 5, 4, 1], ['Mérignac Grimpe', 3, 2, 0], ['Talence Escalade', 0, 1, 0]],
+    colVoies: 'NP de voie',
+    sections: [
+      { t: 'Vitesse', att: '42 engagés', lignes: [
+        ['DUPONT Léa', 'Bordeaux EC · Équipe 1 · M1', ['B1 Échec', 'B2 Échec', 'M1 Échec', 'M2 Top', 'M3 Échec', '!Vit NP (juge)'], ['alerte', 'Vitesse NP, fiche complète']],
+        ['MARTIN Hugo', 'Bordeaux EC · Équipe 2 · T1', ['!B1 NP', '!B2 NP', '!T1 NP', '!T2 NP', '!T3 NP', '!Vit non saisie'], ['neutre', 'Tout NP : absent ?']],
+      ]},
+      { t: 'Bloc B1', att: '42 engagés', lignes: [
+        ['MARTIN Hugo', 'Bordeaux EC · Équipe 2 · T1', ['!B1 NP', '!B2 NP', '!T1 NP', '!T2 NP', '!T3 NP', '!Vit non saisie'], ['neutre', 'Tout NP : absent ?']],
+        ['ROUX Inès', 'Mérignac Grimpe · Équipe 1 · M2', ['!B1 NP', '!B2 NP', '!M2 NP', '!M3 NP', '!M4 NP', 'Vit 29,11 s'], ['alerte', 'Rien saisi sauf vitesse']],
+      ]},
+      { t: 'Bloc B2', att: '42 engagés', lignes: [
+        ['MARTIN Hugo', 'Bordeaux EC · Équipe 2 · T1', ['!B1 NP', '!B2 NP', '!T1 NP', '!T2 NP', '!T3 NP', '!Vit non saisie'], ['neutre', 'Tout NP : absent ?']],
+        ['ROUX Inès', 'Mérignac Grimpe · Équipe 1 · M2', ['!B1 NP', '!B2 NP', '!M2 NP', '!M3 NP', '!M4 NP', 'Vit 29,11 s'], ['alerte', 'Rien saisi sauf vitesse']],
+        ['BLANC Noé', 'Talence Escalade · Équipe 1 · M1', ['B1 Palier 1er essai', '!B2 NP', 'M1 Top', 'M2 Échec', 'M3 Top', 'Vit 33,15 s'], null],
+      ]},
+      { t: 'Niveau M2', att: 'Voies : 22 Noire (5a) · 14 Jaune (5a) — 18 enfants sur ce niveau', lignes: [
+        ['ROUX Inès', 'Mérignac Grimpe · Équipe 1 · M2', ['!B1 NP', '!B2 NP', '!M2 NP', '!M3 NP', '!M4 NP', 'Vit 29,11 s'], ['alerte', 'Rien saisi sauf vitesse']],
+      ]},
+      { t: 'Niveau M3', att: 'Voies : 13 Noire (5b) · 12 Verte (5b) — 24 enfants sur ce niveau', lignes: [
+        ['PETIT Jules', 'Bordeaux EC · Équipe 1 · M1', ['!B1 NP', '!B2 NP', 'M1 Top', '!M2 NP', '!M3 NP', 'Vit 38,07 s'], ['attention', 'Peu de saisies']],
+        ['ROUX Inès', 'Mérignac Grimpe · Équipe 1 · M2', ['!B1 NP', '!B2 NP', '!M2 NP', '!M3 NP', '!M4 NP', 'Vit 29,11 s'], ['alerte', 'Rien saisi sauf vitesse']],
+      ]},
+      { t: 'Niveau M4', att: 'Voies : 5 Noire (5c) · 11 Bleue (5c) — 15 enfants sur ce niveau', lignes: [
+        ['ROUX Inès', 'Mérignac Grimpe · Équipe 1 · M2', ['!B1 NP', '!B2 NP', '!M2 NP', '!M3 NP', '!M4 NP', 'Vit 29,11 s'], ['alerte', 'Rien saisi sauf vitesse']],
+      ]},
+    ],
+  };
+  const ADO = {
+    clubs: ['Bordeaux EC', 'Talence Escalade'],
+    apercu: [['Bordeaux EC', 7, 1, 0], ['Talence Escalade', 2, 0, 1]],
+    colVoies: 'Voies manquantes',
+    sections: [
+      { t: 'Vitesse', att: '30 engagés', lignes: [
+        ['GARNIER Tom', 'Talence Escalade · Équipe 1', ['B1 Palier 2e essai', 'B2 Échec', 'Voies 6/6', '!Vit non saisie'], ['alerte', 'Vitesse NP, fiche complète']],
+      ]},
+      { t: 'Bloc B1', att: '30 engagés', lignes: [
+        ['LEROY Emma', 'Bordeaux EC · Équipe 1', ['!B1 NP', 'B2 Échec', 'Voies 2/6', 'Vit 14,20 s'], null],
+      ]},
+      { t: 'Moins de 6 voies', att: '30 engagés — les voies manquantes comptent 0', lignes: [
+        ['FAURE Paul', 'Bordeaux EC · Équipe 2', ['B1 Échec', 'B2 Échec', '!Voies 0/6', 'Vit 12,90 s'], ['alerte', 'Aucune voie saisie']],
+        ['LEROY Emma', 'Bordeaux EC · Équipe 1', ['!B1 NP', 'B2 Échec', '!Voies 2/6', 'Vit 14,20 s'], null],
+        ['MOREAU Lina', 'Talence Escalade · Équipe 1', ['B1 Échec', 'B2 Palier 1er essai', '!Voies 4/6', 'Vit 15,02 s'], null],
+      ]},
+    ],
+  };
+
+  let cat = 'enfant', ph = 'comp';
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
+
+  function rendre() {
+    const d = cat === 'enfant' ? ENFANT : ADO;
+    $('#meta-cat').textContent = (cat === 'enfant' ? 'Enfant' : 'Ado') + ' · club porteur Bordeaux EC · saison 2025';
+    $('#og-stats').hidden = cat !== 'enfant';
+    const comp = ph === 'comp';
+    $('#badge-phase').textContent = comp ? 'Compétition' : 'Clôture';
+    $('#badge-phase').className = 'badge ' + (comp ? 'comp' : 'clot');
+    $('#btn-prec').textContent = comp ? '← Préparation' : '← Compétition';
+    $('#btn-suiv').textContent = comp ? 'Clôture →' : 'Résultats publics →';
+    $('#og-np').hidden = comp;
+    $('#og-stats').removeAttribute('aria-current');
+    $('#note-comp').hidden = !comp;
+    $('#panneau-np').hidden = comp;
+
+    const sections = ph === 'vide' ? [] : d.sections;
+    $('#cpt-np').textContent = sections.reduce((s, x) => s + x.lignes.length, 0);
+    $('#carte-exports').hidden = sections.length === 0;
+    // Un bouton par club ayant au moins une ligne (R41s).
+    const parClub = {};
+    sections.forEach((s) => s.lignes.forEach((l) => { const c = l[1].split(' · ')[0]; (parClub[c] ??= new Set()).add(l[0]); }));
+    $('#boutons-clubs').innerHTML = Object.keys(parClub).sort().map((c) =>
+      `<a class="btn" href="#" download>⤓ ${esc(c)} <span class="n">${parClub[c].size}</span></a>`).join('');
+
+    $('#sections').innerHTML = sections.length === 0
+      ? '<section class="carte"><p class="vide">✓ Aucun NP : toutes les saisies sont complètes. <span class="regle">R41l</span></p></section>'
+      : sections.map((s) => `
+      <section class="carte">
+        <div class="entete-section">
+          <h2 class="c-titre">${esc(s.t)}</h2><span class="nb">${s.lignes.length} NP</span>
+          <span class="att">${esc(s.att)} <span class="regle">R41m</span></span>
+        </div>
+        <ul class="lignes">${s.lignes.map(([nom, ou, fiche, sig]) => `
+          <li class="ligne">
+            <div class="qui"><a href="#" title="Corriger dans la saisie admin (R41q)">${esc(nom)}</a><div class="ou">${esc(ou)}</div></div>
+            <div class="fiche">${fiche.map((p) => p.startsWith('!')
+              ? `<span class="puce np">${esc(p.slice(1))}</span>` : `<span class="puce">${esc(p)}</span>`).join('')}</div>
+            <div>${sig ? `<span class="signal ${sig[0]}">${esc(sig[1])}</span>` : ''}</div>
+          </li>`).join('')}
+        </ul>
+      </section>`).join('');
+
+    // Aperçu de la popin (R17bis c).
+    const lignes = d.apercu.filter((l) => l[1] + l[2] + l[3] > 0);
+    const tot = [1, 2, 3].map((i) => lignes.reduce((s, l) => s + l[i], 0));
+    const td = (v) => `<td class="n${v ? ' pos' : ''}">${v}</td>`;
+    $('#apercu').innerHTML = lignes.length === 0
+      ? '<p class="vide">✓ Toutes les saisies sont complètes.</p>'
+      : `<table><thead><tr><th>Club</th><th class="n">${d.colVoies}</th><th class="n">NP de bloc</th><th class="n">Vitesses non saisies</th></tr></thead>
+        <tbody>${lignes.map((l) => `<tr><td>${esc(l[0])}</td>${td(l[1])}${td(l[2])}${td(l[3])}</tr>`).join('')}
+        <tr class="total"><td>Total</td>${td(tot[0])}${td(tot[1])}${td(tot[2])}</tr></tbody></table>`;
+  }
+
+  document.querySelectorAll('[data-cat]').forEach((b) => b.addEventListener('click', () => {
+    cat = b.dataset.cat;
+    document.querySelectorAll('[data-cat]').forEach((x) => x.setAttribute('aria-pressed', x === b));
+    rendre();
+  }));
+  document.querySelectorAll('[data-ph]').forEach((b) => b.addEventListener('click', () => {
+    ph = b.dataset.ph;
+    document.querySelectorAll('[data-ph]').forEach((x) => x.setAttribute('aria-pressed', x === b));
+    rendre();
+  }));
+  const dlg = $('#dlg');
+  $('#btn-suiv').addEventListener('click', () => { if (ph === 'comp') dlg.showModal(); });
+  // Clic hors de la fenêtre = annuler (R17bis d) ; Échap est natif.
+  dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close('annuler'); });
+  dlg.addEventListener('close', () => {
+    if (dlg.returnValue === 'cloturer') {
+      ph = 'clot';
+      document.querySelectorAll('[data-ph]').forEach((x) => x.setAttribute('aria-pressed', x.dataset.ph === 'clot'));
+      rendre();
+    }
+  });
+  rendre();
+</script>
+</body>
+</html>

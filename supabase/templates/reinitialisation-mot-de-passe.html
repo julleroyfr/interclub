@@ -1,0 +1,22 @@
+<!--
+  Modèle d'e-mail « Reset password » (spec #2 R50, rév. 2026-11-22).
+  Local : branché par supabase/config.toml ([auth.email.template.recovery]).
+  Recette / prod : à recopier À LA MAIN dans le Dashboard Supabase →
+  Authentication → Emails → « Reset password » (sujet : « Réinitialisation de
+  votre mot de passe — Interclub »).
+  Le lien DOIT rester au format token_hash : il est consommé à l'enregistrement
+  du nouveau mot de passe (R52), pas à l'ouverture, et fonctionne sur un autre
+  appareil que celui de la demande (R50).
+-->
+<h2>Réinitialisation de votre mot de passe</h2>
+<p>
+  Vous avez demandé à réinitialiser le mot de passe de votre compte Interclub
+  ({{ .Email }}).
+</p>
+<p>
+  <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=recovery">
+    Choisir un nouveau mot de passe
+  </a>
+</p>
+<p>Ce lien est valable 1 heure et ne peut servir qu'une fois.</p>
+<p>Si vous n'êtes pas à l'origine de cette demande, ignorez cet e-mail : votre mot de passe reste inchangé.</p>

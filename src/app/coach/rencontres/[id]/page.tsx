@@ -94,6 +94,7 @@ export default async function PageEngagement({
             engagement={engagement}
             peutEditer={peutEditer}
             estEnfant={engagement.categorie === 'enfant'}
+            aideGroupes={contexte.type === 'permanent'}
           />
         )}
       </div>

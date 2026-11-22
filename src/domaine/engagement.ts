@@ -137,28 +137,6 @@ export function nomEquipeAdulteParDefaut(nomsExistants: readonly string[]): stri
   return nomEquipeParDefaut(PREFIXE_EQUIPE_ADULTE, nomsExistants)
 }
 
-/** Minuscules sans accents, pour une comparaison tolérante (R12bis). */
-function pourRecherche(texte: string): string {
-  return (texte ?? '').normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
-}
-
-/**
- * Filtre les grimpeurs proposés à l'ajout (R12bis) : chaque terme de la
- * recherche doit figurer dans le nom ou le prénom (casse et accents ignorés,
- * ordre libre). Recherche vide → tout le roster, ordre préservé.
- */
-export function filtrerGrimpeursRecherche<G extends { nom: string; prenom: string }>(
-  grimpeurs: readonly G[],
-  recherche: string,
-): G[] {
-  const termes = pourRecherche(recherche).split(/\s+/).filter(Boolean)
-  if (termes.length === 0) return [...grimpeurs]
-  return grimpeurs.filter((g) => {
-    const cible = pourRecherche(`${g.prenom} ${g.nom}`)
-    return termes.every((t) => cible.includes(t))
-  })
-}
-
 /**
  * Dérive les 3 voies de niveau croissant qu'un enfant enchaîne à partir de son
  * groupe de départ (R20), en suivant l'échelle `M1→M4 puis T1→T10`. Lance
@@ -173,6 +151,49 @@ export function voiesDuGroupeDepart(groupe: string): Niveau[] {
     )
   }
   return ECHELLE_NIVEAUX.slice(i, i + NB_VOIES_GROUPE) as Niveau[]
+}
+
+/** Ligne du tableau d'aide au choix du groupe de départ (R21ter). */
+export type LigneAideGroupe = {
+  /** Numéro de groupe du règlement (R21bis). */
+  numero: number
+  niveau: Niveau
+  /** Cotation max en moulinette ; `null` = aucune (affichée « – »). */
+  cotationMaxMoulinette: string | null
+  /** Cotation max en tête ; `null` = aucune (affichée « – »). */
+  cotationMaxTete: string | null
+  /** Les 3 voies à réaliser (R20). */
+  voies: Niveau[]
+}
+
+/**
+ * Cotations max par groupe, dans l'ordre de `GROUPES_DEPART` (document CT33
+ * « Aide à la décision des Groupes de Niveau », R21ter) : [moulinette, tête].
+ */
+const COTATIONS_MAX_GROUPE: readonly (readonly [string | null, string | null])[] = [
+  ['5b', null],
+  ['5c', null],
+  ['5c', '4c'],
+  ['5c', '5a'],
+  [null, '5b'],
+  [null, '5c'],
+  [null, '6a'],
+  [null, '6b'],
+  [null, '6c'],
+  [null, '7a'],
+  [null, '7b'],
+  [null, '7c'],
+]
+
+/** Tableau d'aide au choix du groupe de départ (R21ter) : une ligne par groupe de R19. */
+export function tableauAideGroupes(): LigneAideGroupe[] {
+  return GROUPES_DEPART.map((niveau, i) => ({
+    numero: i + 1,
+    niveau,
+    cotationMaxMoulinette: COTATIONS_MAX_GROUPE[i][0],
+    cotationMaxTete: COTATIONS_MAX_GROUPE[i][1],
+    voies: voiesDuGroupeDepart(niveau),
+  }))
 }
 
 /** Contexte d'un ajout de grimpeur à une équipe, à valider avant écriture. */

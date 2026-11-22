@@ -17,6 +17,8 @@ import { changerPhaseRencontre } from '@/lib/rencontres/actions'
 import type { EtatRencontre } from '@/lib/rencontres/rencontres'
 import type { RencontreTdb } from '@/lib/tableau-de-bord/tableau-de-bord'
 
+import { BoutonPhaseSuivante } from './bouton-phase-suivante'
+
 const labelCategorie = (v: string) =>
   CATEGORIES.find((c) => c.value === v)?.labelCourt ?? v
 
@@ -110,22 +112,16 @@ function LigneRencontreTdb({ rencontre }: { rencontre: RencontreTdb }) {
           </form>
         )}
         {suivante && (
-          <form action={actionPhase}>
-            <input type="hidden" name="id" value={rencontre.id} />
-            <input type="hidden" name="phase" value={suivante} />
-            <Bouton
-              type="submit"
-              taille="sm"
-              disabled={phaseEnCours || suivanteBloquee}
-              title={
-                suivanteBloquee
-                  ? 'Activable seulement le jour de la rencontre.'
-                  : undefined
-              }
-            >
-              {labelPhase(suivante)} →
-            </Bouton>
-          </form>
+          <BoutonPhaseSuivante
+            rencontreId={rencontre.id}
+            phase={rencontre.phase}
+            suivante={suivante}
+            action={actionPhase}
+            enCours={phaseEnCours}
+            bloquee={suivanteBloquee}
+            erreur={etatPhase?.erreur}
+            taille="sm"
+          />
         )}
         <Link
           href={`/admin/jetons?rencontre=${rencontre.id}`}

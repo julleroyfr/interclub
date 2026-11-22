@@ -99,9 +99,22 @@ l'écran l'indique ; demander alors la nouvelle invitation.
 | 1 | E-mail | Identifiant du compte |
 | 2 | Mot de passe | — |
 | 3 | Se connecter | Ouvre « Mes rencontres » |
+| 4 | Mot de passe oublié ? | Demande un lien pour choisir un nouveau mot de passe |
 
-**Mot de passe oublié** : l'application ne propose pas de réinitialisation en
-libre-service. Contacter l'organisateur.
+### Mot de passe oublié
+
+1. Sur l'écran de connexion, cliquer **« Mot de passe oublié ? »** (repère 4)
+   et saisir l'adresse e-mail du compte, puis **« Recevoir le lien »**.
+2. Ouvrir l'e-mail « Réinitialisation de votre mot de passe — Interclub »
+   (penser aux indésirables) et cliquer **« Choisir un nouveau mot de passe »**.
+   L'e-mail peut être ouvert sur un autre appareil, par exemple le téléphone.
+3. Saisir deux fois le nouveau mot de passe (au moins 6 caractères), puis
+   **« Enregistrer »** : on arrive connecté sur « Mes rencontres ».
+
+Le lien est valable **1 heure** et ne sert **qu'une fois**. S'il a expiré ou a
+déjà servi, l'écran le signale au moment d'enregistrer : cliquer « Demander un
+nouveau lien ». Par discrétion, l'écran affiche le même message que l'adresse
+ait un compte ou non : si aucun e-mail n'arrive, vérifier l'adresse saisie.
 
 ## 3. Mes rencontres
 
@@ -171,8 +184,9 @@ close.
 | 4 | Rechercher un nom ou prénom | Filtre la liste des grimpeurs du club |
 | 5 | Grimpeur | Choisit un grimpeur du club non encore engagé |
 | 6 | Groupe de départ (optionnel) | Groupe attribué dès l'ajout ; peut rester « À définir » |
-| 7 | Ajouter à l'équipe | Ajoute le grimpeur choisi |
-| 8 | Supprimer l'équipe | Supprime l'équipe et sa composition |
+| 7 | ? (Aide au choix du groupe) | Ouvre le tableau d'aide dans un nouvel onglet |
+| 8 | Ajouter à l'équipe | Ajoute le grimpeur choisi |
+| 9 | Supprimer l'équipe | Supprime l'équipe et sa composition |
 
 **Ajouter un grimpeur** : la liste ne propose que les grimpeurs du club
 **éligibles à la catégorie** de la rencontre, selon leur âge dans la saison
@@ -193,6 +207,14 @@ de niveau croissant** que l'enfant va grimper. Par exemple, M2 donne M2, M3,
 M4 ; M4 donne M4, T1, T2. Le groupe peut être laissé « À définir » à l'ajout,
 mais il doit être fixé avant la compétition. Pour la catégorie Ado, il n'y a pas
 de groupe de départ.
+
+**Aide au choix du groupe** : le petit **« ? »** à droite de « Groupe de départ
+(optionnel) » ouvre, dans un nouvel onglet, le tableau d'aide du CT33 : pour chaque groupe (1 à 12), le
+niveau de départ, la cotation maximale réussie en **moulinette** ou en **tête**
+et les 3 voies à réaliser. Par exemple, un enfant qui passe le 5c en moulinette
+et le 5a en tête part en **Groupe 4/M4** (voies M4, T1, T2). Fermez l'onglet pour
+revenir à l'équipe. Cette aide est réservée au coach du club (pas
+au coach temporaire).
 
 **Grimpeurs prêtés** : un grimpeur d'un autre club peut être prêté à votre club
 pour compléter une équipe. C'est l'**organisateur** qui met en place le prêt ;

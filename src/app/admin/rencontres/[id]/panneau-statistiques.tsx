@@ -1,3 +1,5 @@
+import Link from 'next/link'
+
 import { Carte, TitreSection } from '@/composants'
 import {
   avancementSaisie,
@@ -245,7 +247,16 @@ function Bilan({ donnees, avecVitesse }: { donnees: DonneesStatistiques; avecVit
   ]
   return (
     <Carte className="overflow-x-auto p-4">
-      <h3 className={titre}>Bilan</h3>
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h3 className={titre}>Bilan</h3>
+        {/* Détail par élément dans l'onglet dédié (R41j rév. 2026-11-22, R41l). */}
+        <Link
+          href="?onglet=np"
+          className="text-sm font-semibold text-accent-doux underline-offset-2 hover:underline"
+        >
+          Voir le détail des NP →
+        </Link>
+      </div>
       <table className="w-full text-sm">
         <thead>
           <tr>

@@ -15,6 +15,9 @@
   **Rév. 2026-11-17 — effacer une saisie (validée le 2026-11-17)** : **R8** — l'admin
   **efface** un résultat de voie (enfant comme ado) ou de bloc avec le même
   croix d'effacement **×** que le coach (spec #6 R13ter), en ③ et en ④.
+  **Rév. 2026-11-22 (validée le 2026-11-22)** : **R10** — la recherche porte sur
+  le nom et le prénom, insensible à la **casse** et aux **accents**,
+  **multi-termes** dans n'importe quel ordre (comme spec #5 R12bis).
 - **Sources** :
   - **Décision produit du 2026-09-22** : l'**administrateur** peut **saisir et
     modifier** les résultats de **n'importe quel grimpeur, tous clubs confondus**,
@@ -140,7 +143,10 @@ de plein droit, décision 2026-09-22) et en **④ clôture** (correction, spec #
 ### Présentation et cohérence IHM
 
 - **R10.** L'écran présente les grimpeurs **regroupés par club** (tous clubs
-  engagés), avec **recherche par nom** et **filtre par club** (maquette). Pour
+  engagés), avec **recherche par nom** et **filtre par club** (maquette). La
+  recherche porte sur le nom et le prénom, insensible à la **casse** et aux
+  **accents**, **multi-termes** dans n'importe quel ordre (comme spec #5
+  R12bis). Pour
   chaque grimpeur : sa **progression** (voies n/3 ou n/6, blocs n/2), son **score**
   au fil de l'eau (lecture seule, spec #6 R23) et son **état de vitesse** (lecture
   seule, spec #6 R22). La sélection d'un grimpeur ouvre sa **saisie** (voies +
@@ -153,6 +159,10 @@ de plein droit, décision 2026-09-22) et en **④ clôture** (correction, spec #
 - **R12.** L'accès se fait depuis le **tableau de bord d'une rencontre**
   (`/admin/rencontres/[id]`) via une action **« Saisir les résultats »** (③) /
   **« Corriger les résultats »** (④), **visible dès la ③**. Rien avant la ③.
+  *(Rév. 2026-11-22, validée : l'écran accepte un paramètre
+  `?grimpeur=[id]` qui **présélectionne** ce grimpeur — club ouvert, fiche
+  affichée ; un identifiant inconnu ou non engagé est ignoré. Utilisé par le
+  contrôle des NP, spec #3 R41q.)*
 - **R13.** Après une saisie réussie, l'écran **reflète l'état à jour**
   (revalidation) : issue enregistrée visible, progression et score actualisés
   (aligné spec #6 R20).

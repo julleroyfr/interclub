@@ -1,5 +1,7 @@
 import 'server-only'
 
+import { cache } from 'react'
+
 import type { TypeEpreuve, TypeVoie } from '@/domaine/gabarit'
 import type { Categorie, Phase } from '@/domaine/rencontre'
 import { libellesVoies, trierVoiesStructure } from '@/domaine/voie'
@@ -90,9 +92,12 @@ export type StructureRencontre = {
 /**
  * Charge une rencontre et toute sa structure (épreuves, voies, blocs + paliers,
  * voies de vitesse). Renvoie `null` si la rencontre est introuvable.
- * À appeler derrière la garde admin.
+ * À appeler derrière la garde admin. Mémoïsée sur la durée d'un rendu (`cache`) :
+ * le tableau de bord et le contrôle des NP (spec #3 R41l) la partagent.
  */
-export async function getStructureRencontre(id: string): Promise<StructureRencontre | null> {
+export const getStructureRencontre = cache(lireStructureRencontre)
+
+async function lireStructureRencontre(id: string): Promise<StructureRencontre | null> {
   const supabase = await createClient()
 
   // Une seule vague de lectures : chaque table est filtrée sur la rencontre via

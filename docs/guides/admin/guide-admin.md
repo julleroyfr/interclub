@@ -54,7 +54,9 @@ Deux garde-fous à connaître :
   que **le jour de sa date**. Le bouton reste inactif les autres jours.
 - **Passage en ④ clôture** : toute voie ou tout bloc attendu et non saisi est
   automatiquement noté **NP** (non présenté, 0 point). La vitesse n'est pas
-  concernée : un grimpeur sans résultat de vitesse compte 0 point.
+  concernée : un grimpeur sans résultat de vitesse compte 0 point. Avant de
+  clôturer, une fenêtre de confirmation affiche ce qui manque encore, club par
+  club.
 
 ### Déroulé type
 
@@ -64,9 +66,10 @@ Deux garde-fous à connaître :
    coachs engager leurs équipes, organiser les prêts éventuels.
 3. **Le jour J** : passer en ② préparation, distribuer les QR, passer en ③
    compétition au début des épreuves, lancer l'écran d'affichage.
-4. **Après les épreuves** : passer en ④ clôture, contrôler les résultats contre
-   les fiches des juges, corriger si besoin, puis passer en ⑤ et exporter le
-   classement officiel.
+4. **Après les épreuves** : passer en ④ clôture, vérifier les NP (et envoyer
+   à chaque club la liste de ses NP), contrôler les résultats contre les fiches
+   des juges, corriger si besoin, puis passer en ⑤ et exporter le classement
+   officiel.
 
 ## 2. Tableau de bord
 
@@ -325,7 +328,7 @@ est rangé en **onglets** : un seul est affiché à la fois.
 | N° | Élément | Effet |
 | --- | --- | --- |
 | 1 | Bouton de phase | Fait avancer la rencontre ; « ← » la fait reculer |
-| 2 | Onglets | **Vue d'ensemble**, **Structure**, **Équipes**, **Prêts** et, en Enfant, **Statistiques** ; le nombre indique les épreuves, équipes ou prêts |
+| 2 | Onglets | **Vue d'ensemble**, **Structure**, **Équipes**, **Prêts**, en Enfant **Statistiques** et, après la clôture, **Contrôle des NP** ; le nombre indique les épreuves, équipes, prêts ou NP |
 | 3 | QR codes | Ouvre les QR des coachs temporaires (capitaines en adulte) et des juges |
 
 - **Vue d'ensemble** (affichée à l'ouverture) : les QR codes et, selon la phase,
@@ -333,7 +336,9 @@ est rangé en **onglets** : un seul est affiché à la fois.
 - L'onglet ouvert reste affiché après une action (enregistrer une voie, créer
   une équipe…) et après un rechargement de la page. L'adresse de la page le
   mémorise : vous pouvez la garder en favori ou l'envoyer.
-- **Prêts** n'existe pas en Adulte ; **Statistiques** seulement en Enfant.
+- **Prêts** n'existe pas en Adulte ; **Statistiques** seulement en Enfant ;
+  **Contrôle des NP** seulement en ④ clôture et ⑤ résultats publics (voir
+  [§ 10](#vérifier-les-np-et-prévenir-les-coachs)).
 
 **Structure** :
 
@@ -396,7 +401,8 @@ de la rencontre.
   chute comptent comme saisis.
 - **En ④ clôture et ⑤ résultats publics**, la carte **Bilan** compte, par club,
   les NP en voies et en blocs (y compris ceux posés automatiquement à la
-  clôture), les absences en vitesse et les vitesses jamais saisies.
+  clôture), les absences en vitesse et les vitesses jamais saisies. Le lien
+  **Voir le détail des NP →** ouvre l'onglet **Contrôle des NP**.
 
 **Vue graphique.** Les cartes « Répartition par groupe de départ » et
 « Grimpeurs par niveau de voie » ont un bouton **camembert** en haut à
@@ -599,8 +605,25 @@ passer le navigateur en plein écran (touche F11).
 ### Passer en clôture
 
 Passer la rencontre en **④ clôture** ferme la saisie des coachs et des juges et
-pose les NP automatiques. La **Vue d'ensemble** du tableau de bord de la
-rencontre propose alors :
+pose les NP automatiques. Le bouton **Clôture →** ne clôture pas tout de suite :
+il ouvre la fenêtre **Clôturer la rencontre ?**, qui rappelle ces effets et
+compte, club par club, ce qui manque encore.
+
+<img src="captures/22-confirmation-cloture.png" alt="Confirmation de la clôture" width="640">
+
+- **NP de voie** : niveaux d'un enfant sans aucun résultat (en Ado et Adulte :
+  **Voies manquantes**, les voies non faites sur 6, qui comptent 0).
+- **NP de bloc** : blocs sans résultat.
+- **Vitesses non saisies** : grimpeurs sans temps ni absence saisis.
+
+Des chiffres inattendus (un club entier, un enfant sans rien) signalent souvent
+un oubli de saisie : **Annuler** (ou Échap), faire compléter, puis rouvrir.
+**Clôturer** passe la rencontre en ④. Si toutes les saisies sont faites, la
+fenêtre affiche « Toutes les saisies sont complètes. ». La même confirmation
+s'affiche depuis la liste des rencontres et depuis le tableau de bord
+général.
+
+La **Vue d'ensemble** du tableau de bord de la rencontre propose alors :
 
 <img src="captures/15-rencontre-cloture.png" alt="Tableau de bord d'une rencontre en clôture" width="640">
 
@@ -610,6 +633,38 @@ rencontre propose alors :
 | 2 | Contrôler les résultats | Ouvre le contrôle contre les fiches des juges, avec la progression |
 | 3 | Voir le classement | Ouvre le classement de la rencontre |
 | 4 | Écran d'affichage | Ouvre l'écran à projeter |
+
+### Vérifier les NP et prévenir les coachs
+
+En ④ et ⑤, l'onglet **Contrôle des NP** liste, élément par élément, les
+grimpeurs concernés : **Vitesse**, chaque **bloc**, puis chaque **niveau** de
+voie en Enfant (en Ado et Adulte : **Moins de 6 voies**). Un NP posé à la
+clôture veut seulement dire qu'**aucun résultat n'a été saisi** : vraie absence
+ou oubli du coach.
+
+<img src="captures/23-controle-np.png" alt="Onglet Contrôle des NP" width="640">
+
+| N° | Élément | Effet |
+| --- | --- | --- |
+| 1 | PDF par niveau (admin) | Télécharge le récapitulatif de tous les NP, section par section, avec une colonne Correction à remplir |
+| 2 | Bouton d'un club | Télécharge le PDF de ce club, à envoyer à ses coachs ; le nombre indique ses grimpeurs concernés |
+| 3 | Section | L'élément (vitesse, bloc, niveau), son nombre de NP et les grimpeurs attendus ; pour un niveau, ses voies |
+| 4 | Nom du grimpeur | En ④, ouvre la correction des résultats sur ce grimpeur |
+| 5 | Signal | Met en avant les cas suspects |
+
+- Chaque ligne montre la **fiche complète** du grimpeur : ses blocs, ses voies
+  et sa vitesse, les NP et les vitesses non saisies en rouge. Un enfant qui a
+  des résultats partout sauf sur un élément a probablement été oublié.
+- Les signaux : **Tout NP : absent ?** (rien du tout, probablement absent),
+  **Vitesse NP, fiche complète** (à vérifier auprès du juge), **Rien saisi sauf
+  vitesse** et **Aucune voie saisie** (oubli probable du coach), **Peu de
+  saisies** (Enfant).
+- Pour corriger, toucher le nom (en ④) : la fiche du grimpeur s'ouvre dans
+  **Corriger les résultats** ; remplacer le NP par le vrai résultat. En ⑤,
+  revenir d'abord en ④.
+- Le PDF d'un club explique au coach ce qu'est un NP et lui demande de noter le
+  vrai résultat dans la colonne **Correction**, puis de vous renvoyer le
+  document. Rien n'est envoyé automatiquement : à vous de le transmettre.
 
 ### Contrôler les résultats contre les fiches des juges
 
@@ -685,6 +740,10 @@ publication.
   peut plus se connecter et son e-mail redevient libre pour une nouvelle
   inscription. Les résultats qu'elle a saisis sont conservés, sans auteur. Votre
   propre compte ne peut pas être supprimé.
+- **Mot de passe oublié** : chacun le réinitialise lui-même depuis l'écran de
+  connexion (« Mot de passe oublié ? ») : il reçoit par e-mail un lien valable
+  **1 heure**, à usage unique, pour choisir un nouveau mot de passe. Aucune
+  action de l'administrateur n'est nécessaire.
 
 ## 12. Questions fréquentes
 
@@ -699,6 +758,11 @@ et le classement sont dans la **Vue d'ensemble**.
 
 **Un coach ne voit pas son club ou n'a accès à rien.**
 Vérifier dans **Rôles** que son compte a le rôle Coach et le bon club.
+
+**Un coach ne reçoit pas l'e-mail « mot de passe oublié ».**
+Lui faire vérifier l'adresse saisie (le même message s'affiche qu'elle ait un
+compte ou non) et ses indésirables ; dans **Rôles**, vérifier que son compte
+existe avec cette adresse.
 
 **Un QR de juge ou de coach temporaire est refusé.**
 Vérifier la phase : ③ pour un juge, ② ou ③ pour un coach temporaire. Si le QR a
@@ -721,6 +785,12 @@ Revenir en ② si la compétition n'a pas commencé.
 **Le bloc ou la vitesse n'a pas lieu (rencontre adulte).**
 Désactiver l'épreuve en ① ou ② depuis l'onglet de la structure (voir
 [§ 7](#rencontre-adulte)).
+
+**Un enfant a des NP alors qu'il a bien grimpé.**
+Son coach n'a pas saisi ses résultats : la clôture a mis NP partout où il n'y
+avait rien. Ouvrir l'onglet **Contrôle des NP**, toucher son nom et saisir le
+vrai résultat (voir
+[Vérifier les NP](#vérifier-les-np-et-prévenir-les-coachs)).
 
 **Un résultat est faux après la clôture.**
 Le corriger via **Corriger les résultats** en ④ clôture. En ⑤, revenir d'abord

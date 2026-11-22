@@ -4,7 +4,10 @@
   séparation par sexe R8b (conséquence de l'attribution des points de vitesse par
   sexe, cf. note ci-dessous), départage ex æquo R8 (classement standard), cadrage
   `grimpeur.sexe` (obligatoire). **Rév. 2026-10-02** : R11 — plus d'accès public
-  à la ⑤ (pas d'espace public, spec #1 R8).
+  à la ⑤ (pas d'espace public, spec #1 R8). **Rév. 2026-11-22 (validée le
+  2026-11-22)** : R12b — la recherche porte sur le nom et le prénom, insensible
+  à la **casse** et aux **accents**, **multi-termes** dans n'importe quel ordre
+  (comme spec #5 R12bis).
 - **Révision du 2026-09-25 — vue classement admin** (règle de changement, spec
   #12) : le classement (déjà « tout compte authentifié, tous clubs », R11) est
   désormais exposé par une **vue admin dédiée** `/admin/rencontres/{id}/classement`
@@ -239,8 +242,10 @@ première = résultats de vitesse saisis par le juge, spec #10.)*
   **paginée** : la navigation se fait par **pages** au **bas de la liste** (façon
   résultats de moteur de recherche — **‹ Précédent · numéros de page · Suivant ›**),
   la **page défilant naturellement** avec le reste de l'écran (**pas** de zone à
-  **barre de défilement interne**). S'y ajoutent : (a) une **recherche par nom**,
-  (b) des **filtres rapides** (tous / un **club** / une **équipe**), (c) la **mise
+  **barre de défilement interne**). S'y ajoutent : (a) une **recherche par nom**
+  et prénom, insensible à la **casse** et aux **accents**, **multi-termes** dans
+  n'importe quel ordre (« roux emma » trouve « Emma Roux », comme spec #5
+  R12bis), (b) des **filtres rapides** (tous / un **club** / une **équipe**), (c) la **mise
   en évidence** des grimpeurs du **club consulté**, et (d) le **compte total**
   affiché. L'en-tête de colonnes accompagne **chaque page**.
 - **R13.** Depuis le classement individuel, la **décomposition** d'un score

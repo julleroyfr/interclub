@@ -15,7 +15,7 @@ import {
   TeteTableau,
   TitreSection,
 } from '@/composants'
-import { filtrerGrimpeursRecherche } from '@/domaine/engagement'
+import { filtrerGrimpeursRecherche } from '@/domaine/recherche'
 import { creerPretAction, revoquerPretAction } from '@/lib/prets/prets-actions'
 import type {
   ClubOption,

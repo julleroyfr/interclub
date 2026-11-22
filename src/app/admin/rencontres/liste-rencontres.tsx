@@ -25,6 +25,8 @@ import type {
   RencontreAvecDependances,
 } from '@/lib/rencontres/rencontres'
 
+import { BoutonPhaseSuivante } from '../bouton-phase-suivante'
+
 const etatInitial: EtatRencontre = undefined
 
 const optionsCategorie = CATEGORIES.map((c) => ({ value: c.value, label: c.label }))
@@ -195,21 +197,15 @@ function LigneRencontre({
             )}
             {suivante && (
               <>
-                <form action={actionPhase}>
-                  <input type="hidden" name="id" value={rencontre.id} />
-                  <input type="hidden" name="phase" value={suivante} />
-                  <Bouton
-                    type="submit"
-                    disabled={phaseEnCours || suivanteBloquee}
-                    title={
-                      suivanteBloquee
-                        ? 'Activable seulement le jour de la rencontre.'
-                        : undefined
-                    }
-                  >
-                    {labelPhase(suivante)} →
-                  </Bouton>
-                </form>
+                <BoutonPhaseSuivante
+                  rencontreId={rencontre.id}
+                  phase={rencontre.phase}
+                  suivante={suivante}
+                  action={actionPhase}
+                  enCours={phaseEnCours}
+                  bloquee={suivanteBloquee}
+                  erreur={etatPhase?.erreur}
+                />
                 {suivanteBloquee && (
                   <span className="basis-full text-xs text-texte-doux">
                     {labelPhase(suivante)} ne s’active que le jour de la rencontre.

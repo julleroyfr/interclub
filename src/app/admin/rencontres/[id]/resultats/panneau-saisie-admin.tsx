@@ -10,6 +10,7 @@ import {
 } from '@/composants/saisie-resultats/ChoixVoieNiveau'
 import { accorder } from '@/domaine/accord'
 import { libelleGroupeDepart } from '@/domaine/engagement'
+import { filtrerGrimpeursRecherche } from '@/domaine/recherche'
 import { aVoiesLibres, type Categorie } from '@/domaine/rencontre'
 import { issuesVoieSaisissables, type IssueVoie } from '@/domaine/resultat'
 import {
@@ -70,8 +71,15 @@ type GrimpeurAvecClub = GrimpeurSaisie & { clubNom: string }
  * (voies + blocs). Sur mobile, la liste et le détail se remplacent. Les écritures
  * passent par les Server Actions admin (garde rôle + phase ③/④).
  */
-export function PanneauSaisieAdmin({ saisie }: { saisie: SaisieAdminRencontre }) {
-  const [selId, setSelId] = useState<string | null>(null)
+export function PanneauSaisieAdmin({
+  saisie,
+  grimpeurInitial = null,
+}: {
+  saisie: SaisieAdminRencontre
+  /** Grimpeur engagé à présélectionner (spec #9 R12, `?grimpeur=`). */
+  grimpeurInitial?: string | null
+}) {
+  const [selId, setSelId] = useState<string | null>(grimpeurInitial)
   const [recherche, setRecherche] = useState('')
   const [clubFiltre, setClubFiltre] = useState<string>('tous')
 
@@ -85,15 +93,13 @@ export function PanneauSaisieAdmin({ saisie }: { saisie: SaisieAdminRencontre })
 
   const selected = selId ? tousGrimpeurs.find((g) => g.grimpeurId === selId) ?? null : null
 
+  // Recherche casse/accents ignorés, multi-termes (spec #9 R10).
   const clubsFiltres = useMemo<SaisieClub[]>(() => {
-    const q = recherche.trim().toLowerCase()
     return saisie.clubs
       .filter((c) => clubFiltre === 'tous' || c.clubId === clubFiltre)
       .map((c) => ({
         ...c,
-        grimpeurs: c.grimpeurs.filter(
-          (g) => !q || `${g.prenom} ${g.nom}`.toLowerCase().includes(q),
-        ),
+        grimpeurs: filtrerGrimpeursRecherche(c.grimpeurs, recherche),
       }))
       .filter((c) => c.grimpeurs.length > 0)
   }, [saisie.clubs, recherche, clubFiltre])

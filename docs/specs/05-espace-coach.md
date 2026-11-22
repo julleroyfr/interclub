@@ -5,6 +5,11 @@
   — engagement éditable par coach permanent en ① pré-compétition et par permanent
   **et** temporaire en ② préparation, gelé dès ③ compétition, R16 — validé le
   2026-09-01)
+- **Révision** : 2026-11-20 (**validée le 2026-11-20**) — **aide au choix du
+  groupe** (R21ter, demande utilisateur du 2026-11-20) : un **« ? » discret**
+  près du choix du groupe de départ ouvre, pour le **coach permanent**, une page
+  d'aide présentant le tableau « Aide à la décision des Groupes de Niveau ».
+  Aucune règle existante modifiée, aucune migration.
 - **Révision** : 2026-11-20 (**validée le 2026-11-20**) — R21bis : ordre du
   libellé inversé, le **numéro** précède le niveau (« Groupe 1/M1 » …
   « Groupe 12/T8 », au lieu de « Groupe M1/1 »). Stockage inchangé.
@@ -207,14 +212,16 @@ cette spec. (Spec #1 R6/R27, rév. 2026-09-01.)
   (spec #21 R7) est proposé, avec le badge **« Surclassé »** (spec #21 R20–R21).
 - **R12bis.** Le formulaire d'ajout propose, au-dessus de la liste des grimpeurs
   (R12), un **champ de recherche** qui **filtre** les grimpeurs proposés sur leur
-  **nom et prénom** : insensible à la **casse** et aux **accents**, **multi-termes**
+  **nom et prénom** : insensible à la **casse** et aux **accents**, les ligatures
+  **æ** et **œ** équivalant à « ae » et « oe » (rév. 2026-11-22), **multi-termes**
   (chaque terme doit figurer dans le nom ou le prénom, dans n'importe quel ordre).
   Une recherche vide propose tout le roster disponible. La liste affiche le
   **nombre de grimpeurs correspondants** ; une **correspondance unique** est
   **présélectionnée** ; sans correspondance, la liste l'indique et l'ajout est
   impossible. La recherche est **purement d'affichage** : elle ne
   change pas quels grimpeurs sont éligibles (R12–R14). *Ex.* « ana alp » ou
-  « alpha ANA » trouvent « Ana Alpha » ; « eleonore » trouve « Éléonore ».
+  « alpha ANA » trouvent « Ana Alpha » ; « eleonore » trouve « Éléonore » ;
+  « laetitia » trouve « Lætitia » et « lætitia » trouve « Laetitia ».
 - **R13.** Le coach **ne peut pas créer de prêt** : mettre à disposition un
   grimpeur d'un **autre club** (ou de l'équipe CT33) est **réservé à l'admin**
   (spec #1 R35) ; l'ajout d'un grimpeur ni du club ni prêté est **refusé**. En
@@ -293,6 +300,26 @@ cette spec. (Spec #1 R6/R27, rév. 2026-09-01.)
   la liste de R19 (`M1`→1 … `M4`→4, `T1`→5 … `T8`→12). Ex. « Groupe 1/M1 »,
   « Groupe 3/M3 », « Groupe 5/T1 ». La valeur **stockée** reste le niveau
   (`M1`…`T8`, inchangé). Ce libellé est une **fonction pure** du domaine.
+- **R21ter.** *(Aide au choix du groupe, rév. 2026-11-20.)* Pour aider le coach
+  à choisir le groupe de départ d'un enfant, une page d'**aide**
+  `/coach/aide-groupes` présente le tableau **« Aide à la décision des Groupes de
+  Niveau »** (source : document `Aide_decision_groupes_de_niveau.pdf` remis par
+  le CT33). Une ligne par groupe de la liste de R19, dans l'ordre : **numéro de
+  groupe** (R21bis), **niveau de départ**, **cotation max en moulinette**,
+  **cotation max en tête**, **voies à réaliser** (les 3 voies de R20). Cotations
+  max : moulinette `5b` (groupe 1), `5c` (groupes 2 à 4), aucune au-delà ; tête
+  aucune (groupes 1 et 2), puis `4c`, `5a`, `5b`, `5c`, `6a`, `6b`, `6c`, `7a`,
+  `7b`, `7c` (groupes 3 à 12). « Aucune » s'affiche « – ». Le tableau est une
+  **fonction pure** du domaine (numéros, niveaux et voies dérivés de R19–R21bis).
+  La page est **réservée au coach permanent** (le coach temporaire → `notFound()`,
+  comme tout autre rôle) et n'est **pas** un lien du menu : on l'ouvre par un
+  **« ? » discret** (cible tactile ≥ 44 px, nom accessible « Aide au choix du
+  groupe (nouvel onglet) »), qui l'ouvre dans un **nouvel onglet** pour laisser
+  le formulaire en place, placé à côté du libellé du **groupe de départ** du formulaire d'ajout
+  d'un grimpeur, en rencontre **enfant**, pour le seul coach permanent. La page
+  expose un **retour** vers l'écran d'engagement d'où elle a été ouverte, à
+  défaut vers « Mes rencontres » (spec #12 R19). Elle est en **lecture seule** et
+  lisible sur mobile (défilement horizontal du tableau si besoin).
 
 ## Scénarios
 
@@ -351,6 +378,17 @@ de l'admin (R13, spec #1 R36).
 et lui choisit le groupe **`M2`** (R19), alors la composition affiche « Groupe
 2/M2 » (R21bis) et le système en dérive les 3 voies **M2, M3, M4** (R20). Un
 autre enfant peut être ajouté **sans** groupe (« à définir ») et complété plus tard (R19).
+
+### Nominal — aide au choix du groupe
+
+Étant donné un coach **permanent** sur l'écran d'engagement d'une rencontre
+**enfant** en phase ①, quand il touche le **« ? »** à côté du groupe de départ du
+formulaire d'ajout, alors la page d'aide s'ouvre dans un **nouvel onglet** et
+affiche les **12 groupes** ; la ligne
+« 4 » indique M4, moulinette 5c, tête 5a, voies M4, T1, T2 (R21ter). Le lien de
+retour le ramène à l'écran d'engagement. En rencontre **ado**, ou pour un coach
+**temporaire**, aucun « ? » n'est affiché ; le coach temporaire qui ouvre
+`/coach/aide-groupes` obtient un **404** (R21ter).
 
 ### Cas limites / erreurs
 

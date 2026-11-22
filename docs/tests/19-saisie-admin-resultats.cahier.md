@@ -74,9 +74,12 @@ Réutilise le seed `01-jeu-de-test.sql` (catalogue
 - **Rôle** : admin. **Pré-condition** : rencontre en ③.
 - **Étapes** :
   1. Observer la liste : grimpeurs **regroupés par club**.
-  2. Utiliser la **recherche** (« Cléo »), puis le **filtre club** (Club B).
+  2. Utiliser la **recherche** (« Cléo », puis « bravo cleo »), puis le **filtre
+     club** (Club B).
 - **Résultat attendu** : la liste montre **Club A** (Ana, Bob) **et Club B**
-  (Cléo) — les **deux** clubs. La recherche restreint par nom ; le filtre club
+  (Cléo) — les **deux** clubs. La recherche restreint par nom ; elle ignore la
+  casse et les **accents** et accepte plusieurs mots dans n'importe quel ordre
+  (« bravo cleo » trouve **Cléo Bravo**, rév. 2026-11-22) ; le filtre club
   n'affiche que le club choisi ; le compteur « n grimpeurs · 2 clubs » est correct.
 
 ### CT-03 — Saisie admin pour un autre club en ③ (couvre R2, R5, R7)
@@ -221,3 +224,4 @@ Réutilise le seed `01-jeu-de-test.sql` (catalogue
 | 2026-10-02 | agent/playwright | develop | CT-01 → CT-10 | ✅ | `e2e/admin-saisie-resultats.spec.ts` (11 tests). Corrigé au passage : boutons d'issue < 44 px sur mobile (admin 36, coach 27) → ≥ 44 px |
 | 2026-11-17 | agent (local) | feature/voies-doublees-enfant | CT-11 | ✅ (local) | `e2e/voies-doublees-enfant.spec.ts` ; recette : à dérouler après application de la migration 202611171200 |
 | 2026-11-17 | agent (local) | feature/effacer-saisie | CT-12 | ✅ (local) | `e2e/effacer-saisie.spec.ts` + `test:effacer-saisie` EF-07 ; recette : à dérouler après application de la migration 202611171400 |
+| 2026-11-22 | agent/playwright (local) | `3af7401` | CT-02 | ✅ (local) | Rév. 2026-11-22 : recherche sans accents, multi-termes (« bravo cleo ») ; `e2e/admin-saisie-resultats.spec.ts` (base au seed) ; recette : à dérouler |

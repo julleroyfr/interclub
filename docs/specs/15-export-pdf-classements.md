@@ -246,6 +246,9 @@ est répété sur chacune (R18) et le pied de page affiche « Page *n* / *N* » 
 - **Choix des sections** à exporter, ou export d'un seul classement.
 - **Export avant officialisation** (③/④, classement provisoire).
 - **Autres formats** (CSV, Excel) et **envoi automatique** (e-mail au comité).
+- **Exports du contrôle des NP** (par niveau, par club) : relèvent de la
+  spec #3 R41r–R41s *(rév. 2026-11-22, validée)* ; ils reprennent la même
+  technique de génération (pdf-lib) et R20 (texte sélectionnable).
 - **Accès public/anonyme** à l'export : sans objet (pas d'espace public, spec #1
   R8).
 - **Classement cumulé de la saison** (fonctionnalité distincte, cf. spec #7).
