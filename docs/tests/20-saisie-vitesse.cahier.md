@@ -236,3 +236,4 @@ tous (cf. `00-catalogue-jeux-de-donnees.md` § Notes).
 | 2026-09-22 | julleroyfr | local (stack Docker) | CT-10 | ✅ | |
 | 2026-09-22 | julleroyfr | local (stack Docker) | CT-11 | ✅ | |
 | 2026-10-02 | agent/playwright | develop | CT-01 → CT-11 | ✅ | `e2e/juge-vitesse.spec.ts` (11 tests) ; CT-08 non connecté → `/connexion` (spec #12 R2) |
+| 2026-11-22 | agent/playwright (local) | `3af7401` | CT-05 | ✅ (local) | Rév. 2026-11-22 : recherche sans accents, multi-termes (`cleo bravo`) ; `e2e/juge-vitesse.spec.ts` (11 tests, base au seed) ; recette : à dérouler |

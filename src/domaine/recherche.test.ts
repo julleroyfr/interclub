@@ -30,6 +30,18 @@ describe('Recherche nom/prénom (spec #5 R12bis, #7 R12b, #9 R10, #10 R14b)', ()
     expect(ids('clêo')).toEqual(['4'])
   })
 
+  it('traite les ligatures æ et œ comme « ae » et « oe », dans les deux sens', () => {
+    const ligatures = [
+      { id: 'a', prenom: 'Lætitia', nom: 'Cœur' },
+      { id: 'b', prenom: 'Laetitia', nom: 'Coeur' },
+      { id: 'c', prenom: 'ŒDIPE', nom: 'ÆSIR' },
+    ]
+    const ids2 = (q: string) => filtrerGrimpeursRecherche(ligatures, q).map((g) => g.id)
+    expect(ids2('laetitia')).toEqual(['a', 'b'])
+    expect(ids2('lætitia cœur')).toEqual(['a', 'b'])
+    expect(ids2('oedipe aesir')).toEqual(['c'])
+  })
+
   it('exige chaque terme, dans n’importe quel ordre', () => {
     expect(ids('ana alp')).toEqual(['1'])
     expect(ids('alpha ANA')).toEqual(['1'])

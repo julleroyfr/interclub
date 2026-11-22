@@ -212,14 +212,16 @@ cette spec. (Spec #1 R6/R27, rév. 2026-09-01.)
   (spec #21 R7) est proposé, avec le badge **« Surclassé »** (spec #21 R20–R21).
 - **R12bis.** Le formulaire d'ajout propose, au-dessus de la liste des grimpeurs
   (R12), un **champ de recherche** qui **filtre** les grimpeurs proposés sur leur
-  **nom et prénom** : insensible à la **casse** et aux **accents**, **multi-termes**
+  **nom et prénom** : insensible à la **casse** et aux **accents**, les ligatures
+  **æ** et **œ** équivalant à « ae » et « oe » (rév. 2026-11-22), **multi-termes**
   (chaque terme doit figurer dans le nom ou le prénom, dans n'importe quel ordre).
   Une recherche vide propose tout le roster disponible. La liste affiche le
   **nombre de grimpeurs correspondants** ; une **correspondance unique** est
   **présélectionnée** ; sans correspondance, la liste l'indique et l'ajout est
   impossible. La recherche est **purement d'affichage** : elle ne
   change pas quels grimpeurs sont éligibles (R12–R14). *Ex.* « ana alp » ou
-  « alpha ANA » trouvent « Ana Alpha » ; « eleonore » trouve « Éléonore ».
+  « alpha ANA » trouvent « Ana Alpha » ; « eleonore » trouve « Éléonore » ;
+  « laetitia » trouve « Lætitia » et « lætitia » trouve « Laetitia ».
 - **R13.** Le coach **ne peut pas créer de prêt** : mettre à disposition un
   grimpeur d'un **autre club** (ou de l'équipe CT33) est **réservé à l'admin**
   (spec #1 R35) ; l'ajout d'un grimpeur ni du club ni prêté est **refusé**. En

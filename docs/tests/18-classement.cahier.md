@@ -312,3 +312,4 @@ T1 = 5 / pv 3, T2 = 6 / pv 3, T3 = 7 / pv 4 ; B1 : 1er = 4, 2e = 3 ; B2 : 1er = 
 | | | | CT-12 | ✅ / ❌ | |
 | | | | CT-13 | ✅ / ❌ | |
 | 2026-10-02 | agent/playwright | develop | CT-01 → CT-13 | ✅ | `e2e/classement.spec.ts` (13 tests). Corrigé au passage : le bandeau disait « la vitesse n'entre pas encore dans le score » (contraire à spec #7 R20) |
+| 2026-11-22 | agent/playwright (local) | `3af7401` | CT-10 | ✅ (local) | Rév. 2026-11-22 : recherche sans accents, multi-termes (`bravo cleo`) ; `e2e/classement.spec.ts` (13 tests, base au seed) ; recette : à dérouler |

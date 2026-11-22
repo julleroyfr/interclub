@@ -2,9 +2,17 @@
 // équipe et prêt (spec #5 R12bis), classement (spec #7 R12b), saisie admin
 // (spec #9 R10), juge vitesse (spec #10 R14b). Purement d'affichage.
 
-/** Minuscules sans accents, pour une comparaison tolérante. */
+/**
+ * Minuscules sans accents, ligatures æ/œ dépliées en « ae »/« oe » (comme
+ * `unaccent` côté SQL), pour une comparaison tolérante.
+ */
 function pourRecherche(texte: string): string {
-  return (texte ?? '').normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
+  return (texte ?? '')
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .toLowerCase()
+    .replace(/æ/g, 'ae')
+    .replace(/œ/g, 'oe')
 }
 
 /**

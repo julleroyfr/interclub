@@ -224,3 +224,4 @@ Réutilise le seed `01-jeu-de-test.sql` (catalogue
 | 2026-10-02 | agent/playwright | develop | CT-01 → CT-10 | ✅ | `e2e/admin-saisie-resultats.spec.ts` (11 tests). Corrigé au passage : boutons d'issue < 44 px sur mobile (admin 36, coach 27) → ≥ 44 px |
 | 2026-11-17 | agent (local) | feature/voies-doublees-enfant | CT-11 | ✅ (local) | `e2e/voies-doublees-enfant.spec.ts` ; recette : à dérouler après application de la migration 202611171200 |
 | 2026-11-17 | agent (local) | feature/effacer-saisie | CT-12 | ✅ (local) | `e2e/effacer-saisie.spec.ts` + `test:effacer-saisie` EF-07 ; recette : à dérouler après application de la migration 202611171400 |
+| 2026-11-22 | agent/playwright (local) | `3af7401` | CT-02 | ✅ (local) | Rév. 2026-11-22 : recherche sans accents, multi-termes (« bravo cleo ») ; `e2e/admin-saisie-resultats.spec.ts` (base au seed) ; recette : à dérouler |
