@@ -77,12 +77,19 @@ describe('lienSuiteRencontreCoach — lien de l’écran de la rencontre', () =>
     })
   })
 
-  it.each(['cloture', 'resultats_publics'] as const)(
-    'enfant/ado en %s : consultation seule, « Voir les résultats »',
-    (phase) => {
-      expect(lienSuiteRencontreCoach('r1', 'ado', phase)).toEqual({
-        href: '/coach/rencontres/r1/resultats',
-        label: 'Voir les résultats →',
+  it('enfant/ado en ④ : consultation seule, « Voir les résultats »', () => {
+    expect(lienSuiteRencontreCoach('r1', 'ado', 'cloture')).toEqual({
+      href: '/coach/rencontres/r1/resultats',
+      label: 'Voir les résultats →',
+    })
+  })
+
+  it.each(['enfant', 'ado'] as const)(
+    '%s en ⑤ : directement le classement officiel (spec #5 R7, rév. 2026-11-22)',
+    (categorie) => {
+      expect(lienSuiteRencontreCoach('r1', categorie, 'resultats_publics')).toEqual({
+        href: '/coach/rencontres/r1/classement',
+        label: 'Voir le classement →',
       })
     },
   )
@@ -103,6 +110,11 @@ describe('cibleCarteRencontreCoach — carte de l’accueil coach (spec #5 R7)',
     expect(cibleCarteRencontreCoach('r1', 'enfant', 'competition')).toBe('/coach/rencontres/r1/resultats')
     expect(cibleCarteRencontreCoach('r1', 'ado', 'cloture')).toBe('/coach/rencontres/r1')
     expect(cibleCarteRencontreCoach('r1', 'ado', 'pre_competition')).toBe('/coach/rencontres/r1')
+  })
+
+  it('enfant/ado en ⑤ : classement officiel directement (R7, rév. 2026-11-22)', () => {
+    expect(cibleCarteRencontreCoach('r1', 'enfant', 'resultats_publics')).toBe('/coach/rencontres/r1/classement')
+    expect(cibleCarteRencontreCoach('r1', 'ado', 'resultats_publics')).toBe('/coach/rencontres/r1/classement')
   })
 
   it('adulte : classement dès la ③, engagement avant (spec #20 R19bis)', () => {

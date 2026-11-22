@@ -5,6 +5,11 @@
   — engagement éditable par coach permanent en ① pré-compétition et par permanent
   **et** temporaire en ② préparation, gelé dès ③ compétition, R16 — validé le
   2026-09-01)
+- **Révision** : 2026-11-22 (**validée le 2026-11-22**) — **⑤ résultats
+  publics → classement** (R7, demande utilisateur du 2026-11-22) : en ⑤, la
+  ligne de l'accueil et le lien de l'écran d'engagement mènent **directement au
+  classement** officiel, seul écran utile une fois la rencontre publiée. Aucune
+  migration.
 - **Révision** : 2026-11-20 (**validée le 2026-11-20**) — **aide au choix du
   groupe** (R21ter, demande utilisateur du 2026-11-20) : un **« ? » discret**
   près du choix du groupe de départ ouvre, pour le **coach permanent**, une page
@@ -154,8 +159,12 @@ cette spec. (Spec #1 R6/R27, rév. 2026-09-01.)
   ③ compétition** : la composition y étant **figée** (R16/R17) et la tâche du coach
   étant la **saisie des résultats** (spec #6), la ligne mène **directement à
   l'écran de saisie des résultats** ; l'écran d'engagement reste **accessible** (URL
-  directe) pour consulter la composition figée. Aux autres phases (①/②/④/⑤), la
-  ligne mène à l'écran d'engagement.
+  directe) pour consulter la composition figée. **En ⑤ résultats publics**
+  (rév. 2026-11-22), le classement étant officiel et la saisie close, la ligne
+  mène **directement au classement** (spec #7) ; sur l'écran d'engagement, le
+  lien de suite devient « Voir le classement » au lieu de « Voir les
+  résultats ». L'engagement et les résultats restent accessibles (URL directe).
+  Aux autres phases (①/②/④), la ligne mène à l'écran d'engagement.
   *(Catégorie adulte, rév. 2026-10-25 : dès la ③, la ligne mène au classement ;
   pas d'écran de résultats pour le coach — spec #20 R19bis.)*
 - **R8.** La liste affiche les rencontres **triées par priorité** : d'abord la

@@ -146,6 +146,20 @@ test.describe('Cahier 13 — Espace coach : engagement', () => {
       'href',
       `/coach/rencontres/${RENCONTRE_PILOTE}/resultats`,
     )
+
+    // En ⑤, classement officiel directement ; sur l'écran d'engagement, le lien
+    // de suite mène aussi au classement (R7, rév. 2026-11-22).
+    poserPhase('resultats_publics')
+    await page.goto('/coach')
+    await expect(carte).toHaveAttribute(
+      'href',
+      `/coach/rencontres/${RENCONTRE_PILOTE}/classement`,
+    )
+    await page.goto(URL_RENCONTRE)
+    await expect(page.getByRole('link', { name: 'Voir le classement →' })).toHaveAttribute(
+      'href',
+      `/coach/rencontres/${RENCONTRE_PILOTE}/classement`,
+    )
   })
 
   test('CT-15 — Coach temporaire : nav bornée à sa rencontre, pas de « Mes rencontres » (R8bis)', async ({
